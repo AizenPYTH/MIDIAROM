@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Plateforme de réparation de consoles à distance
 
-## Getting Started
+Application web complète permettant à un particulier en France de faire réparer sa console à distance : choix de la console, de la panne et des options, paiement en ligne, numéro de dossier, instructions d'envoi, réception documentée, diagnostic, devis complémentaires avec accord tracé, réparation, contrôle qualité, expédition retour, suivi, SAV et avis.
 
-First, run the development server:
+**Stack** : Next.js 16 (App Router, Server Components, Server Actions), TypeScript strict, Tailwind CSS 4, Supabase (PostgreSQL, Auth, Storage, RLS), Stripe (Checkout + webhook), Zod, Vitest.
+
+## Démarrage rapide
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local        # renseigner les clés Supabase
+npx supabase start                # base locale (Docker) — migrations + seed appliqués
+npm run db:reset                  # (re)joue migrations + seed de développement
+npm run dev                       # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Comptes de développement créés par le seed (mot de passe `password123`) :
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Rôle | E-mail |
+| --- | --- |
+| Super administrateur | admin@example.com |
+| Technicien | technicien@example.com |
+| Client | client@example.com |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, `EMAIL_PROVIDER=console`, `SHIPPING_PROVIDER=mock`). Les mocks sont **refusés en production**.
 
-## Learn More
+## Commandes
 
-To learn more about Next.js, take a look at the following resources:
+| Commande | Rôle |
+| --- | --- |
+| `npm run dev` / `npm run build` / `npm start` | Next.js |
+| `npm run lint` · `npm run typecheck` · `npm test` | Qualité |
+| `npm run test:db` | Applique les migrations + seed sur un PostgreSQL jetable et exécute les tests RLS SQL |
+| `npm run db:types` | Regénère `types/database.ts` depuis la base locale |
+| `npm run check` | lint + typecheck + tests + build |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Voir le dossier [`docs/`](docs/) : architecture, base de données, logique métier, commandes, transport, paiements, authentification, SEO, analytics, déploiement.

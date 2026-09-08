@@ -67,18 +67,11 @@ export function getServerEnv(): ServerEnv {
       `Invalid server environment: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ")}`,
     );
   }
-  const env = parsed.data;
-  if (env.NODE_ENV === "production") {
-    // Refuse mock integrations in production: they would silently pretend to work.
-    if (env.PAYMENT_PROVIDER === "mock") {
-      throw new Error("PAYMENT_PROVIDER=mock is not allowed in production");
-    }
-    if (env.EMAIL_PROVIDER === "console") {
-      throw new Error("EMAIL_PROVIDER=console is not allowed in production");
-    }
-  }
-  serverEnvCache = env;
-  return env;
+  // Mock integrations are refused in production where they are USED
+  // (lib/stripe, lib/email, lib/shipping), so that `next build` and pages
+  // that never touch them keep working.
+  serverEnvCache = parsed.data;
+  return parsed.data;
 }
 
 export function isProduction(): boolean {

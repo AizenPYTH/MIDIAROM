@@ -17,6 +17,7 @@ export function getEmailProvider(): EmailProvider {
     }
     case "console":
     default:
+      if (env.NODE_ENV === "production") throw new Error("EMAIL_PROVIDER=console is not allowed in production");
       provider = new ConsoleEmailProvider();
   }
   return provider;

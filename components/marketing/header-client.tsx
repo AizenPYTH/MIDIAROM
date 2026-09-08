@@ -21,7 +21,7 @@ export function AccountLink() {
         sub.subscription.unsubscribe();
       };
     } catch {
-      setLoggedIn(false);
+      // Supabase not configured in this environment: keep the neutral "Connexion" link.
       return;
     }
   }, []);

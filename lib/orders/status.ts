@@ -197,3 +197,38 @@ export function statusTone(status: OrderStatus): "neutral" | "info" | "success" 
       return "info";
   }
 }
+
+export type SavStatus = Enums<"sav_status">;
+export const SAV_STATUS_LABELS: Record<SavStatus, string> = {
+  NEW: "Nouvelle",
+  IN_ANALYSIS: "En analyse",
+  ANSWERED: "Réponse apportée",
+  RETURN_REQUESTED: "Retour demandé",
+  CLOSED: "Terminée",
+};
+
+export type QuoteStatus = Enums<"quote_status">;
+export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
+  DRAFT: "Brouillon",
+  SENT: "Envoyé au client",
+  ACCEPTED: "Accepté",
+  REFUSED: "Refusé",
+  EXPIRED: "Expiré",
+  CANCELLED: "Annulé",
+};
+
+export type DiagnosticOutcomeValue = Enums<"diagnostic_outcome">;
+export const DIAGNOSTIC_OUTCOME_LABELS: Record<DiagnosticOutcomeValue, string> = {
+  REPAIRABLE: "Réparable",
+  UNREPAIRABLE: "Irréparable",
+  NOT_ECONOMICAL: "Réparation non rentable",
+  NO_FAULT_FOUND: "Aucune panne constatée",
+  FURTHER_DIAGNOSIS_NEEDED: "Diagnostic complémentaire nécessaire",
+};
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  CUSTOMER: "Client",
+  TECHNICIAN: "Technicien",
+  ADMIN: "Administrateur",
+  SUPER_ADMIN: "Super administrateur",
+};

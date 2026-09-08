@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import {
   ANALYTICS_EVENTS,
@@ -32,10 +32,25 @@ declare global {
   }
 }
 
+// Tiny external stores (localStorage backed) so that reading them is
+// hydration-safe: the server snapshot is "empty", the client snapshot is stable.
+let attributionCache: AttributionData | null = null;
+let consentCache: "unknown" | "granted" | "denied" | null = null;
+const listeners = new Set<() => void>();
+const subscribe = (cb: () => void) => {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+};
+const emit = () => listeners.forEach((cb) => cb());
+
 function readAttribution(): AttributionData {
+  if (attributionCache) return attributionCache;
   try {
     const stored = window.localStorage.getItem(ATTRIBUTION_STORAGE_KEY);
-    if (stored) return JSON.parse(stored) as AttributionData;
+    if (stored) {
+      attributionCache = JSON.parse(stored) as AttributionData;
+      return attributionCache;
+    }
   } catch {
     /* ignore */
   }
@@ -55,24 +70,36 @@ function readAttribution(): AttributionData {
   } catch {
     /* ignore */
   }
+  attributionCache = data;
   return data;
+}
+
+function readConsent(): "unknown" | "granted" | "denied" {
+  if (consentCache) return consentCache;
+  try {
+    const stored = window.localStorage.getItem(CONSENT_STORAGE_KEY);
+    consentCache = stored === "granted" || stored === "denied" ? stored : "unknown";
+  } catch {
+    consentCache = "unknown";
+  }
+  return consentCache;
+}
+
+function writeConsent(value: "granted" | "denied") {
+  consentCache = value;
+  try {
+    window.localStorage.setItem(CONSENT_STORAGE_KEY, value);
+  } catch {
+    /* ignore */
+  }
+  emit();
 }
 
 export function AnalyticsProvider({ children, gaId, adsId }: { children: ReactNode; gaId?: string; adsId?: string }) {
   const pathname = usePathname();
-  const [attribution, setAttribution] = useState<AttributionData | null>(null);
-  const [consent, setConsentState] = useState<"unknown" | "granted" | "denied">("unknown");
+  const attribution = useSyncExternalStore(subscribe, readAttribution, () => null);
+  const consent = useSyncExternalStore(subscribe, readConsent, () => "unknown" as const);
   const gtagLoaded = useRef(false);
-
-  useEffect(() => {
-    setAttribution(readAttribution());
-    try {
-      const stored = window.localStorage.getItem(CONSENT_STORAGE_KEY);
-      if (stored === "granted" || stored === "denied") setConsentState(stored);
-    } catch {
-      /* ignore */
-    }
-  }, []);
 
   // Load Google tags only with consent.
   useEffect(() => {
@@ -134,12 +161,7 @@ export function AnalyticsProvider({ children, gaId, adsId }: { children: ReactNo
   }, [pathname, attribution?.session_id]);
 
   const setConsent = useCallback((value: "granted" | "denied") => {
-    setConsentState(value);
-    try {
-      window.localStorage.setItem(CONSENT_STORAGE_KEY, value);
-    } catch {
-      /* ignore */
-    }
+    writeConsent(value);
   }, []);
 
   const value = useMemo(() => ({ track, attribution, consent, setConsent }), [track, attribution, consent, setConsent]);
