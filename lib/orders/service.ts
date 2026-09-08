@@ -134,13 +134,17 @@ export async function transitionOrder(input: {
   if (error || !updated) throw new OrderError(error?.message ?? "Mise à jour impossible", "PRECONDITION");
 
   // The DB trigger records order_status_history; we store who did it + reason.
-  await db
+  const { data: historyRow } = await db
     .from("order_status_history")
-    .update({ changed_by: input.actor.id, reason: input.reason ?? null })
+    .select("id")
     .eq("order_id", order.id)
     .eq("to_status", input.to)
     .order("created_at", { ascending: false })
-    .limit(1);
+    .limit(1)
+    .maybeSingle();
+  if (historyRow) {
+    await db.from("order_status_history").update({ changed_by: input.actor.id, reason: input.reason ?? null }).eq("id", historyRow.id);
+  }
 
   await addOrderEvent({
     orderId: order.id,

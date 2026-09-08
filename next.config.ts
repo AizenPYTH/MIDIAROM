@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       // Supabase Storage (public content bucket + signed URLs)
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/**" },
+      // Local Supabase (supabase start)
+      { protocol: "http", hostname: "127.0.0.1", port: "54321", pathname: "/storage/v1/**" },
+      { protocol: "http", hostname: "localhost", port: "54321", pathname: "/storage/v1/**" },
     ],
   },
   async headers() {
