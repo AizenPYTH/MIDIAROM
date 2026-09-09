@@ -158,3 +158,87 @@ export function accountCreated(ctx: { brand: EmailBrand; firstName: string; setP
   const text = `Bonjour ${ctx.firstName},\n\nDéfinissez votre mot de passe : ${ctx.setPasswordUrl}`;
   return renderEmail(ctx.brand, subject, html, text);
 }
+
+// ---------------------------------------------------------------------------
+// Boutique
+// ---------------------------------------------------------------------------
+export interface ShopEmailContext {
+  brand: EmailBrand;
+  firstName: string;
+  orderNumber: string;
+  totalCents: number;
+  fulfillment: "PICKUP" | "SHIPPING";
+  accountUrl: string;
+  lines: { label: string; quantity: number; totalCents: number }[];
+}
+
+const shopLines = (ctx: ShopEmailContext): [string, string][] => [
+  ["Commande", ctx.orderNumber],
+  ...ctx.lines.map((l): [string, string] => [`${l.label}${l.quantity > 1 ? ` × ${l.quantity}` : ""}`, formatPrice(l.totalCents)]),
+  ["Total", formatPrice(ctx.totalCents)],
+];
+
+export function shopOrderConfirmed(ctx: ShopEmailContext & { pickupNote: string; shippingNote: string }): RenderedEmail {
+  const subject = `Commande ${ctx.orderNumber} confirmée`;
+  const next = ctx.fulfillment === "PICKUP" ? `Votre commande sera préparée au magasin. ${ctx.pickupNote}`.trim() : `Votre commande sera expédiée. ${ctx.shippingNote}`.trim();
+  const html = [paragraph(`Bonjour ${ctx.firstName},`), paragraph("Merci, votre paiement est confirmé."), keyValueTable(shopLines(ctx)), paragraph(next), button("Suivre ma commande", ctx.accountUrl)].join("");
+  const text = `Bonjour ${ctx.firstName},\n\nVotre paiement est confirmé pour la commande ${ctx.orderNumber} (${formatPrice(ctx.totalCents)}).\n${next}\n${ctx.accountUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+export function shopOrderReady(ctx: ShopEmailContext): RenderedEmail {
+  const subject = `Commande ${ctx.orderNumber} prête au retrait`;
+  const html = [paragraph(`Bonjour ${ctx.firstName},`), paragraph(`Votre commande ${ctx.orderNumber} est prête : vous pouvez venir la retirer au magasin aux horaires d'ouverture.`), button("Voir ma commande", ctx.accountUrl)].join("");
+  const text = `Bonjour ${ctx.firstName},\n\nVotre commande ${ctx.orderNumber} est prête au retrait.\n${ctx.accountUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+export function shopOrderShipped(ctx: ShopEmailContext & { carrierName: string | null; trackingNumber: string | null; trackingUrl: string | null }): RenderedEmail {
+  const subject = `Commande ${ctx.orderNumber} expédiée`;
+  const tracking = ctx.trackingNumber ? `${ctx.carrierName ?? "Transporteur"} — suivi ${ctx.trackingNumber}` : "Vous recevrez le numéro de suivi dès qu'il sera disponible.";
+  const html = [paragraph(`Bonjour ${ctx.firstName},`), paragraph(`Votre commande ${ctx.orderNumber} vient d'être expédiée. ${tracking}`), ctx.trackingUrl ? button("Suivre le colis", ctx.trackingUrl) : button("Voir ma commande", ctx.accountUrl)].join("");
+  const text = `Bonjour ${ctx.firstName},\n\nCommande ${ctx.orderNumber} expédiée. ${tracking}\n${ctx.trackingUrl ?? ctx.accountUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+export function shopOrderCancelled(ctx: ShopEmailContext & { reason: string | null }): RenderedEmail {
+  const subject = `Commande ${ctx.orderNumber} annulée`;
+  const html = [paragraph(`Bonjour ${ctx.firstName},`), paragraph(`Votre commande ${ctx.orderNumber} a été annulée.${ctx.reason ? ` Motif : ${ctx.reason}` : ""} Si un paiement a été effectué, il vous est remboursé.`), button("Voir ma commande", ctx.accountUrl)].join("");
+  const text = `Bonjour ${ctx.firstName},\n\nCommande ${ctx.orderNumber} annulée.${ctx.reason ? ` Motif : ${ctx.reason}` : ""}\n${ctx.accountUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+// ---------------------------------------------------------------------------
+// Reprise
+// ---------------------------------------------------------------------------
+export interface TradeInEmailContext {
+  brand: EmailBrand;
+  firstName: string;
+  requestNumber: string;
+  itemTitle: string;
+  trackingUrl: string;
+}
+
+export function tradeInReceived(ctx: TradeInEmailContext): RenderedEmail {
+  const subject = `Demande de reprise ${ctx.requestNumber} reçue`;
+  const html = [paragraph(`Bonjour ${ctx.firstName},`), paragraph(`Nous avons bien reçu votre demande de reprise « ${ctx.itemTitle} ». L'atelier l'examine et vous envoie une offre par e-mail.`), button("Suivre ma demande", ctx.trackingUrl)].join("");
+  const text = `Bonjour ${ctx.firstName},\n\nDemande de reprise ${ctx.requestNumber} reçue : ${ctx.itemTitle}.\n${ctx.trackingUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+export function tradeInOffer(ctx: TradeInEmailContext & { offerCents: number; offerNote: string | null; expiresAt: string | null }): RenderedEmail {
+  const subject = `Notre offre pour votre reprise ${ctx.requestNumber}`;
+  const html = [paragraph(`Bonjour ${ctx.firstName},`), paragraph(`Pour « ${ctx.itemTitle} », nous vous proposons ${formatPrice(ctx.offerCents)}${ctx.expiresAt ? ` (offre valable jusqu'au ${ctx.expiresAt})` : ""}.`), ctx.offerNote ? paragraph(ctx.offerNote) : "", paragraph("Vous pouvez accepter ou refuser en ligne. Le paiement se fait au comptoir lors du dépôt du lot."), button("Répondre à l'offre", ctx.trackingUrl)].join("");
+  const text = `Bonjour ${ctx.firstName},\n\nOffre pour ${ctx.itemTitle} : ${formatPrice(ctx.offerCents)}.${ctx.offerNote ? `\n${ctx.offerNote}` : ""}\n${ctx.trackingUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+export function tradeInDecision(ctx: TradeInEmailContext & { accepted: boolean; offerCents: number | null }): RenderedEmail {
+  const subject = ctx.accepted ? `Reprise ${ctx.requestNumber} acceptée` : `Reprise ${ctx.requestNumber} refusée`;
+  const body = ctx.accepted
+    ? `Votre accord est enregistré${ctx.offerCents ? ` pour ${formatPrice(ctx.offerCents)}` : ""}. Apportez le lot au magasin : le paiement est effectué au comptoir après vérification.`
+    : "Votre refus est enregistré. Le lot reste à vous, sans frais.";
+  const html = [paragraph(`Bonjour ${ctx.firstName},`), paragraph(body), button("Voir ma demande", ctx.trackingUrl)].join("");
+  const text = `Bonjour ${ctx.firstName},\n\n${body}\n${ctx.trackingUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}

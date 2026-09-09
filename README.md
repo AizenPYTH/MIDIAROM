@@ -1,6 +1,6 @@
 # Plateforme de réparation de consoles à distance
 
-Application web complète permettant à un particulier en France de faire réparer sa console à distance : choix de la console, de la panne et des options, paiement en ligne, numéro de dossier, instructions d'envoi, réception documentée, diagnostic, devis complémentaires avec accord tracé, réparation, contrôle qualité, expédition retour, suivi, SAV et avis.
+Application web complète d'un magasin de jeux vidéo : **réparation à distance** (plateforme → modèle exact → prestation, symptômes et photos, paiement, numéro de dossier, réception documentée, diagnostic, devis complémentaires, réparation, contrôle qualité, expédition, suivi 8 étapes, SAV, avis), **vente** (catalogue consoles / jeux / accessoires / rétro avec filtres, fiches produit gradées, panier, commande, paiement, stock), **reprise** (estimation en ligne, offre, décision du client) et **fiches consoles** (PS1 → PS5, Xbox, Nintendo, Sega). Back-office complet : réparations, commandes, stock, reprises, clients, catalogue, contenu, réglages.
 
 **Stack** : Next.js 16 (App Router, Server Components, Server Actions), TypeScript strict, Tailwind CSS 4, Supabase (PostgreSQL, Auth, Storage, RLS), Stripe (Checkout + webhook), Zod, Vitest.
 
@@ -21,6 +21,8 @@ Comptes de développement créés par le seed (mot de passe `password123`) :
 | Super administrateur | admin@example.com |
 | Technicien | technicien@example.com |
 | Client | client@example.com |
+
+Le back-office est sur `/admin` (connexion via `/connexion`). Les comptes techniciens n'accèdent ni au catalogue, ni au stock, ni aux réglages.
 
 Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, `EMAIL_PROVIDER=console`, `SHIPPING_PROVIDER=mock`). Les mocks sont **refusés en production**.
 

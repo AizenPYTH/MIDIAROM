@@ -35,6 +35,14 @@ export interface SocialSettings {
   youtube: string;
   google_business: string;
 }
+export interface ShopSettings {
+  shipping_enabled: boolean;
+  shipping_fee_cents: number;
+  free_shipping_threshold_cents: number | null;
+  pickup_enabled: boolean;
+  pickup_note: string;
+  shipping_note: string;
+}
 export interface CheckoutSettings {
   terms_version: string;
   show_terms_summary: boolean;
@@ -48,6 +56,7 @@ export interface SettingsMap {
   trust: TrustSettings;
   social: SocialSettings;
   checkout: CheckoutSettings;
+  shop: ShopSettings;
 }
 
 const DEFAULTS: SettingsMap = {
@@ -58,6 +67,7 @@ const DEFAULTS: SettingsMap = {
   trust: { company_story: "", years_of_experience: null, team_intro: "", workshop_intro: "", new_management_note: "" },
   social: { instagram: "", facebook: "", tiktok: "", youtube: "", google_business: "" },
   checkout: { terms_version: "draft", show_terms_summary: true },
+  shop: { shipping_enabled: true, shipping_fee_cents: 690, free_shipping_threshold_cents: null, pickup_enabled: true, pickup_note: "", shipping_note: "" },
 };
 
 function isRecord(value: Json | undefined): value is { [key: string]: Json | undefined } {
@@ -80,7 +90,7 @@ export const getBrandSettings = () => getSetting("brand");
 export const getBusinessRules = () => getSetting("business_rules");
 
 export async function getAllSettings(): Promise<SettingsMap> {
-  const [brand, business_rules, warranty, shipping_info, trust, social, checkout] = await Promise.all([
+  const [brand, business_rules, warranty, shipping_info, trust, social, checkout, shop] = await Promise.all([
     getSetting("brand"),
     getSetting("business_rules"),
     getSetting("warranty"),
@@ -88,6 +98,7 @@ export async function getAllSettings(): Promise<SettingsMap> {
     getSetting("trust"),
     getSetting("social"),
     getSetting("checkout"),
+    getSetting("shop"),
   ]);
-  return { brand, business_rules, warranty, shipping_info, trust, social, checkout };
+  return { brand, business_rules, warranty, shipping_info, trust, social, checkout, shop };
 }

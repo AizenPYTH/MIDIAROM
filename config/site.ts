@@ -20,6 +20,15 @@ export const ROUTES = {
   accountProfile: "/compte/profil",
   accountAddresses: "/compte/adresses",
   checkout: "/commande",
+  shop: "/boutique",
+  cart: "/panier",
+  shopCheckout: "/commande-boutique",
+  shopConfirmation: "/commande-boutique/confirmation",
+  accountShopOrders: "/compte/commandes",
+  accountTradeIns: "/compte/reprises",
+  tradeIn: "/reprise",
+  tradeInTracking: "/reprise/suivi",
+  consoles: "/consoles",
   admin: "/admin",
 } as const;
 

@@ -165,3 +165,42 @@ export async function sendAccountCreatedEmail(email: string, firstName: string, 
     console.error("[notifications] account e-mail failed", error);
   }
 }
+
+/**
+ * E-mail transactionnel hors dossier de réparation (commande boutique, reprise) :
+ * enregistré dans `notifications` puis envoyé. Les échecs sont journalisés, jamais levés.
+ */
+export async function sendCustomerEmail(input: {
+  to: string;
+  recipientId: string | null;
+  eventType: string;
+  rendered: RenderedEmail;
+  shopOrderId?: string | null;
+  tradeInId?: string | null;
+}): Promise<void> {
+  const db = createSupabaseAdminClient();
+  const { data: row } = await db
+    .from("notifications")
+    .insert({
+      recipient_id: input.recipientId,
+      recipient_email: input.to,
+      shop_order_id: input.shopOrderId ?? null,
+      trade_in_id: input.tradeInId ?? null,
+      event_type: input.eventType,
+      channel: "EMAIL",
+      subject: input.rendered.subject,
+      payload: { event: input.eventType, text: input.rendered.text } as Json,
+      status: "PENDING",
+    })
+    .select("id")
+    .single();
+  try {
+    const result = await getEmailProvider().send({ to: input.to, subject: input.rendered.subject, html: input.rendered.html, text: input.rendered.text });
+    if (row) await db.from("notifications").update({ status: "SENT", sent_at: new Date().toISOString(), provider_message_id: result.providerMessageId }).eq("id", row.id);
+  } catch (error) {
+    console.error("[notifications] send failed", error);
+    if (row) await db.from("notifications").update({ status: "FAILED", error: String(error) }).eq("id", row.id);
+  }
+}
+
+export { emailBrand };

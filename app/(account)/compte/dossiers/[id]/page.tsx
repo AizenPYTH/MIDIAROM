@@ -14,7 +14,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireUserOrRedirect } from "@/lib/security/auth";
 import { signMedia } from "@/lib/media/service";
 import { signedMediaUrl } from "@/lib/shipping/service";
-import { computeTimeline, CUSTOMER_CANCELLABLE_STATUSES, ORDER_STATUS_DESCRIPTIONS, ORDER_STATUS_LABELS, statusTone } from "@/lib/orders/status";
+import { computeWorkshopTimeline, CUSTOMER_CANCELLABLE_STATUSES, ORDER_STATUS_DESCRIPTIONS, ORDER_STATUS_LABELS, statusTone } from "@/lib/orders/status";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/utils/format";
 import { getSetting } from "@/lib/settings";
 import { getInvoiceDocumentUrl, INVOICE_TYPE_LABELS } from "@/lib/invoices";
@@ -114,7 +114,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       <Card>
         <CardContent className="py-6">
-          <StatusTimeline steps={computeTimeline(order.status)} />
+          <StatusTimeline steps={computeWorkshopTimeline(order.status)} />
         </CardContent>
       </Card>
 
@@ -222,12 +222,21 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               items={[
                 { label: "Console", value: order.model_name.startsWith(order.brand_name) ? order.model_name : `${order.brand_name} ${order.model_name}` },
                 { label: "Panne déclarée", value: order.fault_name },
+                { label: "Symptômes", value: order.symptoms.length ? order.symptoms.join(", ") : "—" },
                 { label: "Garantie", value: order.warranty_months > 0 ? `${order.warranty_months} mois sur l'intervention` : "Selon la réparation issue du diagnostic" },
                 { label: "Adresse de retour", value: [address.line1, address.line2, `${address.postal_code} ${address.city}`].filter(Boolean).join(", ") },
                 { label: "Numéro de série", value: reception.data?.serial_number ?? order.console_serial_number ?? "—" },
                 { label: "Vos notes", value: order.customer_notes ?? "—" },
               ]}
             />
+            {mediaByKind("CUSTOMER").length ? (
+              <div className="mt-4">
+                <span className="mono-label text-ink-muted">Vos photos</span>
+                <div className="mt-2">
+                  <MediaGallery media={mediaByKind("CUSTOMER")} />
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

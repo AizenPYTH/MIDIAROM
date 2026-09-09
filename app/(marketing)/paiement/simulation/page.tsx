@@ -16,9 +16,11 @@ export default async function PaymentSimulationPage({ searchParams }: { searchPa
   if (isProduction() || !isMockPayments()) notFound();
   const { session, payment: paymentId, success, cancel } = await searchParams;
   if (!session || !paymentId) notFound();
-  const { data: payment } = await createSupabaseAdminClient().from("payments").select("*, order:repair_orders(order_number, repair_name)").eq("id", paymentId).eq("provider_session_id", session).maybeSingle();
+  const { data: payment } = await createSupabaseAdminClient().from("payments").select("*, order:repair_orders(order_number, repair_name), shop_order:shop_orders(order_number)").eq("id", paymentId).eq("provider_session_id", session).maybeSingle();
   if (!payment) notFound();
-  const order = payment.order as { order_number: string; repair_name: string } | null;
+  const repairOrder = payment.order as { order_number: string; repair_name: string } | null;
+  const shopOrder = payment.shop_order as { order_number: string } | null;
+  const order = repairOrder ?? (shopOrder ? { order_number: shopOrder.order_number, repair_name: "Commande boutique" } : null);
 
   return (
     <Container className="max-w-md py-16">
@@ -29,7 +31,7 @@ export default async function PaymentSimulationPage({ searchParams }: { searchPa
         <p className="text-sm text-ink-muted">Dossier {order?.order_number}</p>
         <p className="font-medium text-ink">{order?.repair_name}</p>
         <p className="mt-2 text-2xl font-bold text-primary">{formatPrice(payment.amount_cents)}</p>
-        <p className="text-xs text-ink-muted">{payment.purpose === "QUOTE" ? "Complément de devis" : "Paiement initial"}</p>
+        <p className="text-xs text-ink-muted">{payment.purpose === "QUOTE" ? "Complément de devis" : payment.purpose === "SHOP" ? "Commande boutique" : "Paiement initial"}</p>
         <form action={simulatePaymentAction} className="mt-6 flex flex-col gap-2">
           <input type="hidden" name="payment" value={payment.id} />
           <input type="hidden" name="session" value={session} />

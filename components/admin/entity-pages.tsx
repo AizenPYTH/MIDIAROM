@@ -34,12 +34,14 @@ function cell(column: string, value: unknown, options: SelectOptions): React.Rea
   if (column === "brand_id") return options.brands?.find((o) => o.value === value)?.label ?? "—";
   if (column === "model_id") return options.models?.find((o) => o.value === value)?.label ?? "Générique";
   if (column === "fault_id") return options.faults?.find((o) => o.value === value)?.label ?? "—";
+  if (column === "condition" && typeof value === "string") return ({ NEW: "Neuf", REFURBISHED: "Révisé", USED_A: "Occasion A", USED_B: "Occasion B", USED_C: "Occasion C" } as Record<string, string>)[value] ?? value;
+  if (column === "quantity") return <span className={Number(value) === 0 ? "font-mono text-danger" : "font-mono"}>{String(value)}</span>;
   if (value == null || value === "") return "—";
   return String(value).slice(0, 80);
 }
 
 const COLUMN_LABELS: Record<string, string> = {
-  name: "Nom", slug: "Slug", display_order: "Ordre", is_active: "Actif", brand_id: "Marque", model_id: "Modèle", fault_id: "Panne", price_cents: "Prix", is_seo_published: "SEO", applies_to_all: "Universelle", is_recommended: "Recommandée", code: "Code", provider_code: "Transporteur", includes_outbound: "Aller", includes_return: "Retour", question: "Question", category: "Catégorie", title: "Titre", image_path: "Image", is_published: "Publié", version: "Version", is_current: "En vigueur", path: "Chemin", no_index: "No-index", key: "Clé", source: "Source", campaign: "Campagne", period_start: "Début", period_end: "Fin", amount_cents: "Montant",
+  name: "Nom", slug: "Slug", display_order: "Ordre", is_active: "Actif", brand_id: "Marque", model_id: "Modèle", fault_id: "Panne", price_cents: "Prix", is_seo_published: "SEO", applies_to_all: "Universelle", is_recommended: "Recommandée", code: "Code", provider_code: "Transporteur", includes_outbound: "Aller", includes_return: "Retour", question: "Question", category: "Catégorie", title: "Titre", image_path: "Image", is_published: "Publié", version: "Version", is_current: "En vigueur", path: "Chemin", no_index: "No-index", key: "Clé", sku: "SKU", platform: "Plateforme", condition: "État", quantity: "Stock", family: "Famille", source: "Source", campaign: "Campagne", period_start: "Début", period_end: "Fin", amount_cents: "Montant",
 };
 
 export async function EntityListPage({ entityKey, title, description, extra }: { entityKey: string; title?: string; description?: string; extra?: React.ReactNode }) {
@@ -107,7 +109,7 @@ export async function EntityEditPage({ entityKey, id, children }: { entityKey: s
         <PageHeader className="mt-1" title={label} actions={row ? <DeleteEntityButton entityKey={entityKey} id={String(row[idField])} label={label} /> : undefined} />
       </div>
       <div className="rounded-lg border border-border bg-surface p-5">
-        <EntityForm entityKey={entityKey} entity={entity} row={row} selectOptions={options} />
+        <EntityForm entityKey={entityKey} entity={{ fields: entity.fields, idField: entity.idField ?? "id" }} row={row} selectOptions={options} />
       </div>
       {row && children ? await children(row) : null}
     </div>

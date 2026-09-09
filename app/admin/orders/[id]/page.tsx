@@ -14,7 +14,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireStaffOrRedirect } from "@/lib/security/auth";
 import { signMedia, kindLabel } from "@/lib/media/service";
 import { signedMediaUrl } from "@/lib/shipping/service";
-import { computeTimeline, isAdminRole, ORDER_STATUS_LABELS, QUOTE_STATUS_LABELS, statusTone, DIAGNOSTIC_OUTCOME_LABELS } from "@/lib/orders/status";
+import { computeWorkshopTimeline, isAdminRole, ORDER_STATUS_LABELS, QUOTE_STATUS_LABELS, statusTone, DIAGNOSTIC_OUTCOME_LABELS } from "@/lib/orders/status";
 import { formatDateTime, formatMinutes, formatPrice } from "@/lib/utils/format";
 import type { MediaKind } from "@/lib/security/upload";
 import { Select } from "@/components/ui/form";
@@ -102,7 +102,7 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
       </div>
       <div>
         <span className="mb-2 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Avancement</span>
-        <StatusTimeline steps={computeTimeline(order.status)} />
+        <StatusTimeline steps={computeWorkshopTimeline(order.status)} />
       </div>
       <Tabs tabs={TABS.map((t) => (t.key === "quotes" ? { ...t, count: pendingQuotes } : t))} current={tab} hrefFor={hrefFor} />
 
@@ -139,11 +139,15 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
               { label: "Téléphone", value: order.customer_phone ?? "—" },
               { label: "Adresse de retour", value: [address.line1, address.line2, `${address.postal_code} ${address.city}`].filter(Boolean).join(", ") },
               { label: "Notes du client", value: order.customer_notes ?? "—" },
+              { label: "Symptômes cochés", value: order.symptoms.length ? order.symptoms.join(", ") : "—" },
               { label: "N° de série déclaré", value: order.console_serial_number ?? "—" },
               { label: "Attribution", value: [order.utm_source, order.utm_medium, order.utm_campaign].filter(Boolean).join(" / ") || "Direct" },
               { label: "CGV acceptées", value: order.accepted_terms_at ? `${formatDateTime(order.accepted_terms_at)} (v. ${order.accepted_terms_version})` : "—" },
               { label: "Suivi public", value: <span className="font-mono text-xs">/suivi/{order.tracking_token}</span> },
             ]} />
+          </Section>
+          <Section title="Photos envoyées par le client" description="Jointes à la fiche de réparation, visibles par le client dans son espace.">
+            <MediaGallery media={mediaOf(["CUSTOMER"])} emptyText="Le client n'a joint aucune photo." />
           </Section>
           <Section title="Messages et notes">
             <ul className="mb-4 max-h-80 space-y-2 overflow-y-auto">

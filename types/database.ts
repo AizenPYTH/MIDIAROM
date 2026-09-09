@@ -252,6 +252,11 @@ export type Database = {
           seo_intro: string | null;
           created_at: string;
           updated_at: string;
+          family: string | null;
+          variants: string[];
+          common_issues: string[];
+          is_retro: boolean;
+          is_handheld: boolean;
         };
         Insert: {
           id?: string;
@@ -269,6 +274,11 @@ export type Database = {
           seo_intro?: string | null;
           created_at?: string;
           updated_at?: string;
+          family?: string | null;
+          variants?: string[];
+          common_issues?: string[];
+          is_retro?: boolean;
+          is_handheld?: boolean;
         };
         Update: {
           id?: string;
@@ -286,6 +296,11 @@ export type Database = {
           seo_intro?: string | null;
           created_at?: string;
           updated_at?: string;
+          family?: string | null;
+          variants?: string[];
+          common_issues?: string[];
+          is_retro?: boolean;
+          is_handheld?: boolean;
         };
         Relationships: [
           {
@@ -509,7 +524,7 @@ export type Database = {
       invoices: {
         Row: {
           id: string;
-          order_id: string;
+          order_id: string | null;
           payment_id: string | null;
           invoice_number: string;
           invoice_type: Database["public"]["Enums"]["invoice_type"];
@@ -522,10 +537,11 @@ export type Database = {
           external_ref: string | null;
           issued_at: string;
           created_at: string;
+          shop_order_id: string | null;
         };
         Insert: {
           id?: string;
-          order_id: string;
+          order_id?: string | null;
           payment_id?: string | null;
           invoice_number?: string;
           invoice_type?: Database["public"]["Enums"]["invoice_type"];
@@ -538,10 +554,11 @@ export type Database = {
           external_ref?: string | null;
           issued_at?: string;
           created_at?: string;
+          shop_order_id?: string | null;
         };
         Update: {
           id?: string;
-          order_id?: string;
+          order_id?: string | null;
           payment_id?: string | null;
           invoice_number?: string;
           invoice_type?: Database["public"]["Enums"]["invoice_type"];
@@ -554,6 +571,7 @@ export type Database = {
           external_ref?: string | null;
           issued_at?: string;
           created_at?: string;
+          shop_order_id?: string | null;
         };
         Relationships: [
           {
@@ -568,6 +586,13 @@ export type Database = {
             columns: ["payment_id"];
             isOneToOne: false;
             referencedRelation: "payments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invoices_shop_order_id_fkey";
+            columns: ["shop_order_id"];
+            isOneToOne: false;
+            referencedRelation: "shop_orders";
             referencedColumns: ["id"];
           }
         ];
@@ -665,6 +690,8 @@ export type Database = {
           read_at: string | null;
           sent_at: string | null;
           created_at: string;
+          shop_order_id: string | null;
+          trade_in_id: string | null;
         };
         Insert: {
           id?: string;
@@ -681,6 +708,8 @@ export type Database = {
           read_at?: string | null;
           sent_at?: string | null;
           created_at?: string;
+          shop_order_id?: string | null;
+          trade_in_id?: string | null;
         };
         Update: {
           id?: string;
@@ -697,6 +726,8 @@ export type Database = {
           read_at?: string | null;
           sent_at?: string | null;
           created_at?: string;
+          shop_order_id?: string | null;
+          trade_in_id?: string | null;
         };
         Relationships: [
           {
@@ -711,6 +742,20 @@ export type Database = {
             columns: ["recipient_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_shop_order_id_fkey";
+            columns: ["shop_order_id"];
+            isOneToOne: false;
+            referencedRelation: "shop_orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_trade_in_fk";
+            columns: ["trade_in_id"];
+            isOneToOne: false;
+            referencedRelation: "trade_in_requests";
             referencedColumns: ["id"];
           }
         ];
@@ -1095,7 +1140,7 @@ export type Database = {
       payments: {
         Row: {
           id: string;
-          order_id: string;
+          order_id: string | null;
           quote_id: string | null;
           purpose: Database["public"]["Enums"]["payment_purpose"];
           provider: string;
@@ -1109,10 +1154,11 @@ export type Database = {
           created_at: string;
           updated_at: string;
           succeeded_at: string | null;
+          shop_order_id: string | null;
         };
         Insert: {
           id?: string;
-          order_id: string;
+          order_id?: string | null;
           quote_id?: string | null;
           purpose?: Database["public"]["Enums"]["payment_purpose"];
           provider: string;
@@ -1126,10 +1172,11 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           succeeded_at?: string | null;
+          shop_order_id?: string | null;
         };
         Update: {
           id?: string;
-          order_id?: string;
+          order_id?: string | null;
           quote_id?: string | null;
           purpose?: Database["public"]["Enums"]["payment_purpose"];
           provider?: string;
@@ -1143,6 +1190,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           succeeded_at?: string | null;
+          shop_order_id?: string | null;
         };
         Relationships: [
           {
@@ -1157,6 +1205,105 @@ export type Database = {
             columns: ["quote_id"];
             isOneToOne: false;
             referencedRelation: "supplementary_quotes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_shop_order_id_fkey";
+            columns: ["shop_order_id"];
+            isOneToOne: false;
+            referencedRelation: "shop_orders";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      products: {
+        Row: {
+          id: string;
+          sku: string;
+          slug: string;
+          name: string;
+          category: Database["public"]["Enums"]["product_category"];
+          platform: string;
+          model_id: string | null;
+          condition: Database["public"]["Enums"]["product_condition"];
+          condition_notes: string | null;
+          description: string | null;
+          specs: Json;
+          includes: string[];
+          price_cents: number;
+          compare_at_price_cents: number | null;
+          cost_cents: number;
+          quantity: number;
+          low_stock_threshold: number;
+          weight_grams: number | null;
+          images: string[];
+          is_retro: boolean;
+          is_featured: boolean;
+          is_active: boolean;
+          display_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          sku: string;
+          slug: string;
+          name: string;
+          category?: Database["public"]["Enums"]["product_category"];
+          platform: string;
+          model_id?: string | null;
+          condition?: Database["public"]["Enums"]["product_condition"];
+          condition_notes?: string | null;
+          description?: string | null;
+          specs?: Json;
+          includes?: string[];
+          price_cents: number;
+          compare_at_price_cents?: number | null;
+          cost_cents?: number;
+          quantity?: number;
+          low_stock_threshold?: number;
+          weight_grams?: number | null;
+          images?: string[];
+          is_retro?: boolean;
+          is_featured?: boolean;
+          is_active?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          sku?: string;
+          slug?: string;
+          name?: string;
+          category?: Database["public"]["Enums"]["product_category"];
+          platform?: string;
+          model_id?: string | null;
+          condition?: Database["public"]["Enums"]["product_condition"];
+          condition_notes?: string | null;
+          description?: string | null;
+          specs?: Json;
+          includes?: string[];
+          price_cents?: number;
+          compare_at_price_cents?: number | null;
+          cost_cents?: number;
+          quantity?: number;
+          low_stock_threshold?: number;
+          weight_grams?: number | null;
+          images?: string[];
+          is_retro?: boolean;
+          is_featured?: boolean;
+          is_active?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "products_model_id_fkey";
+            columns: ["model_id"];
+            isOneToOne: false;
+            referencedRelation: "console_models";
             referencedColumns: ["id"];
           }
         ];
@@ -1601,6 +1748,7 @@ export type Database = {
           review_requested_at: string | null;
           created_at: string;
           updated_at: string;
+          symptoms: string[];
         };
         Insert: {
           id?: string;
@@ -1654,6 +1802,7 @@ export type Database = {
           review_requested_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          symptoms?: string[];
         };
         Update: {
           id?: string;
@@ -1707,6 +1856,7 @@ export type Database = {
           review_requested_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          symptoms?: string[];
         };
         Relationships: [
           {
@@ -2499,6 +2649,218 @@ export type Database = {
         };
         Relationships: [];
       };
+      shop_order_history: {
+        Row: {
+          id: string;
+          order_id: string;
+          from_status: Database["public"]["Enums"]["shop_order_status"] | null;
+          to_status: Database["public"]["Enums"]["shop_order_status"];
+          actor_id: string | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          from_status?: Database["public"]["Enums"]["shop_order_status"] | null;
+          to_status: Database["public"]["Enums"]["shop_order_status"];
+          actor_id?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          from_status?: Database["public"]["Enums"]["shop_order_status"] | null;
+          to_status?: Database["public"]["Enums"]["shop_order_status"];
+          actor_id?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shop_order_history_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shop_order_history_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "shop_orders";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      shop_order_items: {
+        Row: {
+          id: string;
+          order_id: string;
+          product_id: string | null;
+          sku: string | null;
+          label: string;
+          platform: string | null;
+          condition: Database["public"]["Enums"]["product_condition"] | null;
+          quantity: number;
+          unit_price_cents: number;
+          total_cents: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          product_id?: string | null;
+          sku?: string | null;
+          label: string;
+          platform?: string | null;
+          condition?: Database["public"]["Enums"]["product_condition"] | null;
+          quantity: number;
+          unit_price_cents: number;
+          total_cents: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          product_id?: string | null;
+          sku?: string | null;
+          label?: string;
+          platform?: string | null;
+          condition?: Database["public"]["Enums"]["product_condition"] | null;
+          quantity?: number;
+          unit_price_cents?: number;
+          total_cents?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shop_order_items_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "shop_orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shop_order_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      shop_orders: {
+        Row: {
+          id: string;
+          order_number: string;
+          tracking_token: string;
+          customer_id: string;
+          customer_first_name: string;
+          customer_last_name: string;
+          customer_email: string;
+          customer_phone: string | null;
+          fulfillment: Database["public"]["Enums"]["shop_fulfillment"];
+          shipping_address: Json | null;
+          status: Database["public"]["Enums"]["shop_order_status"];
+          currency: string;
+          subtotal_cents: number;
+          shipping_cents: number;
+          total_cents: number;
+          paid_cents: number;
+          vat_rate_bp: number;
+          customer_notes: string | null;
+          internal_notes: string | null;
+          carrier_name: string | null;
+          tracking_number: string | null;
+          tracking_url: string | null;
+          accepted_terms_at: string | null;
+          accepted_terms_version: string | null;
+          paid_at: string | null;
+          prepared_at: string | null;
+          shipped_at: string | null;
+          delivered_at: string | null;
+          cancelled_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_number?: string;
+          tracking_token?: string;
+          customer_id: string;
+          customer_first_name: string;
+          customer_last_name: string;
+          customer_email: string;
+          customer_phone?: string | null;
+          fulfillment?: Database["public"]["Enums"]["shop_fulfillment"];
+          shipping_address?: Json | null;
+          status?: Database["public"]["Enums"]["shop_order_status"];
+          currency?: string;
+          subtotal_cents?: number;
+          shipping_cents?: number;
+          total_cents?: number;
+          paid_cents?: number;
+          vat_rate_bp?: number;
+          customer_notes?: string | null;
+          internal_notes?: string | null;
+          carrier_name?: string | null;
+          tracking_number?: string | null;
+          tracking_url?: string | null;
+          accepted_terms_at?: string | null;
+          accepted_terms_version?: string | null;
+          paid_at?: string | null;
+          prepared_at?: string | null;
+          shipped_at?: string | null;
+          delivered_at?: string | null;
+          cancelled_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_number?: string;
+          tracking_token?: string;
+          customer_id?: string;
+          customer_first_name?: string;
+          customer_last_name?: string;
+          customer_email?: string;
+          customer_phone?: string | null;
+          fulfillment?: Database["public"]["Enums"]["shop_fulfillment"];
+          shipping_address?: Json | null;
+          status?: Database["public"]["Enums"]["shop_order_status"];
+          currency?: string;
+          subtotal_cents?: number;
+          shipping_cents?: number;
+          total_cents?: number;
+          paid_cents?: number;
+          vat_rate_bp?: number;
+          customer_notes?: string | null;
+          internal_notes?: string | null;
+          carrier_name?: string | null;
+          tracking_number?: string | null;
+          tracking_url?: string | null;
+          accepted_terms_at?: string | null;
+          accepted_terms_version?: string | null;
+          paid_at?: string | null;
+          prepared_at?: string | null;
+          shipped_at?: string | null;
+          delivered_at?: string | null;
+          cancelled_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shop_orders_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       site_settings: {
         Row: {
           key: string;
@@ -2530,6 +2892,54 @@ export type Database = {
             columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      stock_movements: {
+        Row: {
+          id: string;
+          product_id: string;
+          delta: number;
+          reason: string;
+          reference_id: string | null;
+          actor_id: string | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          delta: number;
+          reason: string;
+          reference_id?: string | null;
+          actor_id?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          delta?: number;
+          reason?: string;
+          reference_id?: string | null;
+          actor_id?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_movements_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
             referencedColumns: ["id"];
           }
         ];
@@ -2794,6 +3204,156 @@ export type Database = {
           }
         ];
       };
+      trade_in_events: {
+        Row: {
+          id: string;
+          request_id: string;
+          event_type: string;
+          title: string;
+          description: string | null;
+          is_public: boolean;
+          actor_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          request_id: string;
+          event_type: string;
+          title: string;
+          description?: string | null;
+          is_public?: boolean;
+          actor_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          request_id?: string;
+          event_type?: string;
+          title?: string;
+          description?: string | null;
+          is_public?: boolean;
+          actor_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "trade_in_events_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "trade_in_events_request_id_fkey";
+            columns: ["request_id"];
+            isOneToOne: false;
+            referencedRelation: "trade_in_requests";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      trade_in_requests: {
+        Row: {
+          id: string;
+          request_number: string;
+          access_token: string;
+          customer_id: string | null;
+          customer_first_name: string;
+          customer_last_name: string;
+          customer_email: string;
+          customer_phone: string | null;
+          item_type: Database["public"]["Enums"]["trade_in_item_type"];
+          platform: string;
+          model_id: string | null;
+          item_title: string;
+          condition: Database["public"]["Enums"]["trade_in_condition"];
+          accessories: string[];
+          description: string | null;
+          photos: string[];
+          status: Database["public"]["Enums"]["trade_in_status"];
+          offer_cents: number | null;
+          offer_note: string | null;
+          offered_at: string | null;
+          offer_expires_at: string | null;
+          decided_at: string | null;
+          decision_note: string | null;
+          internal_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          request_number?: string;
+          access_token?: string;
+          customer_id?: string | null;
+          customer_first_name: string;
+          customer_last_name: string;
+          customer_email: string;
+          customer_phone?: string | null;
+          item_type?: Database["public"]["Enums"]["trade_in_item_type"];
+          platform: string;
+          model_id?: string | null;
+          item_title: string;
+          condition?: Database["public"]["Enums"]["trade_in_condition"];
+          accessories?: string[];
+          description?: string | null;
+          photos?: string[];
+          status?: Database["public"]["Enums"]["trade_in_status"];
+          offer_cents?: number | null;
+          offer_note?: string | null;
+          offered_at?: string | null;
+          offer_expires_at?: string | null;
+          decided_at?: string | null;
+          decision_note?: string | null;
+          internal_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          request_number?: string;
+          access_token?: string;
+          customer_id?: string | null;
+          customer_first_name?: string;
+          customer_last_name?: string;
+          customer_email?: string;
+          customer_phone?: string | null;
+          item_type?: Database["public"]["Enums"]["trade_in_item_type"];
+          platform?: string;
+          model_id?: string | null;
+          item_title?: string;
+          condition?: Database["public"]["Enums"]["trade_in_condition"];
+          accessories?: string[];
+          description?: string | null;
+          photos?: string[];
+          status?: Database["public"]["Enums"]["trade_in_status"];
+          offer_cents?: number | null;
+          offer_note?: string | null;
+          offered_at?: string | null;
+          offer_expires_at?: string | null;
+          decided_at?: string | null;
+          decision_note?: string | null;
+          internal_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "trade_in_requests_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "trade_in_requests_model_id_fkey";
+            columns: ["model_id"];
+            isOneToOne: false;
+            referencedRelation: "console_models";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       workshops: {
         Row: {
           id: string;
@@ -2940,15 +3500,17 @@ export type Database = {
       compatibility_mode: "INCLUDE" | "EXCLUDE";
       diagnostic_outcome: "REPAIRABLE" | "UNREPAIRABLE" | "NOT_ECONOMICAL" | "NO_FAULT_FOUND" | "FURTHER_DIAGNOSIS_NEEDED";
       invoice_status: "DRAFT" | "ISSUED" | "PAID" | "VOID";
-      invoice_type: "INITIAL" | "SUPPLEMENTARY" | "CREDIT_NOTE";
-      media_kind: "RECEPTION" | "DIAGNOSTIC" | "REPAIR" | "SHIPPING" | "FINAL" | "DOCUMENT" | "SAV" | "QUOTE";
+      invoice_type: "INITIAL" | "SUPPLEMENTARY" | "CREDIT_NOTE" | "SHOP";
+      media_kind: "RECEPTION" | "DIAGNOSTIC" | "REPAIR" | "SHIPPING" | "FINAL" | "DOCUMENT" | "SAV" | "QUOTE" | "CUSTOMER";
       notification_channel: "EMAIL" | "IN_APP";
       notification_status: "PENDING" | "SENT" | "FAILED" | "SKIPPED";
       order_item_source: "INITIAL" | "QUOTE" | "ADMIN";
       order_item_type: "REPAIR" | "OPTION" | "PACK" | "SHIPPING" | "DIAGNOSTIC_FEE" | "QUOTE_ITEM" | "ADJUSTMENT";
       order_status: "DRAFT" | "PENDING_PAYMENT" | "PAID" | "AWAITING_SHIPMENT" | "IN_TRANSIT_TO_WORKSHOP" | "RECEIVED" | "RECEPTION_CHECK" | "DIAGNOSIS" | "WAITING_CUSTOMER_APPROVAL" | "APPROVED" | "REPAIRING" | "QUALITY_CONTROL" | "READY_TO_SHIP" | "SHIPPED" | "DELIVERED" | "COMPLETED" | "CANCELLED" | "REFUSED_QUOTE" | "UNREPAIRABLE" | "RETURN_REQUIRED" | "SAV" | "DISPUTED";
-      payment_purpose: "INITIAL" | "QUOTE" | "OTHER";
+      payment_purpose: "INITIAL" | "QUOTE" | "OTHER" | "SHOP";
       payment_status: "PENDING" | "SUCCEEDED" | "FAILED" | "REFUNDED" | "PARTIALLY_REFUNDED" | "CANCELLED";
+      product_category: "CONSOLE" | "GAME" | "ACCESSORY" | "PART" | "COLLECTIBLE";
+      product_condition: "NEW" | "REFURBISHED" | "USED_A" | "USED_B" | "USED_C";
       quote_decision: "ACCEPTED" | "REFUSED";
       quote_status: "DRAFT" | "SENT" | "ACCEPTED" | "REFUSED" | "EXPIRED" | "CANCELLED";
       review_status: "PENDING" | "APPROVED" | "REJECTED";
@@ -2956,7 +3518,12 @@ export type Database = {
       severity_level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
       shipment_direction: "TO_WORKSHOP" | "TO_CUSTOMER";
       shipment_status: "PENDING" | "LABEL_CREATED" | "IN_TRANSIT" | "DELIVERED" | "EXCEPTION" | "CANCELLED";
+      shop_fulfillment: "PICKUP" | "SHIPPING";
+      shop_order_status: "PENDING" | "PAID" | "PREPARED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
       test_result_status: "PENDING" | "PASS" | "FAIL" | "NA";
+      trade_in_condition: "LIKE_NEW" | "GOOD" | "FAIR" | "FOR_PARTS";
+      trade_in_item_type: "CONSOLE" | "GAME" | "ACCESSORY" | "LOT";
+      trade_in_status: "NEW" | "ESTIMATED" | "ACCEPTED" | "REFUSED" | "CLOSED";
       user_role: "CUSTOMER" | "TECHNICIAN" | "ADMIN" | "SUPER_ADMIN";
     };
     CompositeTypes: Record<string, never>;

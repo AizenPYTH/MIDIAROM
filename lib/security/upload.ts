@@ -12,6 +12,7 @@ export const BUCKET_FOR_KIND: Record<MediaKind, string> = {
   DOCUMENT: "documents",
   SAV: "sav-media",
   QUOTE: "diagnostic-media",
+  CUSTOMER: "customer-media",
 };
 
 const EXTENSION_FOR_MIME: Record<string, string> = {

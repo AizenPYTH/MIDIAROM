@@ -28,14 +28,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const admin = isAdminRole(user.profile.role);
   const db = createSupabaseAdminClient();
   const count = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
-  const [openOrders, expected, openSav] = await Promise.all([
+  const [openOrders, expected, openSav, shopToPrepare, products, newTradeIns] = await Promise.all([
     count(db.from("repair_orders").select("id", { count: "exact", head: true }).in("status", [...OPEN_STATUSES])),
     count(db.from("repair_orders").select("id", { count: "exact", head: true }).in("status", ["AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP"])),
     count(db.from("sav_requests").select("id", { count: "exact", head: true }).in("status", ["NEW", "IN_ANALYSIS"])),
+    count(db.from("shop_orders").select("id", { count: "exact", head: true }).in("status", ["PAID", "PREPARED"])),
+    count(db.from("products").select("id", { count: "exact", head: true }).eq("is_active", true)),
+    count(db.from("trade_in_requests").select("id", { count: "exact", head: true }).eq("status", "NEW")),
   ]);
 
   const tabs: AdminTab[] = [
     { href: "/admin", label: "Réparations", admin: false, exact: true, count: openOrders },
+    { href: "/admin/shop-orders", label: "Commandes", admin: false, count: shopToPrepare },
+    { href: "/admin/stock", label: "Stock", admin: true, count: products },
+    { href: "/admin/trade-ins", label: "Reprises", admin: false, count: newTradeIns },
     { href: "/admin/orders", label: "Dossiers", admin: false },
     { href: "/admin/reception", label: "Réception", admin: false, count: expected },
     { href: "/admin/sav", label: "SAV", admin: false, count: openSav },

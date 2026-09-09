@@ -7,7 +7,7 @@ export interface CreateCheckoutInput {
   paymentId: string; // our payments.id (idempotency + reconciliation)
   orderId: string;
   orderNumber: string;
-  purpose: "INITIAL" | "QUOTE";
+  purpose: "INITIAL" | "QUOTE" | "SHOP";
   quoteId?: string | null;
   customerEmail: string;
   amountCents: number;

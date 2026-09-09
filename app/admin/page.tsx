@@ -7,7 +7,7 @@ import { advanceStatusAction } from "@/app/admin/actions/orders";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireStaffOrRedirect } from "@/lib/security/auth";
 import { signMedia } from "@/lib/media/service";
-import { canRoleTransition, isAdminRole, ORDER_STATUS_LABELS, statusTone, type OrderStatus } from "@/lib/orders/status";
+import { canRoleTransition, isAdminRole, ORDER_STATUS_LABELS, statusTone, WORKSHOP_STEPS, workshopStepIndex, type OrderStatus } from "@/lib/orders/status";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 
@@ -21,15 +21,6 @@ const FILTERS: { key: string; label: string; statuses: OrderStatus[] | null }[] 
   { key: "shipped", label: "Expédié", statuses: ["SHIPPED", "DELIVERED"] },
 ];
 const ACTIVE_STATUSES: OrderStatus[] = ["PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "RECEPTION_CHECK", "DIAGNOSIS", "WAITING_CUSTOMER_APPROVAL", "APPROVED", "REPAIRING", "QUALITY_CONTROL", "READY_TO_SHIP", "SHIPPED", "DELIVERED", "RETURN_REQUIRED", "REFUSED_QUOTE", "UNREPAIRABLE", "SAV", "DISPUTED"];
-
-/** Segments « Avancement » du handoff, chacun lié à un statut cible réel. */
-const PIPELINE: { label: string; status: OrderStatus; reached: OrderStatus[] }[] = [
-  { label: "Reçu", status: "RECEIVED", reached: ["RECEIVED", "RECEPTION_CHECK"] },
-  { label: "Diagnostic", status: "DIAGNOSIS", reached: ["DIAGNOSIS"] },
-  { label: "Devis envoyé", status: "WAITING_CUSTOMER_APPROVAL", reached: ["WAITING_CUSTOMER_APPROVAL", "APPROVED"] },
-  { label: "En atelier", status: "REPAIRING", reached: ["REPAIRING", "QUALITY_CONTROL"] },
-  { label: "Prêt", status: "READY_TO_SHIP", reached: ["READY_TO_SHIP", "SHIPPED", "DELIVERED", "COMPLETED"] },
-];
 
 function periods(): { startOfDay: string; thirtyDaysAgo: string } {
   const startOfDay = new Date();
@@ -79,13 +70,13 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
     ? await Promise.all([
         db.from("repair_order_items").select("*").eq("order_id", selected.id).order("created_at"),
         db.from("order_events").select("*").eq("order_id", selected.id).order("created_at", { ascending: false }).limit(12),
-        db.from("order_media").select("*").eq("order_id", selected.id).in("kind", ["RECEPTION", "DIAGNOSTIC"]).order("created_at", { ascending: false }).limit(6),
+        db.from("order_media").select("*").eq("order_id", selected.id).in("kind", ["CUSTOMER", "RECEPTION", "DIAGNOSTIC"]).order("created_at", { ascending: false }).limit(6),
         db.from("supplementary_quotes").select("id, quote_number, title, status, total_cents").eq("order_id", selected.id).order("created_at", { ascending: false }),
       ])
     : [null, null, null, null];
   const signed = media?.data ? await signMedia(media.data) : [];
   const draftQuote = (quotes?.data ?? []).find((qu) => qu.status === "DRAFT");
-  const pipelineIndex = selected ? PIPELINE.reduce((acc, seg, i) => (seg.reached.includes(selected.status) ? i : acc), -1) : -1;
+  const pipelineIndex = selected ? workshopStepIndex(selected.status) : -1;
   const hrefFor = (params: Record<string, string | undefined>) => {
     const sp = new URLSearchParams();
     for (const [k, v] of Object.entries({ q, f, sel: selectedId, ...params })) if (v) sp.set(k, v);
@@ -168,19 +159,28 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                 <p className="text-[14.5px] leading-[1.5] text-[#e4dccb]">
                   <span className="font-semibold">{selected.fault_name}.</span> {selected.customer_notes || "Aucune description complémentaire."}
                 </p>
+                {selected.symptoms.length ? (
+                  <ul className="flex flex-wrap gap-1.5">
+                    {selected.symptoms.map((sym) => (
+                      <li key={sym} className="border border-border-strong px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-faint">
+                        {sym}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 {signed.length ? (
                   <div className="mt-1 [&_li]:border-border [&_li]:bg-surface-muted">
                     <MediaGallery media={signed} />
                   </div>
                 ) : (
-                  <div className="photo-placeholder mt-1 h-[74px] text-[10.5px]">photos de réception et de diagnostic</div>
+                  <div className="photo-placeholder mt-1 h-[74px] text-[10.5px]">photos client, de réception et de diagnostic</div>
                 )}
               </div>
 
               <div className="flex flex-col gap-[9px]">
                 <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Avancement</span>
                 <div className="flex gap-[2px]">
-                  {PIPELINE.map((seg, i) => {
+                  {WORKSHOP_STEPS.map((seg, i) => {
                     const reached = i <= pipelineIndex;
                     const allowed = canRoleTransition(user.profile.role, selected.status, seg.status);
                     const cls = cn("min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap px-1 py-[9px] font-mono text-[10px] uppercase tracking-[0.04em]", reached ? "bg-accent text-white" : "bg-surface-muted text-ink-muted");
@@ -200,7 +200,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                     );
                   })}
                 </div>
-                <span className="text-[12px] text-ink-muted">Cliquer un segment change le statut si la transition est autorisée ; les autres statuts sont dans la fiche complète.</span>
+                <span className="text-[12px] text-ink-muted">Reçu → Diagnostic → Devis envoyé → En attente client → En atelier → Réparé → Expédié → Terminé. Cliquer un segment change le statut si la transition est autorisée ; les autres statuts sont dans la fiche complète.</span>
               </div>
 
               <div className="flex flex-col gap-[9px] border border-border-strong p-3.5">

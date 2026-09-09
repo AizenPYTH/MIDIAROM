@@ -2,11 +2,13 @@ import Link from "next/link";
 import { ROUTES } from "@/config/site";
 import type { BrandSettings } from "@/config/brand";
 import { AccountLink, MobileNav } from "@/components/marketing/header-client";
+import { CartLink } from "@/components/shop/cart-widgets";
 
 const NAV = [
+  { href: ROUTES.shop, label: "Boutique" },
   { href: ROUTES.repair, label: "Réparation" },
-  { href: ROUTES.howItWorks, label: "Comment ça marche" },
-  { href: ROUTES.faq, label: "FAQ" },
+  { href: ROUTES.consoles, label: "Consoles" },
+  { href: ROUTES.tradeIn, label: "Reprise" },
   { href: ROUTES.tracking, label: "Suivi" },
   { href: ROUTES.contact, label: "Le magasin" },
 ];
@@ -68,9 +70,7 @@ export function SiteHeader({ brand }: { brand: BrandSettings }) {
           <Link href={ROUTES.tracking} className="hidden whitespace-nowrap border border-border-strong px-3.5 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-ink hover:border-ink sm:inline-block">
             Suivre ma réparation
           </Link>
-          <Link href={ROUTES.repair} className="whitespace-nowrap bg-ink-900 px-3.5 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-paper hover:bg-accent">
-            Démarrer une réparation
-          </Link>
+          <CartLink />
           <MobileNav items={NAV} />
         </div>
       </header>

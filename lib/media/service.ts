@@ -105,6 +105,7 @@ export async function signMedia(media: OrderMedia[], expiresIn = 900): Promise<(
 
 export function kindLabel(kind: MediaKind): string {
   const labels: Record<MediaKind, string> = {
+    CUSTOMER: "Envoyé par le client",
     RECEPTION: "Réception",
     DIAGNOSTIC: "Diagnostic",
     REPAIR: "Réparation",

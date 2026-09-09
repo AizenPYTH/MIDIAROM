@@ -3,7 +3,19 @@ export interface FormModel {
   id: string;
   name: string;
   slug: string;
-  tag: string; // marque ou précision affichée en mono sous le nom
+  tag: string; // précision affichée en mono sous le nom (variantes ou année)
+  brandId: string;
+  brandName: string;
+  brandSlug: string;
+  isRetro: boolean;
+  commonIssues: string[];
+}
+
+/** Plateforme (étape 1) : une marque du catalogue, ou le regroupement « Rétro ». */
+export interface FormPlatform {
+  key: string;
+  label: string;
+  note: string;
 }
 
 export interface FormRepair {

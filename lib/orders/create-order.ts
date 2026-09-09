@@ -11,6 +11,7 @@ import { audit } from "@/lib/security/audit";
 import { trackServerEvent } from "@/lib/analytics/server";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { sendAccountCreatedEmail } from "@/lib/notifications";
+import { CUSTOMER_MEDIA_BUCKET, moveDraftPhotos } from "@/lib/media/drafts";
 import { ROUTES, SITE_URL } from "@/config/site";
 import type { CreateOrderInput } from "@/lib/orders/schemas";
 import type { CurrentUser } from "@/lib/security/auth";
@@ -26,12 +27,19 @@ export class CreateOrderError extends Error {
 }
 
 /**
- * Finds or creates the customer profile for a checkout.
+ * Finds or creates the customer profile for a checkout (repair or shop).
  * - Logged in: the current user (the e-mail typed at checkout is stored on the order).
  * - Guest with a known e-mail: order attached to that existing account (they log in to see it).
  * - Guest with a new e-mail: account created, "set your password" e-mail sent.
  */
-async function resolveCustomer(input: CreateOrderInput, currentUser: CurrentUser | null): Promise<{ id: string; created: boolean }> {
+export interface CustomerIdentity {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string | undefined;
+}
+
+export async function resolveCustomer(input: { customer: CustomerIdentity }, currentUser: CurrentUser | null): Promise<{ id: string; created: boolean }> {
   if (currentUser) return { id: currentUser.id, created: false };
   const db = createSupabaseAdminClient();
   const email = input.customer.email.toLowerCase();
@@ -113,6 +121,7 @@ export async function createOrderAndCheckout(input: CreateOrderInput, currentUse
         .filter(Boolean)
         .join("\n") || null,
       console_serial_number: input.console_serial_number || null,
+      symptoms: input.symptoms,
       accepted_terms_at: new Date().toISOString(),
       accepted_terms_version: checkout.terms_version,
       currency: "EUR",
@@ -153,6 +162,17 @@ export async function createOrderAndCheckout(input: CreateOrderInput, currentUse
   if (itemsError) {
     console.error("[orders] items insert failed", itemsError.message);
     throw new CreateOrderError("La création du dossier a échoué. Merci de réessayer.");
+  }
+
+  // Photos jointes par le client (brouillons déposés avant la commande) → médias du dossier, visibles par le client.
+  if (input.photos.length) {
+    const paths = await moveDraftPhotos(input.photos, `${order.id}/CUSTOMER`);
+    if (paths.length) {
+      await db.from("order_media").insert(
+        paths.map((path) => ({ order_id: order.id, kind: "CUSTOMER" as const, bucket: CUSTOMER_MEDIA_BUCKET, path, mime_type: `image/${path.endsWith(".png") ? "png" : path.endsWith(".webp") ? "webp" : path.endsWith(".heic") ? "heic" : "jpeg"}`, size_bytes: 0, original_name: null, caption: "Photo envoyée par le client", is_visible_to_customer: true, uploaded_by: customer.created ? null : customer.id })),
+      );
+      await addOrderEvent({ orderId: order.id, type: "CUSTOMER_PHOTOS", title: `${paths.length} photo(s) jointe(s) par le client`, isPublic: true });
+    }
   }
 
   const provider = getPaymentProvider();

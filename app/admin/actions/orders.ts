@@ -525,10 +525,13 @@ export async function refundPaymentAction(_prev: ActionResult | null, formData: 
     const { refundId } = await getPaymentProvider().refund(payment.provider_payment_id, amount, reason ?? undefined);
     const refunded = payment.refunded_cents + amount;
     await db.from("payments").update({ refunded_cents: refunded, status: refunded >= payment.amount_cents ? "REFUNDED" : "PARTIALLY_REFUNDED" }).eq("id", paymentId);
-    await db.from("invoices").insert({ order_id: payment.order_id, payment_id: payment.id, invoice_type: "CREDIT_NOTE", status: "ISSUED", amount_cents: -amount, currency: payment.currency, lines: [{ label: reason ?? "Remboursement", total_cents: -amount }] as unknown as Json, external_ref: refundId });
-    await addOrderEvent({ orderId: payment.order_id, type: "REFUND", title: "Remboursement effectué", description: reason, actorId: user.id, metadata: { amount_cents: amount } });
+    await db.from("invoices").insert({ order_id: payment.order_id, shop_order_id: payment.shop_order_id, payment_id: payment.id, invoice_type: "CREDIT_NOTE", status: "ISSUED", amount_cents: -amount, currency: payment.currency, lines: [{ label: reason ?? "Remboursement", total_cents: -amount }] as unknown as Json, external_ref: refundId });
+    if (payment.order_id) {
+      await addOrderEvent({ orderId: payment.order_id, type: "REFUND", title: "Remboursement effectué", description: reason, actorId: user.id, metadata: { amount_cents: amount } });
+      revalidatePath(orderPath(payment.order_id));
+    }
+    if (payment.shop_order_id) revalidatePath(`/admin/shop-orders/${payment.shop_order_id}`);
     await audit({ actorId: user.id, actorRole: user.profile.role, action: "payment.refunded", resourceType: "payments", resourceId: paymentId, orderId: payment.order_id, newValue: { amount_cents: amount, reason, refund_id: refundId } });
-    revalidatePath(orderPath(payment.order_id));
     return { ok: true, message: "Remboursement effectué." };
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Remboursement impossible");

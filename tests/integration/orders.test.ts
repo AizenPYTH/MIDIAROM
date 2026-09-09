@@ -88,6 +88,8 @@ d("server-side pricing and compatibility guards", () => {
       console_already_opened: false,
       accept_terms: true as const,
       attribution: null,
+      symptoms: [] as string[],
+      photos: [] as string[],
     };
     await expect(createOrderAndCheckout({ ...base, selection: { repairId: SWITCH_USBC, optionIds: [LIQUID_METAL], packIds: [], shippingMethodId: SHIPPING_LABEL } }, null)).rejects.toThrow(/incompatible/);
     await expect(createOrderAndCheckout({ ...base, selection: { repairId: PS5_HDMI, optionIds: [], packIds: [], shippingMethodId: "00000000-0000-4000-8000-000000000000" } }, null)).rejects.toThrow();

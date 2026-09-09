@@ -11,7 +11,9 @@ import { AccountNav } from "@/components/customer/account-nav";
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const [user, brand] = await Promise.all([requireUserOrRedirect(ROUTES.account), getBrandSettings()]);
   const items = [
-    { href: ROUTES.accountOrders, label: "Mes dossiers" },
+    { href: ROUTES.accountOrders, label: "Mes réparations" },
+    { href: ROUTES.accountShopOrders, label: "Mes commandes" },
+    { href: ROUTES.accountTradeIns, label: "Mes reprises" },
     { href: ROUTES.accountProfile, label: "Mon profil" },
     { href: ROUTES.accountAddresses, label: "Mes adresses" },
   ];

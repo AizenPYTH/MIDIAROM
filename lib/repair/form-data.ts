@@ -6,9 +6,20 @@ import type { FormModel, FormOffer, FormRepair } from "@/components/repair/repai
 export function toFormModels(models: ConsoleModel[], brands: Brand[]): FormModel[] {
   const brandName = new Map(brands.map((b) => [b.id, b.name]));
   const brandRank = new Map(brands.map((b, i) => [b.id, i]));
+  const brandSlug = new Map(brands.map((b) => [b.id, b.slug]));
   return [...models]
     .sort((a, b) => (brandRank.get(a.brand_id) ?? 99) - (brandRank.get(b.brand_id) ?? 99) || a.display_order - b.display_order)
-    .map((m) => ({ id: m.id, name: m.name, slug: m.slug, tag: brandName.get(m.brand_id) ?? (m.release_year ? String(m.release_year) : "") }));
+    .map((m) => ({
+      id: m.id,
+      name: m.name,
+      slug: m.slug,
+      tag: m.variants.length ? m.variants.join(", ") : m.release_year ? String(m.release_year) : (brandName.get(m.brand_id) ?? ""),
+      brandId: m.brand_id,
+      brandName: brandName.get(m.brand_id) ?? "",
+      brandSlug: brandSlug.get(m.brand_id) ?? "",
+      isRetro: m.is_retro,
+      commonIssues: m.common_issues,
+    }));
 }
 
 export function toFormRepair(r: Repair & { fault: Fault }): FormRepair {

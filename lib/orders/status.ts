@@ -148,6 +148,41 @@ export const TIMELINE_STEPS: readonly { key: string; label: string; statuses: re
   { key: "return", label: "Retour", statuses: ["DELIVERED", "COMPLETED"] },
 ];
 
+/**
+ * Étapes de suivi « atelier » (cahier des charges) : Reçu → Diagnostic → Devis envoyé →
+ * En attente client → En atelier → Réparé → Expédié → Terminé. Chaque étape est liée au
+ * statut cible réel utilisé par le back-office.
+ */
+export const WORKSHOP_STEPS: readonly { key: string; label: string; status: OrderStatus; statuses: readonly OrderStatus[] }[] = [
+  { key: "received", label: "Reçu", status: "RECEIVED", statuses: ["RECEIVED", "RECEPTION_CHECK"] },
+  { key: "diagnosis", label: "Diagnostic", status: "DIAGNOSIS", statuses: ["DIAGNOSIS"] },
+  { key: "quote", label: "Devis envoyé", status: "WAITING_CUSTOMER_APPROVAL", statuses: ["WAITING_CUSTOMER_APPROVAL"] },
+  { key: "approved", label: "En attente client", status: "APPROVED", statuses: ["APPROVED"] },
+  { key: "workshop", label: "En atelier", status: "REPAIRING", statuses: ["REPAIRING", "QUALITY_CONTROL"] },
+  { key: "repaired", label: "Réparé", status: "READY_TO_SHIP", statuses: ["READY_TO_SHIP"] },
+  { key: "shipped", label: "Expédié", status: "SHIPPED", statuses: ["SHIPPED", "DELIVERED"] },
+  { key: "completed", label: "Terminé", status: "COMPLETED", statuses: ["COMPLETED"] },
+];
+
+/** Index de la dernière étape atelier atteinte (-1 avant réception). */
+export function workshopStepIndex(status: OrderStatus): number {
+  const order: OrderStatus[] = ["RECEIVED", "RECEPTION_CHECK", "DIAGNOSIS", "WAITING_CUSTOMER_APPROVAL", "APPROVED", "REPAIRING", "QUALITY_CONTROL", "READY_TO_SHIP", "SHIPPED", "DELIVERED", "COMPLETED"];
+  const pos = order.indexOf(status);
+  if (pos === -1) return ["REFUSED_QUOTE", "UNREPAIRABLE", "RETURN_REQUIRED", "SAV", "DISPUTED"].includes(status) ? 1 : -1;
+  return WORKSHOP_STEPS.reduce((acc, step, i) => (step.statuses.some((st) => order.indexOf(st) <= pos) ? i : acc), -1);
+}
+
+/** Étapes atelier avec leur état (suivi public, espace client, back-office). */
+export function computeWorkshopTimeline(status: OrderStatus): { key: string; label: string; state: TimelineState }[] {
+  const index = workshopStepIndex(status);
+  const exceptional = ["REFUSED_QUOTE", "UNREPAIRABLE", "RETURN_REQUIRED", "SAV", "DISPUTED", "CANCELLED", "REFUNDED"].includes(status);
+  return WORKSHOP_STEPS.map((step, i) => ({
+    key: step.key,
+    label: step.label,
+    state: i < index || (i === index && (status === "COMPLETED" || exceptional)) ? "done" : i === index ? "current" : "todo",
+  }));
+}
+
 const STATUS_ORDER: OrderStatus[] = [
   "DRAFT", "PENDING_PAYMENT", "PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "RECEPTION_CHECK",
   "DIAGNOSIS", "WAITING_CUSTOMER_APPROVAL", "APPROVED", "REPAIRING", "QUALITY_CONTROL", "READY_TO_SHIP", "SHIPPED",

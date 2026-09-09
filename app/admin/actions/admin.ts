@@ -28,6 +28,7 @@ const SETTINGS_SCHEMAS: Record<string, z.ZodType<Record<string, unknown>>> = {
   shipping_info: z.object({ intro: z.string().trim().max(1000), return_carrier_note: z.string().trim().max(500), workshop_receiving_name: z.string().trim().max(120), workshop_receiving_address: z.string().trim().max(300) }),
   trust: z.object({ company_story: z.string().trim().max(5000), years_of_experience: z.union([z.literal(""), z.coerce.number().int().min(0).max(100)]).transform((v) => (v === "" ? null : v)), team_intro: z.string().trim().max(3000), workshop_intro: z.string().trim().max(3000), new_management_note: z.string().trim().max(3000) }),
   checkout: z.object({ terms_version: z.string().trim().min(1).max(40), show_terms_summary: z.boolean() }),
+  shop: z.object({ shipping_enabled: z.boolean(), shipping_fee_cents: z.coerce.number().int().min(0), free_shipping_threshold_cents: z.coerce.number().int().min(0).transform((v) => (v > 0 ? v : null)), pickup_enabled: z.boolean(), pickup_note: z.string().trim().max(500), shipping_note: z.string().trim().max(500) }),
 };
 
 export async function saveSettingsAction(key: string, _prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -42,7 +43,7 @@ export async function saveSettingsAction(key: string, _prev: ActionResult | null
   // Checkboxes: absent = false, present = true; cents fields arrive in euros
   for (const k of Object.keys(schema instanceof z.ZodObject ? schema.shape : {})) {
     if (k.endsWith("_cents")) raw[k] = Math.round(Number(String(raw[k] ?? "0").replace(",", ".")) * 100);
-    if (["prices_include_vat", "diagnostic_fee_deducted_when_repaired", "show_terms_summary"].includes(k)) raw[k] = raw[k] === "on";
+    if (["prices_include_vat", "diagnostic_fee_deducted_when_repaired", "show_terms_summary", "shipping_enabled", "pickup_enabled"].includes(k)) raw[k] = raw[k] === "on";
   }
   const parsed = schema.safeParse(raw);
   if (!parsed.success) return fail(parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", "));

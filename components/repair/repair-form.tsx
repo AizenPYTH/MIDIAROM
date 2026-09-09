@@ -10,14 +10,15 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { PricingResult } from "@/lib/pricing/engine";
 import { createOrderAction, quoteSelectionAction } from "@/app/(marketing)/commande/[repairId]/actions";
 import { loadModelRepairsAction, loadOfferAction } from "@/app/(marketing)/reparation/actions";
-import type { FormAddress, FormConditions, FormCustomer, FormModel, FormOffer, FormRepair } from "@/components/repair/repair-form-types";
+import type { FormAddress, FormConditions, FormCustomer, FormModel, FormOffer, FormPlatform, FormRepair } from "@/components/repair/repair-form-types";
+import { DraftPhotoUploader, type DraftPhoto } from "@/components/customer/draft-photo-uploader";
 import { cn } from "@/lib/utils/cn";
 
 /**
  * « Fiche de réparation » du handoff : carte papier en 4 étapes.
- *  1. Quel appareil ?            → modèle de console (catalogue)
- *  2. Quelle prestation ?        → prestation publiée + options / packs compatibles
- *  3. Décrivez le problème       → description + puces de symptômes (+ n° de série)
+ *  1. Quel appareil ?            → plateforme (marque / rétro) puis modèle exact du catalogue
+ *  2. Quelle prestation ?        → prestations liées au modèle exact + options / packs compatibles
+ *  3. Décrivez le problème       → description libre + symptômes multiples + photos (+ n° de série)
  *  4. Envoi et coordonnées       → coordonnées, transport, récapitulatif, CGV
  * Le prix est calculé et vérifié par le serveur à chaque changement ; la
  * commande est créée côté serveur puis redirigée vers le paiement.
@@ -41,13 +42,34 @@ export interface RepairFormProps {
 
 const SYMPTOMS = ["ne s'allume plus", "surchauffe", "pas d'image", "bruit anormal", "ne charge plus", "dégât liquide"];
 const MIN_DESCRIPTION = 20;
+const RETRO_KEY = "retro";
 
 type Step = 1 | 2 | 3 | 4;
+
+/** Plateformes de l'étape 1, dérivées du catalogue (marques actives + regroupement rétro). */
+function buildPlatforms(models: FormModel[]): FormPlatform[] {
+  const platforms: FormPlatform[] = [];
+  for (const m of models) {
+    if (platforms.some((p) => p.key === m.brandId)) continue;
+    const own = models.filter((x) => x.brandId === m.brandId);
+    const first = own[0]?.name ?? "";
+    const last = own[own.length - 1]?.name ?? "";
+    platforms.push({ key: m.brandId, label: m.brandName, note: own.length > 1 ? `${first} → ${last}` : first });
+  }
+  const retro = models.filter((m) => m.isRetro);
+  if (retro.length) platforms.push({ key: RETRO_KEY, label: "Rétro", note: `${retro.length} consoles anciennes` });
+  return platforms;
+}
 
 export function RepairForm(props: RepairFormProps) {
   const { models, conditions } = props;
   const { track, attribution } = useAnalytics();
   const [step, setStep] = useState<Step>(props.initialStep ?? (props.initialRepairId ? 2 : props.initialModelId ? 2 : 1));
+  const platforms = useMemo(() => buildPlatforms(models), [models]);
+  const [platform, setPlatform] = useState<string | null>(() => {
+    const initial = models.find((m) => m.id === props.initialModelId);
+    return initial ? initial.brandId : platforms.length === 1 ? (platforms[0]?.key ?? null) : null;
+  });
   const [modelId, setModelId] = useState<string | null>(props.initialModelId ?? null);
   const [repairs, setRepairs] = useState<FormRepair[]>(props.initialRepairs ?? []);
   const [repairsLoading, setRepairsLoading] = useState(false);
@@ -58,6 +80,8 @@ export function RepairForm(props: RepairFormProps) {
   const [packIds, setPackIds] = useState<string[]>([]);
   const [shippingId, setShippingId] = useState<string | null>(props.initialOffer?.shippingMethods[0]?.id ?? null);
   const [desc, setDesc] = useState("");
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<DraftPhoto[]>([]);
   const [serial, setSerial] = useState("");
   const [alreadyOpened, setAlreadyOpened] = useState(false);
   const [customer, setCustomer] = useState<FormCustomer>(props.initialCustomer ?? { first_name: "", last_name: "", email: "", phone: "" });
@@ -75,6 +99,12 @@ export function RepairForm(props: RepairFormProps) {
   const model = models.find((m) => m.id === modelId) ?? null;
   const repair = repairs.find((r) => r.id === repairId) ?? null;
   const showPrices = props.showPrices ?? true;
+  const platformModels = useMemo(() => (platform === RETRO_KEY ? models.filter((m) => m.isRetro) : platform ? models.filter((m) => m.brandId === platform) : []), [models, platform]);
+  // Pannes fréquentes du modèle d'abord, puis les symptômes génériques non couverts.
+  const symptomChoices = useMemo(() => {
+    const specific = [...new Set((model?.commonIssues ?? []).map((i) => i.toLowerCase()))];
+    return [...specific, ...SYMPTOMS.filter((generic) => !specific.some((i) => i.includes(generic)))];
+  }, [model]);
 
   const scrollToTop = () => {
     if (typeof window === "undefined") return;
@@ -173,19 +203,20 @@ export function RepairForm(props: RepairFormProps) {
     });
   };
 
-  const addSymptom = (t: string) => setDesc((d) => (d ? `${d.replace(/\s*$/, "")} ${t}` : t));
+  const toggleSymptom = (t: string) => setSymptoms((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : prev.length < 12 ? [...prev, t] : prev));
 
   const next = () => {
     setError(null);
     if (step === 1) {
-      if (!modelId) return setError("Choisissez votre appareil.");
+      if (!platform) return setError("Choisissez d'abord votre plateforme.");
+      if (!modelId) return setError("Choisissez le modèle exact de votre console.");
       setStep(2);
     } else if (step === 2) {
       if (!repairId) return setError("Choisissez une prestation.");
       if (!offer) return setError("Chargement des options en cours…");
       setStep(3);
     } else if (step === 3) {
-      if (desc.trim().length < MIN_DESCRIPTION) return setError(`Décrivez le problème en quelques mots (au moins ${MIN_DESCRIPTION} caractères) : cela aide le diagnostic.`);
+      if (desc.trim().length < MIN_DESCRIPTION && !symptoms.length) return setError(`Décrivez le problème en quelques mots (au moins ${MIN_DESCRIPTION} caractères) ou cochez au moins un symptôme : cela aide le diagnostic.`);
       setStep(4);
     }
     scrollToTop();
@@ -221,6 +252,8 @@ export function RepairForm(props: RepairFormProps) {
       console_already_opened: alreadyOpened,
       accept_terms: true,
       attribution,
+      symptoms,
+      photos: photos.map((p) => p.path),
     });
     if (result.ok) {
       track(ANALYTICS_EVENTS.START_PAYMENT, { repair_id: repairId, value_cents: pricing?.totalCents ?? 0, order_number: result.orderNumber });
@@ -254,23 +287,46 @@ export function RepairForm(props: RepairFormProps) {
       {step === 1 ? (
         <div className="flex flex-col gap-3.5">
           <h3 className="text-[22px] font-extrabold tracking-[-0.01em]">Quel appareil ?</h3>
-          <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(140px,1fr))]">
-            {models.map((m) => {
-              const selected = modelId === m.id;
+          <span className="font-mono text-[11.5px] text-ink-muted">1. La plateforme, 2. le modèle exact — les prestations dépendent du modèle</span>
+          <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(140px,1fr))]" role="radiogroup" aria-label="Plateforme">
+            {platforms.map((p) => {
+              const selected = platform === p.key;
               return (
                 <button
-                  key={m.id}
+                  key={p.key}
                   type="button"
-                  onClick={() => pickModel(m.id)}
-                  aria-pressed={selected}
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    setPlatform(p.key);
+                    setModelId(null);
+                    setError(null);
+                  }}
                   className={cn("flex cursor-pointer flex-col gap-1 border p-[13px] text-left transition-colors hover:border-accent", selected ? "border-ink-900 bg-ink-900 text-paper" : "border-[rgba(20,18,15,0.22)] bg-transparent text-ink-900")}
                 >
-                  <span className="text-[15px] font-semibold">{m.name}</span>
-                  <span className="font-mono text-[11px] opacity-70">{m.tag}</span>
+                  <span className="text-[15px] font-semibold">{p.label}</span>
+                  <span className="font-mono text-[11px] opacity-70">{p.note}</span>
                 </button>
               );
             })}
           </div>
+          {platform ? (
+            <>
+              <span className="mt-1 font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Modèle exact</span>
+              <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(140px,1fr))]" role="radiogroup" aria-label="Modèle">
+                {platformModels.map((m) => {
+                  const selected = modelId === m.id;
+                  return (
+                    <button key={m.id} type="button" role="radio" aria-checked={selected} onClick={() => pickModel(m.id)} className={cn("flex cursor-pointer flex-col gap-1 border p-[13px] text-left transition-colors hover:border-accent", selected ? "border-accent bg-[var(--selection)] text-ink-900" : "border-[rgba(20,18,15,0.22)] bg-transparent text-ink-900")}>
+                      <span className="text-[15px] font-semibold">{m.name}</span>
+                      <span className="font-mono text-[11px] opacity-70">{platform === RETRO_KEY ? m.brandName : m.tag || m.brandName}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {!platformModels.length ? <p className="text-sm text-ink-muted">Aucun modèle publié pour cette plateforme.</p> : null}
+            </>
+          ) : null}
           {!models.length ? <p className="text-sm text-ink-muted">Aucune console publiée pour le moment.</p> : null}
         </div>
       ) : null}
@@ -329,13 +385,18 @@ export function RepairForm(props: RepairFormProps) {
             placeholder="Ex. : la console s'allume mais s'éteint après 5 minutes, ventilateur très bruyant depuis 2 semaines. Déjà nettoyée l'an dernier."
             className="min-h-[130px] w-full resize-y border border-[rgba(20,18,15,0.22)] bg-white p-[13px] text-[15px] leading-normal text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none"
           />
-          <div className="flex flex-wrap gap-2">
-            {SYMPTOMS.map((s) => (
-              <button key={s} type="button" onClick={() => addSymptom(s)} className="whitespace-nowrap border border-dashed border-[rgba(20,18,15,0.3)] bg-paper-alt px-[11px] py-2 font-mono text-[11.5px] uppercase tracking-[0.05em] text-ink-900 hover:border-accent">
-                + {s}
-              </button>
-            ))}
+          <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Symptômes — plusieurs choix possibles</span>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Symptômes">
+            {symptomChoices.map((sym) => {
+              const on = symptoms.includes(sym);
+              return (
+                <button key={sym} type="button" aria-pressed={on} onClick={() => toggleSymptom(sym)} className={cn("whitespace-nowrap border px-[11px] py-2 font-mono text-[11.5px] uppercase tracking-[0.05em] transition-colors hover:border-accent", on ? "border-accent bg-accent text-white" : "border-dashed border-[rgba(20,18,15,0.3)] bg-paper-alt text-ink-900")}>
+                  {on ? "✓" : "+"} {sym}
+                </button>
+              );
+            })}
           </div>
+          <DraftPhotoUploader photos={photos} onChange={setPhotos} label="déposez photos de la panne" />
           <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
             <input value={serial} onChange={(e) => setSerial(e.target.value)} maxLength={60} placeholder="Numéro de série (facultatif)" aria-label="Numéro de série" className="border border-[rgba(20,18,15,0.22)] bg-white p-3 text-[15px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none" />
             <label className="flex items-center gap-3 border border-[rgba(20,18,15,0.22)] px-3 py-2 text-[13px] text-ink-faint">
@@ -381,8 +442,10 @@ export function RepairForm(props: RepairFormProps) {
           <div className="bg-ink-900 p-4 text-paper">
             <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Récapitulatif</span>
             <div className="mt-[11px] flex flex-col gap-[7px] text-[14.5px]">
-              <RecapLine k="Appareil" v={model?.name ?? "—"} />
+              <RecapLine k="Appareil" v={model ? `${model.brandName} ${model.name}` : "—"} />
               <RecapLine k="Prestation" v={repair?.name ?? "—"} />
+              {symptoms.length ? <RecapLine k="Symptômes" v={symptoms.join(", ")} muted /> : null}
+              {photos.length ? <RecapLine k="Photos" v={`${photos.length} jointe${photos.length > 1 ? "s" : ""}`} muted /> : null}
               <RecapLine k="Options" v={pickedOptions.length ? pickedOptions.map((o) => o.name).join(", ") : "aucune"} />
               <RecapLine k="Envoi" v={shipping ? `${shipping.name} — ${formatPrice(shipping.priceCents)}` : "—"} />
               <RecapLine k="Total TTC" v={total !== null ? formatPrice(total) : "calcul…"} />

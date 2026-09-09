@@ -7,22 +7,23 @@ l'application Next.js existante, ce qui a été volontairement laissé de côté
 
 ## Périmètre retenu
 
-Règle appliquée : ce qui est dans la maquette mais **absent du projet initial** n'a pas
-été inventé. La plateforme est un atelier de réparation à distance ; elle n'a ni
-boutique, ni stock, ni commandes de vente, ni reprises.
+Première passe : seul le périmètre « réparation » du projet initial avait été retenu.
+La passe de complétude fonctionnelle a ensuite branché **tout** le périmètre de la
+maquette sur de vraies données : boutique, panier, commandes de vente, stock, reprises,
+photos client, fiches consoles.
 
 | Élément de la maquette | Décision |
 | --- | --- |
 | Bandeau d'infos, header sticky, logo « 207 / MEDIAROM », footer mono | **Reproduit** (données : réglages `brand` + `social`) |
-| Hero deux portes « Vente / Réparation » | **Adapté** : deux portes « Réparation / Suivi » (fonctions existantes) |
+| Hero deux portes « Vente / Réparation » | **Reproduit** (blocs CMS `homepage.sale` et `homepage.hero`), liens consoles / jeux / accessoires / rétro / suivi / espace client |
 | Bandeau de garanties (4 cellules) | **Reproduit** (bloc CMS `homepage.reassurance`) |
-| Boutique, filtres, cartes produits, « Panier · 0 », « Ajouter » | **Retiré** (pas de vente dans le projet) |
+| Boutique, filtres, cartes produits, « Panier · N », « Ajouter » | **Reproduit** : produits réels (`products`), panier local chiffré par le serveur, catalogue complet `/boutique` avec recherche / filtres / tri, fiche produit, commande et paiement |
 | Section Réparation : explication, liste 01-04, tarifs indicatifs, **fiche de réparation 4 étapes** | **Reproduit** ; tarifs = prestations réelles du catalogue, fiche branchée sur le pricing serveur |
-| Zone « déposez photos / vidéo » (étape 3) | **Retiré** (pas de dépôt de photos par le client à la demande dans le projet) |
-| Reprise & rétro | **Retiré** |
+| Zone « déposez photos / vidéo » (étape 3) | **Reproduit** (photos ; bucket privé `customer-media`, rattachées au dossier) |
+| Reprise & rétro | **Reproduit** (blocs CMS `homepage.tradein` / `homepage.retro`, formulaire `/reprise`, rayon rétro de la boutique) |
 | Le magasin (adresse, horaires, photo) | **Reproduit** (réglages `brand`, première photo de la galerie ou placeholder rayé) |
 | Back-office : header, onglets, bandeau KPI, maître/détail Réparations | **Reproduit** avec les vrais dossiers, permissions et audit existants |
-| Onglets Commandes / Stock / Reprises | **Retirés** ; les modules existants (Dossiers, Réception, SAV, Catalogue, Options, Packs, Transport, Techniciens, Contenu, Avis, Analytics, Réglages, Audit) sont des onglets du même style |
+| Onglets Commandes / Stock / Reprises | **Reproduits** (`/admin/shop-orders`, `/admin/stock`, `/admin/trade-ins`) avec les vraies tables ; les modules existants (Dossiers, Réception, SAV, Clients, Catalogue, Options, Packs, Transport, Techniciens, Contenu, Avis, Analytics, Réglages, Audit) sont des onglets du même style |
 
 ## Design system
 
@@ -46,14 +47,21 @@ boutique, ni stock, ni commandes de vente, ni reprises.
 | Confirmation | `/commande/confirmation/[id]` | récapitulatif encre, étapes 01-04 |
 | Admin Réparations | `/admin` | `app/admin/page.tsx` (liste + filtres + fiche : panne décrite, photos, avancement cliquable, devis, note d'atelier, actions, historique) |
 | Fiche dossier complète | `/admin/orders/[id]` | onglets Réception / Diagnostic / Devis / Réparation / Tests / Expédition / Médias / Historique |
+| Boutique | `/boutique`, `/boutique/[produit]`, `/panier`, `/commande-boutique`, `/commande-boutique/confirmation/[id]` | `components/shop/*` |
+| Reprise | `/reprise`, `/reprise/confirmation/[id]`, `/reprise/suivi/[jeton]` | `components/tradein/*`, `components/customer/draft-photo-uploader.tsx` |
+| Fiches consoles | `/consoles`, `/consoles/[modèle]` | `app/(marketing)/consoles/*` |
+| Admin Commandes / Stock / Reprises | `/admin/shop-orders`, `/admin/stock`, `/admin/trade-ins` (+ `/admin/clients` → clients) | `components/admin/shop-forms.tsx` |
 
 ## Comportement de la fiche de réparation
 
-1. **Quel appareil ?** — modèles actifs du catalogue (précision = marque).
+1. **Quel appareil ?** — plateforme (marques actives + regroupement « Rétro ») puis
+   modèle exact (précision = variantes ou année) ; les prestations de l'étape 2 sont
+   celles liées en base à ce modèle.
 2. **Quelle prestation ?** — prestations publiées du modèle (choix unique) puis options
    et packs **compatibles** (choix multiples), calculés côté serveur.
-3. **Décrivez le problème** — description (≥ 20 caractères, comme recommandé par le
-   handoff), puces de symptômes qui s'ajoutent au texte, n° de série facultatif.
+3. **Décrivez le problème** — description libre (≥ 20 caractères ou au moins un
+   symptôme), symptômes à choix multiples (pannes fréquentes du modèle + génériques,
+   stockés dans `repair_orders.symptoms`), dépôt de photos (jusqu'à 6), n° de série.
 4. **Envoi et coordonnées** — coordonnées, adresse de retour, formules de transport
    réelles, récapitulatif (prix et TVA vérifiés par le serveur), conditions, CGV.
    « Envoyer ma demande » crée le dossier puis redirige vers le paiement.

@@ -23,6 +23,7 @@ export const INVOICE_TYPE_LABELS: Record<Invoice["invoice_type"], string> = {
   INITIAL: "Facture",
   SUPPLEMENTARY: "Facture complémentaire",
   CREDIT_NOTE: "Avoir",
+  SHOP: "Facture boutique",
 };
 
 /** Signed download URL when a PDF has been attached to the invoice, otherwise null. */

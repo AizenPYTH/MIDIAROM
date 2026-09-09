@@ -35,7 +35,8 @@ export interface EntityDef {
     | "content_blocks"
     | "test_checklists"
     | "option_categories"
-    | "marketing_costs";
+    | "marketing_costs"
+    | "products";
   label: string;
   labelPlural: string;
   basePath: string;
@@ -91,10 +92,15 @@ export const ENTITIES: Record<string, EntityDef> = {
       { name: "seo_description", label: "SEO — meta description", type: "textarea" },
       { name: "seo_intro", label: "SEO — introduction de la page modèle", type: "textarea" },
       { name: "image_path", label: "Image (chemin content-media)", type: "text", width: "half" },
+      { name: "family", label: "Famille de réparation (ps5, ps4, switch, n64…)", type: "text", width: "half", hint: "Regroupe les modèles qui partagent les mêmes prestations" },
+      { name: "variants", label: "Variantes (une par ligne)", type: "list" },
+      { name: "common_issues", label: "Pannes fréquentes (une par ligne, fiche console)", type: "list" },
+      { name: "is_retro", label: "Console rétro", type: "checkbox", width: "half" },
+      { name: "is_handheld", label: "Portable", type: "checkbox", width: "half" },
       { name: "is_active", label: "Actif", type: "checkbox", width: "half" },
     ],
-    schema: z.object({ brand_id: z.string().uuid(), name: text(80).min(1), slug, short_name: optText(40), release_year: nullableInt, display_order: int.default(0), description: optText(), seo_title: optText(200), seo_description: optText(400), seo_intro: optText(), image_path: optText(300), is_active: bool.default(true) }),
-    revalidate: ["/", "/reparation"],
+    schema: z.object({ brand_id: z.string().uuid(), name: text(80).min(1), slug, short_name: optText(40), release_year: nullableInt, display_order: int.default(0), description: optText(), seo_title: optText(200), seo_description: optText(400), seo_intro: optText(), image_path: optText(300), family: optText(40), variants: list, common_issues: list, is_retro: bool.default(false), is_handheld: bool.default(false), is_active: bool.default(true) }),
+    revalidate: ["/", "/reparation", "/consoles"],
   },
   faults: {
     table: "faults",
@@ -393,6 +399,63 @@ export const ENTITIES: Record<string, EntityDef> = {
   },
 };
 
+ENTITIES.products = {
+  table: "products",
+  label: "Article",
+  labelPlural: "Stock",
+  basePath: "/admin/stock",
+  listColumns: ["sku", "name", "platform", "condition", "price_cents", "quantity", "is_active"],
+  fields: [
+    { name: "sku", label: "SKU / référence", type: "text", required: true, width: "half" },
+    { name: "slug", label: "Slug (URL /boutique/[slug])", type: "slug", required: true, width: "half" },
+    { name: "name", label: "Nom", type: "text", required: true },
+    { name: "category", label: "Catégorie", type: "select", required: true, width: "half", options: [{ value: "CONSOLE", label: "Console" }, { value: "GAME", label: "Jeu" }, { value: "ACCESSORY", label: "Accessoire" }, { value: "PART", label: "Pièce" }, { value: "COLLECTIBLE", label: "Collector" }] },
+    { name: "platform", label: "Plateforme (libellé affiché)", type: "text", required: true, width: "half" },
+    { name: "model_id", label: "Modèle de console lié (fiche console, compatibilité)", type: "select", options: "models", width: "half" },
+    { name: "condition", label: "État", type: "select", required: true, width: "half", options: [{ value: "NEW", label: "Neuf" }, { value: "REFURBISHED", label: "Révisé en atelier" }, { value: "USED_A", label: "Occasion — grade A" }, { value: "USED_B", label: "Occasion — grade B" }, { value: "USED_C", label: "Occasion — grade C" }] },
+    { name: "condition_notes", label: "Défauts / précisions sur l'état (affichés au client)", type: "textarea" },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "specs", label: "Caractéristiques (JSON {\"Stockage\":\"1 To\"})", type: "json" },
+    { name: "includes", label: "Contenu / accessoires fournis (un par ligne)", type: "list" },
+    { name: "price_cents", label: "Prix TTC (€)", type: "cents", required: true, width: "half" },
+    { name: "compare_at_price_cents", label: "Prix barré (€, facultatif)", type: "cents", width: "half" },
+    { name: "cost_cents", label: "Prix d'achat (€)", type: "cents", width: "half" },
+    { name: "quantity", label: "Quantité en stock", type: "number", required: true, width: "half" },
+    { name: "low_stock_threshold", label: "Seuil de stock faible", type: "number", width: "half" },
+    { name: "weight_grams", label: "Poids (g)", type: "number", width: "half" },
+    { name: "images", label: "Photos (chemins content-media, une par ligne)", type: "list", hint: "Téléversez via Contenu → Médias publics puis collez le chemin" },
+    { name: "is_retro", label: "Rétro", type: "checkbox", width: "half" },
+    { name: "is_featured", label: "Mis en avant (accueil)", type: "checkbox", width: "half" },
+    { name: "is_active", label: "En vente", type: "checkbox", width: "half" },
+    { name: "display_order", label: "Ordre", type: "number", width: "half" },
+  ],
+  schema: z.object({
+    sku: text(40).min(2),
+    slug,
+    name: text(140).min(2),
+    category: z.enum(["CONSOLE", "GAME", "ACCESSORY", "PART", "COLLECTIBLE"]),
+    platform: text(60).min(1),
+    model_id: nullableUuid,
+    condition: z.enum(["NEW", "REFURBISHED", "USED_A", "USED_B", "USED_C"]),
+    condition_notes: optText(1000),
+    description: optText(4000),
+    specs: z.record(z.string(), z.string()).default({}),
+    includes: list,
+    price_cents: z.coerce.number().int().min(0),
+    compare_at_price_cents: z.union([z.literal(""), z.coerce.number().int().min(0)]).transform((v) => (v === "" ? null : v)),
+    cost_cents: z.union([z.literal(""), z.coerce.number().int().min(0)]).transform((v) => (v === "" ? 0 : v)),
+    quantity: int.min(0),
+    low_stock_threshold: z.union([z.literal(""), z.coerce.number().int().min(0)]).transform((v) => (v === "" ? 2 : v)),
+    weight_grams: nullableInt,
+    images: list,
+    is_retro: bool.default(false),
+    is_featured: bool.default(false),
+    is_active: bool.default(true),
+    display_order: int.default(0),
+  }),
+  revalidate: ["/", "/boutique", "/consoles"],
+};
+
 export function getEntity(key: string): EntityDef | null {
   return ENTITIES[key] ?? null;
 }
@@ -423,7 +486,7 @@ export function formDataToObject(entity: EntityDef, formData: FormData): Record<
         break;
       case "json":
         try {
-          out[field.name] = value ? JSON.parse(value) : field.name === "data" ? {} : [];
+          out[field.name] = value ? JSON.parse(value) : field.name === "data" || field.name === "specs" ? {} : [];
         } catch {
           out[field.name] = Number.NaN; // forces a validation error
         }

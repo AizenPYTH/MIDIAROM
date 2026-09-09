@@ -17,10 +17,10 @@ function defaultValue(field: FieldDef, row: Record<string, unknown> | null): str
   return String(v);
 }
 
-export function EntityForm({ entityKey, entity, row, selectOptions }: { entityKey: string; entity: EntityDef; row: Record<string, unknown> | null; selectOptions: SelectOptions }) {
+export function EntityForm({ entityKey, entity, row, selectOptions }: { entityKey: string; entity: Pick<EntityDef, "fields"> & { idField: string }; row: Record<string, unknown> | null; selectOptions: SelectOptions }) {
   const bound = saveEntityAction.bind(null, entityKey);
   const [state, action, pending] = useActionState<EntityActionResult | null, FormData>(bound, null);
-  const id = row ? String(row[entity.idField ?? "id"]) : "new";
+  const id = row ? String(row[entity.idField]) : "new";
   const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
@@ -52,7 +52,7 @@ export function EntityForm({ entityKey, entity, row, selectOptions }: { entityKe
                 ))}
               </Select>
             ) : (
-              <Input id={htmlId} name={field.name} defaultValue={value} required={field.required} aria-invalid={Boolean(error)} inputMode={field.type === "cents" || field.type === "number" ? "decimal" : undefined} type={field.type === "number" ? "number" : "text"} readOnly={Boolean(row) && field.name === (entity.idField ?? "") } />
+              <Input id={htmlId} name={field.name} defaultValue={value} required={field.required} aria-invalid={Boolean(error)} inputMode={field.type === "cents" || field.type === "number" ? "decimal" : undefined} type={field.type === "number" ? "number" : "text"} readOnly={Boolean(row) && field.name === entity.idField && entity.idField !== "id"} />
             )}
           </Field>
         );

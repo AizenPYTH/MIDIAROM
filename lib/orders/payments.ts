@@ -10,6 +10,7 @@ import { audit } from "@/lib/security/audit";
 import { getPaymentProvider } from "@/lib/stripe";
 import type { PaymentConfirmation } from "@/lib/stripe/types";
 import { ROUTES, SITE_URL } from "@/config/site";
+import { getShopOrderById, handleShopPaymentConfirmed } from "@/lib/shop/orders";
 
 type Payment = Tables<"payments">;
 
@@ -30,7 +31,7 @@ export async function confirmPayment(confirmation: PaymentConfirmation): Promise
   if (confirmation.amountCents !== payment.amount_cents) {
     // Never accept a partial / different amount silently.
     await db.from("payments").update({ status: "FAILED", raw: { reason: "amount_mismatch", confirmation: confirmation.raw as Json } }).eq("id", payment.id);
-    await audit({ actorId: null, actorRole: null, action: "payment.amount_mismatch", resourceType: "payments", resourceId: payment.id, orderId: payment.order_id, newValue: { expected: payment.amount_cents, received: confirmation.amountCents } });
+    await audit({ actorId: null, actorRole: null, action: "payment.amount_mismatch", resourceType: "payments", resourceId: payment.id, orderId: payment.order_id ?? undefined, newValue: { expected: payment.amount_cents, received: confirmation.amountCents } });
     return { status: "ignored", payment };
   }
 
@@ -49,6 +50,28 @@ export async function confirmPayment(confirmation: PaymentConfirmation): Promise
     .select("*")
     .maybeSingle();
   if (error || !updated) return { status: "already_confirmed", payment };
+
+  // Commande boutique : encaissement, facture, stock et e-mail dédiés.
+  if (payment.shop_order_id) {
+    const shopOrder = await getShopOrderById(payment.shop_order_id);
+    await db.from("shop_orders").update({ paid_cents: shopOrder.paid_cents + payment.amount_cents }).eq("id", shopOrder.id);
+    const { data: shopItems } = await db.from("shop_order_items").select("label, quantity, unit_price_cents, total_cents").eq("order_id", shopOrder.id);
+    await db.from("invoices").insert({
+      order_id: null,
+      shop_order_id: shopOrder.id,
+      payment_id: payment.id,
+      invoice_type: "SHOP",
+      status: "PAID",
+      amount_cents: payment.amount_cents,
+      vat_cents: Math.round(payment.amount_cents - (payment.amount_cents * 10_000) / (10_000 + shopOrder.vat_rate_bp)),
+      currency: payment.currency,
+      lines: (shopItems ?? []) as unknown as Json,
+    });
+    await audit({ actorId: null, actorRole: null, action: "payment.succeeded", resourceType: "payments", resourceId: payment.id, newValue: { amount_cents: payment.amount_cents, purpose: "SHOP", shop_order_id: shopOrder.id } });
+    await handleShopPaymentConfirmed(shopOrder.id);
+    return { status: "confirmed", payment: updated };
+  }
+  if (!payment.order_id) return { status: "ignored", payment };
 
   const order = await getOrderById(payment.order_id);
   await db.from("repair_orders").update({ paid_cents: order.paid_cents + payment.amount_cents }).eq("id", order.id);

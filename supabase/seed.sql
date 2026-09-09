@@ -433,3 +433,182 @@ insert into public.seo_pages (path, title, description) values
   ('/faq', 'Questions fréquentes', 'Envoi, délais, devis complémentaire, garantie, données : toutes les réponses sur notre service de réparation à distance.')
 on conflict (path) do nothing;
 
+
+-- =============================================================================
+-- CATALOGUE ÉTENDU (vente + réparation) — DEV
+-- Modèles, pannes et réparations générés par famille de console ; produits de
+-- démonstration ; réglages boutique. Prix indicatifs à ajuster dans le back-office.
+-- =============================================================================
+insert into public.brands (id, name, slug, display_order) values
+  ('40000000-0000-4000-8000-000000000004', 'Sega', 'sega', 4)
+on conflict (id) do nothing;
+
+create temp table seed_models (brand_slug text, name text, slug text, short_name text, year int, family text, is_retro boolean, is_handheld boolean, variants text[], common_issues text[], display_order int);
+insert into seed_models values
+  ('playstation', 'PlayStation 5', 'ps5', 'PS5', 2020, 'ps5', false, false, '{"Standard (lecteur Blu-ray)","Digital Edition"}', '{"Port HDMI arraché ou sans image","Surchauffe et ventilateur bruyant","Lecteur Blu-ray qui éjecte","Bloc alimentation en panne"}', 1),
+  ('playstation', 'PlayStation 5 Slim', 'ps5-slim', 'PS5 Slim', 2023, 'ps5', false, false, '{"Slim avec lecteur","Slim Digital"}', '{"Port HDMI","Surchauffe","Lecteur amovible non reconnu"}', 2),
+  ('playstation', 'PlayStation 5 Pro', 'ps5-pro', 'PS5 Pro', 2024, 'ps5', false, false, '{"Pro (Digital, lecteur en option)"}', '{"Port HDMI","Surchauffe","Stockage"}', 3),
+  ('playstation', 'PlayStation 4', 'ps4', 'PS4', 2013, 'ps4', false, false, '{"Fat (CUH-1000 à 1200)"}', '{"Port HDMI","Ventilateur bruyant","Lecteur Blu-ray","Disque dur"}', 4),
+  ('playstation', 'PlayStation 4 Slim', 'ps4-slim', 'PS4 Slim', 2016, 'ps4', false, false, '{"Slim (CUH-2000 à 2200)"}', '{"Port HDMI","Surchauffe","Lecteur"}', 5),
+  ('playstation', 'PlayStation 4 Pro', 'ps4-pro', 'PS4 Pro', 2016, 'ps4', false, false, '{"Pro (CUH-7000 à 7200)"}', '{"Ventilateur très bruyant","Port HDMI","Surchauffe"}', 6),
+  ('playstation', 'PlayStation 3', 'ps3', 'PS3', 2006, 'ps3', true, false, '{"Fat","Slim","Super Slim"}', '{"Yellow light (YLOD)","Lecteur Blu-ray","Alimentation"}', 7),
+  ('playstation', 'PlayStation 2', 'ps2', 'PS2', 2000, 'ps2', true, false, '{"Fat","Slim"}', '{"Lecteur DVD (laser)","Alimentation","Sortie vidéo"}', 8),
+  ('playstation', 'PlayStation 1', 'ps1', 'PS1', 1994, 'ps1', true, false, '{"PS1","PSone"}', '{"Lecteur CD (laser)","Condensateurs","Sortie vidéo"}', 9),
+  ('playstation', 'PSP', 'psp', 'PSP', 2004, 'psp', true, true, '{"1000","2000","3000","Street"}', '{"Écran","Batterie gonflée","Lecteur UMD","Stick"}', 10),
+  ('playstation', 'PS Vita', 'ps-vita', 'PS Vita', 2011, 'vita', true, true, '{"OLED (1000)","Slim (2000)"}', '{"Écran","Batterie","Port de charge","Sticks"}', 11),
+  ('xbox', 'Xbox Series X', 'xbox-series-x', 'Series X', 2020, 'xbox-series', false, false, '{"Series X"}', '{"Port HDMI","Lecteur","Alimentation","Surchauffe"}', 1),
+  ('xbox', 'Xbox Series S', 'xbox-series-s', 'Series S', 2020, 'xbox-series', false, false, '{"Series S (512 Go, 1 To)"}', '{"Port HDMI","Alimentation","Stockage"}', 2),
+  ('xbox', 'Xbox One', 'xbox-one', 'Xbox One', 2013, 'xbox-one', false, false, '{"One (2013)"}', '{"Port HDMI","Lecteur Blu-ray","Alimentation externe"}', 3),
+  ('xbox', 'Xbox One S', 'xbox-one-s', 'One S', 2016, 'xbox-one', false, false, '{"One S","One S All-Digital"}', '{"Port HDMI","Lecteur","Ventilateur"}', 4),
+  ('xbox', 'Xbox One X', 'xbox-one-x', 'One X', 2017, 'xbox-one', false, false, '{"One X"}', '{"Port HDMI","Surchauffe","Alimentation"}', 5),
+  ('xbox', 'Xbox 360', 'xbox-360', 'Xbox 360', 2005, 'xbox-360', true, false, '{"Fat","Slim","E"}', '{"Red Ring (surchauffe)","Lecteur DVD","Alimentation"}', 6),
+  ('xbox', 'Xbox originale', 'xbox-originale', 'Xbox', 2001, 'xbox-og', true, false, '{"Xbox (2001)"}', '{"Pile d''horloge qui fuit","Lecteur DVD","Disque dur"}', 7),
+  ('nintendo', 'Nintendo Switch', 'switch', 'Switch', 2017, 'switch', false, true, '{"V1 (2017)","V2 (2019)"}', '{"Port USB-C","Dérive des Joy-Con","Écran","Batterie"}', 1),
+  ('nintendo', 'Nintendo Switch OLED', 'switch-oled', 'Switch OLED', 2021, 'switch', false, true, '{"OLED"}', '{"Port USB-C","Joy-Con","Écran OLED"}', 2),
+  ('nintendo', 'Nintendo Switch Lite', 'switch-lite', 'Switch Lite', 2019, 'switch-lite', false, true, '{"Lite"}', '{"Sticks intégrés (dérive)","Port USB-C","Écran"}', 3),
+  ('nintendo', 'Wii U', 'wii-u', 'Wii U', 2012, 'wiiu', true, false, '{"Basic","Premium"}', '{"GamePad (écran, batterie)","Lecteur","Wi-Fi"}', 4),
+  ('nintendo', 'Wii', 'wii', 'Wii', 2006, 'wii', true, false, '{"Wii","Wii Mini"}', '{"Lecteur de disque","Alimentation","Wi-Fi"}', 5),
+  ('nintendo', 'GameCube', 'gamecube', 'GameCube', 2001, 'gamecube', true, false, '{"GameCube"}', '{"Lecteur (laser)","Ports manettes","Sortie vidéo"}', 6),
+  ('nintendo', 'Nintendo 64', 'nintendo-64', 'N64', 1996, 'n64', true, false, '{"N64","Pikachu / couleurs"}', '{"Sticks de manette usés","Sortie vidéo","Lecteur de cartouche"}', 7),
+  ('nintendo', 'Super Nintendo', 'super-nintendo', 'SNES', 1990, 'snes', true, false, '{"SNES","SNES Jr."}', '{"Condensateurs","Lecteur de cartouche","Sortie vidéo"}', 8),
+  ('nintendo', 'NES', 'nes', 'NES', 1985, 'nes', true, false, '{"NES","NES Top Loader"}', '{"Connecteur 72 broches","Condensateurs","Sortie vidéo"}', 9),
+  ('nintendo', 'Game Boy', 'game-boy', 'Game Boy', 1989, 'gb', true, true, '{"Game Boy (DMG)","Pocket","Light"}', '{"Écran (lignes)","Contacts piles","Boutons"}', 10),
+  ('nintendo', 'Game Boy Color', 'game-boy-color', 'GB Color', 1998, 'gb', true, true, '{"Color"}', '{"Écran","Contacts piles","Boutons"}', 11),
+  ('nintendo', 'Game Boy Advance', 'game-boy-advance', 'GBA', 2001, 'gba', true, true, '{"Advance","SP","Micro"}', '{"Écran","Batterie SP","Boutons"}', 12),
+  ('nintendo', 'Nintendo DS', 'nintendo-ds', 'DS', 2004, 'ds', true, true, '{"DS","DS Lite","DSi","DSi XL"}', '{"Charnière / écran","Charge","Batterie"}', 13),
+  ('nintendo', 'Nintendo 3DS', 'nintendo-3ds', '3DS', 2011, 'ds', true, true, '{"3DS","3DS XL","2DS","New 3DS"}', '{"Écran","Circle Pad","Charge"}', 14),
+  ('sega', 'Dreamcast', 'dreamcast', 'Dreamcast', 1998, 'dreamcast', true, false, '{"Dreamcast"}', '{"Lecteur GD-ROM","Alimentation","Condensateurs"}', 1),
+  ('sega', 'Saturn', 'saturn', 'Saturn', 1994, 'saturn', true, false, '{"Saturn"}', '{"Lecteur CD","Pile de sauvegarde","Condensateurs"}', 2),
+  ('sega', 'Mega Drive', 'mega-drive', 'Mega Drive', 1988, 'megadrive', true, false, '{"Mega Drive","Mega Drive II"}', '{"Condensateurs","Sortie vidéo","Ports manettes"}', 3),
+  ('sega', 'Master System', 'master-system', 'Master System', 1985, 'mastersystem', true, false, '{"Master System","Master System II"}', '{"Condensateurs","Sortie vidéo","Alimentation"}', 4),
+  ('sega', 'Game Gear', 'game-gear', 'Game Gear', 1990, 'gamegear', true, true, '{"Game Gear"}', '{"Condensateurs (écran, son)","Écran","Alimentation"}', 5);
+
+insert into public.console_models (id, brand_id, name, slug, short_name, release_year, display_order, family, variants, common_issues, is_retro, is_handheld)
+select gen_random_uuid(), b.id, m.name, m.slug, m.short_name, m.year, m.display_order, m.family, m.variants, m.common_issues, m.is_retro, m.is_handheld
+from seed_models m join public.brands b on b.slug = m.brand_slug
+on conflict (slug) do update set family = excluded.family, variants = excluded.variants, common_issues = excluded.common_issues, is_retro = excluded.is_retro, is_handheld = excluded.is_handheld, display_order = excluded.display_order;
+
+-- Pannes supplémentaires
+insert into public.faults (name, slug, short_description, icon, display_order) values
+  ('Ventilateur bruyant / HS', 'ventilateur', 'Bruit anormal, ventilateur bloqué ou arrêté', 'Fan', 12),
+  ('Nettoyage / entretien', 'nettoyage-entretien', 'Dépoussiérage complet, pâte thermique, pads', 'Sparkles', 13),
+  ('Lecteur de cartouche', 'lecteur-cartouche', 'Jeu non reconnu, contacts oxydés', 'Package', 14),
+  ('Lecteur microSD', 'micro-sd', 'Carte non détectée, erreur de lecture', 'HardDrive', 15),
+  ('Batterie', 'batterie', 'Autonomie très faible, batterie gonflée', 'BatteryWarning', 16),
+  ('Condensateurs (recap)', 'recap-condensateurs', 'Image ou son dégradés, console rétro qui vieillit', 'Cpu', 17),
+  ('Pile de sauvegarde', 'pile-sauvegarde', 'Sauvegardes perdues (console ou cartouche)', 'Battery', 18),
+  ('Sortie vidéo / RGB', 'sortie-video', 'Image tremblante, absente, mod RGB ou HDMI', 'Tv', 19),
+  ('Boutons / gâchettes', 'boutons', 'Bouton mort, gâchette qui reste enfoncée', 'Gamepad2', 20),
+  ('Wi-Fi / Bluetooth', 'wifi-bluetooth', 'Manettes ou réseau qui décrochent', 'Wifi', 21),
+  ('Manette', 'manette', 'Sticks, gâchettes, batterie ou port de charge de la manette', 'Gamepad', 22)
+on conflict (slug) do nothing;
+
+-- Grille de prix par famille (DEV) : famille, panne, prix, coût pièces estimé, minutes, délai min/max, garantie (mois)
+create temp table seed_prices (family text, fault_slug text, price int, cost int, minutes int, lead_min int, lead_max int, warranty int);
+insert into seed_prices values
+  ('ps5','hdmi',8900,1800,60,2,4,6),('ps5','alimentation',9500,4500,45,2,5,6),('ps5','surchauffe',4900,800,60,1,3,6),('ps5','ventilateur',6900,2500,60,2,4,6),('ps5','lecteur',8900,3500,60,2,5,6),('ps5','stockage',7900,0,45,1,3,6),('ps5','connectique',6900,1500,60,2,4,6),('ps5','ne-s-allume-plus',7900,3000,90,3,6,6),('ps5','nettoyage-entretien',4900,800,60,1,3,3),('ps5','wifi-bluetooth',6900,2000,60,2,4,6),('ps5','manette',3900,1200,40,1,3,3),('ps5','autre',2900,0,45,2,5,0),
+  ('ps4','hdmi',7900,1500,60,2,4,6),('ps4','alimentation',8900,3500,45,2,5,6),('ps4','surchauffe',4900,800,60,1,3,6),('ps4','ventilateur',5900,2000,60,2,4,6),('ps4','lecteur',6900,2500,60,2,5,6),('ps4','stockage',6900,0,45,1,3,6),('ps4','connectique',5900,1200,60,2,4,6),('ps4','ne-s-allume-plus',6900,2500,90,3,6,6),('ps4','nettoyage-entretien',4500,600,60,1,3,3),('ps4','wifi-bluetooth',5900,1800,60,2,4,6),('ps4','manette',3500,1000,40,1,3,3),('ps4','autre',2500,0,45,2,5,0),
+  ('ps3','hdmi',6900,1500,60,2,5,6),('ps3','alimentation',7900,3000,45,2,5,6),('ps3','surchauffe',5900,900,90,3,6,3),('ps3','lecteur',6900,2500,60,3,6,6),('ps3','stockage',4900,0,45,1,3,6),('ps3','ne-s-allume-plus',6900,2500,90,3,6,3),('ps3','nettoyage-entretien',4500,600,60,1,3,3),('ps3','autre',2500,0,45,2,5,0),
+  ('ps2','lecteur',4900,1500,60,2,5,6),('ps2','alimentation',4900,1500,45,2,5,6),('ps2','connectique',3900,800,45,2,4,6),('ps2','nettoyage-entretien',3500,300,45,1,3,3),('ps2','recap-condensateurs',6500,1500,120,4,8,6),('ps2','sortie-video',4900,1200,60,3,6,6),('ps2','ne-s-allume-plus',4900,1500,60,3,6,3),('ps2','autre',2000,0,45,2,5,0),
+  ('ps1','lecteur',4500,1500,60,2,5,6),('ps1','alimentation',3900,1000,45,2,5,6),('ps1','recap-condensateurs',6500,1500,120,4,8,6),('ps1','sortie-video',4500,1000,60,3,6,6),('ps1','nettoyage-entretien',3000,300,45,1,3,3),('ps1','autre',2000,0,45,2,5,0),
+  ('psp','ecran',6900,2500,60,2,5,6),('psp','batterie',3900,1500,30,1,3,6),('psp','charge',4900,1200,60,2,4,6),('psp','boutons',3900,800,45,2,4,6),('psp','joystick',3900,900,45,2,4,6),('psp','lecteur',4900,1500,60,2,5,6),('psp','autre',2000,0,45,2,5,0),
+  ('vita','ecran',8900,3500,60,2,5,6),('vita','batterie',4500,1800,30,1,3,6),('vita','charge',4900,1200,60,2,4,6),('vita','joystick',4500,1200,45,2,4,6),('vita','boutons',3900,800,45,2,4,6),('vita','autre',2000,0,45,2,5,0),
+  ('xbox-series','hdmi',8900,1800,60,2,4,6),('xbox-series','alimentation',8900,4000,45,2,5,6),('xbox-series','surchauffe',4900,800,60,1,3,6),('xbox-series','ventilateur',6900,2500,60,2,4,6),('xbox-series','lecteur',7900,3000,60,2,5,6),('xbox-series','stockage',7900,0,45,1,3,6),('xbox-series','ne-s-allume-plus',7900,3000,90,3,6,6),('xbox-series','wifi-bluetooth',6900,2000,60,2,4,6),('xbox-series','nettoyage-entretien',4900,800,60,1,3,3),('xbox-series','manette',3900,1200,40,1,3,3),('xbox-series','autre',2900,0,45,2,5,0),
+  ('xbox-one','hdmi',7900,1500,60,2,4,6),('xbox-one','alimentation',7900,3000,45,2,5,6),('xbox-one','surchauffe',4900,800,60,1,3,6),('xbox-one','ventilateur',5900,2000,60,2,4,6),('xbox-one','lecteur',6900,2500,60,2,5,6),('xbox-one','stockage',6900,0,45,1,3,6),('xbox-one','ne-s-allume-plus',6900,2500,90,3,6,6),('xbox-one','nettoyage-entretien',4500,600,60,1,3,3),('xbox-one','manette',3500,1000,40,1,3,3),('xbox-one','autre',2500,0,45,2,5,0),
+  ('xbox-360','alimentation',5900,2000,45,2,5,6),('xbox-360','surchauffe',6900,1000,120,3,6,3),('xbox-360','lecteur',5900,2000,60,3,6,6),('xbox-360','stockage',3900,0,30,1,3,6),('xbox-360','ne-s-allume-plus',5900,2000,90,3,6,3),('xbox-360','nettoyage-entretien',4500,600,60,1,3,3),('xbox-360','autre',2500,0,45,2,5,0),
+  ('xbox-og','alimentation',5900,2000,45,2,5,6),('xbox-og','lecteur',5900,2000,60,3,6,6),('xbox-og','stockage',4900,1500,60,2,5,6),('xbox-og','recap-condensateurs',6500,1200,120,4,8,6),('xbox-og','nettoyage-entretien',4500,600,60,1,3,3),('xbox-og','autre',2500,0,45,2,5,0),
+  ('switch','usb-c',6900,1500,60,2,4,6),('switch','ecran',11900,5000,60,2,5,6),('switch','batterie',5900,2500,45,1,3,6),('switch','joystick',4500,1600,40,1,3,6),('switch','lecteur-cartouche',5900,1500,60,2,4,6),('switch','micro-sd',4900,1200,60,2,4,6),('switch','charge',6900,1500,60,2,4,6),('switch','surchauffe',4900,600,60,1,3,3),('switch','ne-s-allume-plus',6900,2000,90,3,6,3),('switch','nettoyage-entretien',3900,300,45,1,3,3),('switch','wifi-bluetooth',5900,1500,60,2,4,6),('switch','autre',2000,0,45,2,5,0),
+  ('switch-lite','usb-c',6900,1500,60,2,4,6),('switch-lite','ecran',9900,4000,60,2,5,6),('switch-lite','batterie',5900,2500,45,1,3,6),('switch-lite','joystick',4900,1800,45,1,3,6),('switch-lite','lecteur-cartouche',5900,1500,60,2,4,6),('switch-lite','micro-sd',4900,1200,60,2,4,6),('switch-lite','charge',6900,1500,60,2,4,6),('switch-lite','ne-s-allume-plus',6900,2000,90,3,6,3),('switch-lite','boutons',4500,900,45,2,4,6),('switch-lite','autre',2000,0,45,2,5,0),
+  ('wiiu','lecteur',6900,2500,60,3,6,6),('wiiu','alimentation',4900,1500,45,2,5,6),('wiiu','wifi-bluetooth',5900,1500,60,2,4,6),('wiiu','ecran',7900,3000,60,2,5,6),('wiiu','joystick',4500,1200,45,2,4,6),('wiiu','charge',4900,1200,60,2,4,6),('wiiu','ne-s-allume-plus',5900,2000,90,3,6,3),('wiiu','nettoyage-entretien',3900,300,45,1,3,3),('wiiu','autre',2000,0,45,2,5,0),
+  ('wii','lecteur',5900,2000,60,3,6,6),('wii','alimentation',3900,1200,45,2,5,6),('wii','wifi-bluetooth',4900,1200,60,2,4,6),('wii','ne-s-allume-plus',4900,1500,90,3,6,3),('wii','nettoyage-entretien',3500,300,45,1,3,3),('wii','autre',2000,0,45,2,5,0),
+  ('gamecube','lecteur',5900,2000,60,3,6,6),('gamecube','alimentation',3900,1200,45,2,5,6),('gamecube','connectique',3900,800,45,2,4,6),('gamecube','nettoyage-entretien',3500,300,45,1,3,3),('gamecube','sortie-video',4500,1000,60,3,6,6),('gamecube','autre',2000,0,45,2,5,0),
+  ('n64','connectique',3900,800,45,2,4,6),('n64','sortie-video',6900,2500,90,4,8,6),('n64','recap-condensateurs',6500,1200,120,4,8,6),('n64','lecteur-cartouche',3900,500,45,2,4,6),('n64','nettoyage-entretien',3500,300,45,1,3,3),('n64','alimentation',3500,1000,45,2,5,6),('n64','autre',2000,0,45,2,5,0),
+  ('snes','lecteur-cartouche',3900,500,45,2,4,6),('snes','recap-condensateurs',6500,1200,120,4,8,6),('snes','sortie-video',6900,2500,90,4,8,6),('snes','alimentation',3500,1000,45,2,5,6),('snes','nettoyage-entretien',3500,300,45,1,3,3),('snes','autre',2000,0,45,2,5,0),
+  ('nes','lecteur-cartouche',3900,800,45,2,4,6),('nes','recap-condensateurs',6500,1200,120,4,8,6),('nes','sortie-video',6900,2500,90,4,8,6),('nes','alimentation',3500,1000,45,2,5,6),('nes','nettoyage-entretien',3500,300,45,1,3,3),('nes','autre',2000,0,45,2,5,0),
+  ('gb','ecran',5900,2500,60,3,6,6),('gb','boutons',3500,500,45,2,4,6),('gb','connectique',2900,300,30,2,4,6),('gb','nettoyage-entretien',3000,200,45,1,3,3),('gb','pile-sauvegarde',1500,200,20,1,3,3),('gb','autre',2000,0,45,2,5,0),
+  ('gba','ecran',6900,3000,60,3,6,6),('gba','boutons',3500,500,45,2,4,6),('gba','batterie',3500,1200,30,1,3,6),('gba','nettoyage-entretien',3000,200,45,1,3,3),('gba','pile-sauvegarde',1500,200,20,1,3,3),('gba','autre',2000,0,45,2,5,0),
+  ('ds','ecran',6900,2800,60,3,6,6),('ds','charge',4500,1000,60,2,4,6),('ds','batterie',3900,1200,30,1,3,6),('ds','boutons',3500,500,45,2,4,6),('ds','joystick',3900,900,45,2,4,6),('ds','lecteur-cartouche',4500,900,45,2,4,6),('ds','autre',2000,0,45,2,5,0),
+  ('dreamcast','lecteur',5900,2000,60,3,6,6),('dreamcast','alimentation',4500,1200,45,2,5,6),('dreamcast','recap-condensateurs',6500,1200,120,4,8,6),('dreamcast','sortie-video',4900,1500,60,3,6,6),('dreamcast','nettoyage-entretien',3500,300,45,1,3,3),('dreamcast','autre',2000,0,45,2,5,0),
+  ('saturn','lecteur',5900,2000,60,3,6,6),('saturn','alimentation',4500,1200,45,2,5,6),('saturn','recap-condensateurs',6500,1200,120,4,8,6),('saturn','sortie-video',4900,1500,60,3,6,6),('saturn','pile-sauvegarde',1500,200,20,1,3,3),('saturn','autre',2000,0,45,2,5,0),
+  ('megadrive','recap-condensateurs',6500,1200,120,4,8,6),('megadrive','sortie-video',4900,1500,60,3,6,6),('megadrive','alimentation',3500,1000,45,2,5,6),('megadrive','connectique',3900,800,45,2,4,6),('megadrive','nettoyage-entretien',3000,200,45,1,3,3),('megadrive','autre',2000,0,45,2,5,0),
+  ('mastersystem','recap-condensateurs',6500,1200,120,4,8,6),('mastersystem','sortie-video',4900,1500,60,3,6,6),('mastersystem','alimentation',3500,1000,45,2,5,6),('mastersystem','connectique',3900,800,45,2,4,6),('mastersystem','autre',2000,0,45,2,5,0),
+  ('gamegear','recap-condensateurs',6900,1500,120,4,8,6),('gamegear','ecran',7900,3500,90,4,8,6),('gamegear','alimentation',3500,1000,45,2,5,6),('gamegear','boutons',3500,500,45,2,4,6),('gamegear','autre',2000,0,45,2,5,0);
+
+-- Libellés de prestation par panne (%s = nom court du modèle)
+create temp table seed_labels (fault_slug text, label text, summary text, included text[]);
+insert into seed_labels values
+  ('hdmi', 'Réparation port HDMI %s', 'Remplacement du connecteur HDMI (micro-soudure), tests d''affichage.', '{"Diagnostic","Remplacement du connecteur HDMI","Remontage","Tests d''affichage"}'),
+  ('ne-s-allume-plus', 'Console %s ne s''allume plus', 'Recherche de panne, réparation de l''étage d''alimentation ou de la carte mère.', '{"Diagnostic","Réparation","Remontage","Tests"}'),
+  ('usb-c', 'Remplacement port USB-C %s', 'Connecteur de charge neuf soudé sur la carte mère.', '{"Diagnostic","Remplacement du port USB-C","Remontage","Tests de charge"}'),
+  ('charge', 'Problème de charge %s', 'Port, circuit de charge ou batterie : recherche et réparation.', '{"Diagnostic","Réparation","Tests de charge"}'),
+  ('surchauffe', 'Surchauffe / nettoyage thermique %s', 'Démontage complet, dépoussiérage, pâte thermique et pads neufs.', '{"Démontage","Nettoyage complet","Pâte thermique et pads","Tests sous charge"}'),
+  ('lecteur', 'Réparation lecteur %s', 'Lecteur optique remplacé ou réparé (laser, courroie, mécanisme).', '{"Diagnostic","Réparation du lecteur","Tests de lecture"}'),
+  ('alimentation', 'Réparation alimentation %s', 'Bloc ou étage d''alimentation réparé ou remplacé.', '{"Diagnostic","Réparation alimentation","Tests"}'),
+  ('stockage', 'Stockage / SSD %s', 'Remplacement ou installation du stockage et réinstallation du système.', '{"Diagnostic","Remplacement du stockage","Réinstallation système"}'),
+  ('connectique', 'Connectique %s', 'Ports USB, réseau, casque ou manettes remplacés.', '{"Diagnostic","Remplacement du port","Tests"}'),
+  ('joystick', 'Sticks / dérive %s', 'Sticks remplacés, calibration et tests.', '{"Remplacement des sticks","Calibration","Tests"}'),
+  ('ecran', 'Remplacement écran %s', 'Écran ou vitre d''origine remplacé, tactile testé.', '{"Remplacement de l''écran","Remontage","Tests tactile / affichage"}'),
+  ('autre', 'Diagnostic %s', 'Vous ne savez pas d''où vient la panne ? Nous diagnostiquons et vous envoyons un devis.', '{"Diagnostic complet","Devis détaillé"}'),
+  ('ventilateur', 'Remplacement ventilateur %s', 'Ventilateur neuf, nettoyage du radiateur.', '{"Remplacement du ventilateur","Nettoyage","Tests sous charge"}'),
+  ('nettoyage-entretien', 'Nettoyage complet %s', 'Dépoussiérage intégral, contrôle des connecteurs, pâte thermique si nécessaire.', '{"Démontage","Nettoyage complet","Contrôle final"}'),
+  ('lecteur-cartouche', 'Lecteur de cartouche %s', 'Contacts nettoyés ou connecteur remplacé.', '{"Nettoyage / remplacement du connecteur","Tests avec cartouche"}'),
+  ('micro-sd', 'Lecteur microSD %s', 'Lecteur de carte remplacé.', '{"Remplacement du lecteur","Tests"}'),
+  ('batterie', 'Remplacement batterie %s', 'Batterie neuve, cycle de charge testé.', '{"Remplacement de la batterie","Tests de charge"}'),
+  ('recap-condensateurs', 'Recap condensateurs %s', 'Condensateurs remplacés, carte nettoyée : image et son retrouvés.', '{"Remplacement des condensateurs","Nettoyage de la carte","Tests"}'),
+  ('pile-sauvegarde', 'Pile de sauvegarde %s', 'Pile remplacée (console ou cartouche) sans perdre le reste.', '{"Remplacement de la pile","Tests de sauvegarde"}'),
+  ('sortie-video', 'Sortie vidéo / RGB %s', 'Réparation de la sortie vidéo ou installation d''un mod RGB / HDMI.', '{"Diagnostic","Réparation ou mod vidéo","Tests"}'),
+  ('boutons', 'Boutons / gâchettes %s', 'Membranes, boutons ou gâchettes remplacés.', '{"Remplacement","Nettoyage des contacts","Tests"}'),
+  ('wifi-bluetooth', 'Wi-Fi / Bluetooth %s', 'Module ou antenne remplacés.', '{"Diagnostic","Remplacement du module","Tests de connexion"}'),
+  ('manette', 'Réparation manette %s', 'Sticks, gâchettes, batterie ou port de charge de la manette.', '{"Diagnostic","Réparation","Tests"}');
+
+insert into public.repairs (model_id, fault_id, name, slug, summary, price_cents, estimated_cost_cents, estimated_minutes, lead_time_days_min, lead_time_days_max, warranty_months, included_items, is_diagnostic_only, is_seo_published, display_order)
+select m.id, f.id, format(l.label, m.short_name), f.slug, l.summary, p.price, p.cost, p.minutes, p.lead_min, p.lead_max, p.warranty, l.included, f.slug = 'autre', true, f.display_order
+from public.console_models m
+join seed_prices p on p.family = m.family
+join public.faults f on f.slug = p.fault_slug
+join seed_labels l on l.fault_slug = f.slug
+where not exists (select 1 from public.repairs r where r.model_id = m.id and r.fault_id = f.id);
+
+-- ---------------------------------------------------------------------------
+-- Produits (DEV) — stock de démonstration
+-- ---------------------------------------------------------------------------
+insert into public.products (sku, slug, name, category, platform, model_id, condition, condition_notes, description, specs, includes, price_cents, compare_at_price_cents, cost_cents, quantity, low_stock_threshold, is_retro, is_featured, display_order) values
+  ('CON-PS5S-001', 'console-ps5-slim-pack-manette', 'Console PS5 Slim — pack manette', 'CONSOLE', 'PS5', (select id from public.console_models where slug = 'ps5-slim'), 'NEW', null, 'PlayStation 5 Slim avec lecteur Blu-ray, une manette DualSense et le câble HDMI 2.1.', '{"Stockage":"1 To SSD","Lecteur":"Blu-ray 4K","Manette":"DualSense"}', '{"Console","Manette DualSense","Câble HDMI","Câble d''alimentation"}', 49900, null, 43000, 4, 2, false, true, 1),
+  ('CON-PS5P-001', 'console-ps5-pro', 'Console PS5 Pro', 'CONSOLE', 'PS5', (select id from public.console_models where slug = 'ps5-pro'), 'NEW', null, 'PlayStation 5 Pro édition numérique, 2 To.', '{"Stockage":"2 To SSD","Lecteur":"En option"}', '{"Console","Manette DualSense","Câble HDMI"}', 79900, null, 70000, 2, 1, false, true, 2),
+  ('CON-PS4S-U01', 'console-ps4-slim-500-occasion', 'Console PS4 Slim 500 Go', 'CONSOLE', 'PS4', (select id from public.console_models where slug = 'ps4-slim'), 'USED_B', 'Rayures légères sur le capot, lecteur et ports testés.', 'PS4 Slim d''occasion révisée en atelier, nettoyée et pâte thermique remplacée.', '{"Stockage":"500 Go","Couleur":"Noir"}', '{"Console","Manette DualShock 4","Câbles"}', 15900, 17900, 9000, 3, 1, false, false, 3),
+  ('CON-N64-U01', 'console-n64-complete-2-manettes', 'Console N64 complète + 2 manettes', 'CONSOLE', 'Nintendo 64', (select id from public.console_models where slug = 'nintendo-64'), 'USED_A', 'Sticks de manettes remplacés, plastique non jauni.', 'Nintendo 64 testée, nettoyée, avec deux manettes et le câble vidéo.', '{"Région":"PAL","Sortie":"Composite"}', '{"Console","2 manettes","Alimentation","Câble AV"}', 14900, null, 7000, 1, 1, true, true, 4),
+  ('CON-PS2S-R01', 'console-ps2-slim-recapee', 'Console PS2 Slim recapée', 'CONSOLE', 'PS2', (select id from public.console_models where slug = 'ps2'), 'REFURBISHED', 'Condensateurs et laser remplacés en atelier.', 'PS2 Slim entièrement révisée : lecteur neuf, condensateurs neufs, garantie atelier.', '{"Modèle":"SCPH-90004","Région":"PAL"}', '{"Console","Manette","Alimentation","Câble AV"}', 8900, null, 3500, 2, 1, true, false, 5),
+  ('CON-GBC-R01', 'game-boy-color-coque-neuve', 'Game Boy Color — coque neuve', 'CONSOLE', 'Game Boy', (select id from public.console_models where slug = 'game-boy-color'), 'REFURBISHED', 'Coque et vitre neuves, écran d''origine.', 'Game Boy Color reconditionnée : coque neuve, boutons neufs, contacts nettoyés.', '{"Couleur":"Violet transparent"}', '{"Console"}', 11900, null, 4500, 1, 1, true, false, 6),
+  ('CON-SW-U01', 'console-switch-oled-occasion', 'Console Switch OLED', 'CONSOLE', 'Switch', (select id from public.console_models where slug = 'switch-oled'), 'USED_A', 'Comme neuve, protection d''écran posée.', 'Nintendo Switch OLED d''occasion, Joy-Con testés (aucune dérive).', '{"Stockage":"64 Go","Écran":"OLED 7 pouces"}', '{"Console","Joy-Con","Dock","Câbles"}', 26900, 29900, 19000, 2, 1, false, true, 7),
+  ('CON-XSX-001', 'console-xbox-series-x', 'Console Xbox Series X', 'CONSOLE', 'Xbox Series X', (select id from public.console_models where slug = 'xbox-series-x'), 'NEW', null, 'Xbox Series X 1 To avec manette sans fil.', '{"Stockage":"1 To SSD","Lecteur":"Blu-ray 4K"}', '{"Console","Manette","Câble HDMI"}', 49900, null, 43000, 3, 2, false, false, 8),
+  ('CON-DC-U01', 'console-dreamcast-occasion', 'Console Dreamcast', 'CONSOLE', 'Dreamcast', (select id from public.console_models where slug = 'dreamcast'), 'USED_B', 'Lecteur GD-ROM testé, quelques traces d''usage.', 'Dreamcast PAL testée avec manette et VMU.', '{"Région":"PAL"}', '{"Console","Manette","VMU","Câbles"}', 12900, null, 6000, 1, 1, true, false, 9),
+  ('GAM-PS5-001', 'jeu-ps5-astro-bot', 'Astro Bot — PS5', 'GAME', 'PS5', (select id from public.console_models where slug = 'ps5'), 'NEW', null, 'Jeu PS5 neuf sous blister.', '{"Genre":"Plateforme","PEGI":"7"}', '{"Boîte","Disque"}', 5990, null, 4500, 6, 2, false, true, 10),
+  ('GAM-PS5-U02', 'jeu-ps5-god-of-war-ragnarok', 'God of War Ragnarök — PS5', 'GAME', 'PS5', (select id from public.console_models where slug = 'ps5'), 'USED_A', 'Boîte et disque impeccables.', 'Jeu PS5 d''occasion, testé.', '{"Genre":"Action","PEGI":"18"}', '{"Boîte","Disque"}', 2990, 3990, 1500, 3, 1, false, false, 11),
+  ('GAM-SW-001', 'jeu-switch-mario-kart-8-deluxe', 'Mario Kart 8 Deluxe — Switch', 'GAME', 'Switch', (select id from public.console_models where slug = 'switch'), 'NEW', null, 'Jeu Switch neuf.', '{"Genre":"Course","PEGI":"3"}', '{"Boîte","Cartouche"}', 4990, null, 3800, 5, 2, false, false, 12),
+  ('GAM-XSX-U01', 'jeu-xbox-forza-horizon-5', 'Forza Horizon 5 — Xbox Series', 'GAME', 'Xbox Series X', (select id from public.console_models where slug = 'xbox-series-x'), 'USED_A', 'Comme neuf.', 'Jeu Xbox Series d''occasion.', '{"Genre":"Course","PEGI":"3"}', '{"Boîte","Disque"}', 2490, null, 1200, 2, 1, false, false, 13),
+  ('GAM-MD-L01', 'lot-5-cartouches-mega-drive', 'Lot 5 cartouches testées — Mega Drive', 'GAME', 'Mega Drive', (select id from public.console_models where slug = 'mega-drive'), 'USED_B', 'Cartouches sans boîte, contacts nettoyés.', 'Lot de cinq jeux Mega Drive testés un à un.', '{"Région":"PAL"}', '{"5 cartouches"}', 7500, null, 3000, 3, 1, true, false, 14),
+  ('GAM-N64-U01', 'jeu-n64-zelda-ocarina-of-time', 'The Legend of Zelda: Ocarina of Time — N64', 'GAME', 'Nintendo 64', (select id from public.console_models where slug = 'nintendo-64'), 'USED_B', 'Cartouche seule, sauvegarde fonctionnelle.', 'Cartouche N64 PAL testée.', '{"Région":"PAL"}', '{"Cartouche"}', 4900, null, 2500, 1, 1, true, true, 15),
+  ('GAM-GB-U01', 'jeu-game-boy-pokemon-rouge', 'Pokémon Rouge — Game Boy', 'GAME', 'Game Boy', (select id from public.console_models where slug = 'game-boy'), 'USED_B', 'Pile de sauvegarde remplacée en atelier.', 'Cartouche Game Boy testée, pile neuve.', '{"Région":"FR"}', '{"Cartouche"}', 3900, null, 1800, 2, 1, true, false, 16),
+  ('ACC-SW-001', 'manette-pro-switch', 'Manette Pro sans fil — Switch', 'ACCESSORY', 'Switch', (select id from public.console_models where slug = 'switch'), 'NEW', null, 'Manette Nintendo Switch Pro officielle.', '{"Connexion":"Bluetooth","Autonomie":"40 h"}', '{"Manette","Câble USB-C"}', 5900, null, 4200, 12, 3, false, false, 17),
+  ('ACC-PS5-001', 'manette-dualsense-blanche', 'Manette DualSense blanche — PS5', 'ACCESSORY', 'PS5', (select id from public.console_models where slug = 'ps5'), 'NEW', null, 'Manette DualSense officielle.', '{"Connexion":"Bluetooth / USB-C"}', '{"Manette"}', 6490, null, 5200, 8, 3, false, false, 18),
+  ('ACC-XSX-001', 'manette-xbox-officielle-noire', 'Manette officielle noire — Xbox', 'ACCESSORY', 'Xbox Series X', (select id from public.console_models where slug = 'xbox-series-x'), 'NEW', null, 'Manette sans fil Xbox Carbon Black.', '{"Connexion":"Bluetooth / USB-C","Piles":"2 × AA"}', '{"Manette"}', 5400, null, 4000, 8, 3, false, false, 19),
+  ('ACC-HDMI-001', 'cable-hdmi-2-1-2m', 'Câble HDMI 2.1 — 2 m', 'ACCESSORY', 'Multi', null, 'NEW', null, 'Câble HDMI 2.1 certifié 4K 120 Hz / 8K.', '{"Longueur":"2 m","Norme":"HDMI 2.1"}', '{"Câble"}', 1490, null, 500, 20, 5, false, false, 20),
+  ('ACC-PS4-PSU', 'alimentation-ps4-slim', 'Bloc d''alimentation PS4 Slim (ADP-160CR)', 'PART', 'PS4', (select id from public.console_models where slug = 'ps4-slim'), 'NEW', null, 'Bloc d''alimentation interne compatible PS4 Slim.', '{"Référence":"ADP-160CR / N16-160P1A"}', '{"Bloc d''alimentation"}', 3900, null, 2200, 4, 2, false, false, 21),
+  ('ACC-SW-CHG', 'chargeur-usb-c-switch', 'Chargeur USB-C 39 W — Switch', 'ACCESSORY', 'Switch', (select id from public.console_models where slug = 'switch'), 'NEW', null, 'Adaptateur secteur compatible dock Nintendo Switch.', '{"Puissance":"39 W","Connecteur":"USB-C"}', '{"Chargeur"}', 2490, null, 1200, 6, 2, false, false, 22),
+  ('ACC-PS2-MEM', 'carte-memoire-ps2-8mo', 'Carte mémoire 8 Mo — PS2', 'ACCESSORY', 'PS2', (select id from public.console_models where slug = 'ps2'), 'USED_A', 'Testée, formatée.', 'Carte mémoire officielle 8 Mo.', '{"Capacité":"8 Mo"}', '{"Carte mémoire"}', 1290, null, 400, 5, 2, true, false, 23),
+  ('ACC-N64-CTL', 'manette-n64-stick-neuf', 'Manette N64 — stick neuf', 'ACCESSORY', 'Nintendo 64', (select id from public.console_models where slug = 'nintendo-64'), 'REFURBISHED', 'Stick remplacé, boutons nettoyés.', 'Manette officielle Nintendo 64 avec stick neuf posé en atelier.', '{"Couleur":"Grise"}', '{"Manette"}', 3490, null, 1500, 3, 1, true, false, 24),
+  ('PRT-JC-STK', 'sticks-remplacement-joy-con', 'Sticks de remplacement Joy-Con (la paire)', 'PART', 'Switch', (select id from public.console_models where slug = 'switch'), 'NEW', null, 'Paire de sticks compatibles Joy-Con, pose possible en atelier.', '{"Compatibilité":"Joy-Con gauche et droit"}', '{"2 sticks","Tournevis Y"}', 1200, null, 500, 0, 2, false, false, 25),
+  ('PRT-PS5-HDMI', 'connecteur-hdmi-ps5', 'Connecteur HDMI PS5 (pièce)', 'PART', 'PS5', (select id from public.console_models where slug = 'ps5'), 'NEW', null, 'Connecteur HDMI d''origine pour PS5, pose en atelier recommandée.', '{"Compatibilité":"PS5 toutes révisions"}', '{"Connecteur"}', 1490, null, 600, 10, 3, false, false, 26),
+  ('COL-FIG-001', 'figurine-collector-vitrine', 'Figurine collector — vitrine', 'COLLECTIBLE', 'Multi', null, 'NEW', null, 'Figurine d''exposition, boîte d''origine.', '{"Hauteur":"25 cm"}', '{"Figurine","Boîte"}', 3400, null, 2000, 6, 2, false, false, 27),
+  ('GAM-PS1-U01', 'jeu-ps1-final-fantasy-vii', 'Final Fantasy VII — PS1', 'GAME', 'PS1', (select id from public.console_models where slug = 'ps1'), 'USED_C', 'Boîtier fissuré, disques rayés mais lisibles, notice absente.', 'Jeu PS1 PAL testé sur console.', '{"Région":"PAL"}', '{"Boîtier","3 disques"}', 3900, 5900, 1500, 1, 1, true, false, 28)
+on conflict (sku) do nothing;
+
+insert into public.site_settings (key, value, description, is_public) values
+  ('shop', '{"shipping_enabled":true,"shipping_fee_cents":690,"free_shipping_threshold_cents":8000,"pickup_enabled":true,"pickup_note":"Retrait au magasin aux horaires d''ouverture, sans rendez-vous.","shipping_note":"Colissimo suivi, expédition sous 48 h ouvrées après paiement."}', 'Boutique : livraison et retrait', true)
+on conflict (key) do nothing;
+
+insert into public.content_blocks (key, title, body, data) values
+  ('homepage.sale', 'Jeux, consoles et rétro.', 'Le stock du magasin de la rue de Rome, en ligne. Neuf, occasion révisée et garantie, accessoires et collector. Retrait boutique ou envoi partout en France.', '{"cta_primary":"Voir la boutique","cta_secondary":"Je revends ma console"}'),
+  ('homepage.tradein', 'Vendez-nous votre console', 'Estimation en ligne, paiement au comptoir le jour même. Consoles, jeux, manettes, collectors — du Master System à la PS5.', '{"cta":"Estimer mon lot"}'),
+  ('homepage.retro', 'Le mur du rétrogaming', 'Cartouches testées une à une, consoles recapées, notices d''origine. Les arrivages sont annoncés dans la boutique.', '{}')
+on conflict (key) do nothing;

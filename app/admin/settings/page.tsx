@@ -22,6 +22,7 @@ const WARRANTY: SettingField[] = [{ name: "default_months", label: "Durée par d
 const SHIPPING: SettingField[] = [{ name: "workshop_receiving_name", label: "Nom du destinataire (atelier)" }, { name: "workshop_receiving_address", label: "Adresse de réception (communiquée après paiement)" }, { name: "intro", label: "Texte transport (checkout)", type: "textarea" }, { name: "return_carrier_note", label: "Note sur le retour", type: "textarea" }];
 const TRUST: SettingField[] = [{ name: "years_of_experience", label: "Années d'expérience (vide si non communiqué)", type: "number" }, { name: "company_story", label: "Historique de l'entreprise", type: "textarea" }, { name: "new_management_note", label: "Nouvelle direction / nouvelles procédures", type: "textarea" }, { name: "workshop_intro", label: "Présentation de l'atelier", type: "textarea" }, { name: "team_intro", label: "Présentation des techniciens", type: "textarea" }];
 const SOCIAL: SettingField[] = [{ name: "instagram", label: "Instagram" }, { name: "facebook", label: "Facebook" }, { name: "tiktok", label: "TikTok" }, { name: "youtube", label: "YouTube" }, { name: "google_business", label: "Fiche Google" }];
+const SHOP: SettingField[] = [{ name: "pickup_enabled", label: "Retrait au magasin possible", type: "checkbox" }, { name: "shipping_enabled", label: "Envoi possible", type: "checkbox" }, { name: "shipping_fee_cents", label: "Frais d'envoi (€)", type: "cents" }, { name: "free_shipping_threshold_cents", label: "Envoi offert à partir de (€, 0 = jamais)", type: "cents" }, { name: "pickup_note", label: "Note retrait (affichée au client)", type: "textarea" }, { name: "shipping_note", label: "Note envoi (affichée au client)", type: "textarea" }];
 const CHECKOUT: SettingField[] = [{ name: "terms_version", label: "Version des CGV acceptée au checkout", hint: "Enregistrée sur chaque commande" }, { name: "show_terms_summary", label: "Afficher le résumé des conditions avant paiement", type: "checkbox" }];
 
 export default async function SettingsPage() {
@@ -36,6 +37,7 @@ export default async function SettingsPage() {
       <Section title="Transport"><SettingsForm settingKey="shipping_info" values={s.shipping_info as unknown as Record<string, unknown>} fields={SHIPPING} /></Section>
       <Section title="Confiance et réputation" description="Ne renseignez que des informations réelles : rien n'est inventé par le site."><SettingsForm settingKey="trust" values={s.trust as unknown as Record<string, unknown>} fields={TRUST} /></Section>
       <Section title="Réseaux sociaux"><SettingsForm settingKey="social" values={s.social as unknown as Record<string, unknown>} fields={SOCIAL} /></Section>
+      <Section title="Boutique (vente)"><SettingsForm settingKey="shop" values={s.shop as unknown as Record<string, unknown>} fields={SHOP} /></Section>
       <Section title="Checkout"><SettingsForm settingKey="checkout" values={s.checkout as unknown as Record<string, unknown>} fields={CHECKOUT} /></Section>
     </div>
   );

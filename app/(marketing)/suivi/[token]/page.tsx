@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { StatusTimeline } from "@/components/ui/timeline";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { computeTimeline, ORDER_STATUS_DESCRIPTIONS, ORDER_STATUS_LABELS, statusTone } from "@/lib/orders/status";
+import { computeWorkshopTimeline, ORDER_STATUS_DESCRIPTIONS, ORDER_STATUS_LABELS, statusTone, workshopStepIndex } from "@/lib/orders/status";
 import { formatDateTime } from "@/lib/utils/format";
 
 export const dynamic = "force-dynamic";
@@ -25,9 +25,11 @@ export default async function TrackingTokenPage({ params }: { params: Promise<{ 
   if (!order) notFound();
   const [{ data: events }, { data: shipments }] = await Promise.all([
     db.from("order_events").select("id, title, description, created_at").eq("order_id", order.id).eq("is_public", true).order("created_at", { ascending: false }).limit(30),
-    db.from("shipments").select("direction, carrier_name, tracking_number, tracking_url, status").eq("order_id", order.id).eq("direction", "TO_CUSTOMER"),
+    db.from("shipments").select("direction, carrier_name, tracking_number, tracking_url, status").eq("order_id", order.id),
   ]);
-  const returnShipment = shipments?.[0];
+  const returnShipment = shipments?.find((s) => s.direction === "TO_CUSTOMER");
+  const outbound = shipments?.find((s) => s.direction === "TO_WORKSHOP");
+  const beforeReception = workshopStepIndex(order.status) < 0;
 
   return (
     <Container className="max-w-2xl py-10 sm:py-16">
@@ -44,9 +46,23 @@ export default async function TrackingTokenPage({ params }: { params: Promise<{ 
         </div>
         {ORDER_STATUS_DESCRIPTIONS[order.status] ? <p className="mt-3 text-sm text-ink-soft">{ORDER_STATUS_DESCRIPTIONS[order.status]}</p> : null}
         <div className="mt-6">
-          <StatusTimeline steps={computeTimeline(order.status)} />
+          <StatusTimeline steps={computeWorkshopTimeline(order.status)} />
+          {beforeReception ? <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">Console attendue à l&apos;atelier — les étapes démarrent à réception du colis.</p> : null}
         </div>
       </div>
+      {outbound?.tracking_number ? (
+        <div className="mt-4 rounded-lg border border-border bg-surface p-5 text-sm">
+          <p className="font-semibold text-ink">Envoi vers l&apos;atelier</p>
+          <p className="mt-1 text-ink-soft">
+            {outbound.carrier_name ?? "Transporteur"} — suivi <span className="font-mono text-ink">{outbound.tracking_number}</span>
+          </p>
+          {outbound.tracking_url ? (
+            <a href={outbound.tracking_url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-accent underline">
+              Suivre chez le transporteur
+            </a>
+          ) : null}
+        </div>
+      ) : null}
       {returnShipment?.tracking_number ? (
         <div className="mt-4 rounded-lg border border-border bg-surface p-5 text-sm">
           <p className="font-semibold text-ink">Retour de votre console</p>

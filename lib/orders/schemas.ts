@@ -51,9 +51,23 @@ export const createOrderSchema = z.object({
   customer_notes: z.string().trim().max(2000).optional().or(z.literal("")),
   console_serial_number: z.string().trim().max(60).optional().or(z.literal("")),
   console_already_opened: z.boolean().default(false),
+  symptoms: z.array(z.string().trim().min(1).max(60)).max(12).default([]),
+  photos: z.array(z.string().max(200)).max(6).default([]),
   accept_terms: z.literal(true, { message: "Vous devez accepter les conditions générales" }),
   attribution: attributionSchema,
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type SelectionInput = z.infer<typeof selectionSchema>;
+
+/** Commande boutique : lignes (identifiants + quantités), retrait ou envoi, coordonnées. */
+export const shopOrderSchema = z.object({
+  lines: z.array(z.object({ productId: z.string().uuid(), quantity: z.number().int().min(1).max(99) })).min(1, "Panier vide").max(30),
+  fulfillment: z.enum(["PICKUP", "SHIPPING"]),
+  customer: customerSchema,
+  address: addressSchema.nullable(),
+  customer_notes: z.string().trim().max(1000).optional().or(z.literal("")),
+  accept_terms: z.literal(true, { message: "Vous devez accepter les conditions générales" }),
+  attribution: attributionSchema,
+});
+export type ShopOrderInput = z.infer<typeof shopOrderSchema>;
