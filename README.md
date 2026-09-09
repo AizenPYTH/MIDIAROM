@@ -46,6 +46,16 @@ select u.id, u.id::text, 'email',
   from auth.users u where u.email = 'admin@example.com'
 on conflict (provider_id, provider) do nothing;
 
+-- Le profil applicatif peut manquer si le compte a été créé avant l'application
+-- des migrations : le créer, puis poser le rôle.
+insert into public.profiles (id, email, first_name, last_name, phone)
+select u.id, u.email,
+       nullif(u.raw_user_meta_data ->> 'first_name', ''),
+       nullif(u.raw_user_meta_data ->> 'last_name', ''),
+       nullif(u.raw_user_meta_data ->> 'phone', '')
+  from auth.users u where u.email = 'admin@example.com'
+on conflict (id) do nothing;
+
 update public.profiles set role = 'SUPER_ADMIN' where email = 'admin@example.com';
 ```
 

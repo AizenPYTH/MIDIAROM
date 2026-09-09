@@ -93,6 +93,26 @@ Deux pièges spécifiques à Vercel :
 - les variables sont définies **par environnement**. Une valeur renseignée seulement
   pour Preview laisse la Production sans valeur.
 
+## Espace client vide ou page blanche après connexion
+
+Un compte authentifié dont la ligne `public.profiles` est absente rendait l'espace
+client inutilisable : la page privée renvoyait vers la connexion, que le proxy
+renvoyait vers l'espace client, d'où une boucle de redirection et une page blanche.
+Cet état survient quand le compte a été créé hors de l'application (dashboard
+Supabase, import) avant que le déclencheur `on_auth_user_created` n'existe.
+
+L'application recrée désormais le profil manquant à la volée, avec le rôle par défaut
+`CUSTOMER`. Pour un administrateur, posez ensuite le rôle :
+
+```sql
+update public.profiles set role = 'SUPER_ADMIN' where email = 'vous@votre-domaine.fr';
+```
+
+Si la réparation est impossible (clé `SUPABASE_SERVICE_ROLE_KEY` absente ou refusée,
+table `profiles` inexistante), la page de connexion affiche un message explicite au
+lieu de boucler. Vérifiez alors la clé de service et l'application des migrations avec
+`npm run check:supabase`.
+
 ## Contrôles avant mise en ligne
 
 - `npm run check` et `npm run test:db` verts.

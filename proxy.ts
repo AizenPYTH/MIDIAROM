@@ -21,7 +21,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && AUTH_PAGES.includes(pathname)) {
+  // « error » signale une session inexploitable (profil manquant) : renvoyer vers
+  // l'espace client bouclerait avec la redirection posée par le layout.
+  if (user && AUTH_PAGES.includes(pathname) && !request.nextUrl.searchParams.has("error")) {
     const url = request.nextUrl.clone();
     url.pathname = "/compte";
     url.search = "";
