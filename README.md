@@ -42,3 +42,5 @@ Voir [`docs/STATUS.md`](docs/STATUS.md) : ce qui est implémenté, à configurer
 ## Documentation
 
 Voir le dossier [`docs/`](docs/) : architecture, base de données, logique métier, commandes, transport, paiements, authentification, SEO, analytics, déploiement.
+
+Le design (handoff Claude Design « 207 Mediarom ») et sa correspondance avec les pages sont décrits dans [`docs/DESIGN.md`](docs/DESIGN.md).

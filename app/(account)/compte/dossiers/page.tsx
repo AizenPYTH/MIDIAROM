@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { ROUTES } from "@/config/site";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +40,7 @@ export default async function OrdersPage() {
                     Commandé le {formatDate(order.created_at)} · {formatPrice(order.total_cents)}
                   </p>
                 </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-ink-muted" aria-hidden="true" />
+                <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted" aria-hidden="true">Ouvrir →</span>
               </Link>
             </li>
           ))}

@@ -2,32 +2,46 @@ import Link from "next/link";
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
+/** Cellule KPI du handoff : étiquette mono, valeur 26 px / 800, note 12.5 px. */
 export function StatCard({ label, value, hint, href, tone }: { label: string; value: React.ReactNode; hint?: string; href?: string; tone?: "warning" | "info" | "success" }) {
   const body = (
-    <div className={cn("rounded-lg border border-border bg-surface p-4", href && "transition-colors hover:border-accent")}>
-      <p className="text-xs font-medium uppercase tracking-wider text-ink-muted">{label}</p>
-      <p className={cn("mt-1 text-2xl font-bold tabular-nums", tone === "warning" ? "text-warning" : tone === "success" ? "text-success" : "text-ink")}>{value}</p>
-      {hint ? <p className="mt-0.5 text-xs text-ink-muted">{hint}</p> : null}
+    <div className={cn("flex h-full flex-col gap-[5px] bg-surface px-5 py-4", href && "transition-colors hover:bg-surface-muted")}>
+      <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">{label}</span>
+      <strong className={cn("text-[26px] font-extrabold tracking-[-0.02em]", tone === "warning" ? "text-warning" : tone === "success" ? "text-success" : tone === "info" ? "text-info" : "text-ink")}>{value}</strong>
+      {hint ? <span className="text-[12.5px] text-ink-muted">{hint}</span> : <span className="text-[12.5px] text-transparent" aria-hidden="true">·</span>}
     </div>
   );
-  return href ? <Link href={href}>{body}</Link> : body;
+  return href ? (
+    <Link href={href} className="min-w-0">
+      {body}
+    </Link>
+  ) : (
+    body
+  );
 }
 
-export function Table({ children, className }: { children: React.ReactNode; className?: string }) {
+/** Bandeau KPI : cellules séparées par des filets de 1 px. */
+export function StatBand({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("grid gap-px border-y border-border bg-border [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]", className)}>{children}</div>;
+}
+
+export function Table({ children, className, minWidth = 640 }: { children: React.ReactNode; className?: string; minWidth?: number }) {
   return (
-    <div className={cn("overflow-x-auto rounded-lg border border-border bg-surface", className)}>
-      <table className="w-full min-w-[640px] text-sm">{children}</table>
+    <div className={cn("overflow-x-auto border border-border", className)}>
+      <table className="w-full text-[14px]" style={{ minWidth }}>
+        {children}
+      </table>
     </div>
   );
 }
 
 export function Th({ children, className }: { children?: React.ReactNode; className?: string }) {
-  return <th className={cn("border-b border-border px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted", className)}>{children}</th>;
+  return <th className={cn("bg-surface px-3.5 py-[11px] text-left font-mono text-[10.5px] font-normal uppercase tracking-[0.08em] text-ink-muted", className)}>{children}</th>;
 }
 
 export function Td({ children, className, colSpan }: { children?: React.ReactNode; className?: string; colSpan?: number }) {
   return (
-    <td className={cn("border-b border-border px-3 py-2.5 align-top text-ink", className)} colSpan={colSpan}>
+    <td className={cn("border-t border-border px-3.5 py-3 align-top text-ink", className)} colSpan={colSpan}>
       {children}
     </td>
   );
@@ -35,29 +49,48 @@ export function Td({ children, className, colSpan }: { children?: React.ReactNod
 
 export function Section({ title, description, actions, children, className }: { title: string; description?: string; actions?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <section className={cn("rounded-lg border border-border bg-surface", className)}>
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-3.5">
+    <section className={cn("border border-border-strong bg-surface", className)}>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
         <div>
-          <h2 className="font-semibold text-ink">{title}</h2>
-          {description ? <p className="text-xs text-ink-muted">{description}</p> : null}
+          <h2 className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">{title}</h2>
+          {description ? <p className="mt-1 text-[12.5px] text-ink-faint">{description}</p> : null}
         </div>
         {actions}
       </div>
-      <div className="px-5 py-4">{children}</div>
+      <div className="px-4 py-4">{children}</div>
     </section>
   );
 }
 
+/** Onglets mono majuscules, actif souligné 2 px bleu (fiche dossier, listes). */
 export function Tabs({ tabs, current, hrefFor }: { tabs: { key: string; label: string; count?: number }[]; current: string; hrefFor: (key: string) => string }) {
   return (
-    <nav className="flex w-full max-w-full gap-1 overflow-x-auto border-b border-border" aria-label="Onglets">
+    <nav className="flex w-full max-w-full gap-[2px] overflow-x-auto border-b border-border" aria-label="Onglets">
       {tabs.map((t) => (
-        <Link key={t.key} href={hrefFor(t.key)} className={cn("-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium", current === t.key ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink")} aria-current={current === t.key ? "page" : undefined}>
+        <Link
+          key={t.key}
+          href={hrefFor(t.key)}
+          className={cn("-mb-px flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3.5 font-mono text-[12px] uppercase tracking-[0.07em]", current === t.key ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink")}
+          aria-current={current === t.key ? "page" : undefined}
+        >
           {t.label}
-          {t.count ? <span className="rounded-full bg-surface-muted px-1.5 text-[11px] text-ink-soft">{t.count}</span> : null}
+          {t.count ? <span className="bg-surface-strong px-1.5 py-0.5 font-mono text-[10.5px] text-ink-soft">{t.count}</span> : null}
         </Link>
       ))}
     </nav>
+  );
+}
+
+/** Filtres en boutons mono (« Tout », statuts…) ; actif = papier sur encre. */
+export function FilterChips({ items, current, hrefFor }: { items: { key: string; label: string }[]; current: string; hrefFor: (key: string) => string }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map((it) => (
+        <Link key={it.key} href={hrefFor(it.key)} className={cn("whitespace-nowrap border border-border-strong px-[11px] py-[9px] font-mono text-[11px] uppercase tracking-[0.06em]", current === it.key ? "bg-paper text-ink-900" : "bg-transparent text-ink-faint hover:text-ink")} aria-current={current === it.key ? "true" : undefined}>
+          {it.label}
+        </Link>
+      ))}
+    </div>
   );
 }
 
@@ -65,13 +98,21 @@ export function Pagination({ page, pageSize, total, hrefFor }: { page: number; p
   const pages = Math.max(1, Math.ceil(total / pageSize));
   if (pages <= 1) return null;
   return (
-    <div className="flex items-center justify-between text-sm text-ink-muted">
+    <div className="flex items-center justify-between font-mono text-[11.5px] text-ink-muted">
       <span>
         Page {page} / {pages} · {total} résultat{total > 1 ? "s" : ""}
       </span>
       <div className="flex gap-2">
-        {page > 1 ? <Link href={hrefFor(page - 1)} className="rounded-md border border-border px-3 py-1 hover:bg-surface-muted">Précédent</Link> : null}
-        {page < pages ? <Link href={hrefFor(page + 1)} className="rounded-md border border-border px-3 py-1 hover:bg-surface-muted">Suivant</Link> : null}
+        {page > 1 ? (
+          <Link href={hrefFor(page - 1)} className="border border-border-strong px-3 py-1.5 uppercase tracking-[0.06em] hover:text-ink">
+            Précédent
+          </Link>
+        ) : null}
+        {page < pages ? (
+          <Link href={hrefFor(page + 1)} className="border border-border-strong px-3 py-1.5 uppercase tracking-[0.06em] hover:text-ink">
+            Suivant
+          </Link>
+        ) : null}
       </div>
     </div>
   );

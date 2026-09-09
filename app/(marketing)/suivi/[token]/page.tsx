@@ -76,10 +76,10 @@ export default async function TrackingTokenPage({ params }: { params: Promise<{ 
           </ol>
         </section>
       ) : null}
-      <div className="mt-8 rounded-lg bg-primary-soft p-5">
-        <p className="font-semibold text-ink">Photos, diagnostic, devis et messages</p>
-        <p className="mt-1 text-sm text-ink-soft">Ces éléments sont réservés à votre espace client, protégé par mot de passe.</p>
-        <ButtonLink href={`${ROUTES.accountOrders}/${order.id}`} size="sm" className="mt-3">
+      <div className="mt-8 bg-ink-900 p-5 text-paper">
+        <p className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Photos, diagnostic, devis et messages</p>
+        <p className="mt-1 text-[15px] text-[#c4bdae]">Ces éléments sont réservés à votre espace client, protégé par mot de passe.</p>
+        <ButtonLink href={`${ROUTES.accountOrders}/${order.id}`} variant="accent" size="sm" className="mt-3">
           Ouvrir mon espace client
         </ButtonLink>
       </div>

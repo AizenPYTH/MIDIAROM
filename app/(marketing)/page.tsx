@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { ROUTES, SITE_URL } from "@/config/site";
-import { Container, SectionTitle } from "@/components/ui/misc";
-import { ButtonLink } from "@/components/ui/button";
-import { ConsoleGrid, CtaBanner, FaqList, PopularRepairs, ReassuranceGrid, ReviewsSection, StepsList } from "@/components/marketing/sections";
-import { getActiveBrands, getActiveModels } from "@/lib/repair/catalog";
-import { blockData, getContentBlocks, getFaqItems, getSeoPage } from "@/lib/content";
+import { Container, Eyebrow } from "@/components/ui/misc";
+import { CtaBanner, FaqList, GuaranteeStrip, HowToList, PriceList, ReviewsSection, StoreSection } from "@/components/marketing/sections";
+import { RepairForm } from "@/components/repair/repair-form";
+import { getRepairFormBase } from "@/lib/repair/form-data";
+import { blockData, getContentBlocks, getFaqItems, getGalleryItems, getSeoPage } from "@/lib/content";
 import { getBrandSettings } from "@/lib/settings";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { formatPrice } from "@/lib/utils/format";
 
 export const revalidate = 600;
 
@@ -21,50 +21,49 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const DEFAULT_REASSURANCE = [
-  { icon: "Truck", title: "Réparation à distance", text: "Envoyez votre console depuis n'importe où en France." },
-  { icon: "Wrench", title: "Atelier spécialisé", text: "Des techniciens équipés pour la micro-soudure et les consoles récentes." },
-  { icon: "Eye", title: "Suivi du dossier", text: "Photos à réception, diagnostic, devis, tests : tout est tracé." },
-  { icon: "ShieldCheck", title: "Garantie sur l'intervention", text: "Chaque réparation précise sa garantie." },
-  { icon: "Lock", title: "Paiement sécurisé", text: "Paiement en ligne sécurisé." },
+const DEFAULT_GUARANTEES = ["Devis avant toute intervention", "Dossier photographié et suivi", "Garantie sur l'intervention", "Paiement sécurisé"];
+const DEFAULT_HOWTO = [
+  { title: "Vous décrivez la panne", text: "Console, prestation, symptômes. Trois minutes." },
+  { title: "Étiquette prépayée", text: "Reçue par e-mail selon la formule choisie, à imprimer et coller sur le colis." },
+  { title: "Diagnostic à réception", text: "Photos, constat, devis complémentaire par e-mail si nécessaire, validation en un clic." },
+  { title: "Retour suivi", text: "Tests de contrôle qualité, garantie sur l'intervention, numéro de suivi du colis." },
 ];
 
 export default async function HomePage() {
-  const [brands, models, blocks, faq, brand] = await Promise.all([
-    getActiveBrands(),
-    getActiveModels(),
-    getContentBlocks(["homepage.hero", "homepage.reassurance", "how_it_works.steps", "trust.intro"]),
+  const [blocks, faq, brand, form, gallery] = await Promise.all([
+    getContentBlocks(["homepage.hero", "homepage.tracking", "homepage.repair", "homepage.reassurance", "trust.intro"]),
     getFaqItems(),
     getBrandSettings(),
+    getRepairFormBase(),
+    getGalleryItems(),
   ]);
   const hero = blocks["homepage.hero"];
-  const heroData = blockData(hero, { cta_primary: "Faire réparer ma console", cta_secondary: "Comment ça marche ?" });
-  const reassurance = blockData(blocks["homepage.reassurance"], { items: DEFAULT_REASSURANCE }).items;
-  const steps = blockData(blocks["how_it_works.steps"], { steps: [] as { title: string; text: string }[] }).steps;
-  const trust = blocks["trust.intro"];
+  const heroData = blockData(hero, { cta_primary: "Démarrer une réparation", cta_secondary: "Grille tarifaire" });
+  const tracking = blocks["homepage.tracking"];
+  const trackingData = blockData(tracking, { cta_primary: "Suivre ma réparation", cta_secondary: "Mon espace client" });
+  const repairBlock = blocks["homepage.repair"];
+  const howto = blockData(repairBlock, { howto: DEFAULT_HOWTO }).howto;
+  const reassurance = blockData(blocks["homepage.reassurance"], { items: [] as { title: string }[] }).items.map((i) => i.title);
+  const guarantees = (reassurance.length ? reassurance : DEFAULT_GUARANTEES).slice(0, 4);
 
   const db = createSupabaseAdminClient();
   const [{ data: popular }, { data: reviews }] = await Promise.all([
     db
       .from("repairs")
-      .select("id, name, price_cents, summary, slug, model:console_models!inner(slug, name, is_active), fault:faults!inner(slug, is_active)")
+      .select("id, name, price_cents, is_diagnostic_only, model:console_models!inner(slug, name, is_active), fault:faults!inner(slug, is_active)")
       .eq("is_active", true)
       .eq("is_seo_published", true)
       .order("display_order")
-      .limit(6),
+      .limit(12),
     db.from("public_reviews").select("*").order("is_featured", { ascending: false }).limit(6),
   ]);
-
-  const popularRepairs = (popular ?? [])
+  const priceList = (popular ?? [])
     .filter((r) => (r.model as { is_active: boolean }).is_active && (r.fault as { is_active: boolean }).is_active)
+    .slice(0, 5)
     .map((r) => ({
-      id: r.id,
-      name: r.name,
-      price_cents: r.price_cents,
-      summary: r.summary,
-      modelSlug: (r.model as { slug: string }).slug,
-      modelName: (r.model as { name: string }).name,
-      faultSlug: (r.fault as { slug: string }).slug,
+      label: `${r.name}${r.is_diagnostic_only ? " (déduit si réparation)" : ""}`,
+      price: formatPrice(r.price_cents),
+      href: `${ROUTES.repair}/${(r.model as { slug: string }).slug}/${(r.fault as { slug: string }).slug}`,
     }));
 
   const jsonLd = {
@@ -75,110 +74,92 @@ export default async function HomePage() {
     url: SITE_URL,
     ...(brand.email ? { email: brand.email } : {}),
     ...(brand.phone ? { telephone: brand.phone } : {}),
+    ...(brand.address_line1 ? { address: { "@type": "PostalAddress", streetAddress: brand.address_line1, postalCode: brand.postal_code, addressLocality: brand.city, addressCountry: "FR" } } : {}),
     areaServed: "FR",
   };
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      {/* Hero */}
-      <section className="border-b border-border bg-surface">
-        <Container className="grid items-center gap-10 py-14 sm:py-20 lg:grid-cols-[1.2fr_1fr]">
-          <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-accent">{brand.tagline}</p>
-            <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl lg:text-5xl">
-              {hero?.title ?? "Faites réparer votre console, où que vous soyez en France."}
-            </h1>
-            <p className="mt-4 max-w-xl text-lg text-ink-soft">
-              {hero?.body ?? "Choisissez votre console et votre panne, commandez en ligne et suivez votre réparation de l'envoi jusqu'au retour."}
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href={ROUTES.repair} variant="accent" size="lg">
-                {heroData.cta_primary}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </ButtonLink>
-              <ButtonLink href={ROUTES.howItWorks} variant="outline" size="lg">
-                {heroData.cta_secondary}
-              </ButtonLink>
-            </div>
-          </div>
-          <div className="rounded-lg border border-border bg-bg p-5 sm:p-6">
-            <p className="text-sm font-semibold text-ink">Exemple de parcours</p>
-            <ol className="mt-3 space-y-2 text-sm text-ink-soft">
-              <li className="flex gap-2"><span className="font-semibold text-ink">1.</span> « Ma PS5 n&apos;affiche plus d&apos;image. »</li>
-              <li className="flex gap-2"><span className="font-semibold text-ink">2.</span> Réparation PS5 → Port HDMI → prix affiché immédiatement.</li>
-              <li className="flex gap-2"><span className="font-semibold text-ink">3.</span> Options d&apos;entretien compatibles proposées, sans obligation.</li>
-              <li className="flex gap-2"><span className="font-semibold text-ink">4.</span> Paiement, numéro de dossier REP-XXXXXX, instructions d&apos;envoi.</li>
-              <li className="flex gap-2"><span className="font-semibold text-ink">5.</span> Réception photographiée, diagnostic, réparation, tests, retour suivi.</li>
-            </ol>
-            <Link href={ROUTES.tracking} className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
-              Suivre un dossier existant <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+
+      {/* Hero deux colonnes : réparation (papier) / suivi (encre) */}
+      <section id="top" className="grid [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
+        <div className="flex flex-col gap-[18px] border-r border-border bg-bg-alt px-11 pb-13 pt-16 max-sm:px-6">
+          <Eyebrow tone="repair">01 — Réparation</Eyebrow>
+          <h1 className="text-[clamp(38px,5vw,62px)] font-extrabold leading-[0.98] tracking-[-0.03em] text-ink">{hero?.title ?? "Envoyez-nous votre console."}</h1>
+          <p className="max-w-[38ch] text-[17px] leading-[1.5] text-ink-soft">{hero?.body ?? "Décrivez la panne, choisissez la prestation, imprimez l'étiquette. Diagnostic à réception, devis avant toute intervention complémentaire."}</p>
+          <div className="mt-2 flex flex-wrap gap-2.5">
+            <Link href="#reparation" className="bg-accent px-[22px] py-3.5 text-[15px] font-semibold text-white hover:bg-ink-900">
+              {heroData.cta_primary}
+            </Link>
+            <Link href="#tarifs" className="border border-ink px-[22px] py-3.5 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper">
+              {heroData.cta_secondary}
             </Link>
           </div>
-        </Container>
+        </div>
+        <div className="flex flex-col gap-[18px] bg-ink-900 px-11 pb-13 pt-16 text-paper max-sm:px-6">
+          <Eyebrow tone="repair">02 — Suivi</Eyebrow>
+          <h1 className="text-[clamp(38px,5vw,62px)] font-extrabold leading-[0.98] tracking-[-0.03em]">{tracking?.title ?? "Où en est ma console ?"}</h1>
+          <p className="max-w-[38ch] text-[17px] leading-[1.5] text-[#c4bdae]">{tracking?.body ?? "Votre numéro de dossier et votre e-mail suffisent pour voir le statut et les étapes."}</p>
+          <div className="mt-2 flex flex-wrap gap-2.5">
+            <Link href={ROUTES.tracking} className="bg-accent px-[22px] py-3.5 text-[15px] font-semibold text-white hover:bg-paper hover:text-ink-900">
+              {trackingData.cta_primary}
+            </Link>
+            <Link href={ROUTES.account} className="border border-[#55503f] px-[22px] py-3.5 text-[15px] font-semibold text-paper hover:border-paper">
+              {trackingData.cta_secondary}
+            </Link>
+          </div>
+        </div>
       </section>
 
-      <section className="py-12 sm:py-16">
-        <Container>
-          <ReassuranceGrid items={reassurance} />
-        </Container>
+      <GuaranteeStrip items={guarantees} />
+
+      {/* Réparation : explication + fiche */}
+      <section id="reparation" className="bg-ink-900 px-6 py-[76px] text-paper" style={{ scrollMarginTop: 80 }}>
+        <div className="mx-auto grid max-w-[1280px] items-start gap-12 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
+          <div className="flex flex-col gap-[26px]">
+            <div>
+              <Eyebrow tone="repair">Atelier</Eyebrow>
+              <h2 className="mt-2 text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em]">{repairBlock?.title ?? "Réparation par envoi"}</h2>
+              <p className="mt-3.5 max-w-[42ch] text-[16.5px] leading-[1.55] text-[#c4bdae]">{repairBlock?.body ?? "Vous décrivez la panne en ligne, vous recevez vos instructions d'envoi. À réception : diagnostic, devis si nécessaire, réparation. Aucune intervention sans votre accord."}</p>
+            </div>
+            <HowToList steps={howto.slice(0, 4)} />
+            <PriceList id="tarifs" items={priceList} />
+            <p className="font-mono text-[11.5px] text-ink-muted">
+              <Link href={ROUTES.howItWorks} className="hover:text-paper">
+                Toutes les étapes
+              </Link>
+              {" · "}
+              <Link href={ROUTES.trust} className="hover:text-paper">
+                Pourquoi nous confier votre console
+              </Link>
+            </p>
+          </div>
+          <RepairForm models={form.models} conditions={form.conditions} initialCustomer={null} initialAddress={null} isLoggedIn={false} />
+        </div>
       </section>
-
-      <section className="border-y border-border bg-surface py-12 sm:py-16">
-        <Container>
-          <SectionTitle title="Choisissez votre console" description="Sélectionnez votre modèle pour voir les pannes prises en charge et les prix." />
-          <ConsoleGrid brands={brands} models={models} />
-        </Container>
-      </section>
-
-      {popularRepairs.length ? (
-        <section className="py-12 sm:py-16">
-          <Container>
-            <SectionTitle title="Réparations les plus demandées" description="Prix affichés TTC, transport en sus selon la formule choisie." />
-            <PopularRepairs repairs={popularRepairs} />
-          </Container>
-        </section>
-      ) : null}
-
-      {steps.length ? (
-        <section className="border-y border-border bg-surface py-12 sm:py-16">
-          <Container>
-            <SectionTitle title="Comment ça marche ?" description="Un parcours simple, documenté à chaque étape." />
-            <StepsList steps={steps.slice(0, 6)} compact />
-            <ButtonLink href={ROUTES.howItWorks} variant="link" className="mt-6">
-              Voir toutes les étapes →
-            </ButtonLink>
-          </Container>
-        </section>
-      ) : null}
-
-      {trust ? (
-        <section className="py-12 sm:py-16">
-          <Container className="max-w-3xl text-center">
-            <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">{trust.title}</h2>
-            <p className="mt-3 text-ink-soft">{trust.body}</p>
-            <ButtonLink href={ROUTES.trust} variant="outline" className="mt-6">
-              Pourquoi nous confier votre console
-            </ButtonLink>
-          </Container>
-        </section>
-      ) : null}
 
       <ReviewsSection reviews={reviews ?? []} />
 
       {faq.length ? (
-        <section className="border-t border-border bg-surface py-12 sm:py-16">
-          <Container className="max-w-3xl">
-            <SectionTitle title="Questions fréquentes" />
+        <section className="border-t border-border">
+          <Container className="grid gap-10 py-[72px] [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
+            <div>
+              <Eyebrow>FAQ</Eyebrow>
+              <h2 className="mt-2 text-[clamp(28px,3.4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">Questions fréquentes</h2>
+              <p className="mt-3 max-w-[42ch] text-[16px] text-ink-soft">{blocks["trust.intro"]?.body ?? "Envoi, délais, devis complémentaire, garantie : les réponses avant de commander."}</p>
+              <Link href={ROUTES.faq} className="mt-4 inline-block font-mono text-[12.5px] uppercase tracking-[0.06em] text-sale underline underline-offset-4">
+                Toutes les questions
+              </Link>
+            </div>
             <FaqList items={faq.slice(0, 6)} />
-            <ButtonLink href={ROUTES.faq} variant="link" className="mt-4">
-              Toutes les questions →
-            </ButtonLink>
           </Container>
         </section>
       ) : null}
 
-      <CtaBanner title="Prêt à faire réparer votre console ?" text="Choisissez votre panne, commandez en ligne et suivez chaque étape depuis votre espace client." />
+      <StoreSection brand={brand} photo={gallery[0] ?? null} />
+
+      <CtaBanner title="Prêt à faire réparer votre console ?" text="Choisissez la prestation, envoyez la console et suivez chaque étape depuis votre espace client." />
     </>
   );
 }

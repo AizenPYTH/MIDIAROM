@@ -1,49 +1,42 @@
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
+/** Champs du handoff : fond blanc (encre en admin), contour 1 px, padding 12 px, 15 px, aucun arrondi. */
 const inputBase =
-  "block w-full rounded-md border border-border-strong bg-surface px-3.5 py-2.5 text-[15px] text-ink placeholder:text-ink-muted/70 shadow-sm focus:border-accent disabled:bg-surface-muted disabled:text-ink-muted aria-[invalid=true]:border-danger";
+  "block w-full border border-border-strong bg-field px-3 py-3 text-[15px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none disabled:bg-surface-muted disabled:text-ink-muted aria-[invalid=true]:border-danger";
 
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("mb-1.5 block text-sm font-medium text-ink", className)} {...props} />;
+  return <label className={cn("mb-1.5 block font-mono text-[11px] uppercase tracking-[0.08em] text-ink-soft", className)} {...props} />;
 }
 
-export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input(
-  { className, ...props },
-  ref,
-) {
+export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...props }, ref) {
   return <input ref={ref} className={cn(inputBase, className)} {...props} />;
 });
 
-export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
-  function Textarea({ className, ...props }, ref) {
-    return <textarea ref={ref} className={cn(inputBase, "min-h-[96px]", className)} {...props} />;
-  },
-);
+export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(function Textarea({ className, ...props }, ref) {
+  return <textarea ref={ref} className={cn(inputBase, "min-h-[96px] resize-y leading-normal", className)} {...props} />;
+});
 
-export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(function Select(
-  { className, children, ...props },
-  ref,
-) {
+export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(function Select({ className, children, ...props }, ref) {
   return (
-    <select ref={ref} className={cn(inputBase, "pr-9 appearance-none bg-no-repeat", className)} style={{
-      backgroundImage:
-        "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
-      backgroundPosition: "right 0.75rem center",
-    }} {...props}>
+    <select
+      ref={ref}
+      className={cn(inputBase, "appearance-none bg-no-repeat pr-9", className)}
+      style={{
+        backgroundImage:
+          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238a8271' stroke-width='1.5' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+        backgroundPosition: "right 0.75rem center",
+      }}
+      {...props}
+    >
       {children}
     </select>
   );
 });
 
+/** Case à cocher 16 × 16 contour encre, remplie bleu quand cochée (comme les lignes de prestation). */
 export function Checkbox({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      type="checkbox"
-      className={cn("h-4.5 w-4.5 shrink-0 rounded border-border-strong text-accent accent-[var(--color-accent)]", className)}
-      {...props}
-    />
-  );
+  return <input type="checkbox" className={cn("h-4 w-4 shrink-0 appearance-none border border-ink bg-field checked:border-accent checked:bg-accent", className)} {...props} />;
 }
 
 export interface FieldProps {
@@ -62,7 +55,11 @@ export function Field({ label, htmlFor, hint, error, required, children, classNa
     <div className={cn("w-full", className)}>
       <Label htmlFor={htmlFor}>
         {label}
-        {required ? <span className="ml-0.5 text-danger" aria-hidden="true">*</span> : null}
+        {required ? (
+          <span className="ml-0.5 text-sale" aria-hidden="true">
+            *
+          </span>
+        ) : null}
       </Label>
       {children}
       {hint && !error ? (
@@ -82,7 +79,7 @@ export function Field({ label, htmlFor, hint, error, required, children, classNa
 export function FormError({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <div role="alert" className="rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+    <div role="alert" className="border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
       {message}
     </div>
   );
@@ -91,7 +88,7 @@ export function FormError({ message }: { message?: string | null }) {
 export function FormSuccess({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <div role="status" className="rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
+    <div role="status" className="border border-success bg-success-soft px-4 py-3 text-sm text-success">
       {message}
     </div>
   );

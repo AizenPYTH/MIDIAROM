@@ -59,6 +59,24 @@ export async function changeStatusAction(_prev: ActionResult | null, formData: F
   }
 }
 
+/** Segment « Avancement » du tableau de bord : transition directe puis retour à la vue maître/détail. */
+export async function advanceStatusAction(formData: FormData): Promise<void> {
+  const user = await requireStaff();
+  const orderId = str(formData, "order_id");
+  const to = str(formData, "status") as OrderStatus;
+  const next = str(formData, "next") || `/admin?sel=${orderId}`;
+  if (ORDER_STATUSES.includes(to)) {
+    try {
+      await transitionOrder({ orderId, to, actor: actorOf(user) });
+    } catch (error) {
+      redirect(`${next}${next.includes("?") ? "&" : "?"}error=${encodeURIComponent(error instanceof OrderError ? error.message : "Changement impossible")}`);
+    }
+  }
+  revalidatePath("/admin");
+  revalidatePath(orderPath(orderId));
+  redirect(next);
+}
+
 export async function assignTechnicianAction(formData: FormData): Promise<void> {
   const user = await requireStaff();
   const orderId = str(formData, "order_id");

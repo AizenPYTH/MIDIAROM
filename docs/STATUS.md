@@ -9,7 +9,8 @@ Légende : **IMPLEMENTED** fonctionne sans configuration supplémentaire · **CO
 | Catalogue (marques, modèles, pannes, réparations, options, packs, compatibilités) | IMPLEMENTED | CRUD admin, règles de compatibilité, options incluses, aperçu de l'offre calculée |
 | Pages réparation SEO (`/reparation/[modèle]/[panne]`) | IMPLEMENTED | Générées uniquement pour les réparations publiées ; sitemap, canonical, JSON-LD, FAQ |
 | Moteur de prix côté serveur | IMPLEMENTED | Testé unitairement et en intégration ; le navigateur n'envoie que des identifiants |
-| Checkout 8 étapes | IMPLEMENTED | Options, transport, coordonnées, récapitulatif, CGV |
+| Fiche de réparation 4 étapes (design 207 Mediarom) | IMPLEMENTED | Appareil → prestation + options compatibles → description → coordonnées / transport / récapitulatif / CGV ; prix serveur, création de dossier puis paiement. Voir `docs/DESIGN.md` |
+| Design system (papier / encre, Archivo + IBM Plex Mono, sans arrondi ni ombre) | IMPLEMENTED | Site public, espace client et back-office ; boutique / stock / reprises de la maquette volontairement non implémentés |
 | Création de compte au checkout | IMPLEMENTED | Compte créé, e-mail « définir mon mot de passe » via `token_hash` + `/auth/callback` |
 | Paiement | CONFIGURE / MOCK | Stripe Checkout + webhook signé + idempotence implémentés ; nécessite les clés Stripe. Simulation `PAYMENT_PROVIDER=mock` en développement uniquement |
 | Numéros REP-/D-/F- | IMPLEMENTED | Séquences PostgreSQL, unicité vérifiée sous 20 insertions concurrentes |

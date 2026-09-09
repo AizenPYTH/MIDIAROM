@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Camera, FileCheck2, Lock, ShieldCheck, Truck, Users, Wrench } from "lucide-react";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { Container, PageHeader } from "@/components/ui/misc";
 import { CtaBanner, FaqList } from "@/components/marketing/sections";
@@ -32,12 +31,12 @@ export default async function TrustPage() {
   ]);
 
   const pillars = [
-    { Icon: Camera, title: "Réception documentée", text: "Colis et console photographiés à l'arrivée, numéro de série et accessoires enregistrés." },
-    { Icon: FileCheck2, title: "Diagnostic écrit", text: "Panne reproduite ou non, constat, travaux recommandés : le diagnostic est consultable dans votre dossier." },
-    { Icon: Wrench, title: "Aucune intervention sans accord", text: "Toute prestation supplémentaire passe par un devis que vous acceptez ou refusez en ligne." },
-    { Icon: ShieldCheck, title: "Garantie sur l'intervention", text: warranty.scope || formatWarranty(warranty.default_months) },
-    { Icon: Truck, title: "Transport suivi", text: shippingInfo.return_carrier_note || "Retour en colis suivi." },
-    { Icon: Lock, title: "Paiement sécurisé", text: "Paiement en ligne par un prestataire certifié. Nous ne stockons aucune donnée bancaire." },
+    { title: "Réception documentée", text: "Colis et console photographiés à l'arrivée, numéro de série et accessoires enregistrés." },
+    { title: "Diagnostic écrit", text: "Panne reproduite ou non, constat, travaux recommandés : le diagnostic est consultable dans votre dossier." },
+    { title: "Aucune intervention sans accord", text: "Toute prestation supplémentaire passe par un devis que vous acceptez ou refusez en ligne." },
+    { title: "Garantie sur l'intervention", text: warranty.scope || formatWarranty(warranty.default_months) },
+    { title: "Transport suivi", text: shippingInfo.return_carrier_note || "Retour en colis suivi." },
+    { title: "Paiement sécurisé", text: "Paiement en ligne par un prestataire certifié. Nous ne stockons aucune donnée bancaire." },
   ];
 
   const identity = [
@@ -52,9 +51,9 @@ export default async function TrustPage() {
         <PageHeader eyebrow="Confiance" title={intro?.title ?? "Vous savez où va votre console, et ce qui lui arrive."} description={intro?.body ?? undefined} />
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {pillars.map(({ Icon, title, text }) => (
+          {pillars.map(({ title, text }, i) => (
             <div key={title} className="rounded-lg border border-border bg-surface p-5">
-              <Icon className="h-5 w-5 text-accent" aria-hidden="true" />
+              <span className="font-mono text-[12px] text-accent">{String(i + 1).padStart(2, "0")}</span>
               <p className="mt-3 font-semibold text-ink">{title}</p>
               <p className="mt-1 text-sm text-ink-soft">{text}</p>
             </div>
@@ -64,7 +63,7 @@ export default async function TrustPage() {
         <div className="mt-12 grid gap-8 lg:grid-cols-2">
           <div className="rounded-lg border border-border bg-surface p-6">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
-              <Users className="h-5 w-5 text-accent" aria-hidden="true" /> L&apos;entreprise
+              L&apos;entreprise
             </h2>
             <p className="mt-2 font-medium text-ink">{brand.name}</p>
             {identity.length ? <p className="text-sm text-ink-muted">{identity.join(" · ")}</p> : null}
@@ -81,7 +80,7 @@ export default async function TrustPage() {
           </div>
           <div className="rounded-lg border border-border bg-surface p-6">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
-              <Wrench className="h-5 w-5 text-accent" aria-hidden="true" /> L&apos;atelier et l&apos;équipe
+              L&apos;atelier et l&apos;équipe
             </h2>
             {trust.workshop_intro ? <p className="mt-3 whitespace-pre-line text-sm text-ink-soft">{trust.workshop_intro}</p> : null}
             {trust.team_intro ? <p className="mt-3 whitespace-pre-line text-sm text-ink-soft">{trust.team_intro}</p> : null}

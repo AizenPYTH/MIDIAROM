@@ -16,6 +16,8 @@ export interface BrandSettings {
   country: string;
   logo_path: string | null;
   hours: string;
+  /** Année d'ouverture (affichée « Depuis 1997 » quand renseignée). */
+  founded_year: string;
   siret: string;
   legal_form: string;
 }
@@ -33,6 +35,7 @@ export const BRAND_DEFAULTS: BrandSettings = {
   country: "France",
   logo_path: null,
   hours: "",
+  founded_year: "",
   siret: "",
   legal_form: "",
 };

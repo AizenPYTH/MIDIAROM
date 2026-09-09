@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AnalyticsProvider } from "@/lib/analytics/client";
 import { CookieBanner } from "@/components/marketing/cookie-banner";
 import { SITE_URL } from "@/config/site";
 import { getBrandSettings } from "@/lib/settings";
+
+const archivo = Archivo({ subsets: ["latin"], weight: ["400", "500", "600", "800"], variable: "--font-archivo", display: "swap" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono", display: "swap" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandSettings();
@@ -19,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0b2545",
+  themeColor: "#14120f",
   width: "device-width",
   initialScale: 1,
 };
@@ -28,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
   return (
-    <html lang="fr" className="h-full antialiased">
+    <html lang="fr" className={`h-full ${archivo.variable} ${plexMono.variable}`}>
       <body className="flex min-h-full flex-col">
         <AnalyticsProvider gaId={gaId} adsId={adsId}>
           {children}

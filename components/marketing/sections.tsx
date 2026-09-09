@@ -1,29 +1,70 @@
 import Link from "next/link";
-import { ArrowRight, Star } from "lucide-react";
+import Image from "next/image";
 import { ROUTES } from "@/config/site";
-import { Container, SectionTitle } from "@/components/ui/misc";
-import { ButtonLink } from "@/components/ui/button";
-import { DynamicIcon } from "@/components/marketing/icons";
+import { Container, Eyebrow } from "@/components/ui/misc";
+import { publicMediaUrl } from "@/components/marketing/gallery";
 import { formatPrice } from "@/lib/utils/format";
+import type { BrandSettings } from "@/config/brand";
 import type { Brand, ConsoleModel } from "@/lib/repair/catalog";
-import type { Views } from "@/types/database";
+import type { Tables, Views } from "@/types/database";
+import { cn } from "@/lib/utils/cn";
 
-export function ReassuranceGrid({ items }: { items: { icon: string; title: string; text: string }[] }) {
+/** Bandeau de garanties du handoff : cellules mono majuscules séparées par des filets. */
+export function GuaranteeStrip({ items }: { items: string[] }) {
+  if (!items.length) return null;
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-      {items.map((item) => (
-        <li key={item.title} className="rounded-lg border border-border bg-surface p-4">
-          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary">
-            <DynamicIcon name={item.icon} className="h-4.5 w-4.5" />
-          </div>
-          <p className="font-semibold text-ink">{item.title}</p>
-          <p className="mt-1 text-sm text-ink-muted">{item.text}</p>
-        </li>
+    <div className="grid border-y border-border bg-bg [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+      {items.map((item, i) => (
+        <div key={item} className={cn("px-6 py-5 font-mono text-[12.5px] uppercase tracking-[0.04em] text-ink", i < items.length - 1 && "border-r border-border")}>
+          {item}
+        </div>
       ))}
-    </ul>
+    </div>
   );
 }
 
+/** Liste ordonnée « comment ça marche » en blocs sombres numérotés (section réparation). */
+export function HowToList({ steps, className }: { steps: { title: string; text: string }[]; className?: string }) {
+  return (
+    <ol className={cn("flex flex-col gap-px border border-ink-700 bg-ink-700", className)}>
+      {steps.map((step, i) => (
+        <li key={step.title} className="flex items-baseline gap-3.5 bg-ink-800 px-[18px] py-4">
+          <span className="min-w-[22px] font-mono text-[12px] text-accent-light">{String(i + 1).padStart(2, "0")}</span>
+          <span className="flex flex-col gap-[3px]">
+            <strong className="text-[15.5px] font-semibold text-paper">{step.title}</strong>
+            <span className="text-[14px] leading-[1.45] text-[#a39c8c]">{step.text}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** Bloc tarifs indicatifs (lignes pointillées) — prix réels du catalogue. */
+export function PriceList({ items, id, title = "Indicatif — options en sus", className }: { items: { label: string; price: string; href?: string }[]; id?: string; title?: string; className?: string }) {
+  return (
+    <div id={id} className={cn("border border-ink-650 p-[18px]", className)} style={{ scrollMarginTop: 96 }}>
+      <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">{title}</span>
+      <div className="mt-3 flex flex-col gap-[9px]">
+        {items.map((t) => (
+          <div key={t.label} className="flex justify-between gap-4 border-b border-dotted border-[#3a3529] pb-[7px] text-[14.5px] text-paper">
+            {t.href ? (
+              <Link href={t.href} className="hover:text-accent-light">
+                {t.label}
+              </Link>
+            ) : (
+              <span>{t.label}</span>
+            )}
+            <span className="whitespace-nowrap font-mono text-[#e4dccb]">{t.price}</span>
+          </div>
+        ))}
+        {!items.length ? <p className="text-[14px] text-[#a39c8c]">Tarifs communiqués après diagnostic.</p> : null}
+      </div>
+    </div>
+  );
+}
+
+/** Grille des consoles par marque (pages catalogue), style boutons de la fiche. */
 export function ConsoleGrid({ brands, models }: { brands: Brand[]; models: ConsoleModel[] }) {
   return (
     <div className="space-y-8">
@@ -32,16 +73,13 @@ export function ConsoleGrid({ brands, models }: { brands: Brand[]; models: Conso
         if (!brandModels.length) return null;
         return (
           <div key={brand.id}>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-muted">{brand.name}</h3>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <h3 className="mb-3 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-muted">{brand.name}</h3>
+            <ul className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))]">
               {brandModels.map((model) => (
                 <li key={model.id}>
-                  <Link
-                    href={`${ROUTES.repair}/${model.slug}`}
-                    className="group flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-3.5 transition-colors hover:border-accent hover:bg-accent-soft/40"
-                  >
-                    <span className="font-medium text-ink">{model.name}</span>
-                    <ArrowRight className="h-4 w-4 text-ink-muted transition-transform group-hover:translate-x-0.5 group-hover:text-accent" aria-hidden="true" />
+                  <Link href={`${ROUTES.repair}/${model.slug}`} className="flex flex-col gap-1 border border-border-strong p-[13px] transition-colors hover:border-accent">
+                    <span className="text-[15px] font-semibold text-ink">{model.name}</span>
+                    <span className="font-mono text-[11px] text-ink-muted">{model.release_year ? `depuis ${model.release_year}` : brand.name}</span>
                   </Link>
                 </li>
               ))}
@@ -55,35 +93,31 @@ export function ConsoleGrid({ brands, models }: { brands: Brand[]; models: Conso
 
 export function StepsList({ steps, compact }: { steps: { title: string; text: string }[]; compact?: boolean }) {
   return (
-    <ol className={compact ? "grid gap-4 sm:grid-cols-3" : "space-y-6"}>
+    <ol className={cn("flex flex-col gap-px border border-border bg-border", compact && "sm:grid sm:grid-cols-3")}>
       {steps.map((step, i) => (
-        <li key={step.title} className="flex gap-4">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">{i + 1}</span>
-          <div>
-            <p className="font-semibold text-ink">{step.title}</p>
-            <p className="mt-1 text-sm text-ink-soft">{step.text}</p>
-          </div>
+        <li key={step.title} className="flex items-baseline gap-3.5 bg-surface px-[18px] py-4">
+          <span className="min-w-[22px] font-mono text-[12px] text-accent">{String(i + 1).padStart(2, "0")}</span>
+          <span className="flex flex-col gap-[3px]">
+            <strong className="text-[15.5px] font-semibold text-ink">{step.title}</strong>
+            <span className="text-[14px] leading-[1.45] text-ink-soft">{step.text}</span>
+          </span>
         </li>
       ))}
     </ol>
   );
 }
 
-export function PopularRepairs({
-  repairs,
-}: {
-  repairs: { id: string; name: string; price_cents: number; summary: string | null; modelSlug: string; faultSlug: string; modelName: string }[];
-}) {
+export function PopularRepairs({ repairs }: { repairs: { id: string; name: string; price_cents: number; summary: string | null; modelSlug: string; faultSlug: string; modelName: string }[] }) {
   if (!repairs.length) return null;
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
       {repairs.map((r) => (
         <li key={r.id}>
-          <Link href={`${ROUTES.repair}/${r.modelSlug}/${r.faultSlug}`} className="flex h-full flex-col rounded-lg border border-border bg-surface p-5 transition-colors hover:border-accent">
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">{r.modelName}</p>
-            <p className="mt-1 font-semibold text-ink">{r.name}</p>
-            {r.summary ? <p className="mt-1 line-clamp-2 text-sm text-ink-muted">{r.summary}</p> : null}
-            <p className="mt-auto pt-4 text-lg font-bold text-primary">{formatPrice(r.price_cents)}</p>
+          <Link href={`${ROUTES.repair}/${r.modelSlug}/${r.faultSlug}`} className="flex h-full flex-col gap-3 border border-border bg-surface p-4 transition-colors hover:border-accent">
+            <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">{r.modelName}</span>
+            <span className="text-[16px] font-semibold leading-[1.25] text-ink">{r.name}</span>
+            {r.summary ? <span className="line-clamp-2 text-[13px] text-ink-faint">{r.summary}</span> : null}
+            <span className="mt-auto font-mono text-[17px] font-semibold text-ink">{formatPrice(r.price_cents)}</span>
           </Link>
         </li>
       ))}
@@ -95,20 +129,23 @@ export function ReviewsSection({ reviews }: { reviews: Views<"public_reviews">[]
   // Only genuine, moderated reviews are ever displayed. No reviews → no section.
   if (!reviews.length) return null;
   return (
-    <section className="py-12 sm:py-16">
-      <Container>
-        <SectionTitle title="Avis de clients" description="Avis authentiques laissés après une réparation, modérés par l'atelier." />
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <section className="border-t border-border">
+      <Container className="py-[72px]">
+        <div className="mb-7">
+          <Eyebrow>Avis</Eyebrow>
+          <h2 className="mt-2 text-[clamp(28px,3.4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">Ce que disent les clients</h2>
+          <p className="mt-3 max-w-[42ch] text-[16px] text-ink-soft">Avis authentiques laissés après une réparation, modérés par l&apos;atelier.</p>
+        </div>
+        <ul className="grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
           {reviews.map((review) => (
-            <li key={review.id} className="rounded-lg border border-border bg-surface p-5">
-              <div className="flex items-center gap-1 text-warning" aria-label={`${review.rating ?? 0} sur 5`}>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-4 w-4 ${i < (review.rating ?? 0) ? "fill-current" : "opacity-30"}`} aria-hidden="true" />
-                ))}
-              </div>
-              {review.title ? <p className="mt-2 font-semibold text-ink">{review.title}</p> : null}
-              {review.body ? <p className="mt-1 text-sm text-ink-soft">{review.body}</p> : null}
-              <p className="mt-3 text-xs text-ink-muted">
+            <li key={review.id} className="flex flex-col gap-3 border border-border bg-surface p-4">
+              <span className="font-mono text-[12px] tracking-[0.1em] text-sale" aria-label={`${review.rating ?? 0} sur 5`}>
+                {"★".repeat(review.rating ?? 0)}
+                <span className="text-border-strong">{"★".repeat(Math.max(0, 5 - (review.rating ?? 0)))}</span>
+              </span>
+              {review.title ? <p className="text-[16px] font-semibold leading-[1.25] text-ink">{review.title}</p> : null}
+              {review.body ? <p className="text-[14px] leading-[1.5] text-ink-soft">{review.body}</p> : null}
+              <p className="mt-auto font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">
                 {review.display_name ?? "Client"} · {review.model_name} — {review.repair_name}
               </p>
             </li>
@@ -121,31 +158,89 @@ export function ReviewsSection({ reviews }: { reviews: Views<"public_reviews">[]
 
 export function FaqList({ items }: { items: { id: string; question: string; answer: string }[] }) {
   return (
-    <div className="divide-y divide-border rounded-lg border border-border bg-surface">
+    <div className="divide-y divide-border border border-border bg-surface">
       {items.map((item) => (
         <details key={item.id} className="group px-5 py-4">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-ink [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15.5px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
             {item.question}
-            <span className="text-ink-muted transition-transform group-open:rotate-90" aria-hidden="true">›</span>
+            <span className="font-mono text-ink-muted group-open:hidden" aria-hidden="true">
+              +
+            </span>
+            <span className="hidden font-mono text-ink-muted group-open:inline" aria-hidden="true">
+              −
+            </span>
           </summary>
-          <p className="mt-3 text-sm text-ink-soft">{item.answer}</p>
+          <p className="mt-3 text-[14.5px] leading-[1.5] text-ink-soft">{item.answer}</p>
         </details>
       ))}
     </div>
   );
 }
 
+/** Section « Le magasin » du handoff : adresse, téléphone, horaires + photo (ou placeholder). */
+export function StoreSection({ brand, photo }: { brand: BrandSettings; photo: Tables<"gallery_items"> | null }) {
+  const hasAddress = brand.address_line1 || brand.city;
+  return (
+    <section id="magasin" className="border-t border-border bg-bg-alt" style={{ scrollMarginTop: 80 }}>
+      <Container className="grid gap-10 py-16 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+        <div className="flex flex-col gap-3">
+          <Eyebrow>Le magasin</Eyebrow>
+          <h2 className="text-[30px] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{brand.address_line1 || brand.name}</h2>
+          <p className="text-[16px] leading-[1.55] text-ink-soft">
+            {hasAddress ? `${[brand.postal_code, brand.city].filter(Boolean).join(" ")}${brand.founded_year ? `. Ouvert depuis ${brand.founded_year}.` : "."}` : brand.description}
+            {brand.phone ? (
+              <>
+                <br />
+                <a href={`tel:${brand.phone.replace(/\s/g, "")}`} className="hover:text-sale">
+                  {brand.phone}
+                </a>
+              </>
+            ) : null}
+            {brand.email ? (
+              <>
+                <br />
+                <a href={`mailto:${brand.email}`} className="hover:text-sale">
+                  {brand.email}
+                </a>
+              </>
+            ) : null}
+          </p>
+          {brand.hours ? (
+            <div className="mt-2 flex flex-col gap-1.5 font-mono text-[13.5px] text-ink">
+              {brand.hours.split(/\s*[;\n]\s*/).map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </div>
+          ) : null}
+          <Link href={ROUTES.contact} className="mt-2 self-start border border-ink px-5 py-3 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper">
+            Nous écrire
+          </Link>
+        </div>
+        {photo ? (
+          <div className="relative min-h-[220px]">
+            <Image src={publicMediaUrl(photo.image_path)} alt={photo.title ?? "Le magasin"} fill sizes="(min-width: 640px) 50vw, 100vw" className="object-cover" />
+          </div>
+        ) : (
+          <div className="photo-placeholder min-h-[220px] text-[11.5px]">plan / façade du magasin</div>
+        )}
+      </Container>
+    </section>
+  );
+}
+
+/** Bandeau final : un appel à l'action pleine largeur sur fond encre. */
 export function CtaBanner({ title, text }: { title: string; text: string }) {
   return (
-    <section className="py-12 sm:py-16">
-      <Container>
-        <div className="rounded-lg bg-primary px-6 py-10 text-center text-white sm:px-12">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
-          <p className="mx-auto mt-3 max-w-xl text-white/80">{text}</p>
-          <ButtonLink href={ROUTES.repair} variant="accent" size="lg" className="mt-6">
-            Faire réparer ma console
-          </ButtonLink>
+    <section className="bg-ink-900 text-paper">
+      <Container className="flex flex-wrap items-end justify-between gap-6 py-16">
+        <div>
+          <Eyebrow tone="repair">Atelier</Eyebrow>
+          <h2 className="mt-2 text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em]">{title}</h2>
+          <p className="mt-3 max-w-[42ch] text-[16.5px] leading-[1.55] text-[#c4bdae]">{text}</p>
         </div>
+        <Link href={ROUTES.repair} className="bg-accent px-[22px] py-3.5 text-[15px] font-semibold text-white hover:bg-paper hover:text-ink-900">
+          Démarrer une réparation
+        </Link>
       </Container>
     </section>
   );

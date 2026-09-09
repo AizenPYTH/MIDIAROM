@@ -1,45 +1,79 @@
 import Link from "next/link";
-import { Wrench } from "lucide-react";
 import { ROUTES } from "@/config/site";
-import { ButtonLink } from "@/components/ui/button";
-import { Container } from "@/components/ui/misc";
-import { MobileNav, AccountLink } from "@/components/marketing/header-client";
+import type { BrandSettings } from "@/config/brand";
+import { AccountLink, MobileNav } from "@/components/marketing/header-client";
 
 const NAV = [
-  { href: ROUTES.repair, label: "Réparations" },
+  { href: ROUTES.repair, label: "Réparation" },
   { href: ROUTES.howItWorks, label: "Comment ça marche" },
-  { href: ROUTES.trust, label: "Confiance" },
   { href: ROUTES.faq, label: "FAQ" },
   { href: ROUTES.tracking, label: "Suivi" },
+  { href: ROUTES.contact, label: "Le magasin" },
 ];
 
-export function SiteHeader({ brandName }: { brandName: string }) {
+/** Logo typographique du handoff : carré encre avec le premier mot, puis le reste en capitales. */
+export function BrandMark({ name, inverted, size = "md" }: { name: string; inverted?: boolean; size?: "md" | "sm" }) {
+  const [first, ...rest] = name.trim().split(/\s+/);
+  const mark = first ?? name;
+  const label = rest.join(" ") || null;
+  const box = inverted ? "bg-paper text-ink-900" : "bg-ink-900 text-paper";
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
-      <Container className="flex h-16 items-center justify-between gap-4">
-        <Link href={ROUTES.home} className="flex items-center gap-2.5 font-semibold tracking-tight text-ink" aria-label={`${brandName} — accueil`}>
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white">
-            <Wrench className="h-4 w-4" aria-hidden="true" />
-          </span>
-          <span>{brandName}</span>
+    <span className="flex items-center gap-2.5 whitespace-nowrap">
+      <span className={`${box} font-mono font-semibold tracking-[-0.02em] ${size === "sm" ? "px-[7px] py-[5px] text-[15px]" : "px-[9px] py-[7px] text-[19px]"}`}>{mark}</span>
+      {label ? <span className={`font-extrabold uppercase tracking-[0.02em] ${size === "sm" ? "text-[15px]" : "text-[19px]"}`}>{label}</span> : null}
+    </span>
+  );
+}
+
+/** Bandeau d'infos + header sticky du handoff (adresse, ancienneté, téléphone, horaires). */
+export function SiteHeader({ brand }: { brand: BrandSettings }) {
+  const info = [
+    [brand.address_line1, [brand.postal_code, brand.city].filter(Boolean).join(" ")].filter(Boolean).join(" — "),
+    brand.founded_year ? `Depuis ${brand.founded_year}` : "",
+    brand.phone,
+    brand.hours,
+  ].filter(Boolean);
+
+  return (
+    <>
+      {info.length ? (
+        <div className="flex flex-wrap justify-center gap-5 bg-ink-900 px-6 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-[#d9d3c5]">
+          {info.map((item, i) => (
+            <span key={item} className="contents">
+              {i > 0 ? (
+                <span className="text-[#6b6558]" aria-hidden="true">
+                  /
+                </span>
+              ) : null}
+              <span>{item}</span>
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-x-7 gap-y-3 border-b border-border bg-bg px-6 py-3.5">
+        <Link href={ROUTES.home} aria-label={`${brand.name} — accueil`} className="text-ink">
+          <BrandMark name={brand.name} />
         </Link>
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Navigation principale">
+        <nav className="hidden flex-1 flex-wrap items-center gap-[22px] whitespace-nowrap text-[14px] font-medium lg:flex" aria-label="Navigation principale">
           {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-sm font-medium text-ink-soft hover:bg-surface-muted hover:text-ink">
+            <Link key={item.href} href={item.href} className="text-ink hover:text-sale">
               {item.label}
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2.5">
           <div className="hidden sm:block">
             <AccountLink />
           </div>
-          <ButtonLink href={ROUTES.repair} variant="accent" size="sm" className="hidden sm:inline-flex">
-            Faire réparer ma console
-          </ButtonLink>
+          <Link href={ROUTES.tracking} className="hidden whitespace-nowrap border border-border-strong px-3.5 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-ink hover:border-ink sm:inline-block">
+            Suivre ma réparation
+          </Link>
+          <Link href={ROUTES.repair} className="whitespace-nowrap bg-ink-900 px-3.5 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-paper hover:bg-accent">
+            Démarrer une réparation
+          </Link>
           <MobileNav items={NAV} />
         </div>
-      </Container>
-    </header>
+      </header>
+    </>
   );
 }

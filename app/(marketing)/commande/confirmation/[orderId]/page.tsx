@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock, FileText, Package } from "lucide-react";
 import { ROUTES } from "@/config/site";
-import { Container } from "@/components/ui/misc";
-import { ButtonLink } from "@/components/ui/button";
+import { Container, Eyebrow } from "@/components/ui/misc";
 import { Alert } from "@/components/ui/alert";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { verifyPendingPayment } from "@/lib/orders/payments";
@@ -34,82 +32,97 @@ export default async function ConfirmationPage({ params, searchParams }: { param
   const { data: shipment } = await db.from("shipments").select("*").eq("order_id", order.id).eq("direction", "TO_WORKSHOP").maybeSingle();
 
   return (
-    <Container className="max-w-2xl py-10 sm:py-16">
+    <Container className="max-w-[760px] py-16">
       {paid ? (
         <>
           <TrackOnMount event={ANALYTICS_EVENTS.PURCHASE} props={{ order_number: current.order_number, value_cents: current.total_cents, repair_id: current.repair_id ?? undefined }} />
-          <div className="text-center">
-            <CheckCircle2 className="mx-auto h-12 w-12 text-success" aria-hidden="true" />
-            <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Merci, votre commande est confirmée</h1>
-            <p className="mt-2 text-ink-soft">Votre numéro de dossier :</p>
-            <p className="mt-1 font-mono text-3xl font-bold text-primary">{current.order_number}</p>
-            <p className="mt-3 text-sm text-ink-muted">Un e-mail de confirmation avec les instructions vient de vous être envoyé à {current.customer_email}.</p>
+          <Eyebrow tone="repair">Demande enregistrée</Eyebrow>
+          <h1 className="mt-2 text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Merci, votre commande est confirmée.</h1>
+          <p className="mt-3 text-[16.5px] text-ink-soft">Votre numéro de dossier :</p>
+          <p className="mt-1 font-mono text-[34px] font-semibold tracking-[-0.02em] text-ink">{current.order_number}</p>
+          <p className="mt-3 text-[14px] text-ink-muted">Un e-mail de confirmation avec les instructions vient de vous être envoyé à {current.customer_email}.</p>
+
+          <div className="mt-8 bg-ink-900 p-4 text-paper">
+            <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Récapitulatif</span>
+            <div className="mt-[11px] flex flex-col gap-[7px] text-[14.5px]">
+              {[
+                ["Console", current.model_name],
+                ["Prestation", current.repair_name],
+                ["Montant réglé", formatPrice(current.total_cents)],
+                ["Statut", ORDER_STATUS_LABELS[current.status]],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-3.5">
+                  <span className="text-[#c4bdae]">{k}</span>
+                  <span className="text-right font-mono">{v}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="mt-8 rounded-lg border border-border bg-surface p-5">
-            <h2 className="font-semibold text-ink">Récapitulatif</h2>
-            <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-              <div><dt className="text-ink-muted">Console</dt><dd className="text-ink">{current.model_name}</dd></div>
-              <div><dt className="text-ink-muted">Réparation</dt><dd className="text-ink">{current.repair_name}</dd></div>
-              <div><dt className="text-ink-muted">Montant réglé</dt><dd className="font-semibold text-ink">{formatPrice(current.total_cents)}</dd></div>
-              <div><dt className="text-ink-muted">Statut</dt><dd className="text-ink">{ORDER_STATUS_LABELS[current.status]}</dd></div>
-            </dl>
-          </div>
-
-          <div className="mt-6 rounded-lg border border-border bg-surface p-5">
-            <h2 className="flex items-center gap-2 font-semibold text-ink">
-              <Package className="h-5 w-5 text-accent" aria-hidden="true" /> Prochaines étapes
-            </h2>
-            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-ink-soft">
-              <li>
-                Emballez soigneusement votre console en suivant nos{" "}
-                <Link href={ROUTES.packaging} className="text-accent underline">
-                  instructions d&apos;emballage
-                </Link>
-                .
+          <div className="mt-6 border border-border p-5">
+            <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Prochaines étapes</span>
+            <ol className="mt-3 flex flex-col gap-2 text-[14.5px] leading-[1.5] text-ink-soft">
+              <li className="flex gap-3.5">
+                <span className="font-mono text-[12px] text-accent">01</span>
+                <span>
+                  Emballez soigneusement votre console en suivant nos{" "}
+                  <Link href={ROUTES.packaging} className="text-sale underline">
+                    instructions d&apos;emballage
+                  </Link>
+                  .
+                </span>
               </li>
-              <li>
-                Glissez une feuille avec votre numéro de dossier <span className="font-mono font-semibold text-ink">{current.order_number}</span> dans le colis.
+              <li className="flex gap-3.5">
+                <span className="font-mono text-[12px] text-accent">02</span>
+                <span>
+                  Glissez une feuille avec votre numéro de dossier <span className="font-mono font-semibold text-ink">{current.order_number}</span> dans le colis.
+                </span>
               </li>
-              {shipment?.label_path ? (
-                <li>Imprimez l&apos;étiquette de transport disponible dans votre espace client et déposez le colis au point indiqué.</li>
-              ) : (
-                <li>
-                  {shipping.workshop_receiving_address
-                    ? <>Expédiez le colis à : <span className="text-ink">{[shipping.workshop_receiving_name, shipping.workshop_receiving_address].filter(Boolean).join(", ")}</span></>
-                    : <>L&apos;adresse d&apos;expédition de l&apos;atelier vous est communiquée par e-mail.</>}
-                </li>
-              )}
-              <li>Suivez chaque étape depuis votre espace client. Vous serez notifié par e-mail.</li>
+              <li className="flex gap-3.5">
+                <span className="font-mono text-[12px] text-accent">03</span>
+                {shipment?.label_path ? (
+                  <span>Imprimez l&apos;étiquette de transport disponible dans votre espace client et déposez le colis au point indiqué.</span>
+                ) : (
+                  <span>
+                    {shipping.workshop_receiving_address ? (
+                      <>
+                        Expédiez le colis à : <span className="text-ink">{[shipping.workshop_receiving_name, shipping.workshop_receiving_address].filter(Boolean).join(", ")}</span>
+                      </>
+                    ) : (
+                      <>L&apos;adresse d&apos;expédition de l&apos;atelier vous est communiquée par e-mail.</>
+                    )}
+                  </span>
+                )}
+              </li>
+              <li className="flex gap-3.5">
+                <span className="font-mono text-[12px] text-accent">04</span>
+                <span>Suivez chaque étape depuis votre espace client. Vous serez notifié par e-mail.</span>
+              </li>
             </ol>
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href={`${ROUTES.accountOrders}/${current.id}`} variant="accent" size="lg">
-              <FileText className="h-4 w-4" aria-hidden="true" /> Ouvrir mon dossier
-            </ButtonLink>
-            <ButtonLink href={`${ROUTES.tracking}/${current.tracking_token}`} variant="outline" size="lg">
+          <div className="mt-6 flex flex-wrap gap-2.5">
+            <Link href={`${ROUTES.accountOrders}/${current.id}`} className="bg-accent px-[22px] py-3.5 text-[15px] font-semibold text-white hover:bg-ink-900">
+              Ouvrir mon dossier
+            </Link>
+            <Link href={`${ROUTES.tracking}/${current.tracking_token}`} className="border border-ink px-[22px] py-3.5 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper">
               Suivi sans connexion
-            </ButtonLink>
+            </Link>
           </div>
-          <p className="mt-4 text-xs text-ink-muted">
-            Pas encore de mot de passe ? Un e-mail vous permet d&apos;en définir un. Vous pouvez aussi utiliser « Mot de passe oublié » avec l&apos;adresse {current.customer_email}.
-          </p>
+          <p className="mt-4 text-[13px] text-ink-muted">Pas encore de mot de passe ? Un e-mail vous permet d&apos;en définir un. Vous pouvez aussi utiliser « Mot de passe oublié » avec l&apos;adresse {current.customer_email}.</p>
         </>
       ) : (
         <>
           <PaymentPendingRefresh />
-          <div className="text-center">
-            <Clock className="mx-auto h-12 w-12 text-warning" aria-hidden="true" />
-            <h1 className="mt-4 text-2xl font-bold tracking-tight text-ink">Paiement en cours de confirmation</h1>
-            <p className="mt-2 text-ink-soft">
-              Votre dossier <span className="font-mono font-semibold text-ink">{current.order_number}</span> est enregistré. Nous attendons la confirmation de votre paiement par notre prestataire. Cette page se rafraîchit automatiquement.
-            </p>
-          </div>
+          <Eyebrow tone="muted">Paiement</Eyebrow>
+          <h1 className="mt-2 text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Paiement en cours de confirmation</h1>
+          <p className="mt-3 text-[16px] text-ink-soft">
+            Votre dossier <span className="font-mono font-semibold text-ink">{current.order_number}</span> est enregistré. Nous attendons la confirmation de votre paiement par notre prestataire. Cette page se rafraîchit automatiquement.
+          </p>
           <Alert tone="info" className="mt-6">
             Si vous avez fermé la page de paiement sans payer, vous pouvez{" "}
-            <Link href={`${ROUTES.checkout}/${current.repair_id}`} className="text-accent underline">
-              reprendre votre commande
+            <Link href={`${ROUTES.checkout}/${current.repair_id}`} className="text-sale underline">
+              reprendre votre demande
             </Link>
             .
           </Alert>

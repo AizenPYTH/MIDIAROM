@@ -1,35 +1,28 @@
 import * as React from "react";
-import { AlertTriangle, CheckCircle2, Info, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 type Tone = "info" | "success" | "warning" | "danger";
 
-const styles: Record<Tone, { box: string; Icon: typeof Info }> = {
-  info: { box: "border-info/25 bg-info-soft text-ink", Icon: Info },
-  success: { box: "border-success/25 bg-success-soft text-ink", Icon: CheckCircle2 },
-  warning: { box: "border-warning/30 bg-warning-soft text-ink", Icon: AlertTriangle },
-  danger: { box: "border-danger/30 bg-danger-soft text-ink", Icon: XCircle },
+/** Encadré plat du handoff : filet 1 px + fond ton sur ton, étiquette mono en titre. */
+const styles: Record<Tone, string> = {
+  info: "border-info bg-info-soft",
+  success: "border-success bg-success-soft",
+  warning: "border-warning bg-warning-soft",
+  danger: "border-danger bg-danger-soft",
 };
 
-export function Alert({
-  tone = "info",
-  title,
-  children,
-  className,
-}: {
-  tone?: Tone;
-  title?: string;
-  children?: React.ReactNode;
-  className?: string;
-}) {
-  const { box, Icon } = styles[tone];
+const titles: Record<Tone, string> = {
+  info: "text-info",
+  success: "text-success",
+  warning: "text-warning",
+  danger: "text-danger",
+};
+
+export function Alert({ tone = "info", title, children, className }: { tone?: Tone; title?: string; children?: React.ReactNode; className?: string }) {
   return (
-    <div role={tone === "danger" ? "alert" : "status"} className={cn("flex gap-3 rounded-md border px-4 py-3 text-sm", box, className)}>
-      <Icon className="mt-0.5 h-4.5 w-4.5 shrink-0" aria-hidden="true" />
-      <div className="min-w-0">
-        {title ? <p className="font-semibold">{title}</p> : null}
-        {children ? <div className={cn(title && "mt-0.5", "text-ink-soft")}>{children}</div> : null}
-      </div>
+    <div role={tone === "danger" ? "alert" : "status"} className={cn("border px-4 py-3 text-sm text-ink", styles[tone], className)}>
+      {title ? <p className={cn("font-mono text-[11px] uppercase tracking-[0.08em]", titles[tone])}>{title}</p> : null}
+      {children ? <div className={cn(title && "mt-1", "text-ink-soft")}>{children}</div> : null}
     </div>
   );
 }

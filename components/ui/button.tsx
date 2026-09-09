@@ -2,26 +2,37 @@ import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 
-type Variant = "primary" | "accent" | "secondary" | "outline" | "ghost" | "danger" | "link";
+/**
+ * Boutons du handoff : blocs pleins ou contour 1 px, sans arrondi ni ombre.
+ *  - primary  : encre (site) / bleu (admin) — hover orange (site) / papier (admin)
+ *  - accent   : bleu réparation, hover encre / papier
+ *  - sale     : orange vente, hover encre
+ *  - outline  : contour 1 px encre
+ *  - ghost    : texte seul
+ *  - danger   : contour, texte danger
+ *  - link     : lien souligné
+ * Les tailles « mono » (sm) utilisent l'étiquette IBM Plex Mono majuscules.
+ */
+type Variant = "primary" | "accent" | "sale" | "secondary" | "outline" | "ghost" | "danger" | "link";
 type Size = "sm" | "md" | "lg";
 
-const base =
-  "inline-flex items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap transition-colors disabled:opacity-60 disabled:pointer-events-none select-none";
+const base = "inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors disabled:opacity-60 disabled:pointer-events-none select-none cursor-pointer border";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-primary text-white hover:bg-primary-hover shadow-sm",
-  accent: "bg-accent text-white hover:bg-accent-hover shadow-sm",
-  secondary: "bg-primary-soft text-primary hover:bg-[#d9e4f3]",
-  outline: "border border-border-strong bg-surface text-ink hover:bg-surface-muted",
-  ghost: "text-ink-soft hover:bg-surface-muted hover:text-ink",
-  danger: "bg-danger text-white hover:bg-[#991b1b]",
-  link: "text-accent underline-offset-4 hover:underline px-0 h-auto",
+  primary: "border-primary bg-primary text-primary-fg hover:bg-primary-hover hover:border-primary-hover hover:text-primary-fg",
+  accent: "border-accent bg-accent text-white hover:bg-accent-hover hover:border-accent-hover hover:text-[var(--color-bg)]",
+  sale: "border-sale bg-sale text-white hover:bg-sale-hover hover:border-sale-hover hover:text-[var(--color-bg)]",
+  secondary: "border-border-strong bg-surface-muted text-ink hover:bg-surface-strong",
+  outline: "border-border-strong bg-transparent text-ink hover:border-ink",
+  ghost: "border-transparent bg-transparent text-ink-soft hover:text-ink",
+  danger: "border-danger bg-transparent text-danger hover:bg-danger hover:text-white",
+  link: "border-0 px-0 text-sale underline-offset-4 hover:underline h-auto",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-3 text-sm",
-  md: "h-11 px-5 text-sm sm:text-[15px]",
-  lg: "h-12 px-6 text-base",
+  sm: "px-3.5 py-2.5 font-mono text-[12px] uppercase tracking-[0.06em]",
+  md: "px-[22px] py-[14px] text-[15px] font-semibold",
+  lg: "px-6 py-4 text-[15px] font-semibold",
 };
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -33,12 +44,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export function Button({ className, variant = "primary", size = "md", loading, fullWidth, children, disabled, ...props }: ButtonProps) {
   return (
-    <button
-      className={cn(base, variants[variant], sizes[size], fullWidth && "w-full", className)}
-      disabled={disabled || loading}
-      aria-busy={loading || undefined}
-      {...props}
-    >
+    <button className={cn(base, variants[variant], sizes[size], fullWidth && "w-full", className)} disabled={disabled || loading} aria-busy={loading || undefined} {...props}>
       {loading ? <Spinner /> : null}
       {children}
     </button>
@@ -57,9 +63,6 @@ export function ButtonLink({ className, variant = "primary", size = "md", fullWi
 
 export function Spinner({ className }: { className?: string }) {
   return (
-    <svg className={cn("h-4 w-4 animate-spin", className)} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-    </svg>
+    <span className={cn("inline-block h-3.5 w-3.5 border border-current border-r-transparent", className)} aria-hidden="true" style={{ animation: "spin 0.8s linear infinite" }} />
   );
 }

@@ -8,7 +8,7 @@ import { getAllSettings } from "@/lib/settings";
 const BRAND: SettingField[] = [
   { name: "name", label: "Nom de l'entreprise / marque" }, { name: "tagline", label: "Accroche" }, { name: "email", label: "E-mail de contact", type: "email" }, { name: "phone", label: "Téléphone" },
   { name: "address_line1", label: "Adresse" }, { name: "postal_code", label: "Code postal" }, { name: "city", label: "Ville" }, { name: "country", label: "Pays" },
-  { name: "hours", label: "Horaires" }, { name: "siret", label: "SIRET" }, { name: "legal_form", label: "Forme juridique" }, { name: "logo_path", label: "Logo (chemin content-media)" },
+  { name: "hours", label: "Horaires" }, { name: "founded_year", label: "Année d'ouverture" }, { name: "siret", label: "SIRET" }, { name: "legal_form", label: "Forme juridique" }, { name: "logo_path", label: "Logo (chemin content-media)" },
   { name: "description", label: "Description (meta par défaut, pied de page)", type: "textarea" },
 ];
 const RULES: SettingField[] = [

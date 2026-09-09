@@ -7,10 +7,10 @@ export default async function MarketingLayout({ children }: { children: React.Re
   const [brand, social, models] = await Promise.all([getSetting("brand"), getSetting("social"), getActiveModels()]);
   return (
     <>
-      <a href="#contenu" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2">
+      <a href="#contenu" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-paper focus:px-3 focus:py-2">
         Aller au contenu
       </a>
-      <SiteHeader brandName={brand.name} />
+      <SiteHeader brand={brand} />
       <main id="contenu" className="flex-1">
         {children}
       </main>

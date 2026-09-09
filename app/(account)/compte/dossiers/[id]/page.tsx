@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, Download, FileText, MessageSquare, Package, Wrench } from "lucide-react";
 import { ROUTES } from "@/config/site";
 import { Breadcrumbs, DescriptionList } from "@/components/ui/misc";
 import { Badge } from "@/components/ui/badge";
@@ -123,7 +122,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Package className="h-4.5 w-4.5 text-accent" aria-hidden="true" /> Envoyer votre console
+              Envoyer votre console
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-ink-soft">
@@ -155,7 +154,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             {labelUrl ? (
               <div className="flex flex-wrap items-center gap-3 rounded-md bg-surface-muted p-3">
                 <a href={labelUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 font-medium text-accent underline">
-                  <Download className="h-4 w-4" aria-hidden="true" /> Télécharger mon étiquette (PDF)
+                  Télécharger mon étiquette (PDF)
                 </a>
                 {outbound?.tracking_number ? (
                   <span className="text-xs text-ink-muted">
@@ -200,7 +199,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <ul className="mt-3 space-y-1 text-xs text-ink-muted">
                 {invoiceLinks.map((inv) => (
                   <li key={inv.id} className="flex flex-wrap items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5" aria-hidden="true" /> {INVOICE_TYPE_LABELS[inv.invoice_type]} {inv.invoice_number} · {formatPrice(Math.abs(inv.amount_cents))} · {formatDate(inv.issued_at)}
+                    {INVOICE_TYPE_LABELS[inv.invoice_type]} {inv.invoice_number} · {formatPrice(Math.abs(inv.amount_cents))} · {formatDate(inv.issued_at)}
                     {inv.url ? (
                       <a href={inv.url} target="_blank" rel="noopener noreferrer" className="text-accent underline">
                         Télécharger le PDF
@@ -260,7 +259,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Wrench className="h-4.5 w-4.5 text-accent" aria-hidden="true" /> Diagnostic
+              Diagnostic
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -365,7 +364,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-4.5 w-4.5 text-warning" aria-hidden="true" /> Un problème après la réparation ?
+              Un problème après la réparation ?
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center justify-between gap-3 text-sm">
@@ -390,7 +389,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-4.5 w-4.5 text-accent" aria-hidden="true" /> Messagerie
+            Messagerie
           </CardTitle>
         </CardHeader>
         <CardContent>

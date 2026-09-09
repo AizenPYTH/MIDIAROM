@@ -1,55 +1,125 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Design tokens — sober, technical, trustworthy. No loud colours.
+   Design tokens — handoff « 207 Mediarom » (Claude Design).
+   Deux ambiances partagent les mêmes noms de variables :
+     :root       → « papier » (site public, espace client)
+     .theme-ink  → « encre »  (back-office, entièrement sombre)
+   Aucun arrondi, aucune ombre : le style repose sur des filets de 1 px et des
+   blocs pleins. Ne pas « améliorer ».
 --------------------------------------------------------------------------- */
 :root {
-  --color-bg: #f6f7f9;
-  --color-surface: #ffffff;
-  --color-surface-muted: #eef1f5;
-  --color-border: #dfe3ea;
-  --color-border-strong: #c3cad6;
-  --color-ink: #0f172a;
-  --color-ink-soft: #475569;
-  --color-ink-muted: #64748b;
-  --color-primary: #0b2545;
-  --color-primary-hover: #13315c;
-  --color-primary-soft: #e6edf7;
-  --color-accent: #1d5fd1;
-  --color-accent-hover: #174cab;
-  --color-accent-soft: #e8f0fd;
-  --color-success: #15803d;
-  --color-success-soft: #e8f5ec;
-  --color-warning: #b45309;
-  --color-warning-soft: #fdf3e2;
-  --color-danger: #b91c1c;
-  --color-danger-soft: #fdeaea;
-  --color-info: #1d5fd1;
-  --color-info-soft: #e8f0fd;
-  --radius-sm: 0.375rem;
-  --radius: 0.625rem;
-  --radius-lg: 1rem;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.12);
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --paper: #f6f3ec;
+  --paper-alt: #f0ebdf;
+  --paper-strong: #e0dacb;
+  --ink-900: #14120f;
+  --ink-800: #191712;
+  --ink-750: #201d17;
+  --ink-700: #2a261e;
+  --ink-650: #2f2b22;
+  --ink-600: #3f3a2e;
+  --sale: #c94d18;
+  --repair: #3d7cd1;
+  --repair-light: #7fa8e0;
+  --selection: #dbe6f6;
+
+  --color-bg: var(--paper);
+  --color-bg-alt: var(--paper-alt);
+  --color-surface: var(--paper);
+  --color-surface-muted: var(--paper-alt);
+  --color-surface-strong: var(--paper-strong);
+  --color-border: rgba(20, 18, 15, 0.14);
+  --color-border-strong: rgba(20, 18, 15, 0.25);
+  --color-ink: var(--ink-900);
+  --color-ink-soft: #3a352c;
+  --color-ink-muted: #8a8271;
+  --color-ink-faint: #6d6656;
+  --color-primary: var(--ink-900);
+  --color-primary-hover: var(--sale);
+  --color-primary-fg: var(--paper);
+  --color-primary-soft: var(--paper-alt);
+  --color-accent: var(--repair);
+  --color-accent-hover: var(--ink-900);
+  --color-accent-soft: var(--selection);
+  --color-accent-light: var(--repair-light);
+  --color-sale: var(--sale);
+  --color-sale-hover: var(--ink-900);
+  --color-success: #355c1e;
+  --color-success-soft: #e4ecd6;
+  --color-warning: #8a4a12;
+  --color-warning-soft: #f6e6d0;
+  --color-danger: #a3341a;
+  --color-danger-soft: #f4dcd3;
+  --color-info: #2d5ea6;
+  --color-info-soft: var(--selection);
+  --color-field: #ffffff;
+  --color-placeholder-a: #e8e3d6;
+  --color-placeholder-b: #f0ecdf;
+  --color-placeholder-fg: #7c7565;
+
+  --font-sans: var(--font-archivo), Archivo, Helvetica, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.theme-ink {
+  --color-bg: var(--ink-900);
+  --color-bg-alt: var(--ink-800);
+  --color-surface: var(--ink-800);
+  --color-surface-muted: var(--ink-750);
+  --color-surface-strong: var(--ink-700);
+  --color-border: var(--ink-700);
+  --color-border-strong: var(--ink-600);
+  --color-ink: var(--paper);
+  --color-ink-soft: #c4bdae;
+  --color-ink-muted: #8a8271;
+  --color-ink-faint: #a39c8c;
+  --color-primary: var(--repair);
+  --color-primary-hover: var(--paper);
+  --color-primary-fg: #ffffff;
+  --color-primary-soft: var(--ink-750);
+  --color-accent: var(--repair);
+  --color-accent-hover: var(--paper);
+  --color-accent-soft: #243349;
+  --color-accent-light: var(--repair-light);
+  --color-sale: var(--sale);
+  --color-sale-hover: var(--paper);
+  --color-success: #a9cf85;
+  --color-success-soft: #2c3a22;
+  --color-warning: #f0b071;
+  --color-warning-soft: #3d2a16;
+  --color-danger: #e08b6b;
+  --color-danger-soft: #3d1c16;
+  --color-info: #9dc0ec;
+  --color-info-soft: #243349;
+  --color-field: var(--ink-900);
+  --color-placeholder-a: #201d17;
+  --color-placeholder-b: #262218;
+  --color-placeholder-fg: #6b6558;
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-bg: var(--color-bg);
+  --color-bg-alt: var(--color-bg-alt);
   --color-surface: var(--color-surface);
   --color-surface-muted: var(--color-surface-muted);
+  --color-surface-strong: var(--color-surface-strong);
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
   --color-ink: var(--color-ink);
   --color-ink-soft: var(--color-ink-soft);
   --color-ink-muted: var(--color-ink-muted);
+  --color-ink-faint: var(--color-ink-faint);
   --color-primary: var(--color-primary);
   --color-primary-hover: var(--color-primary-hover);
+  --color-primary-fg: var(--color-primary-fg);
   --color-primary-soft: var(--color-primary-soft);
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-soft: var(--color-accent-soft);
+  --color-accent-light: var(--color-accent-light);
+  --color-sale: var(--color-sale);
+  --color-sale-hover: var(--color-sale-hover);
   --color-success: var(--color-success);
   --color-success-soft: var(--color-success-soft);
   --color-warning: var(--color-warning);
@@ -58,17 +128,23 @@
   --color-danger-soft: var(--color-danger-soft);
   --color-info: var(--color-info);
   --color-info-soft: var(--color-info-soft);
+  --color-field: var(--color-field);
+  --color-paper: var(--paper);
+  --color-paper-alt: var(--paper-alt);
+  --color-paper-strong: var(--paper-strong);
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-750: var(--ink-750);
+  --color-ink-700: var(--ink-700);
+  --color-ink-650: var(--ink-650);
+  --color-ink-600: var(--ink-600);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius);
-  --radius-lg: var(--radius-lg);
-  --shadow-sm: var(--shadow-sm);
-  --shadow-md: var(--shadow);
+  --radius-*: initial;
+  --shadow-*: initial;
 }
 
 html {
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -76,53 +152,92 @@ body {
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  line-height: 1.55;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
 }
 
-/* Accessible focus ring everywhere */
+/* Dans @layer base pour que les utilitaires (font-mono, text-paper…) gardent la main. */
+@layer base {
+  textarea,
+  input,
+  button,
+  select {
+    font-family: inherit;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+/* Aucun arrondi, aucune ombre, nulle part (règle n°1 du handoff). */
+*,
+*::before,
+*::after {
+  border-radius: 0;
+  box-shadow: none;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
 }
 
 ::selection {
-  background: var(--color-accent-soft);
+  background: var(--selection);
+  color: var(--ink-900);
+}
+
+/* Titres de page plus compacts dans le back-office (fiche admin : 24–30 px). */
+.theme-ink .page-title {
+  font-size: 26px;
+}
+
+/* Étiquette mono : majuscules, interlettrage large. */
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Placeholder photo rayé (à remplacer par les vraies photos). */
+.photo-placeholder {
+  background: repeating-linear-gradient(135deg, var(--color-placeholder-a) 0 7px, var(--color-placeholder-b) 7px 14px);
+  color: var(--color-placeholder-fg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Prose for CMS markdown */
-.prose-cms h1 { font-size: 1.75rem; font-weight: 700; margin: 1.5rem 0 0.75rem; letter-spacing: -0.01em; }
-.prose-cms h2 { font-size: 1.375rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+.prose-cms h1 { font-size: 1.75rem; font-weight: 800; margin: 1.5rem 0 0.75rem; letter-spacing: -0.02em; }
+.prose-cms h2 { font-size: 1.375rem; font-weight: 800; margin: 1.5rem 0 0.5rem; letter-spacing: -0.01em; }
 .prose-cms h3 { font-size: 1.125rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
 .prose-cms p { margin: 0.5rem 0 0.875rem; color: var(--color-ink-soft); }
 .prose-cms ul, .prose-cms ol { margin: 0.5rem 0 1rem 1.25rem; color: var(--color-ink-soft); }
 .prose-cms ul { list-style: disc; }
 .prose-cms ol { list-style: decimal; }
 .prose-cms li { margin: 0.25rem 0; }
-.prose-cms a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
-.prose-cms blockquote { border-left: 3px solid var(--color-warning); background: var(--color-warning-soft); padding: 0.5rem 1rem; border-radius: var(--radius-sm); margin: 1rem 0; }
+.prose-cms a { color: var(--color-sale); text-decoration: underline; text-underline-offset: 2px; }
+.prose-cms blockquote { border-left: 2px solid var(--color-ink); background: var(--color-surface-muted); padding: 0.5rem 1rem; margin: 1rem 0; }
 .prose-cms blockquote p { margin: 0; color: var(--color-ink); }
-.prose-cms code { font-family: var(--font-mono); font-size: 0.875em; background: var(--color-surface-muted); padding: 0.1em 0.3em; border-radius: 4px; }
+.prose-cms code { font-family: var(--font-mono); font-size: 0.875em; background: var(--color-surface-muted); padding: 0.1em 0.3em; }
 .prose-cms strong { color: var(--color-ink); }
 
-/* Reduce motion */
+/* Le handoff n'a aucune animation : seules les transitions de couleur au survol. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
 .skeleton {
-  background: linear-gradient(90deg, var(--color-surface-muted) 25%, #e3e7ee 50%, var(--color-surface-muted) 75%);
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite linear;
-  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
 }
 
-/* Print: labels / QR */
 @media print {
   .no-print { display: none !important; }
 }

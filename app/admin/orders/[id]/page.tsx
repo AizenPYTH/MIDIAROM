@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -78,30 +77,33 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
   const pendingQuotes = (quotes.data ?? []).filter((q) => q.status === "SENT").length;
 
   return (
-    <div className="min-w-0 max-w-full space-y-6 overflow-x-hidden">
+    <div className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Link href="/admin/orders" className="text-xs text-ink-muted hover:text-ink">← Dossiers</Link>
-          <h1 className="mt-1 font-mono text-2xl font-bold text-ink">{order.order_number}</h1>
-          <p className="text-ink">{order.brand_name} {order.model_name} — {order.repair_name}</p>
-          <p className="text-sm text-ink-muted">
-            {order.customer_first_name} {order.customer_last_name} · {order.customer_email}{order.customer_phone ? ` · ${order.customer_phone}` : ""}
+        <div className="min-w-0">
+          <Link href="/admin" className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted hover:text-ink">← Réparations</Link>
+          <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Fiche {order.order_number}</p>
+          <h1 className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-ink">{order.model_name.startsWith(order.brand_name) ? order.model_name : `${order.brand_name} ${order.model_name}`}</h1>
+          <p className="text-[14px] text-ink-faint">
+            {order.repair_name} · <Link href={`/admin/customers/${order.customer_id}`} className="hover:text-ink">{order.customer_first_name} {order.customer_last_name}</Link> · {order.customer_email}{order.customer_phone ? ` · ${order.customer_phone}` : ""}
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <Badge tone={statusTone(order.status)} className="text-sm">{ORDER_STATUS_LABELS[order.status]}</Badge>
-          <form action={assignTechnicianAction} className="flex items-center gap-2 text-xs">
+          <Badge tone={statusTone(order.status)}>{ORDER_STATUS_LABELS[order.status]}</Badge>
+          <form action={assignTechnicianAction} className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.06em]">
             <input type="hidden" name="order_id" value={order.id} />
             <label htmlFor="technician_id" className="text-ink-muted">Technicien</label>
-            <Select id="technician_id" name="technician_id" defaultValue={order.assigned_technician_id ?? ""} className="h-8 py-1 text-xs">
+            <Select id="technician_id" name="technician_id" defaultValue={order.assigned_technician_id ?? ""} className="py-1.5 text-[12px]">
               <option value="">Non assigné</option>
               {(technicians.data ?? []).map((t) => <option key={t.id} value={t.id}>{t.display_name}</option>)}
             </Select>
-            <Button type="submit" size="sm" variant="outline" className="h-8">OK</Button>
+            <Button type="submit" size="sm" variant="outline" className="py-2">OK</Button>
           </form>
         </div>
       </div>
-      <StatusTimeline steps={computeTimeline(order.status)} />
+      <div>
+        <span className="mb-2 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Avancement</span>
+        <StatusTimeline steps={computeTimeline(order.status)} />
+      </div>
       <Tabs tabs={TABS.map((t) => (t.key === "quotes" ? { ...t, count: pendingQuotes } : t))} current={tab} hrefFor={hrefFor} />
 
       {tab === "overview" ? (
@@ -385,7 +387,7 @@ function ShipmentList({ shipments, labelUrls }: { shipments: { id: string; carri
             <span className="block text-xs text-ink-muted">{s.status} · {formatDateTime(s.created_at)} · coût {formatPrice(s.cost_cents)}</span>
           </span>
           <span className="flex gap-3 text-xs">
-            {labelUrls.get(s.id) ? <a href={labelUrls.get(s.id) ?? "#"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline"><Download className="h-3.5 w-3.5" aria-hidden="true" /> Étiquette</a> : null}
+            {labelUrls.get(s.id) ? <a href={labelUrls.get(s.id) ?? "#"} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">↓ Étiquette</a> : null}
             {s.tracking_url ? <a href={s.tracking_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Suivi</a> : null}
           </span>
         </li>

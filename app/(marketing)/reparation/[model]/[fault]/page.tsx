@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Info } from "lucide-react";
-import { CHECKOUT_STEPS, ROUTES, SITE_URL } from "@/config/site";
-import { Breadcrumbs, Container } from "@/components/ui/misc";
-import { Stepper } from "@/components/ui/stepper";
-import { ButtonLink } from "@/components/ui/button";
+import { ROUTES, SITE_URL } from "@/config/site";
+import { Breadcrumbs, Container, Eyebrow } from "@/components/ui/misc";
 import { Alert } from "@/components/ui/alert";
 import { FaqList, StepsList } from "@/components/marketing/sections";
 import { IncludedList, PriceTag, RepairFacts } from "@/components/repair/repair-summary";
@@ -46,8 +43,15 @@ interface FaqEntry {
 
 function parseFaq(value: unknown): FaqEntry[] {
   if (!Array.isArray(value)) return [];
-  return value.filter(
-    (v): v is FaqEntry => typeof v === "object" && v !== null && typeof (v as FaqEntry).question === "string" && typeof (v as FaqEntry).answer === "string",
+  return value.filter((v): v is FaqEntry => typeof v === "object" && v !== null && typeof (v as FaqEntry).question === "string" && typeof (v as FaqEntry).answer === "string");
+}
+
+function SectionBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-9">
+      <h2 className="text-[22px] font-extrabold tracking-[-0.01em] text-ink">{title}</h2>
+      <div className="mt-3 text-[15.5px] leading-[1.55] text-ink-soft">{children}</div>
+    </section>
   );
 }
 
@@ -92,59 +96,63 @@ export default async function RepairPage({ params }: { params: Promise<{ model: 
         { "@type": "ListItem", position: 3, name: repair.fault.name, item: url },
       ],
     },
-    ...(repairFaq.length
-      ? [
-          {
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            mainEntity: repairFaq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })),
-          },
-        ]
-      : []),
+    ...(repairFaq.length ? [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: repairFaq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) }] : []),
   ];
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <TrackOnMount event={ANALYTICS_EVENTS.VIEW_REPAIR} props={{ repair_id: repair.id, value_cents: repair.price_cents, repair_name: repair.name }} />
-      <Container className="py-10 pb-28 sm:py-14 lg:pb-14">
-        <Stepper steps={CHECKOUT_STEPS} current={3} className="mb-8" />
-        <Breadcrumbs
-          items={[
-            { label: "Accueil", href: ROUTES.home },
-            { label: "Réparation", href: ROUTES.repair },
-            { label: repair.model.name, href: `${ROUTES.repair}/${repair.model.slug}` },
-            { label: repair.fault.name },
-          ]}
-        />
 
-        <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_380px]">
-          <article className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-accent">
-              {repair.model.brand.name} · {repair.model.name} · Étape 4 sur 8
-            </p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink sm:text-4xl">{repair.seo_h1 ?? repair.name}</h1>
-            {repair.summary ? <p className="mt-3 text-lg text-ink-soft">{repair.summary}</p> : null}
-
-            {/* Mobile price */}
-            <div className="mt-6 rounded-lg border border-border bg-surface p-5 lg:hidden">
-              <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} />
-              <div className="mt-4">
-                <RepairFacts repair={repair} />
-              </div>
+      {/* En-tête encre : fil d'Ariane, titre, résumé, carte prix */}
+      <section className="bg-ink-900 px-6 py-[56px] text-paper">
+        <div className="mx-auto grid max-w-[1280px] items-start gap-12 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
+          <div className="flex flex-col gap-[18px]">
+            <div className="text-[#a39c8c]">
+              <Breadcrumbs items={[{ label: "Accueil", href: ROUTES.home }, { label: "Réparation", href: ROUTES.repair }, { label: repair.model.name, href: `${ROUTES.repair}/${repair.model.slug}` }, { label: repair.fault.name }]} />
             </div>
-
-            {repair.description ? (
-              <div className="prose-cms mt-8" dangerouslySetInnerHTML={{ __html: renderMarkdown(repair.description) }} />
+            <Eyebrow tone="repair">
+              {repair.model.brand.name} · {repair.model.name}
+            </Eyebrow>
+            <h1 className="text-[clamp(32px,4vw,52px)] font-extrabold leading-[1] tracking-[-0.03em]">{repair.seo_h1 ?? repair.name}</h1>
+            {repair.summary ? <p className="max-w-[42ch] text-[17px] leading-[1.5] text-[#c4bdae]">{repair.summary}</p> : null}
+            {repair.included_items.length ? (
+              <ul className="flex flex-wrap gap-2">
+                {repair.included_items.map((item) => (
+                  <li key={item} className="border border-ink-650 px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.06em] text-[#c4bdae]">
+                    {item}
+                  </li>
+                ))}
+              </ul>
             ) : null}
+          </div>
+          <aside className="bg-paper p-[26px] text-ink-900">
+            <span className="font-mono text-[12px] uppercase tracking-[0.08em]">Prestation</span>
+            <p className="mt-2 text-[22px] font-extrabold tracking-[-0.01em]">{repair.name}</p>
+            <div className="mt-3">
+              <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} />
+            </div>
+            {repair.is_diagnostic_only ? <p className="mt-2 text-[13px] text-ink-faint">Diagnostic puis devis. Le montant du diagnostic est traité selon les conditions affichées avant paiement.</p> : null}
+            <div className="mt-4">
+              <RepairFacts repair={repair} />
+            </div>
+            <Link href={checkoutHref} className="mt-5 block bg-accent px-4 py-[14px] text-center font-mono text-[12.5px] uppercase tracking-[0.06em] text-white hover:bg-ink-900">
+              {cta}
+            </Link>
+            <p className="mt-3 text-center font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-muted">Transport en sus selon la formule · Paiement sécurisé</p>
+          </aside>
+        </div>
+      </section>
+
+      <Container className="pb-28 pt-4 lg:pb-16">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <article className="min-w-0">
+            {repair.description ? <div className="prose-cms mt-6" dangerouslySetInnerHTML={{ __html: renderMarkdown(repair.description) }} /> : null}
 
             {repair.included_items.length ? (
-              <section className="mt-8">
-                <h2 className="text-xl font-semibold text-ink">Ce qui est inclus</h2>
-                <div className="mt-3">
-                  <IncludedList items={repair.included_items} />
-                </div>
-              </section>
+              <SectionBlock title="Ce qui est inclus">
+                <IncludedList items={repair.included_items} />
+              </SectionBlock>
             ) : null}
 
             {repair.important_notes ? (
@@ -153,96 +161,63 @@ export default async function RepairPage({ params }: { params: Promise<{ model: 
               </Alert>
             ) : null}
 
-            {repair.seo_symptoms ? (
-              <section className="mt-8">
-                <h2 className="text-xl font-semibold text-ink">Symptômes</h2>
-                <p className="mt-2 text-ink-soft">{repair.seo_symptoms}</p>
-              </section>
-            ) : null}
-            {repair.seo_causes ? (
-              <section className="mt-6">
-                <h2 className="text-xl font-semibold text-ink">Causes fréquentes</h2>
-                <p className="mt-2 text-ink-soft">{repair.seo_causes}</p>
-              </section>
-            ) : null}
-            {repair.seo_process ? (
-              <section className="mt-6">
-                <h2 className="text-xl font-semibold text-ink">Comment nous réparons</h2>
-                <p className="mt-2 text-ink-soft">{repair.seo_process}</p>
-              </section>
-            ) : null}
+            {repair.seo_symptoms ? <SectionBlock title="Symptômes">{repair.seo_symptoms}</SectionBlock> : null}
+            {repair.seo_causes ? <SectionBlock title="Causes fréquentes">{repair.seo_causes}</SectionBlock> : null}
+            {repair.seo_process ? <SectionBlock title="Comment nous réparons">{repair.seo_process}</SectionBlock> : null}
 
-            <section className="mt-8">
-              <h2 className="text-xl font-semibold text-ink">Garantie</h2>
-              <p className="mt-2 text-ink-soft">
+            <SectionBlock title="Garantie">
+              <p>
                 {repair.warranty_months > 0
                   ? `${repair.warranty_months} mois sur l'intervention. ${repair.warranty_scope ?? warranty.scope}`
                   : "Cette prestation de diagnostic n'est pas couverte par une garantie spécifique : la garantie s'applique à la réparation qui en découle."}
               </p>
-              {repair.warranty_exclusions || warranty.exclusions ? (
-                <p className="mt-1 text-sm text-ink-muted">Exclusions : {repair.warranty_exclusions ?? warranty.exclusions}</p>
-              ) : null}
-              <p className="mt-1 text-xs text-ink-muted">La garantie porte sur l&apos;intervention réalisée, pas sur l&apos;ensemble de la console.</p>
-            </section>
+              {repair.warranty_exclusions || warranty.exclusions ? <p className="mt-1 text-[13.5px] text-ink-muted">Exclusions : {repair.warranty_exclusions ?? warranty.exclusions}</p> : null}
+              <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">La garantie porte sur l&apos;intervention réalisée, pas sur l&apos;ensemble de la console.</p>
+            </SectionBlock>
 
             {steps.length ? (
-              <section className="mt-10">
-                <h2 className="mb-4 text-xl font-semibold text-ink">Comment ça marche ?</h2>
+              <SectionBlock title="Comment ça marche ?">
                 <StepsList steps={steps.slice(0, 4)} />
-                <Link href={ROUTES.howItWorks} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
-                  Toutes les étapes <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                <Link href={ROUTES.howItWorks} className="mt-3 inline-block font-mono text-[12px] uppercase tracking-[0.06em] text-sale underline underline-offset-4">
+                  Toutes les étapes
                 </Link>
-              </section>
+              </SectionBlock>
             ) : null}
 
             {recommended.length ? (
-              <section className="mt-10">
-                <h2 className="text-xl font-semibold text-ink">{blocks["upsell.title"]?.title ?? "Options compatibles"}</h2>
-                <p className="mt-1 text-sm text-ink-muted">Proposées lors de la commande. Facultatives.</p>
-                <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+              <SectionBlock title={blocks["upsell.title"]?.title ?? "Options compatibles"}>
+                <p className="text-[13.5px] text-ink-muted">Proposées lors de la commande. Facultatives.</p>
+                <ul className="mt-3 flex flex-col gap-2">
                   {recommended.map((item) => (
-                    <li key={item.id} className="flex items-center justify-between rounded-md border border-border bg-surface px-4 py-3">
-                      <span className="text-sm">
-                        <span className="block font-medium text-ink">{item.name}</span>
-                        <span className="block text-ink-muted">{item.short_description}</span>
+                    <li key={item.id} className="flex items-center justify-between gap-3 border border-border-strong px-3.5 py-3">
+                      <span>
+                        <span className="block text-[15px] font-semibold text-ink">{item.name}</span>
+                        <span className="block text-[13px] text-ink-faint">{item.short_description}</span>
                       </span>
-                      <span className="shrink-0 font-semibold text-primary">{formatPriceDelta(item.price_cents)}</span>
+                      <span className="shrink-0 font-mono text-[14px] text-ink">{formatPriceDelta(item.price_cents)}</span>
                     </li>
                   ))}
                 </ul>
-              </section>
+              </SectionBlock>
             ) : null}
 
             {faq.length ? (
-              <section className="mt-10">
-                <h2 className="mb-4 text-xl font-semibold text-ink">Questions fréquentes</h2>
+              <SectionBlock title="Questions fréquentes">
                 <FaqList items={faq} />
-              </section>
+              </SectionBlock>
             ) : null}
           </article>
 
-          {/* Desktop sticky card */}
           <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-lg border border-border bg-surface p-6 shadow-sm">
-              <p className="text-sm font-medium text-ink-muted">{repair.model.name}</p>
-              <p className="text-lg font-semibold text-ink">{repair.name}</p>
+            <div className="sticky top-24 mt-6 border border-border bg-surface p-5">
+              <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">{repair.model.name}</span>
+              <p className="mt-1 text-[16px] font-semibold text-ink">{repair.name}</p>
               <div className="mt-3">
-                <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} />
+                <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} size="md" />
               </div>
-              {repair.is_diagnostic_only ? (
-                <p className="mt-2 flex items-start gap-1.5 text-xs text-ink-muted">
-                  <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  Diagnostic puis devis. Le montant du diagnostic est traité selon les conditions affichées avant paiement.
-                </p>
-              ) : null}
-              <div className="mt-4">
-                <RepairFacts repair={repair} />
-              </div>
-              <ButtonLink href={checkoutHref} variant="accent" size="lg" fullWidth className="mt-5">
+              <Link href={checkoutHref} className="mt-4 block bg-accent px-4 py-3 text-center font-mono text-[12px] uppercase tracking-[0.06em] text-white hover:bg-ink-900">
                 {cta}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </ButtonLink>
-              <p className="mt-3 text-center text-xs text-ink-muted">Transport en sus selon la formule choisie · Paiement sécurisé</p>
+              </Link>
             </div>
           </aside>
         </div>

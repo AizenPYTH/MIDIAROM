@@ -1,18 +1,18 @@
-import { ButtonLink } from "@/components/ui/button";
+import Link from "next/link";
 import { formatPrice } from "@/lib/utils/format";
 
-/** Mobile sticky bar: repair name + price + CTA (always visible while scrolling). */
+/** Barre mobile fixe : prestation + prix + CTA (toujours visible en défilant). */
 export function StickyCta({ label, priceCents, href, cta }: { label: string; priceCents: number; href: string; cta: string }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 p-3 backdrop-blur lg:hidden">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg p-3 lg:hidden">
+      <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">{label}</p>
-          <p className="text-sm font-bold text-primary">{formatPrice(priceCents)}</p>
+          <p className="truncate text-[14px] font-semibold text-ink">{label}</p>
+          <p className="font-mono text-[14px] font-semibold text-ink">{formatPrice(priceCents)}</p>
         </div>
-        <ButtonLink href={href} variant="accent" size="md">
+        <Link href={href} className="whitespace-nowrap bg-accent px-4 py-3 font-mono text-[12px] uppercase tracking-[0.06em] text-white hover:bg-ink-900">
           {cta}
-        </ButtonLink>
+        </Link>
       </div>
     </div>
   );

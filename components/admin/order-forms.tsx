@@ -88,20 +88,22 @@ export function StatusForm({ orderId, current, role }: { orderId: string; curren
   );
 }
 
-export function NoteForm({ orderId }: { orderId: string }) {
+export function NoteForm({ orderId, compact }: { orderId: string; compact?: boolean }) {
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(addInternalNoteAction, null);
   useRefresh(state);
   return (
-    <form action={action} className="space-y-3" key={state?.ok ? "sent" : "draft"}>
+    <form action={action} className="flex flex-col gap-2" key={state?.ok ? "sent" : "draft"}>
       <input type="hidden" name="order_id" value={orderId} />
-      <Textarea name="body" required minLength={2} placeholder="Note interne ou message au client…" aria-label="Message" />
-      <label className="flex items-center gap-2 text-sm text-ink-soft">
-        <Checkbox name="internal" defaultChecked /> Note interne (non visible par le client)
-      </label>
+      <Textarea name="body" required minLength={2} placeholder={compact ? "Note d'atelier interne — pièces commandées, mesures, tests effectués…" : "Note interne ou message au client…"} aria-label="Message" className={compact ? "min-h-[80px] text-[14px]" : undefined} />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label className="flex items-center gap-2 text-[13px] text-ink-soft">
+          <Checkbox name="internal" defaultChecked /> Note interne (non visible par le client)
+        </label>
+        <Button type="submit" size="sm" variant="outline" loading={pending}>
+          Enregistrer la note
+        </Button>
+      </div>
       <Feedback state={state} />
-      <Button type="submit" size="sm" loading={pending}>
-        Enregistrer
-      </Button>
     </form>
   );
 }
@@ -303,14 +305,14 @@ function QuoteRow({ index, options }: { index: number; options: { id: string; na
   );
 }
 
-export function SendQuoteButton({ quoteId }: { quoteId: string }) {
+export function SendQuoteButton({ quoteId, className, label = "Envoyer au client" }: { quoteId: string; className?: string; label?: string }) {
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(sendQuoteAction, null);
   useRefresh(state);
   return (
-    <form action={action} className="inline-flex flex-col gap-1">
+    <form action={action} className={className ? `flex flex-col gap-1 ${className.includes("flex-[") ? "" : "inline-flex"}` : "inline-flex flex-col gap-1"} style={className?.includes("flex-[") ? { flex: "1 1 150px" } : undefined}>
       <input type="hidden" name="quote_id" value={quoteId} />
-      <Button type="submit" size="sm" loading={pending}>
-        Envoyer au client
+      <Button type="submit" size="sm" variant={className ? "accent" : "primary"} loading={pending} className={className ? "w-full py-[13px]" : undefined}>
+        {label}
       </Button>
       <Feedback state={state} />
     </form>

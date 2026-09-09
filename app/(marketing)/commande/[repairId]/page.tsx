@@ -1,32 +1,31 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Container } from "@/components/ui/misc";
-import { CheckoutFlow } from "@/components/checkout/checkout-flow";
-import { getRepairById, getRepairOffer } from "@/lib/repair/catalog";
+import { ROUTES } from "@/config/site";
+import { Eyebrow } from "@/components/ui/misc";
+import { RepairForm } from "@/components/repair/repair-form";
+import { IncludedList, PriceTag, RepairFacts } from "@/components/repair/repair-summary";
+import { getRepairById, getRepairOffer, getRepairsForModel } from "@/lib/repair/catalog";
+import { getRepairFormBase, toFormOffer, toFormRepair } from "@/lib/repair/form-data";
 import { getCurrentUser } from "@/lib/security/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSetting } from "@/lib/settings";
-import { getContentBlock, getLegalDocument } from "@/lib/content";
-import { consequenceForOutcome } from "@/lib/quotes/rules";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Votre commande", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Votre demande de réparation", robots: { index: false, follow: false } };
 
+/**
+ * Commande d'une prestation : la fiche de réparation s'ouvre à l'étape 2 avec
+ * le modèle et la prestation présélectionnés (options, description, coordonnées, paiement).
+ */
 export default async function CheckoutPage({ params, searchParams }: { params: Promise<{ repairId: string }>; searchParams: Promise<{ cancelled?: string }> }) {
   const [{ repairId }, { cancelled }] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/.test(repairId)) notFound();
   const repair = await getRepairById(repairId);
   if (!repair || !repair.is_active) notFound();
 
-  const [offer, user, rules, warranty, upsell, cgv] = await Promise.all([
-    getRepairOffer(repair),
-    getCurrentUser(),
-    getSetting("business_rules"),
-    getSetting("warranty"),
-    getContentBlock("upsell.title"),
-    getLegalDocument("cgv"),
-  ]);
+  const [offer, repairs, user, base, warranty] = await Promise.all([getRepairOffer(repair), getRepairsForModel(repair.model_id), getCurrentUser(), getRepairFormBase(repair.is_diagnostic_only), getSetting("warranty")]);
 
   let defaultAddress = null;
   if (user) {
@@ -35,50 +34,52 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
     defaultAddress = data;
   }
 
-  const refusal = consequenceForOutcome("QUOTE_REFUSED", rules, repair.is_diagnostic_only);
-  const unrepairable = consequenceForOutcome("UNREPAIRABLE", rules, repair.is_diagnostic_only);
-
   return (
-    <Container className="py-8 pb-32 sm:py-12 lg:pb-12">
-      <CheckoutFlow
-        repair={{
-          id: repair.id,
-          name: repair.name,
-          modelName: repair.model.name,
-          modelSlug: repair.model.slug,
-          faultName: repair.fault.name,
-          priceCents: repair.price_cents,
-          includedItems: repair.included_items,
-          warrantyMonths: repair.warranty_months,
-          warrantyScope: repair.warranty_scope ?? warranty.scope,
-          importantNotes: repair.important_notes,
-          isDiagnosticOnly: repair.is_diagnostic_only,
-          leadTimeMin: repair.lead_time_days_min,
-          leadTimeMax: repair.lead_time_days_max,
-        }}
-        options={offer.options.map((o) => ({ id: o.id, name: o.name, shortDescription: o.short_description, description: o.description, priceCents: o.price_cents, isRecommended: o.is_recommended, categoryId: o.category_id }))}
-        packs={offer.packs.map((p) => ({ id: p.id, name: p.name, shortDescription: p.short_description, description: p.description, priceCents: p.price_cents, isRecommended: p.is_recommended, optionIds: p.optionIds, optionNames: p.options.map((o) => o.name) }))}
-        shippingMethods={offer.shippingMethods.map((m) => ({ id: m.id, name: m.name, description: m.description, priceCents: m.price_cents, includesOutbound: m.includes_outbound, includesReturn: m.includes_return, insuranceCents: m.insurance_cents }))}
-        upsellTitle={upsell?.title ?? "Profitez de l'intervention pour entretenir votre console"}
-        upsellText={upsell?.body ?? null}
-        conditions={{
-          refusalExplanation: refusal.explanation,
-          refusalFeeCents: refusal.diagnosticFeeCents + refusal.returnFeeCents,
-          unrepairableFeeCents: unrepairable.diagnosticFeeCents + unrepairable.returnFeeCents,
-          quoteValidityDays: rules.quote_validity_days,
-          cgvVersion: cgv?.version ?? null,
-        }}
-        initialCustomer={
-          user
-            ? { first_name: user.profile.first_name ?? "", last_name: user.profile.last_name ?? "", email: user.email, phone: user.profile.phone ?? "" }
-            : null
-        }
-        initialAddress={
-          defaultAddress ? { line1: defaultAddress.line1, line2: defaultAddress.line2 ?? "", postal_code: defaultAddress.postal_code, city: defaultAddress.city } : null
-        }
-        isLoggedIn={Boolean(user)}
-        cancelled={cancelled === "1"}
-      />
-    </Container>
+    <section className="bg-ink-900 px-6 py-[56px] text-paper">
+      <div className="mx-auto grid max-w-[1280px] items-start gap-12 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
+        <div className="flex flex-col gap-[22px]">
+          <Eyebrow tone="repair">
+            {repair.model.brand.name} · {repair.model.name}
+          </Eyebrow>
+          <h1 className="text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em]">{repair.name}</h1>
+          {repair.summary ? <p className="max-w-[42ch] text-[16.5px] leading-[1.55] text-[#c4bdae]">{repair.summary}</p> : null}
+          <div className="border border-ink-650 p-[18px]">
+            <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} />
+            <div className="mt-4 [&_dd]:text-paper [&_div]:bg-ink-800 [&_dl]:border-ink-700 [&_dl]:bg-ink-700">
+              <RepairFacts repair={repair} />
+            </div>
+            {repair.included_items.length ? (
+              <div className="mt-4 [&_li]:text-[#c4bdae]">
+                <IncludedList items={repair.included_items} />
+              </div>
+            ) : null}
+            {repair.warranty_months > 0 ? <p className="mt-4 text-[13px] text-[#a39c8c]">{repair.warranty_scope ?? warranty.scope}</p> : null}
+            {repair.important_notes ? <p className="mt-2 text-[13px] text-[#a39c8c]">{repair.important_notes}</p> : null}
+          </div>
+          <p className="font-mono text-[11.5px] text-ink-muted">
+            <Link href={`${ROUTES.repair}/${repair.model.slug}/${repair.fault.slug}`} className="hover:text-paper">
+              ← Fiche détaillée
+            </Link>
+            {" · "}
+            <Link href={`${ROUTES.repair}/${repair.model.slug}`} className="hover:text-paper">
+              Changer de panne
+            </Link>
+          </p>
+        </div>
+        <RepairForm
+          models={base.models}
+          conditions={base.conditions}
+          initialModelId={repair.model_id}
+          initialRepairs={repairs.map(toFormRepair)}
+          initialRepairId={repair.id}
+          initialOffer={toFormOffer(offer)}
+          initialStep={2}
+          initialCustomer={user ? { first_name: user.profile.first_name ?? "", last_name: user.profile.last_name ?? "", email: user.email, phone: user.profile.phone ?? "" } : null}
+          initialAddress={defaultAddress ? { line1: defaultAddress.line1, line2: defaultAddress.line2 ?? "", postal_code: defaultAddress.postal_code, city: defaultAddress.city } : null}
+          isLoggedIn={Boolean(user)}
+          cancelled={cancelled === "1"}
+        />
+      </div>
+    </section>
   );
 }
