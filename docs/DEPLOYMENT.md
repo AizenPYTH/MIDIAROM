@@ -58,9 +58,45 @@ avec `/auth/callback`), sinon les liens de confirmation et de mot de passe écho
 
 `supabase start` reste la voie recommandée. Sans Docker, une pile équivalente (PostgreSQL local + PostgREST + GoTrue compilé + émulateur Storage) a servi à l'audit ; les tests d'intégration se lancent avec `INTEGRATION=1 npm run test:integration` dès que `.env.local` pointe vers une pile Supabase-compatible.
 
+## Diagnostic « Connexion impossible : le service d'authentification n'a pas répondu correctement »
+
+Ce message ne concerne jamais le mot de passe. Il signale que l'application a bien
+tenté la connexion mais que Supabase a répondu autre chose qu'un refus d'identifiants :
+projet injoignable, clé refusée, schéma incomplet.
+
+```bash
+vercel env pull .env.vercel --environment=production
+node scripts/check-supabase.mjs .env.vercel     # ou : npm run check:supabase
+```
+
+Le script vérifie la présence des variables, l'appartenance des clés au projet visé
+par l'URL (la référence est lisible dans la clé), la joignabilité du projet,
+l'acceptation de la clé anon, le fonctionnement du point d'entrée de connexion, la
+validité de la clé service_role et la présence de la table `profiles`. Aucun secret
+n'est affiché.
+
+La cause exacte est aussi journalisée par l'application. Dans Vercel, ouvrez le
+déploiement puis les journaux d'exécution et cherchez `[auth] login failed` :
+
+| Ligne journalisée | Cause | Correction |
+| --- | --- | --- |
+| `status=0 message='fetch failed'` | hôte injoignable | `NEXT_PUBLIC_SUPABASE_URL` erronée, ou projet Supabase en pause : réveillez-le |
+| `status=401 message='Invalid API key'` | clé refusée | `NEXT_PUBLIC_SUPABASE_ANON_KEY` d'un autre projet ou tronquée |
+| `status=404` | l'URL n'expose pas l'API | reprenez « Project URL » dans Supabase → Settings → API |
+| `status=503` | projet en pause ou indisponible | réveillez le projet |
+| `status=500 message='Database error querying schema'` | schéma `auth` incomplet | rejouez `supabase db push` sur ce projet |
+
+Deux pièges spécifiques à Vercel :
+
+- une variable ajoutée ou modifiée ne s'applique qu'**au prochain déploiement**. Après
+  l'avoir corrigée, relancez un déploiement (Redeploy) ;
+- les variables sont définies **par environnement**. Une valeur renseignée seulement
+  pour Preview laisse la Production sans valeur.
+
 ## Contrôles avant mise en ligne
 
 - `npm run check` et `npm run test:db` verts.
+- `npm run check:supabase` vert avec les variables de production (`vercel env pull`).
 - Connexion au back-office vérifiée sur le domaine de production avec le compte super administrateur.
 - Back-office → Réglages : entreprise, règles métier, garantie, transport, confiance ; Contenu → documents légaux validés juridiquement ; Catalogue : prix réels, pages SEO publiées.
 - Webhook Stripe configuré et testé ; formule de transport rattachée à un vrai provider ou en mode manuel (`none`).
