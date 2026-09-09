@@ -3,7 +3,43 @@
 ## Supabase
 
 1. Créer un projet, récupérer URL, clé anon et clé service-role.
-2. `npx supabase link --project-ref <ref>` puis `npx supabase db push` (migrations) — **ne pas** exécuter `seed.sql` en production (données de développement).
+2. Appliquer les migrations. **Ne jamais** exécuter `seed.sql` en production : ce sont des données de développement.
+
+   La voie recommandée ne demande aucun `supabase link` :
+
+   ```bash
+   # Chaîne de connexion : Supabase → Connect → Session pooler (port 5432).
+   # Le mot de passe doit être encodé pour une URL (@ → %40, # → %23, etc.).
+   npx supabase db push --db-url "postgresql://postgres.<ref>:<mot-de-passe>@aws-0-<region>.pooler.supabase.com:5432/postgres" --dry-run
+   npx supabase db push --db-url "postgresql://postgres.<ref>:<mot-de-passe>@aws-0-<region>.pooler.supabase.com:5432/postgres"
+   ```
+
+   `--db-url` contourne le lien au projet, donc les erreurs de privilèges du jeton
+   d'accès personnel. Le pooler en **mode session** (port 5432) est nécessaire : le
+   mode transaction (port 6543) ne supporte pas tout le DDL, et l'hôte direct
+   `db.<ref>.supabase.co` n'est joignable qu'en IPv6 depuis beaucoup de connexions.
+
+   Si `supabase link` échoue sur les privilèges et que vous souhaitez le réparer :
+   vérifiez que le jeton (`npx supabase login`) appartient bien à un membre de
+   l'organisation propriétaire du projet, et que le mot de passe saisi est celui de la
+   base (Settings → Database), pas celui du compte Supabase.
+
+   Repli sans la CLI, en une seule transaction :
+
+   ```bash
+   scripts/apply-migrations.sh "postgresql://postgres.<ref>:<mot-de-passe>@aws-0-<region>.pooler.supabase.com:5432/postgres" --dry-run
+   scripts/apply-migrations.sh "postgresql://postgres.<ref>:<mot-de-passe>@aws-0-<region>.pooler.supabase.com:5432/postgres"
+   ```
+
+   Le script refuse de s'exécuter si `public.profiles` existe déjà (les migrations
+   créent les tables sans `if not exists` : les rejouer échouerait), applique les neuf
+   fichiers dans une transaction unique — une erreur annule tout et ne laisse pas la
+   base à moitié migrée — puis enregistre les versions dans
+   `supabase_migrations.schema_migrations` pour qu'un `db push` ultérieur reparte
+   d'un historique correct.
+
+   Prenez une sauvegarde avant toute application sur une base qui contient déjà des
+   données (Database → Backups), et vérifiez ensuite avec `npm run check:supabase`.
 3. Auth → URL du site et URL de redirection : `https://<domaine>/auth/callback`. Personnaliser les templates d'e-mails Supabase (confirmation, magic link, récupération).
 4. Vérifier que les buckets ont bien été créés par la migration `0008_storage`.
 5. Créer le premier super administrateur. Créez le compte depuis Auth → Users (« Add user », en cochant la confirmation automatique de l'adresse), puis dans le SQL Editor :

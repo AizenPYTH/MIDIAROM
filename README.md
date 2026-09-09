@@ -72,6 +72,7 @@ Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, 
 | `npm run db:types` | Regénère `types/database.ts` depuis la base locale |
 | `npm run check` | lint + typecheck + tests + build |
 | `npm run check:supabase [fichier .env]` | Diagnostique la configuration Supabase d'un déploiement (variables, clés, joignabilité, schéma) |
+| `scripts/apply-migrations.sh <url-postgres>` | Applique les migrations sur une base distante en une transaction, sans `supabase link` |
 
 ## État des intégrations
 
