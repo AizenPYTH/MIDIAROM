@@ -29,16 +29,39 @@ echo "→ connexion"
 
 echo "→ état actuel du schéma"
 EXISTING=$("${PSQL[@]}" -Atc "select count(*) from information_schema.tables where table_schema = 'public';")
-HAS_APP=$("${PSQL[@]}" -Atc "select case when to_regclass('public.profiles') is null then 'non' else 'oui' end;")
-echo "   tables dans public : ${EXISTING} · schéma applicatif déjà présent : ${HAS_APP}"
+# Trois états : pas de table profiles, la nôtre (colonne « role »), ou une table
+# homonyme d'une autre origine (démarrage rapide Supabase, ancien projet).
+STATE=$("${PSQL[@]}" -Atc "select case
+  when to_regclass('public.profiles') is null then 'absent'
+  when exists (select 1 from information_schema.columns where table_schema='public' and table_name='profiles' and column_name='role') then 'notre-schema'
+  else 'table-etrangere' end;")
+echo "   tables dans public : ${EXISTING} · table profiles : ${STATE}"
 
-if [ "$HAS_APP" = "oui" ] && [ "$MODE" != "--force" ]; then
+if [ "$STATE" = "notre-schema" ] && [ "$MODE" != "--force" ]; then
   cat >&2 <<'MSG'
-✘ La table public.profiles existe déjà : les migrations ont (au moins en partie)
-  été appliquées. Les rejouer échouerait, car elles créent les tables sans garde.
+✘ public.profiles vient déjà de ces migrations : elles ont (au moins en partie) été
+  appliquées. Les rejouer échouerait, car elles créent les tables sans garde.
   Comparez d'abord ce qui manque, puis n'appliquez que les fichiers restants :
       psql "$DB_URL" -c "select table_name from information_schema.tables where table_schema='public' order by 1;"
   Passez --force uniquement sur une base dont vous savez qu'elle est vide côté applicatif.
+MSG
+  exit 1
+fi
+
+if [ "$STATE" = "table-etrangere" ] && [ "$MODE" != "--force" ]; then
+  cat >&2 <<'MSG'
+✘ public.profiles existe mais ne vient pas de ces migrations (pas de colonne « role »).
+  C'est typiquement la table du démarrage rapide Supabase. Elle empêche la migration
+  de créer la nôtre, et l'application échoue ensuite en 42703.
+
+  Vérifiez d'abord si des tables la référencent :
+      psql "$DB_URL" -c "select tc.table_name, tc.constraint_name from information_schema.table_constraints tc join information_schema.constraint_column_usage ccu on ccu.constraint_name = tc.constraint_name where ccu.table_schema='public' and ccu.table_name='profiles' and tc.constraint_type='FOREIGN KEY';"
+
+  Puis mettez-la de côté sans perdre ses données, et relancez ce script :
+      psql "$DB_URL" -c "begin; create table public.profiles_avant_migration as select * from public.profiles; drop table public.profiles cascade; commit;"
+
+  Voir « Table profiles d'une autre origine » dans docs/DEPLOYMENT.md pour la
+  recréation des profils et la reprise des noms.
 MSG
   exit 1
 fi

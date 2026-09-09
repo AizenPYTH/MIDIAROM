@@ -94,6 +94,81 @@ avec `/auth/callback`), sinon les liens de confirmation et de mot de passe écho
 
 `supabase start` reste la voie recommandée. Sans Docker, une pile équivalente (PostgreSQL local + PostgREST + GoTrue compilé + émulateur Storage) a servi à l'audit ; les tests d'intégration se lancent avec `INTEGRATION=1 npm run test:integration` dès que `.env.local` pointe vers une pile Supabase-compatible.
 
+## Table `profiles` d'une autre origine (erreur 42703 sur `role`)
+
+Si `public.profiles` existe mais n'a pas de colonne `role`, cette table ne vient pas de
+ces migrations : c'est en général celle du démarrage rapide Supabase, restée d'un essai
+précédent. Elle empêche la migration de créer la nôtre, et toute requête sur `role`
+échoue en `42703`. Vérifiez l'ampleur du problème :
+
+```sql
+select column_name from information_schema.columns
+ where table_schema = 'public' and table_name = 'profiles' order by ordinal_position;
+
+select count(*) from public.profiles;
+
+-- Nos tables sont-elles présentes ? Zéro signifie qu'aucune migration n'a été appliquée.
+select count(*) from information_schema.tables
+ where table_schema = 'public' and table_name in ('repair_orders', 'repairs', 'products', 'site_settings');
+
+-- Des tables référencent-elles profiles ? Aucune ligne = rien ne dépend d'elle.
+select tc.table_name, tc.constraint_name
+  from information_schema.table_constraints tc
+  join information_schema.constraint_column_usage ccu on ccu.constraint_name = tc.constraint_name
+ where ccu.table_schema = 'public' and ccu.table_name = 'profiles' and tc.constraint_type = 'FOREIGN KEY';
+```
+
+Ajouter la colonne `role` à cette table ne suffirait pas : il manque aussi le type
+`user_role`, les autres colonnes, le déclencheur de création de profil, les politiques
+RLS et le reste du schéma. La reprise propre consiste à mettre la table de côté, à
+appliquer les migrations, puis à recréer les profils.
+
+```sql
+-- 1. Sauvegarde intégrale, puis retrait. Aucune donnée n'est perdue : tout reste dans
+--    profiles_avant_migration. « cascade » ne retire ici que les contraintes listées
+--    par la requête de dépendances ci-dessus.
+begin;
+create table public.profiles_avant_migration as select * from public.profiles;
+drop table public.profiles cascade;
+commit;
+```
+
+Appliquez ensuite les migrations (`supabase db push --db-url …` ou
+`scripts/apply-migrations.sh`), puis recréez les profils. Le déclencheur
+`on_auth_user_created` ne concerne que les comptes créés après lui : les comptes
+existants n'ont pas de profil tant que cette requête n'a pas été passée.
+
+```sql
+-- 2. Un profil pour chaque compte déjà présent dans Supabase Auth.
+set search_path = public, extensions;
+
+insert into public.profiles (id, email, first_name, last_name, phone)
+select u.id, u.email,
+       nullif(u.raw_user_meta_data ->> 'first_name', ''),
+       nullif(u.raw_user_meta_data ->> 'last_name', ''),
+       nullif(u.raw_user_meta_data ->> 'phone', '')
+  from auth.users u
+ where u.email is not null
+on conflict (id) do nothing;
+
+-- 3. Facultatif : reprendre les noms de l'ancienne table. À adapter à ses colonnes ;
+--    l'exemple part d'une colonne « full_name ».
+update public.profiles p
+   set first_name = coalesce(p.first_name, nullif(split_part(a.full_name, ' ', 1), '')),
+       last_name  = coalesce(p.last_name, nullif(trim(substr(a.full_name, strpos(a.full_name, ' '))), ''))
+  from public.profiles_avant_migration a
+ where a.id = p.id and a.full_name is not null;
+
+-- 4. Rôle du back-office.
+update public.profiles set role = 'SUPER_ADMIN' where email = 'vous@votre-domaine.fr';
+
+-- 5. Contrôle.
+select email, role, first_name, last_name from public.profiles order by email;
+```
+
+Gardez `public.profiles_avant_migration` le temps de vérifier, puis supprimez-la avec
+`drop table public.profiles_avant_migration;`.
+
 ## Diagnostic « Connexion impossible : le service d'authentification n'a pas répondu correctement »
 
 Ce message ne concerne jamais le mot de passe. Il signale que l'application a bien
