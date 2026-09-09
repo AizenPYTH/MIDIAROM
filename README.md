@@ -24,6 +24,31 @@ Comptes de développement créés par le seed (mot de passe `password123`) :
 
 Le back-office est sur `/admin` (connexion via `/connexion`). Les comptes techniciens n'accèdent ni au catalogue, ni au stock, ni aux réglages.
 
+Le seed est **rejouable** : s'il est appliqué sur un projet où `admin@example.com` existe déjà (créé depuis le dashboard Supabase ou via le formulaire d'inscription), il repose le mot de passe de développement, confirme l'adresse, crée l'identité e-mail attendue par Supabase Auth et remet le rôle `SUPER_ADMIN`. Il ne doit jamais être appliqué sur des comptes de production.
+
+Pour définir un mot de passe d'administration sur un projet en ligne sans rejouer tout le seed, exécutez ceci dans le SQL Editor de Supabase :
+
+```sql
+set search_path = public, extensions;
+
+update auth.users
+   set encrypted_password = crypt('VotreMotDePasseFort', gen_salt('bf')),
+       email_confirmed_at  = coalesce(email_confirmed_at, now()),
+       aud = 'authenticated', role = 'authenticated',
+       raw_app_meta_data = '{"provider":"email","providers":["email"]}'::jsonb,
+       updated_at = now()
+ where email = 'admin@example.com';
+
+insert into auth.identities (user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
+select u.id, u.id::text, 'email',
+       jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
+       now(), now(), now()
+  from auth.users u where u.email = 'admin@example.com'
+on conflict (provider_id, provider) do nothing;
+
+update public.profiles set role = 'SUPER_ADMIN' where email = 'admin@example.com';
+```
+
 Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, `EMAIL_PROVIDER=console`, `SHIPPING_PROVIDER=mock`). Les mocks sont **refusés en production**.
 
 ## Commandes

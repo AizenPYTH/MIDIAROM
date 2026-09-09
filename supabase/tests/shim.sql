@@ -11,6 +11,9 @@ end $$;
 create schema if not exists auth;
 create schema if not exists storage;
 create schema if not exists extensions;
+-- Comme sur Supabase (hébergé et CLI) : pgcrypto vit dans "extensions", hors du
+-- search_path par défaut. Le seed doit donc rester explicite là-dessus.
+create extension if not exists pgcrypto with schema extensions;
 
 create table if not exists auth.users (
   instance_id uuid,
@@ -29,6 +32,22 @@ create table if not exists auth.users (
   email_change text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
+);
+
+create unique index if not exists users_email_partial_key on auth.users (email);
+
+-- Supabase Auth keeps one identity row per sign-in provider; the seed creates
+-- the "email" one for the development accounts.
+create table if not exists auth.identities (
+  provider_id text not null,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  identity_data jsonb not null,
+  provider text not null,
+  last_sign_in_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  id uuid primary key default gen_random_uuid(),
+  constraint identities_provider_id_provider_unique unique (provider_id, provider)
 );
 
 create or replace function auth.uid() returns uuid

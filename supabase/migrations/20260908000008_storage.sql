@@ -1,3 +1,8 @@
+-- Sur Supabase (hébergé et CLI), pgcrypto et citext vivent dans le schéma
+-- "extensions", hors du search_path par défaut ; sur un PostgreSQL nu ils sont
+-- dans "public". Garder les deux évite un échec selon la cible.
+set search_path = public, extensions;
+
 -- =============================================================================
 -- 0008 — Storage buckets & policies
 -- All order buckets are PRIVATE; files are served through signed URLs created

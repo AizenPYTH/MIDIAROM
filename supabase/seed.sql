@@ -7,35 +7,72 @@
 
 -- ---------------------------------------------------------------------------
 -- Dev accounts (password for all: password123)
+--
+-- pgcrypto lives in the "extensions" schema on Supabase (hosted and CLI) and in
+-- "public" on a plain PostgreSQL instance: both are kept on the search_path so
+-- crypt() / gen_salt() resolve either way.
+--
+-- Idempotent on purpose: replaying the seed re-applies the development password
+-- and confirms the address even when the account already exists (created from
+-- the Supabase dashboard or through the sign-up form). Development data only —
+-- never run this seed against production accounts.
 -- ---------------------------------------------------------------------------
+set search_path = public, extensions;
+
+drop table if exists seed_users;
+create temp table seed_users (id uuid, email text, first_name text, last_name text);
+insert into seed_users values
+  ('10000000-0000-4000-8000-000000000001', 'admin@example.com', 'Alice', 'Admin'),
+  ('10000000-0000-4000-8000-000000000002', 'technicien@example.com', 'Théo', 'Technicien'),
+  ('10000000-0000-4000-8000-000000000003', 'client@example.com', 'Camille', 'Client'),
+  ('10000000-0000-4000-8000-000000000004', 'client2@example.com', 'Dominique', 'Deux');
+
+-- 1. Accounts that do not exist yet. The fixed id is only used when it is free:
+--    an account created elsewhere keeps its own id.
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
                         raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
                         confirmation_token, recovery_token, email_change_token_new, email_change)
-values
-  ('00000000-0000-0000-0000-000000000000', '10000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated',
-   'admin@example.com', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
-   '{"first_name":"Alice","last_name":"Admin"}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '10000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated',
-   'technicien@example.com', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
-   '{"first_name":"Théo","last_name":"Technicien"}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '10000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated',
-   'client@example.com', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
-   '{"first_name":"Camille","last_name":"Client"}', now(), now(), '', '', '', ''),
-  ('00000000-0000-0000-0000-000000000000', '10000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated',
-   'client2@example.com', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
-   '{"first_name":"Dominique","last_name":"Deux"}', now(), now(), '', '', '', '')
-on conflict (id) do nothing;
+select '00000000-0000-0000-0000-000000000000', s.id, 'authenticated', 'authenticated', s.email,
+       crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}'::jsonb,
+       jsonb_build_object('first_name', s.first_name, 'last_name', s.last_name), now(), now(), '', '', '', ''
+  from seed_users s
+ where not exists (select 1 from auth.users u where u.email = s.email or u.id = s.id);
 
-update public.profiles set role = 'SUPER_ADMIN' where id = '10000000-0000-4000-8000-000000000001';
-update public.profiles set role = 'TECHNICIAN' where id = '10000000-0000-4000-8000-000000000002';
+-- 2. Development password and confirmed address, pre-existing accounts included.
+--    Without this, `password123` never reaches an account created another way.
+update auth.users u
+   set encrypted_password = crypt('password123', gen_salt('bf')),
+       email_confirmed_at = coalesce(u.email_confirmed_at, now()),
+       aud = 'authenticated',
+       role = 'authenticated',
+       raw_app_meta_data = '{"provider":"email","providers":["email"]}'::jsonb,
+       updated_at = now()
+  from seed_users s
+ where u.email = s.email;
+
+-- 3. Email identity: Supabase Auth expects one row per account (password reset,
+--    dashboard management). GoTrue creates it for accounts made through the app.
+insert into auth.identities (user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
+select u.id, u.id::text, 'email',
+       jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true),
+       now(), now(), now()
+  from auth.users u
+  join seed_users s on s.email = u.email
+on conflict (provider_id, provider) do nothing;
+
+-- Roles are keyed by e-mail so they still land on an account created elsewhere.
+update public.profiles set role = 'SUPER_ADMIN' where email = 'admin@example.com';
+update public.profiles set role = 'TECHNICIAN' where email = 'technicien@example.com';
 
 insert into public.workshops (id, name, slug, city, country_code, is_default)
 values ('20000000-0000-4000-8000-000000000001', 'Atelier principal', 'atelier-principal', 'À définir', 'FR', true)
 on conflict (id) do nothing;
 
 insert into public.technicians (id, profile_id, workshop_id, display_name, specialties)
-values ('30000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002',
-        '20000000-0000-4000-8000-000000000001', 'Théo', array['soudure', 'PlayStation', 'Switch'])
+select '30000000-0000-4000-8000-000000000001', p.id,
+       '20000000-0000-4000-8000-000000000001', 'Théo', array['soudure', 'PlayStation', 'Switch']
+  from public.profiles p
+ where p.email = 'technicien@example.com'
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
@@ -109,6 +146,10 @@ insert into public.repair_options (id, category_id, name, slug, short_descriptio
 on conflict (id) do nothing;
 
 -- Compatibility rules for non-universal options
+-- Rejouable : ces lignes n'ont pas de clé naturelle (compatibilités option / modèle),
+-- on ne les repose donc que si la table est vide.
+do $seed$ begin
+if not exists (select 1 from public.repair_option_compatibility) then
 insert into public.repair_option_compatibility (option_id, mode, brand_id, model_id) values
   -- Liquid metal check: PS5 family only
   ('44000000-0000-4000-8000-000000000006', 'INCLUDE', null, '41000000-0000-4000-8000-000000000001'),
@@ -121,6 +162,8 @@ insert into public.repair_option_compatibility (option_id, mode, brand_id, model
   ('44000000-0000-4000-8000-000000000011', 'INCLUDE', null, '41000000-0000-4000-8000-000000000001'),
   ('44000000-0000-4000-8000-000000000011', 'INCLUDE', null, '41000000-0000-4000-8000-000000000002'),
   ('44000000-0000-4000-8000-000000000011', 'INCLUDE', null, '41000000-0000-4000-8000-000000000003');
+end if;
+end $seed$;
 
 -- Packs
 insert into public.packs (id, name, slug, short_description, description, price_cents, is_recommended, display_order) values
@@ -331,6 +374,10 @@ insert into public.test_checklists (id, model_id, name) values
   ('48000000-0000-4000-8000-000000000003', '41000000-0000-4000-8000-000000000021', 'Contrôle qualité Nintendo Switch')
 on conflict (id) do nothing;
 
+-- Rejouable : ces lignes n'ont pas de clé naturelle (points de contrôle qualité),
+-- on ne les repose donc que si la table est vide.
+do $seed$ begin
+if not exists (select 1 from public.test_checklist_items) then
 insert into public.test_checklist_items (checklist_id, label, display_order) values
   ('48000000-0000-4000-8000-000000000001', 'Démarrage', 1),
   ('48000000-0000-4000-8000-000000000001', 'Affichage', 2),
@@ -357,10 +404,16 @@ insert into public.test_checklist_items (checklist_id, label, display_order) val
   ('48000000-0000-4000-8000-000000000003', 'Wi-Fi', 6),
   ('48000000-0000-4000-8000-000000000003', 'Lecteur de cartouche', 7),
   ('48000000-0000-4000-8000-000000000003', 'Fonction concernée par la réparation', 8);
+end if;
+end $seed$;
 
 -- ---------------------------------------------------------------------------
 -- Packaging instructions
 -- ---------------------------------------------------------------------------
+-- Rejouable : ces lignes n'ont pas de clé naturelle (consignes d'emballage),
+-- on ne les repose donc que si la table est vide.
+do $seed$ begin
+if not exists (select 1 from public.packaging_instructions) then
 insert into public.packaging_instructions (model_id, title, body, display_order) values
   (null, 'Utilisez un carton rigide', 'Choisissez un carton en bon état, légèrement plus grand que la console (5 cm de marge sur chaque face).', 1),
   (null, 'Protégez toutes les faces', 'Enveloppez la console dans du papier bulle ou de la mousse. Aucune face ne doit toucher directement le carton.', 2),
@@ -370,10 +423,16 @@ insert into public.packaging_instructions (model_id, title, body, display_order)
   (null, 'Glissez votre numéro de dossier', 'Imprimez ou écrivez lisiblement votre numéro de dossier (REP-XXXXXX) sur une feuille placée dans le carton.', 6),
   ('41000000-0000-4000-8000-000000000021', 'Retirez la cartouche et la carte microSD', 'Conservez chez vous la cartouche de jeu et la carte microSD, sauf demande contraire.', 10),
   ('41000000-0000-4000-8000-000000000021', 'Joy-Con', 'Détachez les Joy-Con et ne les envoyez que si la réparation les concerne.', 11);
+end if;
+end $seed$;
 
 -- ---------------------------------------------------------------------------
 -- FAQ
 -- ---------------------------------------------------------------------------
+-- Rejouable : ces lignes n'ont pas de clé naturelle (questions fréquentes),
+-- on ne les repose donc que si la table est vide.
+do $seed$ begin
+if not exists (select 1 from public.faq_items) then
 insert into public.faq_items (category, question, answer, display_order) values
   ('envoi', 'Comment envoyer ma console ?', 'Après paiement, vous recevez vos instructions d''envoi et, selon le transport choisi, une étiquette prépayée à imprimer. Emballez la console en suivant nos instructions et déposez le colis au point indiqué.', 1),
   ('envoi', 'Dois-je envoyer les câbles ?', 'Non, sauf si la panne les concerne ou si nous vous le demandons. Conservez câbles, manettes et jeux chez vous.', 2),
@@ -389,6 +448,8 @@ insert into public.faq_items (category, question, answer, display_order) values
   ('reparation', 'Puis-je envoyer une console déjà ouverte ?', 'Oui, indiquez-le lors de la commande. Une console déjà ouverte ou ayant subi une tentative de réparation peut nécessiter un diagnostic plus poussé.', 12),
   ('reparation', 'Que se passe-t-il en cas d''oxydation ?', 'L''oxydation est constatée au diagnostic et documentée avec photos. Une remise en état peut être proposée par devis lorsqu''elle est techniquement possible.', 13),
   ('envoi', 'Que se passe-t-il si le colis est endommagé ?', 'Nous photographions chaque colis à réception. En cas de dommage de transport, nous vous prévenons immédiatement avec les preuves nécessaires à une réclamation.', 14);
+end if;
+end $seed$;
 
 -- ---------------------------------------------------------------------------
 -- Settings (public keys are readable by visitors)
@@ -424,7 +485,8 @@ on conflict (key) do nothing;
 insert into public.legal_documents (slug, version, title, body, is_current, published_at) values
   ('cgv', 'draft-1', 'Conditions générales de vente', E'> **Document de travail — à valider juridiquement avant mise en ligne.**\n\n## 1. Commande\n_À compléter._\n\n## 2. Prix\n_À compléter._\n\n## 3. Paiement\n_À compléter._\n\n## 4. Diagnostic\n_À compléter._\n\n## 5. Devis complémentaire\n_À compléter._\n\n## 6. Réparation et délais\n_À compléter._\n\n## 7. Transport et assurance\n_À compléter._\n\n## 8. Droit de rétractation\n_À compléter._\n\n## 9. Garantie et pièces\n_À compléter._\n\n## 10. Données personnelles\n_À compléter._\n\n## 11. Consoles ouvertes, modifiées ou oxydées\n_À compléter._\n\n## 12. Consoles irréparables et refus de devis\n_À compléter._\n\n## 13. Réclamation et médiation\n_À compléter._\n\n## 14. Consoles non réclamées\n_À compléter._', true, now()),
   ('confidentialite', 'draft-1', 'Politique de confidentialité', E'> **Document de travail — à valider juridiquement avant mise en ligne.**\n\n## Données collectées\n_À compléter._\n\n## Finalités\n_À compléter._\n\n## Durée de conservation\n_À compléter._\n\n## Photos et vidéos de dossiers\nLes médias liés à un dossier sont privés et accessibles uniquement au client concerné et à l''atelier.\n\n## Vos droits\nAccès, rectification, suppression : depuis votre espace client ou par e-mail.\n\n## Cookies et mesure d''audience\n_À compléter._', true, now()),
-  ('mentions-legales', 'draft-1', 'Mentions légales', E'> **Document de travail — à compléter avec les informations de l''entreprise.**\n\n## Éditeur\n_À compléter._\n\n## Hébergement\n_À compléter._', true, now());
+  ('mentions-legales', 'draft-1', 'Mentions légales', E'> **Document de travail — à compléter avec les informations de l''entreprise.**\n\n## Éditeur\n_À compléter._\n\n## Hébergement\n_À compléter._', true, now())
+on conflict (slug, version) do nothing;
 
 insert into public.seo_pages (path, title, description) values
   ('/', 'Réparation de consoles à distance — PS5, Xbox, Switch', 'Faites réparer votre console où que vous soyez en France : choisissez la panne, commandez en ligne, envoyez la console et suivez la réparation jusqu''au retour.'),

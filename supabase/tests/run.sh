@@ -22,6 +22,11 @@ for f in supabase/migrations/*.sql; do
 done
 echo "→ seed"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
+# Replayed once more: the seed must stay idempotent, including on accounts that
+# already exist (regression: dev password never re-applied, missing identities).
+echo "→ seed (rejoué, idempotence)"
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/accounts.test.sql
 echo "→ RLS tests"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/rls.test.sql
 echo "✓ database tests passed"

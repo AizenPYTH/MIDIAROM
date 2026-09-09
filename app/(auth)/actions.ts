@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { requestMeta } from "@/lib/security/audit";
+import { loginErrorMessage } from "@/lib/security/auth-errors";
 import { ROUTES, SITE_URL } from "@/config/site";
 
 export type AuthState = { error?: string; success?: string } | null;
@@ -28,7 +29,7 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) return { error: "E-mail ou mot de passe incorrect." };
+  if (error) return { error: loginErrorMessage(error, (e) => console.error("[auth] login failed", { code: e.code, status: e.status, message: e.message })) };
   redirect(safeNext(formData.get("next")));
 }
 
