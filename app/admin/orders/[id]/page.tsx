@@ -78,7 +78,7 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
   const pendingQuotes = (quotes.data ?? []).filter((q) => q.status === "SENT").length;
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 max-w-full space-y-6 overflow-x-hidden">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Link href="/admin/orders" className="text-xs text-ink-muted hover:text-ink">← Dossiers</Link>
@@ -317,8 +317,8 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
               {order.status === "SHIPPED" ? <form action={markDeliveredAction}><input type="hidden" name="order_id" value={order.id} /><Button type="submit" variant="outline">Marquer comme livré</Button></form> : null}
             </div>
           </Section>
-          <Section title="Photos état final et colis fermé" actions={<div className="flex gap-2"><MediaUploader orderId={order.id} kind="FINAL" label="État final" captionPrompt /><MediaUploader orderId={order.id} kind="SHIPPING" label="Colis fermé" accept="image/*,application/pdf" /></div>}>
-            <MediaGallery media={mediaOf(["FINAL", "SHIPPING"])} emptyText="Ajoutez la photo de l'état final et du colis fermé." />
+          <Section title="Photos état final et colis fermé" actions={<div className="flex gap-2"><MediaUploader orderId={order.id} kind="FINAL" label="État final" captionPrompt /><MediaUploader orderId={order.id} kind="SHIPPING" label="Colis fermé" accept="image/*" /></div>}>
+            <MediaGallery media={mediaOf(["FINAL", "SHIPPING"]).filter((m) => m.mime_type.startsWith("image/"))} emptyText="Ajoutez la photo de l'état final et du colis fermé." />
           </Section>
         </div>
       ) : null}

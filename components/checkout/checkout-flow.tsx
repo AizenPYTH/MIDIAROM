@@ -514,7 +514,7 @@ export function CheckoutFlow(props: Props) {
                   <Link href={ROUTES.cgv} target="_blank" className="text-accent underline">
                     conditions générales de vente
                   </Link>
-                  {props.conditions.cgvVersion ? ` (version ${props.conditions.cgvVersion})` : ""} et la{" "}
+                  {props.conditions.cgvVersion && !props.conditions.cgvVersion.startsWith("draft") ? ` (version ${props.conditions.cgvVersion})` : ""} et la{" "}
                   <Link href={ROUTES.privacy} target="_blank" className="text-accent underline">
                     politique de confidentialité
                   </Link>

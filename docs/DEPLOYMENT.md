@@ -25,6 +25,10 @@ Variables d'environnement (voir `.env.example`) :
 
 `vercel.json` planifie la tâche quotidienne. Sur un autre hébergeur, appeler `GET /api/cron/daily` avec l'en-tête `Authorization: Bearer $CRON_SECRET`.
 
+## Développement local sans Docker
+
+`supabase start` reste la voie recommandée. Sans Docker, une pile équivalente (PostgreSQL local + PostgREST + GoTrue compilé + émulateur Storage) a servi à l'audit ; les tests d'intégration se lancent avec `INTEGRATION=1 npm run test:integration` dès que `.env.local` pointe vers une pile Supabase-compatible.
+
 ## Contrôles avant mise en ligne
 
 - `npm run check` et `npm run test:db` verts.

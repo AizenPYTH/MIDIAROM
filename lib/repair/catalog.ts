@@ -104,6 +104,13 @@ export const getRepairById = cache(async (repairId: string): Promise<RepairWithR
   return { ...data, fault: data.fault as Fault, model: { ...model, brand: model.brand } };
 });
 
+/** Models that have at least one active repair (the only ones worth indexing). */
+export const getModelsWithActiveRepairs = cache(async (): Promise<ConsoleModel[]> => {
+  const [models, { data: repairs }] = await Promise.all([getActiveModels(), db().from("repairs").select("model_id").eq("is_active", true)]);
+  const withRepairs = new Set((repairs ?? []).map((r) => r.model_id));
+  return models.filter((m) => withRepairs.has(m.id));
+});
+
 export const getActiveShippingMethods = cache(async (): Promise<ShippingMethod[]> => {
   const { data } = await db().from("shipping_methods").select("*").eq("is_active", true).order("display_order");
   return data ?? [];

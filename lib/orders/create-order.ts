@@ -52,9 +52,12 @@ async function resolveCustomer(input: CreateOrderInput, currentUser: CurrentUser
     { onConflict: "id" },
   );
 
-  const { data: link } = await db.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo: `${SITE_URL}/auth/callback?next=${ROUTES.account}` } });
-  if (link?.properties?.action_link) {
-    await sendAccountCreatedEmail(email, input.customer.first_name, link.properties.action_link);
+  // Server-generated links cannot use the PKCE flow: send the token hash to our
+  // callback, which calls verifyOtp() and opens a session (see app/auth/callback).
+  const { data: link } = await db.auth.admin.generateLink({ type: "recovery", email });
+  if (link?.properties?.hashed_token) {
+    const setPasswordUrl = `${SITE_URL}/auth/callback?token_hash=${encodeURIComponent(link.properties.hashed_token)}&type=recovery&next=${encodeURIComponent("/nouveau-mot-de-passe")}`;
+    await sendAccountCreatedEmail(email, input.customer.first_name, setPasswordUrl);
   }
   return { id: created.user.id, created: true };
 }

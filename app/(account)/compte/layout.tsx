@@ -21,11 +21,11 @@ export default async function AccountLayout({ children }: { children: React.Reac
       <SiteHeader brandName={brand.name} />
       <main className="flex-1">
         <Container className="grid gap-8 py-8 lg:grid-cols-[240px_1fr] lg:py-12">
-          <aside>
-            <p className="px-3 text-sm font-semibold text-ink">
+          <aside className="min-w-0">
+            <p className="truncate px-3 text-sm font-semibold text-ink">
               {user.profile.first_name} {user.profile.last_name}
             </p>
-            <p className="px-3 text-xs text-ink-muted">{user.email}</p>
+            <p className="break-all px-3 text-xs text-ink-muted">{user.email}</p>
             <AccountNav items={items} />
             {isStaffRole(user.profile.role) ? (
               <Link href={ROUTES.admin} className="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-accent hover:bg-surface-muted">

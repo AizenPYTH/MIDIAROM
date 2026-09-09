@@ -261,7 +261,7 @@ export async function createQuoteAction(_prev: ActionResult | null, formData: Fo
       diagnosis_summary: optional(formData, "diagnosis_summary"),
       message: optional(formData, "message"),
       total_cents: total,
-      requires_payment: formData.get("requires_payment") !== "off",
+      requires_payment: formData.get("requires_payment") === "on",
       is_required_for_repair: formData.get("is_required_for_repair") === "on",
       created_by: user.id,
     })
@@ -458,7 +458,8 @@ export async function markShippedAction(_prev: ActionResult | null, formData: Fo
   const order = await getOrderById(orderId);
   const [{ data: tests }, { count: finalPhotos }, { data: shipment }] = await Promise.all([
     db.from("repair_tests").select("is_completed").eq("order_id", orderId).maybeSingle(),
-    db.from("order_media").select("id", { count: "exact", head: true }).eq("order_id", orderId).in("kind", ["FINAL", "SHIPPING"]),
+    // Only real photos count: shipping labels are stored as SHIPPING media (PDF) and must not satisfy the guard.
+    db.from("order_media").select("id", { count: "exact", head: true }).eq("order_id", orderId).in("kind", ["FINAL", "SHIPPING"]).like("mime_type", "image/%"),
     db.from("shipments").select("*").eq("order_id", orderId).eq("direction", "TO_CUSTOMER").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const missing: string[] = [];

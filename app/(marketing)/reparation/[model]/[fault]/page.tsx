@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ model: st
     title: repair.seo_title ?? `${repair.name} — ${formatPrice(repair.price_cents)}`,
     description: repair.seo_description ?? repair.summary ?? `${repair.name} en atelier, envoi depuis toute la France et suivi en ligne.`,
     alternates: { canonical: url },
-    robots: repair.is_seo_published ? undefined : { index: false, follow: true },
+    robots: repair.is_seo_published ? { index: true, follow: true } : { index: false, follow: true },
     openGraph: { title: repair.seo_h1 ?? repair.name, description: repair.seo_description ?? repair.summary ?? undefined, url },
   };
 }

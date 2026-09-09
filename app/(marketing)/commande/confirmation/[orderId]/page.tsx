@@ -75,7 +75,9 @@ export default async function ConfirmationPage({ params, searchParams }: { param
                 <li>Imprimez l&apos;étiquette de transport disponible dans votre espace client et déposez le colis au point indiqué.</li>
               ) : (
                 <li>
-                  Expédiez le colis à : <span className="text-ink">{[shipping.workshop_receiving_name, shipping.workshop_receiving_address].filter(Boolean).join(", ") || "adresse communiquée dans votre espace client"}</span>
+                  {shipping.workshop_receiving_address
+                    ? <>Expédiez le colis à : <span className="text-ink">{[shipping.workshop_receiving_name, shipping.workshop_receiving_address].filter(Boolean).join(", ")}</span></>
+                    : <>L&apos;adresse d&apos;expédition de l&apos;atelier vous est communiquée par e-mail.</>}
                 </li>
               )}
               <li>Suivez chaque étape depuis votre espace client. Vous serez notifié par e-mail.</li>

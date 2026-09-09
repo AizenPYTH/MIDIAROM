@@ -84,8 +84,10 @@ export async function createShipmentLabel(input: {
     labelPath = `${order.id}/SHIPPING/${input.direction.toLowerCase()}-${crypto.randomUUID()}.pdf`;
     const { error: uploadError } = await db.storage.from("shipping-media").upload(labelPath, result.labelPdf, { contentType: "application/pdf", upsert: false });
     if (uploadError) {
-      console.error("[shipping] label upload failed", uploadError.message);
-      labelPath = null;
+      // Never record a shipment whose label the customer cannot download: fail loudly so the
+      // caller falls back to manual instructions and the team gets an internal event.
+      await provider.cancelLabel(result.providerShipmentId).catch(() => undefined);
+      throw new Error(`Étiquette générée mais stockage impossible : ${uploadError.message}`);
     } else {
       await db.from("order_media").insert({
         order_id: order.id,

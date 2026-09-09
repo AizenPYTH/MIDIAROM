@@ -12,10 +12,15 @@ export function Stepper({
 }) {
   return (
     <nav aria-label="Progression" className={cn("w-full", className)}>
-      <p className="mb-2 text-sm font-medium text-ink-soft sm:hidden">
-        Étape {current + 1} / {steps.length} — <span className="text-ink">{steps[current]?.label}</span>
-      </p>
-      <ol className="flex items-center gap-1 sm:gap-0">
+      <div className="sm:hidden">
+        <p className="mb-1.5 text-sm font-medium text-ink-soft">
+          Étape {current + 1} / {steps.length} — <span className="text-ink">{steps[current]?.label}</span>
+        </p>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-border" role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={current + 1}>
+          <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${((current + 1) / steps.length) * 100}%` }} />
+        </div>
+      </div>
+      <ol className="hidden items-center sm:flex">
         {steps.map((step, i) => {
           const done = i < current;
           const active = i === current;

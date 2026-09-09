@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
 import { ROUTES, SITE_URL } from "@/config/site";
-import { getActiveModels, getSeoPublishedRepairs } from "@/lib/repair/catalog";
+import { getModelsWithActiveRepairs, getSeoPublishedRepairs } from "@/lib/repair/catalog";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [models, repairs] = await Promise.all([getActiveModels().catch(() => []), getSeoPublishedRepairs().catch(() => [])]);
+  const [models, repairs] = await Promise.all([getModelsWithActiveRepairs().catch(() => []), getSeoPublishedRepairs().catch(() => [])]);
   const statics: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE_URL}${ROUTES.repair}`, changeFrequency: "weekly", priority: 0.9 },

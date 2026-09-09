@@ -18,6 +18,7 @@ import { signedMediaUrl } from "@/lib/shipping/service";
 import { computeTimeline, CUSTOMER_CANCELLABLE_STATUSES, ORDER_STATUS_DESCRIPTIONS, ORDER_STATUS_LABELS, statusTone } from "@/lib/orders/status";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/utils/format";
 import { getSetting } from "@/lib/settings";
+import { getInvoiceDocumentUrl, INVOICE_TYPE_LABELS } from "@/lib/invoices";
 
 export const metadata: Metadata = { title: "Dossier", robots: { index: false } };
 
@@ -52,8 +53,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     getSetting("shipping_info"),
     supabase.from("reviews").select("review_token, submitted_at").eq("order_id", id).maybeSingle(),
   ]);
+  const { data: model } = order.model_id ? await supabase.from("console_models").select("slug").eq("id", order.model_id).maybeSingle() : { data: null };
+  const packagingHref = model?.slug ? `${ROUTES.packaging}?modele=${model.slug}` : ROUTES.packaging;
 
   const signedMedia = await signMedia(media.data ?? []);
+  const invoiceLinks = await Promise.all((invoices.data ?? []).map(async (inv) => ({ ...inv, url: await getInvoiceDocumentUrl(inv) })));
   const outbound = (shipments.data ?? []).find((s) => s.direction === "TO_WORKSHOP");
   const returnShipment = (shipments.data ?? []).find((s) => s.direction === "TO_CUSTOMER");
   const labelUrl = outbound?.label_path ? await signedMediaUrl("shipping-media", outbound.label_path) : null;
@@ -126,7 +130,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <ol className="list-decimal space-y-1.5 pl-5">
               <li>
                 Emballez la console selon les{" "}
-                <Link href={`${ROUTES.packaging}${order.model_id ? "" : ""}`} className="text-accent underline">
+                <Link href={packagingHref} className="text-accent underline">
                   instructions d&apos;emballage
                 </Link>
                 .
@@ -138,7 +142,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <li>Imprimez et collez l&apos;étiquette ci-dessous, puis déposez le colis au point indiqué par le transporteur.</li>
               ) : (
                 <li>
-                  Expédiez à : <span className="text-ink">{[shippingInfo.workshop_receiving_name, shippingInfo.workshop_receiving_address].filter(Boolean).join(", ") || "adresse communiquée par e-mail"}</span>
+                  {shippingInfo.workshop_receiving_address ? (
+                    <>
+                      Expédiez le colis à : <span className="text-ink">{[shippingInfo.workshop_receiving_name, shippingInfo.workshop_receiving_address].filter(Boolean).join(", ")}</span>
+                    </>
+                  ) : (
+                    <>L&apos;adresse d&apos;expédition de l&apos;atelier vous est communiquée par e-mail (elle n&apos;est pas encore renseignée dans les réglages du site).</>
+                  )}
                 </li>
               )}
             </ol>
@@ -186,11 +196,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <span>{formatPrice(order.total_cents)}</span>
             </div>
             <p className="text-xs text-ink-muted">Réglé : {formatPrice(order.paid_cents)}</p>
-            {invoices.data?.length ? (
+            {invoiceLinks.length ? (
               <ul className="mt-3 space-y-1 text-xs text-ink-muted">
-                {invoices.data.map((inv) => (
-                  <li key={inv.id} className="flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5" aria-hidden="true" /> Facture {inv.invoice_number} · {formatPrice(inv.amount_cents)} · {formatDate(inv.issued_at)}
+                {invoiceLinks.map((inv) => (
+                  <li key={inv.id} className="flex flex-wrap items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5" aria-hidden="true" /> {INVOICE_TYPE_LABELS[inv.invoice_type]} {inv.invoice_number} · {formatPrice(Math.abs(inv.amount_cents))} · {formatDate(inv.issued_at)}
+                    {inv.url ? (
+                      <a href={inv.url} target="_blank" rel="noopener noreferrer" className="text-accent underline">
+                        Télécharger le PDF
+                      </a>
+                    ) : (
+                      <span>· PDF envoyé sur demande</span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -204,7 +221,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           <CardContent>
             <DescriptionList
               items={[
-                { label: "Console", value: `${order.brand_name} ${order.model_name}` },
+                { label: "Console", value: order.model_name.startsWith(order.brand_name) ? order.model_name : `${order.brand_name} ${order.model_name}` },
                 { label: "Panne déclarée", value: order.fault_name },
                 { label: "Garantie", value: order.warranty_months > 0 ? `${order.warranty_months} mois sur l'intervention` : "Selon la réparation issue du diagnostic" },
                 { label: "Adresse de retour", value: [address.line1, address.line2, `${address.postal_code} ${address.city}`].filter(Boolean).join(", ") },

@@ -7,6 +7,7 @@ import { Breadcrumbs, Container, EmptyState, PageHeader } from "@/components/ui/
 import { Stepper } from "@/components/ui/stepper";
 import { DynamicIcon } from "@/components/marketing/icons";
 import { getActiveModels, getModelBySlug, getRepairsForModel } from "@/lib/repair/catalog";
+import { Alert } from "@/components/ui/alert";
 import { formatPrice } from "@/lib/utils/format";
 import { getBrandSettings } from "@/lib/settings";
 
@@ -21,10 +22,13 @@ export async function generateMetadata({ params }: { params: Promise<{ model: st
   const { model: slug } = await params;
   const model = await getModelBySlug(slug);
   if (!model) return { title: "Console introuvable" };
+  const repairs = await getRepairsForModel(model.id);
   return {
     title: model.seo_title ?? `Réparation ${model.name} à distance — pannes et prix`,
     description: model.seo_description ?? `Faites réparer votre ${model.name} partout en France : choisissez la panne, commandez en ligne et suivez la réparation.`,
     alternates: { canonical: `${SITE_URL}${ROUTES.repair}/${model.slug}` },
+    // A model without any published repair is a thin page: keep it out of the index until the catalogue is filled.
+    robots: repairs.length ? { index: true, follow: true } : { index: false, follow: true },
   };
 }
 
@@ -85,7 +89,12 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
           ))}
         </ul>
       ) : (
-        <EmptyState className="mt-10" title="Aucune réparation publiée pour ce modèle" description="Le catalogue de ce modèle est en cours de préparation. Contactez-nous pour un diagnostic." />
+        <div className="mt-10 space-y-4">
+          <EmptyState title="Aucune réparation publiée pour ce modèle" description="Le catalogue de ce modèle est en cours de préparation." />
+          <Alert tone="info">
+            Votre {model.name} est en panne ? Écrivez-nous depuis la page <a href={ROUTES.contact} className="font-medium text-accent underline">contact</a> : nous vous indiquerons si un diagnostic est possible.
+          </Alert>
+        </div>
       )}
     </Container>
   );

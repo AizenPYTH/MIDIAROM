@@ -252,7 +252,6 @@ export function QuoteForm({ orderId, options }: { orderId: string; options: { id
           <Checkbox name="is_required_for_repair" /> Cette intervention est nécessaire pour réaliser la réparation commandée (un refus bloque la réparation)
         </label>
         <label className="flex items-center gap-2">
-          <input type="hidden" name="requires_payment" value="off" />
           <Checkbox name="requires_payment" value="on" defaultChecked /> Paiement en ligne requis avant intervention
         </label>
         <label className="flex items-center gap-2">

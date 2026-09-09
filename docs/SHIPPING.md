@@ -1,5 +1,11 @@
 # Transport
 
+## État réel
+
+- **Mock uniquement** : aucun transporteur réel n'est branché. `MockShippingProvider` produit un numéro de suivi fictif et un PDF de démonstration ; il est refusé en production (`lib/shipping/index.ts`).
+- **Fonctionne sans API** : formule `provider_code = none` (le client expédie lui-même, adresse de l'atelier communiquée), saisie manuelle des envois aller/retour avec numéro de suivi dans le back-office, notification du client.
+- **Suivi automatique** (`getTracking`) : interface prête, aucune synchronisation périodique tant qu'un transporteur n'est pas intégré ; les statuts livré/reçu sont saisis à l'atelier.
+
 ## Abstraction
 
 `lib/shipping/types.ts` définit `ShippingProvider` : `createLabel()`, `getTracking()`, `getRates()`, `cancelLabel()`.

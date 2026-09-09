@@ -14,11 +14,12 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const db = createSupabaseAdminClient();
   const { data: profile } = await db.from("profiles").select("*").eq("id", id).maybeSingle();
   if (!profile) notFound();
-  const [{ data: orders }, { data: quotes }, { data: sav }, { data: invoices }] = await Promise.all([
-    db.from("repair_orders").select("id, order_number, model_name, repair_name, status, total_cents, created_at").eq("customer_id", id).order("created_at", { ascending: false }),
-    db.from("supplementary_quotes").select("id, quote_number, title, status, total_cents, order_id, created_at").in("order_id", (await db.from("repair_orders").select("id").eq("customer_id", id)).data?.map((o) => o.id) ?? []).order("created_at", { ascending: false }),
+  const { data: orders } = await db.from("repair_orders").select("id, order_number, model_name, repair_name, status, total_cents, created_at").eq("customer_id", id).order("created_at", { ascending: false });
+  const orderIds = (orders ?? []).map((o) => o.id);
+  const [{ data: quotes }, { data: sav }, { data: invoices }] = await Promise.all([
+    db.from("supplementary_quotes").select("id, quote_number, title, status, total_cents, order_id, created_at").in("order_id", orderIds).order("created_at", { ascending: false }),
     db.from("sav_requests").select("id, subject, status, created_at").eq("customer_id", id).order("created_at", { ascending: false }),
-    db.from("invoices").select("id, invoice_number, invoice_type, amount_cents, issued_at, order_id").in("order_id", (await db.from("repair_orders").select("id").eq("customer_id", id)).data?.map((o) => o.id) ?? []).order("issued_at", { ascending: false }),
+    db.from("invoices").select("id, invoice_number, invoice_type, amount_cents, issued_at, order_id").in("order_id", orderIds).order("issued_at", { ascending: false }),
   ]);
   const total = (orders ?? []).reduce((s, o) => s + o.total_cents, 0);
   return (

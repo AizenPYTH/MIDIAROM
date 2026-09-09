@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FormError, FormSuccess, Input } from "@/components/ui/form";
 import { forgotPasswordAction, loginAction, magicLinkAction, registerAction, updatePasswordAction, type AuthState } from "@/app/(auth)/actions";
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, initialError }: { next?: string; initialError?: string }) {
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [state, action, pending] = useActionState<AuthState, FormData>(mode === "password" ? loginAction : magicLinkAction, null);
   return (
@@ -24,7 +24,7 @@ export function LoginForm({ next }: { next?: string }) {
             <Input id="password" name="password" type="password" autoComplete="current-password" required />
           </Field>
         ) : null}
-        <FormError message={state?.error} />
+        <FormError message={state?.error ?? (state ? null : initialError)} />
         <FormSuccess message={state?.success} />
         <Button type="submit" fullWidth loading={pending}>
           {mode === "password" ? "Se connecter" : "Recevoir un lien de connexion"}

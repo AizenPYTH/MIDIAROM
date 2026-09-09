@@ -50,7 +50,7 @@ export function Section({ title, description, actions, children, className }: { 
 
 export function Tabs({ tabs, current, hrefFor }: { tabs: { key: string; label: string; count?: number }[]; current: string; hrefFor: (key: string) => string }) {
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b border-border" aria-label="Onglets">
+    <nav className="flex w-full max-w-full gap-1 overflow-x-auto border-b border-border" aria-label="Onglets">
       {tabs.map((t) => (
         <Link key={t.key} href={hrefFor(t.key)} className={cn("-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium", current === t.key ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink")} aria-current={current === t.key ? "page" : undefined}>
           {t.label}

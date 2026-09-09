@@ -21,6 +21,7 @@ Un devis accepté avec `requires_payment` crée un `payments` de type `QUOTE` ; 
 
 Depuis la fiche dossier (admin) : remboursement partiel/total via le provider, ligne `invoices` de type `CREDIT_NOTE`, audit.
 
-## Factures
+## Factures — état réel
 
-`invoices` conserve les lignes gelées et le montant. La génération PDF ou la synchronisation comptable se branche sur `document_path` / `external_ref` (non implémentées : à intégrer avec l'outil comptable choisi).
+- **Implémenté** : une ligne `invoices` par paiement confirmé (initiale, complémentaire) et par remboursement (avoir), numéro séquentiel `F-AAAA-NNNNNN`, lignes gelées, TVA. La référence est affichée au client et dans le back-office.
+- **Non implémenté** : génération du PDF et export comptable. `lib/invoices/index.ts` expose `getInvoiceDocumentUrl()` (lien signé affiché automatiquement quand `document_path` est renseigné) et `attachInvoiceDocument()` (à appeler par le futur générateur PDF ou la synchronisation comptable). Tant qu'aucun PDF n'existe, l'interface indique « PDF envoyé sur demande » et ne prétend rien d'autre.

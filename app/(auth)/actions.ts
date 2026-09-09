@@ -23,7 +23,7 @@ const registerSchema = z.object({
 
 export async function loginAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const meta = await requestMeta();
-  if (!rateLimit(`login:${meta.ip ?? "unknown"}`, 10, 15 * 60_000).allowed) return { error: "Trop de tentatives. Réessayez dans quelques minutes." };
+  if (!rateLimit(`login:${meta.ip ?? "unknown"}`, 20, 15 * 60_000).allowed) return { error: "Trop de tentatives. Réessayez dans quelques minutes." };
   const parsed = loginSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
   const supabase = await createSupabaseServerClient();

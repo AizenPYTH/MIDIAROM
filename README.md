@@ -31,8 +31,13 @@ Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, 
 | `npm run dev` / `npm run build` / `npm start` | Next.js |
 | `npm run lint` · `npm run typecheck` · `npm test` | Qualité |
 | `npm run test:db` | Applique les migrations + seed sur un PostgreSQL jetable et exécute les tests RLS SQL |
+| `INTEGRATION=1 npm run test:integration` | Tests d'intégration contre une pile Supabase locale (injections refusées, numéros uniques) |
 | `npm run db:types` | Regénère `types/database.ts` depuis la base locale |
 | `npm run check` | lint + typecheck + tests + build |
+
+## État des intégrations
+
+Voir [`docs/STATUS.md`](docs/STATUS.md) : ce qui est implémenté, à configurer, simulé ou absent.
 
 ## Documentation
 
