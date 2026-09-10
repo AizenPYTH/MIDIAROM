@@ -49,7 +49,7 @@ Tests : `supabase/tests/rls.test.sql` (exécutés par `npm run test:db`) vérifi
 - côté back-office (`/admin/catalog/repairs`), elle est comptée dans « tarifs à configurer » ;
 - enregistrer un prix non nul lève automatiquement le drapeau.
 
-Le contenu vient de `supabase/catalog-reparations.sql` (voir README). Une prestation non rattachée à une catégorie reste valide : elle apparaît sous « Sans catégorie ».
+Le contenu vient de `supabase/catalog-reparations.sql`, appliqué en production sous sa forme générée `supabase/seed-production-repairs.sql` (voir README). Une prestation non rattachée à une catégorie reste valide : elle apparaît sous « Sans catégorie ».
 
 ## Seed
 

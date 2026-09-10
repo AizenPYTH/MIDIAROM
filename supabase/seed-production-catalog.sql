@@ -1,25 +1,48 @@
--- =============================================================================
--- CATALOGUE INITIAL — 207 MEDIAROM
+-- ==========================================================================
+-- DONNÉES DE PRODUCTION — CATALOGUE
 --
--- Marques, consoles, pannes, prestations de réparation, options, packs,
--- transports, contrôles qualité, contenus éditoriaux, documents légaux et
--- produits de la boutique.
+-- Marques, 39 modèles de console, pannes, prestations de départ, options,
+-- packs, transports, contrôles qualité, contenus éditoriaux, documents
+-- légaux et produits de la boutique.
 --
--- Ce fichier est le SEUL à appliquer sur un projet de production : il ne
--- contient ni compte de démonstration, ni dossier, ni avis fictif.
+-- FICHIER GÉNÉRÉ — ne pas modifier à la main.
+--   source       : supabase/catalog.sql
+--   régénération : node scripts/build-production-seeds.mjs
 --
---   psql "$DB_URL" -f supabase/catalog.sql
+-- Ce fichier ne contient QUE des données : aucun create / alter / drop sur le
+-- schéma public, aucune suppression de ligne. Les tables doivent déjà exister,
+-- elles sont créées par les migrations (supabase/migrations/) — c'est la
+-- différence avec supabase/migrations/20260908000002_catalog.sql, qui, lui,
+-- crée les tables et échoue en 42P07 sur une base déjà migrée.
 --
--- Tous les prix sont des PRIX DE DÉPART, destinés à être ajustés depuis le
--- back-office (Catalogue → Réparations pour les prestations, Stock pour les
--- produits). Rien n'est codé en dur côté application : tout vient d'ici puis de
--- la base.
+-- Rejouable autant de fois que nécessaire : chaque insertion est protégée. Une
+-- seconde exécution ne crée pas de doublon et n'écrase pas ce qui a été modifié
+-- depuis le back-office.
 --
--- Rejouable : chaque insertion est protégée, une seconde exécution ne crée pas
--- de doublon et n'écrase pas ce que vous avez modifié dans le back-office.
--- =============================================================================
+-- Deux façons de l'appliquer :
+--   • Supabase → SQL Editor : coller le fichier entier puis « Run » ;
+--   • en ligne de commande  : psql "$DB_URL" -f supabase/seed-production-catalog.sql
+-- ==========================================================================
 
 set search_path = public, extensions;
+
+-- ---------------------------------------------------------------------------
+-- Garde : le schéma doit être en place avant toute insertion.
+-- ---------------------------------------------------------------------------
+do $garde$
+declare manquantes text;
+begin
+  select string_agg(t, ', ' order by t) into manquantes
+    from unnest(array['brands', 'console_models', 'content_blocks', 'faq_items', 'faults', 'legal_documents', 'option_categories', 'pack_items', 'packaging_instructions', 'packs', 'products', 'repair_included_options', 'repair_option_compatibility', 'repair_options', 'repairs', 'seo_pages', 'shipping_methods', 'site_settings', 'test_checklist_items', 'test_checklists', 'workshops']) as t
+   where to_regclass('public.' || t) is null;
+  if manquantes is not null then
+    raise exception using
+      message = 'Schéma incomplet, table(s) absente(s) : ' || manquantes,
+      hint = 'Appliquez d''abord les migrations (scripts/apply-migrations.sh, ou les fichiers de supabase/migrations/), puis rejouez ce fichier.';
+  end if;
+end
+$garde$;
+
 -- Les gardes « drop table if exists » sur les tables temporaires ci-dessous
 -- émettent chacune un NOTICE au premier passage : inutile de les afficher.
 set client_min_messages = warning;
@@ -678,3 +701,27 @@ insert into public.content_blocks (key, title, body, data) values
   ('homepage.tradein', 'Vendez-nous votre console', 'Estimation en ligne, paiement au comptoir le jour même. Consoles, jeux, manettes, collectors — du Master System à la PS5.', '{"cta":"Estimer mon lot"}'),
   ('homepage.retro', 'Le mur du rétrogaming', 'Cartouches testées une à une, consoles recapées, notices d''origine. Les arrivages sont annoncés dans la boutique.', '{}')
 on conflict (key) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Rechargement du cache de schéma de PostgREST.
+--
+-- Sans effet si le schéma n'a pas bougé, mais indispensable juste après une
+-- migration : sinon l'API continue d'ignorer les nouvelles tables et le site
+-- affiche des listes vides sans la moindre erreur.
+-- ---------------------------------------------------------------------------
+notify pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- État des lieux (lecture seule) — dernier résultat affiché par le SQL Editor.
+-- ---------------------------------------------------------------------------
+select element, nombre from (
+  select  1, 'marques', count(*) from public.brands
+  union all select  2, 'modèles de console', count(*) from public.console_models
+  union all select  3, 'pannes', count(*) from public.faults
+  union all select  4, 'prestations', count(*) from public.repairs
+  union all select  5, 'options', count(*) from public.repair_options
+  union all select  6, 'packs', count(*) from public.packs
+  union all select  7, 'formules de transport', count(*) from public.shipping_methods
+  union all select  8, 'produits boutique', count(*) from public.products
+) as etat (ordre, element, nombre)
+order by ordre;

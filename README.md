@@ -63,12 +63,14 @@ Le catalogue initial (consoles, pannes, prestations avec leurs prix de départ, 
 
 Le catalogue de réparation du client — 13 modèles, 35 catégories et 887 prestations reprises du document fourni — est dans `supabase/catalog-reparations.sql`. Les tarifs n'y figurent pas : chaque prestation importée arrive à 0 € avec `price_is_provisional = true`, s'affiche « sur devis » côté client et se règle depuis `/admin/catalog/repairs` (enregistrer un prix non nul lève le drapeau). Le fichier est rejouable : la formulation du document fait foi et écrase le libellé, tandis que le prix, le résumé et l'activation saisis dans le back-office sont conservés.
 
-Ces deux fichiers sont les seuls à appliquer sur un projet de production, dans cet ordre :
+Sur un projet de production, on n'applique **pas** ces deux fichiers directement : on applique leurs versions générées, `supabase/seed-production-catalog.sql` et `supabase/seed-production-repairs.sql`. Même contenu, plus une garde qui refuse de s'exécuter tant que les migrations ne sont pas passées, un état des lieux chiffré en fin de fichier, et une compatibilité assurée avec le SQL Editor de Supabase (collage direct, rejeu dans la même session) :
 
 ```bash
-psql "$DB_URL" -f supabase/catalog.sql
-psql "$DB_URL" -f supabase/catalog-reparations.sql
+psql "$DB_URL" -f supabase/seed-production-catalog.sql
+psql "$DB_URL" -f supabase/seed-production-repairs.sql
 ```
+
+Ces deux fichiers sont générés — `npm run seeds:build` les regénère, et `npm run test:db` échoue s'ils ne correspondent plus à leur source. Ils ne créent aucune table : le schéma vient uniquement des migrations. Ne confondez pas `supabase/catalog.sql` (données) avec `supabase/migrations/20260908000002_catalog.sql` (création des tables) : appliquer le second sur une base déjà migrée échoue en 42P07.
 
 Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, `EMAIL_PROVIDER=console`, `SHIPPING_PROVIDER=mock`). Les mocks sont **refusés en production**.
 
@@ -83,6 +85,7 @@ Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, 
 | `npm run db:types` | Regénère `types/database.ts` depuis la base locale |
 | `psql "$DB_URL" -f supabase/catalog.sql` | Charge le catalogue initial (consoles, pannes, prestations, produits) — applicable en production |
 | `psql "$DB_URL" -f supabase/catalog-reparations.sql` | Charge le catalogue de réparation du client (13 modèles, 35 catégories, 887 prestations « sur devis ») — applicable en production, rejouable |
+| `npm run seeds:build` | Regénère les deux fichiers de données de production depuis `catalog.sql` et `catalog-reparations.sql` |
 | `npm run check` | lint + typecheck + tests + build |
 | `npm run check:supabase [fichier .env]` | Diagnostique la configuration Supabase d'un déploiement (variables, clés, joignabilité, schéma) |
 | `scripts/apply-migrations.sh <url-postgres>` | Applique les migrations sur une base distante en une transaction, sans `supabase link` |

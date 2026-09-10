@@ -3,7 +3,7 @@
 ## Supabase
 
 1. Créer un projet, récupérer URL, clé anon et clé service-role.
-2. Appliquer les migrations. **Ne jamais** exécuter `seed.sql` en production : il crée des comptes de démonstration dont le mot de passe est public. Le catalogue, lui, vit dans `supabase/catalog.sql` et `supabase/catalog-reparations.sql` : ces deux fichiers **sont prévus pour la production**.
+2. Appliquer les migrations. **Ne jamais** exécuter `seed.sql` en production : il crée des comptes de démonstration dont le mot de passe est public. Le catalogue, lui, s'applique par `supabase/seed-production-catalog.sql` puis `supabase/seed-production-repairs.sql` : ces deux fichiers **sont prévus pour la production**. Ils sont générés depuis `supabase/catalog.sql` et `supabase/catalog-reparations.sql` (`npm run seeds:build`) et n'en diffèrent que par une garde de schéma, un état des lieux final et le rechargement du cache PostgREST.
 
    La voie recommandée ne demande aucun `supabase link` :
 
@@ -46,8 +46,14 @@
    produits de la boutique.
 
    ```bash
-   psql "$DB_URL" -f supabase/catalog.sql
+   psql "$DB_URL" -f supabase/seed-production-catalog.sql
    ```
+
+   Ce fichier ne contient **que des données** : il n'existe que pour ça, et refuse
+   de s'exécuter avec un message explicite si les migrations n'ont pas été
+   appliquées. Ne le confondez pas avec `supabase/migrations/20260908000002_catalog.sql`,
+   qui porte presque le même nom mais **crée les tables** : appliqué sur une base
+   déjà migrée, celui-là échoue en `42P07 relation "brands" already exists`.
 
    Sans lui, le site public affiche un catalogue vide (« Aucune console publiée »). Le
    fichier est rejouable : une seconde exécution ne crée pas de doublon et **n'écrase
@@ -61,11 +67,11 @@
    887 prestations) :
 
    ```bash
-   psql "$DB_URL" -f supabase/catalog-reparations.sql
+   psql "$DB_URL" -f supabase/seed-production-repairs.sql
    ```
 
-   Ce fichier suppose `catalog.sql` déjà appliqué (il s'appuie sur les marques et les
-   modèles). Il n'apporte **aucun tarif** : chaque prestation importée arrive à 0 €
+   Ce fichier suppose `seed-production-catalog.sql` déjà appliqué (il s'appuie sur les
+   marques et les modèles). Il n'apporte **aucun tarif** : chaque prestation importée arrive à 0 €
    avec `price_is_provisional = true`, s'affiche « sur devis » côté client et attend
    d'être chiffrée dans Catalogue → Réparations, où un compteur indique combien de
    tarifs restent à configurer. Il est rejouable : la formulation du document du

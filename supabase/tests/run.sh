@@ -36,4 +36,27 @@ psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/accounts.test.sql
 echo "→ RLS tests"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/rls.test.sql
+
+# Import de production : les deux fichiers de données doivent suffire à garnir
+# une base qui vient d'être migrée, et donner le même résultat à chaque rejeu.
+# C'est le scénario réel du client, qui n'a que le SQL Editor de Supabase.
+echo "→ fichiers de production à jour"
+node scripts/build-production-seeds.mjs --check
+
+PROD_DB="${TEST_PROD_DB:-console_repair_prod_test}"
+echo "→ import de production sur une base fraîchement migrée (${PROD_DB})"
+psql -v ON_ERROR_STOP=1 -d postgres -qc "drop database if exists ${PROD_DB};"
+psql -v ON_ERROR_STOP=1 -d postgres -qc "create database ${PROD_DB};"
+psql -v ON_ERROR_STOP=1 -d "$PROD_DB" -q -f supabase/tests/shim.sql
+for f in supabase/migrations/*.sql; do
+  psql -v ON_ERROR_STOP=1 -d "$PROD_DB" -q -f "$f"
+done
+# Deux passages, le second dans la même session que le premier : le SQL Editor
+# de Supabase réutilise ses connexions, une table temporaire y survit d'un
+# « Run » à l'autre.
+cat supabase/seed-production-catalog.sql supabase/seed-production-repairs.sql \
+    supabase/seed-production-catalog.sql supabase/seed-production-repairs.sql |
+  psql -v ON_ERROR_STOP=1 -d "$PROD_DB" -q
+psql -v ON_ERROR_STOP=1 -d "$PROD_DB" -q -f supabase/tests/production-seeds.test.sql
+
 echo "✓ database tests passed"
