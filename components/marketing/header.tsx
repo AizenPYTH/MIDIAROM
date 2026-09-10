@@ -22,7 +22,9 @@ export function BrandMark({ name, inverted, size = "md" }: { name: string; inver
   return (
     <span className="flex items-center gap-2.5 whitespace-nowrap">
       <span className={`${box} font-mono font-semibold tracking-[-0.02em] ${size === "sm" ? "px-[7px] py-[5px] text-[15px]" : "px-[9px] py-[7px] text-[19px]"}`}>{mark}</span>
-      {label ? <span className={`font-extrabold uppercase tracking-[0.02em] ${size === "sm" ? "text-[15px]" : "text-[19px]"}`}>{label}</span> : null}
+      {/* Pas de mise en capitales : l'enseigne s'écrit « Médi@roM », avec son
+          arobase et son M final. La casse saisie dans Réglages fait foi. */}
+      {label ? <span className={`font-extrabold tracking-[0.02em] ${size === "sm" ? "text-[15px]" : "text-[19px]"}`}>{label}</span> : null}
     </span>
   );
 }

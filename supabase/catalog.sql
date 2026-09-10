@@ -229,7 +229,7 @@ end $seed$;
 -- Settings (public keys are readable by visitors)
 -- ---------------------------------------------------------------------------
 insert into public.site_settings (key, value, description, is_public) values
-  ('brand', '{"name":"207 Mediarom","tagline":"Jeux vidéo, consoles, rétro et réparation à Marseille","description":"Magasin de jeux vidéo au 207 rue de Rome à Marseille depuis 1997 : vente neuf et occasion, rétrogaming, reprise et atelier de réparation de consoles.","email":"contact@example.com","phone":"04 91 48 27 48","address_line1":"207 rue de Rome","postal_code":"13006","city":"Marseille","country":"France","logo_path":null,"hours":"Lun–Sam 9h30–19h","founded_year":"1997","siret":"","legal_form":""}', 'Identité de l''entreprise', true),
+  ('brand', '{"name":"207 Médi@roM","tagline":"Jeux vidéo, consoles, rétro et réparation à Marseille","description":"Magasin de jeux vidéo au 207 rue de Rome à Marseille depuis 1997 : vente neuf et occasion, rétrogaming, reprise et atelier de réparation de consoles.","email":"contact@example.com","phone":"04 91 48 27 48","address_line1":"207 rue de Rome","postal_code":"13006","city":"Marseille","country":"France","logo_path":null,"hours":"Lun–Sam 9h30–19h","founded_year":"1997","siret":"","legal_form":""}', 'Identité de l''entreprise', true),
   ('social', '{"instagram":"","facebook":"","tiktok":"","youtube":"","google_business":""}', 'Réseaux sociaux', true),
   ('business_rules', '{"vat_rate_bp":2000,"prices_include_vat":true,"diagnostic_fee_cents":2900,"diagnostic_fee_deducted_when_repaired":true,"refused_quote_return_fee_cents":0,"unrepairable_return_fee_cents":0,"no_fault_found_fee_cents":2900,"quote_validity_days":7,"review_request_delay_days":3,"unclaimed_console_days":90}', 'Règles métier (diagnostic, refus, TVA)', true),
   ('warranty', '{"default_months":6,"scope":"La garantie couvre l''intervention réalisée et les pièces remplacées, dans le cadre d''une utilisation normale.","exclusions":"Chocs, liquides, oxydation, ouverture par un tiers, pannes indépendantes de l''intervention."}', 'Garantie par défaut', true),
@@ -330,7 +330,7 @@ on conflict (slug) do nothing;
 -- ---------------------------------------------------------------------------
 insert into public.gallery_items (category, image_path, title, description, display_order, is_published)
 select 'storefront', '/medias/facade-207-mediarom.webp',
-       'Façade du magasin 207 Mediarom à Marseille',
+       'Façade du magasin 207 Médi@roM à Marseille',
        'Le magasin, 207 rue de Rome à Marseille : vitrine consoles et jeux, réparation express.',
        0, true
  where not exists (select 1 from public.gallery_items where image_path = '/medias/facade-207-mediarom.webp');

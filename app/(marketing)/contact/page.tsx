@@ -25,8 +25,19 @@ export default async function ContactPage() {
       {/* La photo de la façade : « Le magasin » du menu mène ici, on doit y
           reconnaître la boutique avant de lire l'adresse. */}
       {facade ? (
-        <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden border border-border-strong bg-surface-muted">
-          <Image src={publicMediaUrl(facade.image_path)} alt={facade.title ?? "Le magasin"} fill sizes="(min-width: 768px) 768px, 100vw" className="object-cover object-[center_28%]" priority />
+        <div className="mt-8 overflow-hidden border border-border-strong bg-surface-muted">
+          {/* La photo est en portrait : on la laisse à son format plutôt que de
+              la recadrer en bandeau, où l'on ne verrait qu'une tranche de la
+              devanture. La largeur est bornée pour qu'elle reste lisible. */}
+          <Image
+            src={publicMediaUrl(facade.image_path)}
+            alt={facade.title ?? "Le magasin"}
+            width={765}
+            height={1020}
+            sizes="(min-width: 640px) 420px, 100vw"
+            className="mx-auto h-auto w-full max-w-[420px]"
+            priority
+          />
         </div>
       ) : null}
       <div className="mt-8 grid gap-4 sm:grid-cols-2">

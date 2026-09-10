@@ -1,5 +1,5 @@
 -- ==========================================================================
--- REMISE DU SITE AU PÉRIMÈTRE STRICT DU DOCUMENT DU CLIENT — 207 MEDIAROM
+-- REMISE DU SITE AU PÉRIMÈTRE STRICT DU DOCUMENT DU CLIENT — 207 MÉDI@ROM
 --
 -- Un seul fichier à exécuter sur une base déjà garnie. Il aligne les trois
 -- espaces du site sur le document fourni par le client :
@@ -146,10 +146,26 @@ update public.console_models
 -- ---------------------------------------------------------------------------
 insert into public.gallery_items (category, image_path, title, description, display_order, is_published)
 select 'storefront', '/medias/facade-207-mediarom.webp',
-       'Façade du magasin 207 Mediarom à Marseille',
+       'Façade du magasin 207 Médi@roM à Marseille',
        'Le magasin, 207 rue de Rome à Marseille : vitrine consoles et jeux, réparation express.',
        0, true
  where not exists (select 1 from public.gallery_items where image_path = '/medias/facade-207-mediarom.webp');
+
+-- ---------------------------------------------------------------------------
+-- Nom de l'enseigne
+--
+-- L'enseigne du magasin se lit « 207 Médi@roM » : un arobase à la place du
+-- « a ». Le site affichait « 207 Mediarom ». On ne corrige que la valeur
+-- d'origine : un nom modifié depuis Réglages n'est jamais écrasé.
+-- ---------------------------------------------------------------------------
+update public.site_settings
+   set value = jsonb_set(value, '{name}', '"207 Médi@roM"'), updated_at = now()
+ where key = 'brand' and value ->> 'name' = '207 Mediarom';
+
+update public.gallery_items
+   set title = 'Façade du magasin 207 Médi@roM à Marseille'
+ where image_path = '/medias/facade-207-mediarom.webp'
+   and title = 'Façade du magasin 207 Mediarom à Marseille';
 
 -- ---------------------------------------------------------------------------
 -- État des lieux (lecture seule) — dernier résultat affiché par le SQL Editor.

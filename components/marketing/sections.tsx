@@ -217,11 +217,17 @@ export function StoreSection({ brand, photo }: { brand: BrandSettings; photo: Ta
           </Link>
         </div>
         {photo ? (
-          <div className="relative min-h-[260px] sm:min-h-[320px]">
-            {/* Recadrage vers le haut de l'image : sur une photo de devanture,
-                l'enseigne et la vitrine sont dans la moitié supérieure. Un
-                recadrage centré les couperait dans ce bloc plus large que haut. */}
-            <Image src={publicMediaUrl(photo.image_path)} alt={photo.title ?? "Le magasin"} fill sizes="(min-width: 640px) 50vw, 100vw" className="object-cover object-[center_28%]" />
+          <div className="flex items-start justify-center">
+            {/* Photo entière, à son format d'origine : une devanture recadrée en
+                bandeau ne montre qu'une tranche de l'enseigne. */}
+            <Image
+              src={publicMediaUrl(photo.image_path)}
+              alt={photo.title ?? "Le magasin"}
+              width={765}
+              height={1020}
+              sizes="(min-width: 640px) 380px, 100vw"
+              className="h-auto w-full max-w-[380px] border border-border-strong"
+            />
           </div>
         ) : (
           <div className="photo-placeholder min-h-[220px] text-[11.5px]">plan / façade du magasin</div>
