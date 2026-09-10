@@ -12,7 +12,12 @@ import { getFeaturedProducts, getProductCategoryCounts, getProductPlatforms, get
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatPrice } from "@/lib/utils/format";
 
-export const revalidate = 600;
+/**
+ * Rendu à la demande, pour la même raison que /reparation : consoles prises en
+ * charge, produits en rayon et blocs éditoriaux viennent tous de la base. Un
+ * rendu statique fige l'état du catalogue au moment du build.
+ */
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [seo, brand] = await Promise.all([getSeoPage("/"), getBrandSettings()]);

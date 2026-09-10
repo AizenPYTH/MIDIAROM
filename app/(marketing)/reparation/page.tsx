@@ -8,7 +8,17 @@ import { getActiveBrands, getActiveModels } from "@/lib/repair/catalog";
 import { getRepairFormBase } from "@/lib/repair/form-data";
 import { blockData, getContentBlock } from "@/lib/content";
 
-export const revalidate = 600;
+/**
+ * Rendu à la demande, comme /consoles.
+ *
+ * Cette page n'affiche presque que du catalogue vivant : les plateformes et les
+ * modèles de l'étape 1, puis la grille des consoles prises en charge. Un rendu
+ * statique fige l'état de la base au moment du build — un déploiement joué
+ * avant le chargement du catalogue livre donc un HTML qui annonce « Aucune
+ * console publiée », et le sert tant qu'aucune régénération n'a eu lieu, alors
+ * que la base est pleine.
+ */
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Réparation de consoles — démarrer une demande",
