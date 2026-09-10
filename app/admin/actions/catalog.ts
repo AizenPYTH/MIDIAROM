@@ -187,11 +187,16 @@ export async function updateRepairRowAction(formData: FormData): Promise<void> {
   if (!id || !parsed.success || priceCents === null) {
     redirect(`${backToModel(modelId)}&error=${encodeURIComponent("Prix ou nom invalide : la prestation n'a pas été modifiée.")}`);
   }
+  const categoryId = String(formData.get("category_id") ?? "");
   const patch = {
     name: parsed.data.name,
     summary: parsed.data.summary || null,
     display_order: parsed.data.display_order,
     price_cents: priceCents,
+    // Saisir un tarif lève le marqueur « à configurer » posé à l'import du
+    // catalogue client, qui ne comportait aucun prix.
+    price_is_provisional: priceCents === 0,
+    category_id: categoryId || null,
     is_active: formData.get("is_active") === "on",
   };
   const { data: old } = await table("repairs").select("*").eq("id", id).maybeSingle();
@@ -221,12 +226,15 @@ export async function createModelRepairAction(formData: FormData): Promise<void>
   ]);
   if (!model || !fault) redirect(`${backToModel(modelId)}&error=${encodeURIComponent("Modèle ou panne introuvable.")}`);
   const { data: last } = await table("repairs").select("display_order").eq("model_id", modelId).order("display_order", { ascending: false }).limit(1).maybeSingle();
+  const categoryId = String(formData.get("category_id") ?? "");
   const row = {
     model_id: modelId,
     fault_id: faultId,
     name,
     slug: fault.slug,
     price_cents: priceCents,
+    price_is_provisional: priceCents === 0,
+    category_id: categoryId || null,
     display_order: ((last?.display_order as number | undefined) ?? 0) + 10,
     is_active: true,
   };

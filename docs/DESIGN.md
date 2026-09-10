@@ -58,7 +58,12 @@ photos client, fiches consoles.
    modèle exact (précision = variantes ou année) ; les prestations de l'étape 2 sont
    celles liées en base à ce modèle.
 2. **Quelle prestation ?** — prestations publiées du modèle (choix unique) puis options
-   et packs **compatibles** (choix multiples), calculés côté serveur.
+   et packs **compatibles** (choix multiples), calculés côté serveur. Les prestations
+   sont regroupées par catégorie (`repair_categories`) : chaque catégorie est un bloc
+   dépliable portant son nombre de pannes, la première est ouverte par défaut, et un
+   champ de recherche apparaît au-delà de quatorze prestations. Une prestation dont le
+   tarif n'est pas encore arbitré (`price_is_provisional`) annonce « sur devis » — et
+   « sur devis après diagnostic » dans le récapitulatif — au lieu d'un prix.
 3. **Décrivez le problème** — description libre (≥ 20 caractères ou au moins un
    symptôme), symptômes à choix multiples (pannes fréquentes du modèle + génériques,
    stockés dans `repair_orders.symptoms`), dépôt de photos (jusqu'à 6), n° de série.

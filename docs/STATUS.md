@@ -6,7 +6,7 @@ Légende : **IMPLEMENTED** fonctionne sans configuration supplémentaire · **CO
 
 | Domaine | Statut | Détail |
 | --- | --- | --- |
-| Catalogue (marques, modèles, pannes, réparations, options, packs, compatibilités) | IMPLEMENTED | CRUD admin, règles de compatibilité, options incluses, aperçu de l'offre calculée |
+| Catalogue (marques, modèles, pannes, catégories de réparation, réparations, options, packs, compatibilités) | IMPLEMENTED | CRUD admin, règles de compatibilité, options incluses, aperçu de l'offre calculée ; catalogue de réparation du client (13 modèles, 35 catégories, 887 prestations) chargé par `supabase/catalog-reparations.sql`, tarifs provisoires affichés « sur devis » tant qu'ils ne sont pas saisis |
 | Pages réparation SEO (`/reparation/[modèle]/[panne]`) | IMPLEMENTED | Générées uniquement pour les réparations publiées ; sitemap, canonical, JSON-LD, FAQ |
 | Moteur de prix côté serveur | IMPLEMENTED | Testé unitairement et en intégration ; le navigateur n'envoie que des identifiants |
 | Fiche de réparation 4 étapes (design 207 Mediarom) | IMPLEMENTED | Plateforme → modèle exact → prestation liée au modèle + options compatibles → description + symptômes multiples + photos → coordonnées / transport / récapitulatif / CGV ; prix serveur, création de dossier (symptômes et photos rattachés) puis paiement. Voir `docs/DESIGN.md` |
@@ -49,14 +49,16 @@ Gestion (clients, techniciens, catalogue, reprises, contenu, avis), Atelier (ré
 SAV, dossiers), Configuration (options, packs, transport, paramètres) et Administration
 (utilisateurs, statistiques, audit). Aucune route n'a été retirée. Les prestations de
 réparation se gèrent console par console dans Catalogue → Réparations (prix, résumé,
-ordre, activation, ajout, retrait) ; la vue tableau complète reste accessible.
+catégorie, ordre, activation, ajout, retrait) ; la vue tableau complète reste
+accessible. Les prestations y sont groupées par catégorie et un compteur signale les
+tarifs encore à configurer, console par console.
 
 ## Ce qui a été testé réellement
 
 - `tests/*.test.ts` : moteur de prix, compatibilité, machine à états, numéros, règles métier, uploads, markdown, totaux boutique / panier / stock / étapes atelier (42 tests).
 - `tests/integration/orders.test.ts` (`INTEGRATION=1 npm run test:integration`) : refus des options incompatibles/inactives et des transports inconnus à la création de commande, unicité des numéros de dossier, devis et factures sous concurrence.
 - `supabase/tests/rls.test.sql` (`npm run test:db`) : isolation client A / client B, technicien sans droit sur les prix et réglages, storage isolé par dossier, RPC de décision de devis.
-- Scénarios navigateur (Playwright, non versionnés) : parcours réparation complet (plateforme → PS5 → HDMI + option + symptômes + photo + transport → paiement simulé → REP-XXXXXX → compte créé → dossier avec symptômes et photo) ; réception, photos, diagnostic, devis accepté puis payé, devis refusé, réparation, tests, expédition, livraison, clôture par l'admin ; boutique (filtres, fiche, panier, rupture, envoi offert, paiement → C-XXXXXX, stock décrémenté, facture) ; back-office commandes (préparée → expédiée + suivi, CSV, bons d'envoi), stock (ajustement tracé), reprises (photo, offre, acceptation client, clôture), clients ; reprise client avec photo → T-XXXXXX → suivi ; espace client commandes / reprises ; fiches consoles ; suivi public 8 étapes ; pipeline admin ; accès directs par URL refusés ; captures mobiles 375/390/430 et tablette 820 sans débordement horizontal.
+- Scénarios navigateur (Playwright, non versionnés) : parcours réparation complet (plateforme → PS5 → HDMI + option + symptômes + photo + transport → paiement simulé → REP-XXXXXX → compte créé → dossier avec symptômes et photo) ; réception, photos, diagnostic, devis accepté puis payé, devis refusé, réparation, tests, expédition, livraison, clôture par l'admin ; boutique (filtres, fiche, panier, rupture, envoi offert, paiement → C-XXXXXX, stock décrémenté, facture) ; back-office commandes (préparée → expédiée + suivi, CSV, bons d'envoi), stock (ajustement tracé), reprises (photo, offre, acceptation client, clôture), clients ; reprise client avec photo → T-XXXXXX → suivi ; espace client commandes / reprises ; fiches consoles ; suivi public 8 étapes ; pipeline admin ; accès directs par URL refusés ; captures mobiles 375/390/430 et tablette 820 sans débordement horizontal ; catalogue de réparation du client (catégories du document affichées sur la console, comptage des pannes d'une catégorie, recherche, mention « sur devis », groupement par catégorie dans le back-office, compteur de tarifs à configurer, tarif saisi en base puis visible côté client) ; parcours réparation et écrans du back-office rejoués en 1440 / 820 / 390 px sans débordement.
 
 ## Corrections issues de l'audit de connexion
 

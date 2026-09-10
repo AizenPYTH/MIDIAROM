@@ -59,7 +59,16 @@ on conflict (id) do nothing;
 update public.profiles set role = 'SUPER_ADMIN' where email = 'admin@example.com';
 ```
 
-Le catalogue initial (consoles, pannes, prestations avec leurs prix de départ, produits de la boutique) est dans `supabase/catalog.sql`, séparé du seed de développement : c'est le seul fichier à appliquer sur un projet de production.
+Le catalogue initial (consoles, pannes, prestations avec leurs prix de départ, produits de la boutique) est dans `supabase/catalog.sql`, séparé du seed de développement.
+
+Le catalogue de réparation du client — 13 modèles, 35 catégories et 887 prestations reprises du document fourni — est dans `supabase/catalog-reparations.sql`. Les tarifs n'y figurent pas : chaque prestation importée arrive à 0 € avec `price_is_provisional = true`, s'affiche « sur devis » côté client et se règle depuis `/admin/catalog/repairs` (enregistrer un prix non nul lève le drapeau). Le fichier est rejouable : la formulation du document fait foi et écrase le libellé, tandis que le prix, le résumé et l'activation saisis dans le back-office sont conservés.
+
+Ces deux fichiers sont les seuls à appliquer sur un projet de production, dans cet ordre :
+
+```bash
+psql "$DB_URL" -f supabase/catalog.sql
+psql "$DB_URL" -f supabase/catalog-reparations.sql
+```
 
 Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, `EMAIL_PROVIDER=console`, `SHIPPING_PROVIDER=mock`). Les mocks sont **refusés en production**.
 
@@ -73,6 +82,7 @@ Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, 
 | `INTEGRATION=1 npm run test:integration` | Tests d'intégration contre une pile Supabase locale (injections refusées, numéros uniques) |
 | `npm run db:types` | Regénère `types/database.ts` depuis la base locale |
 | `psql "$DB_URL" -f supabase/catalog.sql` | Charge le catalogue initial (consoles, pannes, prestations, produits) — applicable en production |
+| `psql "$DB_URL" -f supabase/catalog-reparations.sql` | Charge le catalogue de réparation du client (13 modèles, 35 catégories, 887 prestations « sur devis ») — applicable en production, rejouable |
 | `npm run check` | lint + typecheck + tests + build |
 | `npm run check:supabase [fichier .env]` | Diagnostique la configuration Supabase d'un déploiement (variables, clés, joignabilité, schéma) |
 | `scripts/apply-migrations.sh <url-postgres>` | Applique les migrations sur une base distante en une transaction, sans `supabase link` |

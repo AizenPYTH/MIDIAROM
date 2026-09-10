@@ -22,6 +22,8 @@ for f in supabase/migrations/*.sql; do
 done
 echo "→ catalogue (applicable en production)"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog.sql
+echo "→ catalogue de réparation du client (PDF)"
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog-reparations.sql
 echo "→ seed de développement"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
 # Rejoués une seconde fois : catalogue et seed doivent rester idempotents, y
@@ -29,6 +31,7 @@ psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
 # développement jamais réappliqué, identités manquantes).
 echo "→ catalogue + seed (rejoués, idempotence)"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog.sql
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog-reparations.sql
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/accounts.test.sql
 echo "→ RLS tests"

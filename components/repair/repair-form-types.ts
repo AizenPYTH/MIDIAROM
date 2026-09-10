@@ -25,6 +25,11 @@ export interface FormRepair {
   faultSlug: string;
   note: string;
   priceCents: number;
+  /** Catégorie du catalogue client (« Image & HDMI », « Charge & USB-C »…). */
+  categoryName: string | null;
+  categoryOrder: number;
+  /** Le catalogue fourni ne comporte pas de prix : la prestation est annoncée sur devis. */
+  priceProvisional: boolean;
   isDiagnosticOnly: boolean;
   warrantyMonths: number;
   leadTimeMin: number | null;

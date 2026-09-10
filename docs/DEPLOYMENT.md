@@ -3,7 +3,7 @@
 ## Supabase
 
 1. Créer un projet, récupérer URL, clé anon et clé service-role.
-2. Appliquer les migrations. **Ne jamais** exécuter `seed.sql` en production : il crée des comptes de démonstration dont le mot de passe est public. Le catalogue, lui, vit dans `supabase/catalog.sql` et **est prévu pour la production**.
+2. Appliquer les migrations. **Ne jamais** exécuter `seed.sql` en production : il crée des comptes de démonstration dont le mot de passe est public. Le catalogue, lui, vit dans `supabase/catalog.sql` et `supabase/catalog-reparations.sql` : ces deux fichiers **sont prévus pour la production**.
 
    La voie recommandée ne demande aucun `supabase link` :
 
@@ -56,6 +56,24 @@
    (produits). Aucune photo n'est fournie : les fiches affichent un aperçu rayé
    explicitement identifié tant qu'aucune image n'a été téléversée depuis
    Stock → produit → Photos.
+
+   Puis charger le catalogue de réparation du client (13 modèles, 35 catégories,
+   887 prestations) :
+
+   ```bash
+   psql "$DB_URL" -f supabase/catalog-reparations.sql
+   ```
+
+   Ce fichier suppose `catalog.sql` déjà appliqué (il s'appuie sur les marques et les
+   modèles). Il n'apporte **aucun tarif** : chaque prestation importée arrive à 0 €
+   avec `price_is_provisional = true`, s'affiche « sur devis » côté client et attend
+   d'être chiffrée dans Catalogue → Réparations, où un compteur indique combien de
+   tarifs restent à configurer. Il est rejouable : la formulation du document du
+   client fait foi et écrase le libellé, alors que le prix, le résumé et l'activation
+   saisis dans le back-office sont conservés. Les anciennes prestations sans catégorie
+   des modèles concernés sont désactivées (jamais supprimées) et réactivables depuis
+   le back-office.
+
 3. Auth → URL du site et URL de redirection : `https://<domaine>/auth/callback`. Personnaliser les templates d'e-mails Supabase (confirmation, magic link, récupération).
 4. Vérifier que les buckets ont bien été créés par la migration `0008_storage`.
 4. Créer le premier super administrateur. Créez le compte depuis Auth → Users (« Add user », en cochant la confirmation automatique de l'adresse), puis dans le SQL Editor :

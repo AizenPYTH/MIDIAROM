@@ -27,10 +27,21 @@ d("server-side pricing and compatibility guards", () => {
     ({ getRepairById, getRepairOffer } = await import("@/lib/repair/catalog"));
     ({ priceSelection } = await import("@/lib/pricing/service"));
     ({ createOrderAndCheckout } = await import("@/lib/orders/create-order"));
+    const { data } = await admin()
+      .from("repairs")
+      .select("id, model:console_models!inner(slug)")
+      .eq("is_active", true)
+      .eq("console_models.slug", "switch")
+      .limit(1)
+      .maybeSingle();
+    switchRepairId = data?.id ?? "";
   });
 
   const PS5_HDMI = "46000000-0000-4000-8000-000000000001";
-  const SWITCH_USBC = "46000000-0000-4000-8000-000000000013";
+  // Le catalogue de réparation du client (PDF) fait foi pour la Switch : la
+  // prestation de test est donc résolue dynamiquement plutôt que figée sur un
+  // identifiant du seed, qui peut être désactivé au profit du catalogue client.
+  let switchRepairId = "";
   const LIQUID_METAL = "44000000-0000-4000-8000-000000000006"; // PS5 only
   const SSD = "44000000-0000-4000-8000-000000000011"; // PS5 only
   const CLEANING = "44000000-0000-4000-8000-000000000002";
@@ -47,7 +58,7 @@ d("server-side pricing and compatibility guards", () => {
   });
 
   it("refuses an option that is not compatible with the console (PS5-only option on a Switch)", async () => {
-    const repair = await getRepairById(SWITCH_USBC);
+    const repair = await getRepairById(switchRepairId);
     const offer = await getRepairOffer(repair!);
     expect(offer.options.map((o) => o.id)).not.toContain(LIQUID_METAL);
     await expect(priceSelection(offer, { optionIds: [LIQUID_METAL], packIds: [], shippingMethodId: SHIPPING_LABEL })).rejects.toThrow(/incompatible/);
@@ -91,7 +102,7 @@ d("server-side pricing and compatibility guards", () => {
       symptoms: [] as string[],
       photos: [] as string[],
     };
-    await expect(createOrderAndCheckout({ ...base, selection: { repairId: SWITCH_USBC, optionIds: [LIQUID_METAL], packIds: [], shippingMethodId: SHIPPING_LABEL } }, null)).rejects.toThrow(/incompatible/);
+    await expect(createOrderAndCheckout({ ...base, selection: { repairId: switchRepairId, optionIds: [LIQUID_METAL], packIds: [], shippingMethodId: SHIPPING_LABEL } }, null)).rejects.toThrow(/incompatible/);
     await expect(createOrderAndCheckout({ ...base, selection: { repairId: PS5_HDMI, optionIds: [], packIds: [], shippingMethodId: "00000000-0000-4000-8000-000000000000" } }, null)).rejects.toThrow();
     // Nothing must have been persisted for these refused attempts.
     const { data } = await admin().from("repair_orders").select("id").eq("customer_email", base.customer.email);

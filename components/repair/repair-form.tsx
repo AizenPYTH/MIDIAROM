@@ -74,6 +74,8 @@ export function RepairForm(props: RepairFormProps) {
   const [repairs, setRepairs] = useState<FormRepair[]>(props.initialRepairs ?? []);
   const [repairsLoading, setRepairsLoading] = useState(false);
   const [repairId, setRepairId] = useState<string | null>(props.initialRepairId ?? null);
+  const [repairQuery, setRepairQuery] = useState("");
+  const [openCategories, setOpenCategories] = useState<string[] | null>(null);
   const [offer, setOffer] = useState<FormOffer | null>(props.initialOffer ?? null);
   const [offerLoading, setOfferLoading] = useState(false);
   const [optionIds, setOptionIds] = useState<string[]>([]);
@@ -100,6 +102,39 @@ export function RepairForm(props: RepairFormProps) {
   const repair = repairs.find((r) => r.id === repairId) ?? null;
   const showPrices = props.showPrices ?? true;
   const platformModels = useMemo(() => (platform === RETRO_KEY ? models.filter((m) => m.isRetro) : platform ? models.filter((m) => m.brandId === platform) : []), [models, platform]);
+  // Le catalogue client est organisé par catégorie (« Image & HDMI », « Charge &
+  // USB-C »…). Une console peut compter plusieurs dizaines de pannes : on les
+  // regroupe et on propose une recherche plutôt qu'une liste à plat.
+  const repairGroups = useMemo(() => {
+    const needle = repairQuery.trim().toLowerCase();
+    const matching = needle ? repairs.filter((r) => `${r.name} ${r.note} ${r.categoryName ?? ""}`.toLowerCase().includes(needle)) : repairs;
+    const groups = new Map<string, { name: string; order: number; items: FormRepair[] }>();
+    for (const r of matching) {
+      const name = r.categoryName ?? "Autres prestations";
+      const g = groups.get(name) ?? { name, order: r.categoryOrder, items: [] };
+      g.items.push(r);
+      groups.set(name, g);
+    }
+    return [...groups.values()].sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+  }, [repairs, repairQuery]);
+
+  const searching = repairQuery.trim().length > 0;
+  const isCategoryOpen = (name: string, index: number) => {
+    if (searching) return true;
+    if (openCategories) return openCategories.includes(name);
+    // Par défaut : tout ouvert quand la liste est courte, sinon la première catégorie
+    // et celle qui contient la prestation déjà choisie.
+    if (repairs.length <= 14) return true;
+    return index === 0 || repairs.find((r) => r.id === repairId)?.categoryName === name;
+  };
+  const toggleCategory = (name: string) =>
+    setOpenCategories((prev) => {
+      const base = prev ?? repairGroups.filter((g, i) => isCategoryOpen(g.name, i)).map((g) => g.name);
+      return base.includes(name) ? base.filter((n) => n !== name) : [...base, name];
+    });
+
+  const repairPrice = (r: FormRepair) => (r.priceProvisional || !showPrices ? "sur devis" : formatPrice(r.priceCents));
+
   // Pannes fréquentes du modèle d'abord, puis les symptômes génériques non couverts.
   const symptomChoices = useMemo(() => {
     const specific = [...new Set((model?.commonIssues ?? []).map((i) => i.toLowerCase()))];
@@ -345,10 +380,45 @@ export function RepairForm(props: RepairFormProps) {
               .
             </p>
           ) : null}
+          {repairs.length > 14 ? (
+            <input
+              value={repairQuery}
+              onChange={(e) => setRepairQuery(e.target.value)}
+              placeholder={`Rechercher parmi ${repairs.length} pannes (HDMI, charge, écran…)`}
+              aria-label="Rechercher une panne"
+              className="w-full border border-[rgba(20,18,15,0.22)] bg-white p-3 text-[15px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none"
+            />
+          ) : null}
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Prestation">
-            {repairs.map((r) => (
-              <OptionRow key={r.id} selected={repairId === r.id} onPick={() => pickRepair(r.id)} label={r.name} note={r.note} price={showPrices ? formatPrice(r.priceCents) : "sur devis"} role="radio" />
-            ))}
+            {repairGroups.map((group, index) => {
+              const open = isCategoryOpen(group.name, index);
+              const panelId = `prestations-${index}`;
+              return (
+                <div key={group.name} className="border border-[rgba(20,18,15,0.16)]">
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(group.name)}
+                    aria-expanded={open}
+                    aria-controls={panelId}
+                    className="flex w-full cursor-pointer items-center justify-between gap-3 bg-paper-alt px-[13px] py-2.5 text-left"
+                  >
+                    <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-900">{group.name}</span>
+                    <span className="flex items-center gap-2 font-mono text-[11px] text-ink-muted">
+                      {group.items.length}
+                      <span aria-hidden="true">{open ? "−" : "+"}</span>
+                    </span>
+                  </button>
+                  {open ? (
+                    <div id={panelId} className="flex flex-col gap-2 p-2">
+                      {group.items.map((r) => (
+                        <OptionRow key={r.id} selected={repairId === r.id} onPick={() => pickRepair(r.id)} label={r.name} note={r.note} price={repairPrice(r)} role="radio" />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+            {searching && !repairGroups.length ? <p className="text-sm text-ink-muted">Aucune panne ne correspond. Choisissez « Autre panne » ou décrivez le problème à l&apos;étape suivante.</p> : null}
           </div>
           {repairId ? (
             <>
@@ -448,12 +518,12 @@ export function RepairForm(props: RepairFormProps) {
               {photos.length ? <RecapLine k="Photos" v={`${photos.length} jointe${photos.length > 1 ? "s" : ""}`} muted /> : null}
               <RecapLine k="Options" v={pickedOptions.length ? pickedOptions.map((o) => o.name).join(", ") : "aucune"} />
               <RecapLine k="Envoi" v={shipping ? `${shipping.name} — ${formatPrice(shipping.priceCents)}` : "—"} />
-              <RecapLine k="Total TTC" v={total !== null ? formatPrice(total) : "calcul…"} />
+              <RecapLine k="Total TTC" v={repair?.priceProvisional ? "sur devis après diagnostic" : total !== null ? formatPrice(total) : "calcul…"} />
               {pricing ? <RecapLine k="dont TVA" v={formatPrice(pricing.vatCents)} muted /> : null}
             </div>
           </div>
           <span className="text-[13px] leading-[1.45] text-ink-faint">
-            {repair?.isDiagnosticOnly ? "Diagnostic puis devis. " : ""}
+            {repair?.priceProvisional ? "Le tarif de cette prestation est communiqué après diagnostic : vous ne réglez aujourd'hui que le transport. " : repair?.isDiagnosticOnly ? "Diagnostic puis devis. " : ""}
             Si une autre intervention est nécessaire, vous recevez un devis complémentaire (valable {conditions.quoteValidityDays} jours) ; rien n&apos;est réalisé sans votre accord. Refus du devis : {conditions.refusalExplanation}
             {conditions.refusalFeeCents > 0 ? ` Frais applicables : ${formatPrice(conditions.refusalFeeCents)}.` : " Aucun frais supplémentaire."}
           </span>

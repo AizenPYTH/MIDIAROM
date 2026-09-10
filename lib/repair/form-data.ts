@@ -1,5 +1,5 @@
 import "server-only";
-import type { ConsoleModel, Brand, RepairOffer, Fault, Repair } from "@/lib/repair/catalog";
+import type { ConsoleModel, Brand, RepairOffer, Fault, Repair, RepairCategory } from "@/lib/repair/catalog";
 import type { FormModel, FormOffer, FormRepair } from "@/components/repair/repair-form-types";
 
 /** Sérialisation du catalogue pour la fiche de réparation (composant client). */
@@ -22,7 +22,7 @@ export function toFormModels(models: ConsoleModel[], brands: Brand[]): FormModel
     }));
 }
 
-export function toFormRepair(r: Repair & { fault: Fault }): FormRepair {
+export function toFormRepair(r: Repair & { fault: Fault; category?: RepairCategory | null }): FormRepair {
   return {
     id: r.id,
     name: r.name,
@@ -30,6 +30,9 @@ export function toFormRepair(r: Repair & { fault: Fault }): FormRepair {
     faultSlug: r.fault.slug,
     note: r.summary ?? r.fault.short_description ?? "",
     priceCents: r.price_cents,
+    categoryName: r.category?.name ?? null,
+    categoryOrder: r.category?.display_order ?? 999,
+    priceProvisional: r.price_is_provisional,
     isDiagnosticOnly: r.is_diagnostic_only,
     warrantyMonths: r.warranty_months,
     leadTimeMin: r.lead_time_days_min,

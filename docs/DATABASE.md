@@ -7,7 +7,7 @@ Migrations dans `supabase/migrations/` (ordre = préfixe horodaté). Toute modif
 | Domaine | Tables |
 | --- | --- |
 | Comptes | `profiles` (rôle, 1:1 `auth.users`), `addresses`, `workshops`, `technicians` |
-| Catalogue | `brands`, `console_models`, `faults`, `repairs` (modèle × panne, prix, garantie, SEO), `repair_options`, `option_categories`, `repair_option_compatibility`, `repair_included_options`, `packs`, `pack_items`, `shipping_methods`, `test_checklists`, `test_checklist_items`, `packaging_instructions` |
+| Catalogue | `brands`, `console_models`, `faults`, `repair_categories` (familles de pannes du catalogue client), `repairs` (modèle × panne, prix, garantie, SEO, `category_id`, `price_is_provisional`), `repair_options`, `option_categories`, `repair_option_compatibility`, `repair_included_options`, `packs`, `pack_items`, `shipping_methods`, `test_checklists`, `test_checklist_items`, `packaging_instructions` |
 | Dossiers | `repair_orders` (snapshot commercial, `order_number` REP-XXXXXX, `tracking_token`), `repair_order_items`, `order_status_history`, `order_events`, `order_media`, `order_messages` |
 | Atelier | `reception_reports`, `diagnostics`, `supplementary_quotes`, `supplementary_quote_items`, `quote_decisions`, `repair_work_logs`, `repair_parts`, `repair_tests`, `repair_test_results` |
 | Paiement / transport | `payments`, `payment_provider_events`, `invoices`, `shipments`, `shipping_events` |
@@ -40,6 +40,16 @@ Le front ne génère jamais ces numéros.
 - Storage : buckets privés `reception-media`, `diagnostic-media`, `repair-media`, `shipping-media`, `final-media`, `sav-media`, `documents` (chemin `<order_id>/<KIND>/<uuid>.<ext>`) ; `content-media` public en lecture, écriture admin.
 
 Tests : `supabase/tests/rls.test.sql` (exécutés par `npm run test:db`) vérifient notamment que le client A ne voit jamais le dossier du client B, que le technicien ne modifie pas les prix, et que les policies storage isolent les fichiers par dossier.
+
+## Catalogue de réparation
+
+`repair_categories` regroupe les prestations d'un modèle en familles (« Image & HDMI », « Allumage & alimentation »…). `repairs.category_id` rattache chaque prestation à sa famille ; `repairs.price_is_provisional` marque une prestation dont le tarif n'est pas encore arbitré :
+
+- côté client, la prestation s'affiche « sur devis » au lieu d'un prix ;
+- côté back-office (`/admin/catalog/repairs`), elle est comptée dans « tarifs à configurer » ;
+- enregistrer un prix non nul lève automatiquement le drapeau.
+
+Le contenu vient de `supabase/catalog-reparations.sql` (voir README). Une prestation non rattachée à une catégorie reste valide : elle apparaît sous « Sans catégorie ».
 
 ## Seed
 

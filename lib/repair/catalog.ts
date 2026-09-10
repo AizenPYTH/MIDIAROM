@@ -12,6 +12,7 @@ import {
 export type Brand = Tables<"brands">;
 export type ConsoleModel = Tables<"console_models">;
 export type Fault = Tables<"faults">;
+export type RepairCategory = Tables<"repair_categories">;
 export type Repair = Tables<"repairs">;
 export type RepairOption = Tables<"repair_options">;
 export type Pack = Tables<"packs">;
@@ -66,16 +67,16 @@ export const getModelBySlug = cache(async (slug: string): Promise<(ConsoleModel 
 });
 
 /** Active repairs for a model with their fault (used by /reparation/[model]). */
-export const getRepairsForModel = cache(async (modelId: string): Promise<(Repair & { fault: Fault })[]> => {
+export const getRepairsForModel = cache(async (modelId: string): Promise<(Repair & { fault: Fault; category: RepairCategory | null })[]> => {
   const { data } = await db()
     .from("repairs")
-    .select("*, fault:faults(*)")
+    .select("*, fault:faults(*), category:repair_categories(*)")
     .eq("model_id", modelId)
     .eq("is_active", true)
     .order("display_order");
   return (data ?? [])
     .filter((r) => r.fault && (r.fault as Fault).is_active)
-    .map((r) => ({ ...r, fault: r.fault as Fault }));
+    .map((r) => ({ ...r, fault: r.fault as Fault, category: (r.category as RepairCategory | null) ?? null }));
 });
 
 export const getRepairBySlugs = cache(async (modelSlug: string, faultSlug: string): Promise<RepairWithRelations | null> => {

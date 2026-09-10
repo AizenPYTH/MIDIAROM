@@ -1468,6 +1468,39 @@ export type Database = {
           }
         ];
       };
+      repair_categories: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       repair_included_options: {
         Row: {
           repair_id: string;
@@ -2162,6 +2195,8 @@ export type Database = {
           display_order: number;
           created_at: string;
           updated_at: string;
+          category_id: string | null;
+          price_is_provisional: boolean;
         };
         Insert: {
           id?: string;
@@ -2195,6 +2230,8 @@ export type Database = {
           display_order?: number;
           created_at?: string;
           updated_at?: string;
+          category_id?: string | null;
+          price_is_provisional?: boolean;
         };
         Update: {
           id?: string;
@@ -2228,8 +2265,17 @@ export type Database = {
           display_order?: number;
           created_at?: string;
           updated_at?: string;
+          category_id?: string | null;
+          price_is_provisional?: boolean;
         };
         Relationships: [
+          {
+            foreignKeyName: "repairs_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "repair_categories";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "repairs_fault_id_fkey";
             columns: ["fault_id"];
