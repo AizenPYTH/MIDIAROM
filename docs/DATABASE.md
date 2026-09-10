@@ -53,11 +53,11 @@ Le contenu vient de `supabase/catalog-reparations.sql`, appliqué en production 
 
 ## Périmètre du catalogue
 
-Le catalogue de réparation ne contient que les **13 modèles** détaillés dans le document du client (PS4 / Slim / Pro, Switch V1 / V2 / Lite / OLED / 2, Xbox One / S / X, Series S / X). `supabase/cleanup-non-pdf-models.sql` retire d'une base déjà garnie les modèles hors document et leurs prestations : `repairs.model_id` est en `ON DELETE RESTRICT`, les prestations partent donc avant les modèles ; dossiers, reprises et fiches produit conservent leur historique, seul le lien passe à NULL.
+Le catalogue de réparation ne contient que les **13 modèles** détaillés dans le document du client (PS4 / Slim / Pro, Switch V1 / V2 / Lite / OLED / 2, Xbox One / S / X, Series S / X). `supabase/cleanup-strict-pdf.sql` remet une base déjà garnie au périmètre du document — modèles hors liste, prestations hors document et produits de démonstration retirés, photos des 13 consoles renseignées : `repairs.model_id` est en `ON DELETE RESTRICT`, les prestations partent donc avant les modèles ; dossiers, reprises et fiches produit conservent leur historique, seul le lien passe à NULL.
 
 ## Nettoyage des données de démonstration
 
-`supabase/cleanup-demo-data.sql` retire, sur une base déjà garnie, les 51 produits de démonstration (désignés un par un par leur SKU) et les 98 anciennes prestations sans catégorie désactivées lors de l'import du catalogue du client. Ciblé, rejouable, sans DELETE global. L'historique survit : `shop_order_items.product_id` et `repair_orders.repair_id` passent à NULL, les lignes gardent leur libellé et leur prix.
+`supabase/cleanup-strict-pdf.sql` est le seul fichier de nettoyage : produits de démonstration désignés par leur SKU, prestations sans catégorie (donc absentes du document) et modèles hors des 13. Ciblé, rejouable, sans DELETE global. L'historique survit : `shop_order_items.product_id` et `repair_orders.repair_id` passent à NULL, les lignes gardent leur libellé et leur prix.
 
 ## Seed
 

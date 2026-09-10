@@ -31,8 +31,11 @@ begin
   if n_pdf <> 887 then
     raise exception 'prestations issues du document : % au lieu de 887', n_pdf;
   end if;
-  if n_provisoires <> 874 then
-    raise exception 'tarifs à configurer : % au lieu de 874', n_provisoires;
+  -- Le document ne contient aucun prix : sur une base neuve, les 887
+  -- prestations arrivent toutes « sur devis ». En production, celles déjà
+  -- chiffrées depuis le back-office conservent leur tarif.
+  if n_provisoires <> 887 then
+    raise exception 'tarifs à configurer : % au lieu de 887', n_provisoires;
   end if;
   -- Le catalogue de production ne crée aucun produit : le stock réel est saisi
   -- depuis le back-office, et la boutique affiche son état vide en attendant.

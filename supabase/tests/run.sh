@@ -41,11 +41,9 @@ psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/rls.test.sql
 # ne doit plus rien trouver à supprimer et ne doit pas échouer. La base porte à
 # ce stade exactement ce que portait la production — catalogue, 887 prestations
 # du document, 98 anciennes prestations désactivées, 51 produits de démonstration.
-echo "→ nettoyage des données de démonstration (rejoué, idempotence)"
-psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-demo-data.sql > /dev/null
-psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-demo-data.sql > /dev/null
-psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-non-pdf-models.sql > /dev/null
-psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-non-pdf-models.sql > /dev/null
+echo "→ remise au périmètre du document (rejouée, idempotence)"
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-strict-pdf.sql > /dev/null
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-strict-pdf.sql > /dev/null
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/cleanup.test.sql
 
 # Import de production : les deux fichiers de données doivent suffire à garnir

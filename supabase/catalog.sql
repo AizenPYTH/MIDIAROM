@@ -131,90 +131,15 @@ insert into public.pack_items (pack_id, option_id, display_order) values
 on conflict do nothing;
 
 -- ---------------------------------------------------------------------------
--- Prestations de réparation (modèle × panne) — PRIX DE DÉPART, ajustables dans le back-office
--- ---------------------------------------------------------------------------
-insert into public.repairs (id, model_id, fault_id, name, slug, summary, description, price_cents, estimated_cost_cents, estimated_minutes,
-  lead_time_days_min, lead_time_days_max, warranty_months, warranty_scope, warranty_exclusions, included_items, important_notes,
-  is_diagnostic_only, is_seo_published, seo_title, seo_description, seo_h1, seo_symptoms, seo_causes, seo_process, seo_faq, display_order) values
-  ('46000000-0000-4000-8000-000000000008', '41000000-0000-4000-8000-000000000004', '42000000-0000-4000-8000-000000000001',
-   'Réparation port HDMI PS4', 'hdmi', 'Remplacement du connecteur HDMI.', 'Remplacement du connecteur HDMI par un connecteur neuf, puis tests d''affichage.',
-   4500, 500, 50, 2, 4, 6, 'Le connecteur HDMI remplacé et sa soudure.', 'Dommages ultérieurs au port, oxydation.',
-   array['Diagnostic', 'Remplacement du connecteur HDMI', 'Remontage', 'Tests d''affichage', 'Contrôle final'], null, false, true,
-   'Réparation port HDMI PS4', 'PS4 sans image : remplacement du port HDMI en atelier.', 'Réparation port HDMI PS4', 'Aucun signal, image instable.', 'Connecteur cassé ou dessoudé.', 'Dessoudage, pose d''un connecteur neuf, tests.', '[]'::jsonb, 1),
-  ('46000000-0000-4000-8000-000000000009', '41000000-0000-4000-8000-000000000004', '42000000-0000-4000-8000-000000000005',
-   'Entretien thermique PS4 (surchauffe)', 'surchauffe', 'Nettoyage complet et remplacement de la pâte thermique.',
-   'Nettoyage du radiateur et du ventilateur, remplacement de la pâte thermique, tests de température.', 4990, 300, 60, 2, 4, 6,
-   'Le nettoyage et la pâte thermique.', 'Composants défaillants non liés à la surchauffe.',
-   array['Diagnostic', 'Dépoussiérage interne', 'Nettoyage du ventilateur', 'Remplacement de la pâte thermique', 'Tests de température', 'Contrôle final'], null, false, true,
-   'PS4 bruyante ou en surchauffe — entretien thermique', 'PS4 qui souffle fort ou s''éteint : nettoyage complet et pâte thermique neuve en atelier.',
-   'PS4 en surchauffe : entretien thermique', 'Ventilateur bruyant, extinction en jeu.', 'Poussière, pâte thermique sèche.', 'Nettoyage, pâte thermique, tests.', '[]'::jsonb, 2),
-  ('46000000-0000-4000-8000-000000000010', '41000000-0000-4000-8000-000000000011', '42000000-0000-4000-8000-000000000001',
-   'Réparation port HDMI Xbox Series X', 'hdmi', 'Remplacement du connecteur HDMI.', 'Remplacement du connecteur HDMI par un connecteur neuf, puis tests d''affichage.',
-   5900, 700, 60, 2, 4, 6, 'Le connecteur HDMI remplacé et sa soudure.', 'Dommages ultérieurs au port, oxydation.',
-   array['Diagnostic', 'Remplacement du connecteur HDMI', 'Remontage', 'Tests d''affichage', 'Contrôle final'], null, false, true,
-   'Réparation port HDMI Xbox Series X', 'Xbox Series X sans image : remplacement du port HDMI en atelier, envoi depuis toute la France.',
-   'Réparation port HDMI Xbox Series X', 'Aucun signal, image instable, port abîmé.', 'Connecteur cassé ou dessoudé.', 'Dessoudage, pose d''un connecteur neuf, tests.', '[]'::jsonb, 1),
-  ('46000000-0000-4000-8000-000000000011', '41000000-0000-4000-8000-000000000011', '42000000-0000-4000-8000-000000000005',
-   'Entretien thermique Xbox Series X', 'surchauffe', 'Nettoyage complet et remplacement de la pâte thermique.',
-   'Nettoyage du radiateur et du ventilateur, remplacement de la pâte thermique, tests de température.', 5990, 300, 60, 2, 4, 6,
-   'Le nettoyage et la pâte thermique.', 'Composants défaillants non liés à la surchauffe.',
-   array['Diagnostic', 'Dépoussiérage interne', 'Nettoyage du ventilateur', 'Remplacement de la pâte thermique', 'Tests de température', 'Contrôle final'], null, false, true,
-   'Xbox Series X en surchauffe — entretien thermique', 'Xbox Series X bruyante ou qui s''éteint : entretien thermique en atelier.',
-   'Xbox Series X en surchauffe', 'Ventilateur bruyant, extinction.', 'Poussière, pâte thermique sèche.', 'Nettoyage, pâte thermique, tests.', '[]'::jsonb, 2),
-  ('46000000-0000-4000-8000-000000000012', '41000000-0000-4000-8000-000000000012', '42000000-0000-4000-8000-000000000001',
-   'Réparation port HDMI Xbox Series S', 'hdmi', 'Remplacement du connecteur HDMI.', 'Remplacement du connecteur HDMI par un connecteur neuf, puis tests d''affichage.',
-   5500, 700, 60, 2, 4, 6, 'Le connecteur HDMI remplacé et sa soudure.', 'Dommages ultérieurs au port, oxydation.',
-   array['Diagnostic', 'Remplacement du connecteur HDMI', 'Remontage', 'Tests d''affichage', 'Contrôle final'], null, false, true,
-   'Réparation port HDMI Xbox Series S', 'Xbox Series S sans image : remplacement du port HDMI en atelier.', 'Réparation port HDMI Xbox Series S',
-   'Aucun signal, image instable.', 'Connecteur cassé ou dessoudé.', 'Dessoudage, pose d''un connecteur neuf, tests.', '[]'::jsonb, 1),
-  ('46000000-0000-4000-8000-000000000013', '41000000-0000-4000-8000-000000000021', '42000000-0000-4000-8000-000000000003',
-   'Réparation port USB-C Nintendo Switch', 'usb-c', 'Remplacement du connecteur de charge USB-C.',
-   'Le port USB-C de la Switch est soudé sur la carte mère. Nous le remplaçons par un connecteur neuf et testons la charge et le dock.',
-   5900, 500, 60, 2, 4, 6, 'Le connecteur USB-C remplacé et sa soudure.', 'Chargeurs non conformes, dommages ultérieurs, oxydation.',
-   array['Diagnostic', 'Remplacement du connecteur USB-C', 'Remontage', 'Tests de charge et dock', 'Contrôle final'],
-   'Un chargeur non officiel peut avoir endommagé la puce de charge : dans ce cas, une intervention complémentaire vous est proposée par devis.',
-   false, true, 'Réparation port USB-C Nintendo Switch — ne charge plus', 'Votre Switch ne charge plus ou le câble bouge dans le port ? Remplacement du connecteur USB-C en atelier, envoi depuis toute la France.',
-   'Réparation port USB-C Nintendo Switch', 'La console ne charge plus, charge par intermittence, ne passe plus sur la TV via le dock, câble qui bouge dans le port.',
-   'Connecteur USB-C usé ou cassé, soudures fissurées, chargeur non conforme.', 'Dessoudage du connecteur, nettoyage, pose d''un connecteur neuf, tests de charge et de sortie vidéo via le dock.', '[]'::jsonb, 1),
-  ('46000000-0000-4000-8000-000000000014', '41000000-0000-4000-8000-000000000021', '42000000-0000-4000-8000-000000000011',
-   'Remplacement écran Nintendo Switch', 'ecran', 'Écran LCD ou vitre tactile remplacés.',
-   'Écran fissuré, lignes, tactile inopérant : nous remplaçons la dalle ou la vitre tactile selon le diagnostic.',
-   6900, 2500, 60, 2, 4, 6, 'L''écran remplacé.', 'Casse ultérieure, infiltration de liquide.',
-   array['Diagnostic', 'Remplacement de l''écran ou de la vitre', 'Remontage', 'Tests tactile et affichage', 'Contrôle final'], null, false, true,
-   'Remplacement écran Nintendo Switch', 'Écran de Switch cassé ou tactile inopérant : remplacement en atelier avec suivi en ligne.',
-   'Remplacement écran Nintendo Switch', 'Écran fissuré, lignes, taches, tactile inopérant.', 'Chute, pression, choc.', 'Diagnostic, remplacement, tests.', '[]'::jsonb, 2),
-  ('46000000-0000-4000-8000-000000000015', '41000000-0000-4000-8000-000000000021', '42000000-0000-4000-8000-000000000010',
-   'Réparation Joy-Con (stick drift)', 'joystick', 'Remplacement du module de stick d''un Joy-Con.',
-   'Le personnage bouge tout seul ? Nous remplaçons le module de stick défaillant. Envoyez le Joy-Con concerné (ou la console avec ses Joy-Con).',
-   3900, 800, 30, 1, 3, 6, 'Le module de stick remplacé.', 'Chute, liquide, usure du second Joy-Con non traité.',
-   array['Diagnostic', 'Remplacement du module de stick', 'Calibration', 'Tests', 'Contrôle final'], 'Le prix correspond à un Joy-Con. Ajoutez l''option « Réparation stick drift » pour le second.',
-   false, true, 'Réparation Joy-Con stick drift — Nintendo Switch', 'Joy-Con qui dérive ? Remplacement du module de stick en atelier avec calibration.',
-   'Réparation Joy-Con : stick drift', 'Le curseur ou le personnage bouge seul, direction fantôme.', 'Usure du module de stick.', 'Remplacement du module, calibration, tests.', '[]'::jsonb, 3),
-  ('46000000-0000-4000-8000-000000000016', '41000000-0000-4000-8000-000000000022', '42000000-0000-4000-8000-000000000003',
-   'Réparation port USB-C Nintendo Switch OLED', 'usb-c', 'Remplacement du connecteur de charge USB-C.',
-   'Remplacement du connecteur USB-C par un connecteur neuf, puis tests de charge et de dock.', 6500, 500, 60, 2, 4, 6,
-   'Le connecteur USB-C remplacé et sa soudure.', 'Chargeurs non conformes, dommages ultérieurs, oxydation.',
-   array['Diagnostic', 'Remplacement du connecteur USB-C', 'Remontage', 'Tests de charge et dock', 'Contrôle final'], null, false, true,
-   'Réparation port USB-C Switch OLED', 'Switch OLED qui ne charge plus : remplacement du port USB-C en atelier.', 'Réparation port USB-C Switch OLED',
-   'Ne charge plus, câble qui bouge.', 'Connecteur usé ou cassé.', 'Dessoudage, connecteur neuf, tests.', '[]'::jsonb, 1),
-  ('46000000-0000-4000-8000-000000000017', '41000000-0000-4000-8000-000000000021', '42000000-0000-4000-8000-000000000012',
-   'Diagnostic Nintendo Switch', 'autre', 'Vous ne savez pas d''où vient la panne ? Nous diagnostiquons.',
-   'Décrivez vos symptômes lors de la commande. Nous réalisons un diagnostic complet et vous proposons la réparation adaptée par devis.',
-   2900, 0, 45, 1, 3, 0, null, null, array['Diagnostic complet', 'Rapport avec photos', 'Devis de réparation'],
-   'Le montant du diagnostic est déduit de la réparation si vous acceptez le devis (règle configurable).', true, false,
-   null, null, null, null, null, null, '[]'::jsonb, 99)
-on conflict (id) do nothing;
 
--- Options already included in some repairs (never sold on top)
-insert into public.repair_included_options (repair_id, option_id) values
-  ('46000000-0000-4000-8000-000000000009', '44000000-0000-4000-8000-000000000001'),
-  ('46000000-0000-4000-8000-000000000009', '44000000-0000-4000-8000-000000000003'),
-  ('46000000-0000-4000-8000-000000000009', '44000000-0000-4000-8000-000000000005'),
-  ('46000000-0000-4000-8000-000000000011', '44000000-0000-4000-8000-000000000001'),
-  ('46000000-0000-4000-8000-000000000011', '44000000-0000-4000-8000-000000000003'),
-  ('46000000-0000-4000-8000-000000000011', '44000000-0000-4000-8000-000000000005'),
-  ('46000000-0000-4000-8000-000000000015', '44000000-0000-4000-8000-000000000010')
-on conflict do nothing;
+-- ---------------------------------------------------------------------------
+-- Prestations de réparation
+--
+-- Ce fichier n'en crée AUCUNE, volontairement. Le catalogue de réparation est
+-- strictement celui du document du client : il est chargé par
+-- supabase/catalog-reparations.sql et lui seul. Toute prestation créée ici
+-- serait une prestation inventée, absente du document.
+-- ---------------------------------------------------------------------------
 
 -- ---------------------------------------------------------------------------
 -- Modes d'envoi — prix de départ
@@ -389,78 +314,6 @@ insert into public.faults (name, slug, short_description, icon, display_order) v
   ('Manette', 'manette', 'Sticks, gâchettes, batterie ou port de charge de la manette', 'Gamepad', 22)
 on conflict (slug) do nothing;
 
--- Grille de prix par famille (DEV) : famille, panne, prix, coût pièces estimé, minutes, délai min/max, garantie (mois)
-drop table if exists seed_prices;
-create temp table seed_prices (family text, fault_slug text, price int, cost int, minutes int, lead_min int, lead_max int, warranty int);
-insert into seed_prices values
-  ('ps5','hdmi',8900,1800,60,2,4,6),('ps5','alimentation',9500,4500,45,2,5,6),('ps5','surchauffe',4900,800,60,1,3,6),('ps5','ventilateur',6900,2500,60,2,4,6),('ps5','lecteur',8900,3500,60,2,5,6),('ps5','stockage',7900,0,45,1,3,6),('ps5','connectique',6900,1500,60,2,4,6),('ps5','ne-s-allume-plus',7900,3000,90,3,6,6),('ps5','nettoyage-entretien',4900,800,60,1,3,3),('ps5','wifi-bluetooth',6900,2000,60,2,4,6),('ps5','manette',3900,1200,40,1,3,3),('ps5','autre',2900,0,45,2,5,0),
-  ('ps4','hdmi',7900,1500,60,2,4,6),('ps4','alimentation',8900,3500,45,2,5,6),('ps4','surchauffe',4900,800,60,1,3,6),('ps4','ventilateur',5900,2000,60,2,4,6),('ps4','lecteur',6900,2500,60,2,5,6),('ps4','stockage',6900,0,45,1,3,6),('ps4','connectique',5900,1200,60,2,4,6),('ps4','ne-s-allume-plus',6900,2500,90,3,6,6),('ps4','nettoyage-entretien',4500,600,60,1,3,3),('ps4','wifi-bluetooth',5900,1800,60,2,4,6),('ps4','manette',3500,1000,40,1,3,3),('ps4','autre',2500,0,45,2,5,0),
-  ('ps3','hdmi',6900,1500,60,2,5,6),('ps3','alimentation',7900,3000,45,2,5,6),('ps3','surchauffe',5900,900,90,3,6,3),('ps3','lecteur',6900,2500,60,3,6,6),('ps3','stockage',4900,0,45,1,3,6),('ps3','ne-s-allume-plus',6900,2500,90,3,6,3),('ps3','nettoyage-entretien',4500,600,60,1,3,3),('ps3','autre',2500,0,45,2,5,0),
-  ('ps2','lecteur',4900,1500,60,2,5,6),('ps2','alimentation',4900,1500,45,2,5,6),('ps2','connectique',3900,800,45,2,4,6),('ps2','nettoyage-entretien',3500,300,45,1,3,3),('ps2','recap-condensateurs',6500,1500,120,4,8,6),('ps2','sortie-video',4900,1200,60,3,6,6),('ps2','ne-s-allume-plus',4900,1500,60,3,6,3),('ps2','autre',2000,0,45,2,5,0),
-  ('ps1','lecteur',4500,1500,60,2,5,6),('ps1','alimentation',3900,1000,45,2,5,6),('ps1','recap-condensateurs',6500,1500,120,4,8,6),('ps1','sortie-video',4500,1000,60,3,6,6),('ps1','nettoyage-entretien',3000,300,45,1,3,3),('ps1','autre',2000,0,45,2,5,0),
-  ('psp','ecran',6900,2500,60,2,5,6),('psp','batterie',3900,1500,30,1,3,6),('psp','charge',4900,1200,60,2,4,6),('psp','boutons',3900,800,45,2,4,6),('psp','joystick',3900,900,45,2,4,6),('psp','lecteur',4900,1500,60,2,5,6),('psp','autre',2000,0,45,2,5,0),
-  ('vita','ecran',8900,3500,60,2,5,6),('vita','batterie',4500,1800,30,1,3,6),('vita','charge',4900,1200,60,2,4,6),('vita','joystick',4500,1200,45,2,4,6),('vita','boutons',3900,800,45,2,4,6),('vita','autre',2000,0,45,2,5,0),
-  ('xbox-series','hdmi',8900,1800,60,2,4,6),('xbox-series','alimentation',8900,4000,45,2,5,6),('xbox-series','surchauffe',4900,800,60,1,3,6),('xbox-series','ventilateur',6900,2500,60,2,4,6),('xbox-series','lecteur',7900,3000,60,2,5,6),('xbox-series','stockage',7900,0,45,1,3,6),('xbox-series','ne-s-allume-plus',7900,3000,90,3,6,6),('xbox-series','wifi-bluetooth',6900,2000,60,2,4,6),('xbox-series','nettoyage-entretien',4900,800,60,1,3,3),('xbox-series','manette',3900,1200,40,1,3,3),('xbox-series','autre',2900,0,45,2,5,0),
-  ('xbox-one','hdmi',7900,1500,60,2,4,6),('xbox-one','alimentation',7900,3000,45,2,5,6),('xbox-one','surchauffe',4900,800,60,1,3,6),('xbox-one','ventilateur',5900,2000,60,2,4,6),('xbox-one','lecteur',6900,2500,60,2,5,6),('xbox-one','stockage',6900,0,45,1,3,6),('xbox-one','ne-s-allume-plus',6900,2500,90,3,6,6),('xbox-one','nettoyage-entretien',4500,600,60,1,3,3),('xbox-one','manette',3500,1000,40,1,3,3),('xbox-one','autre',2500,0,45,2,5,0),
-  ('xbox-360','alimentation',5900,2000,45,2,5,6),('xbox-360','surchauffe',6900,1000,120,3,6,3),('xbox-360','lecteur',5900,2000,60,3,6,6),('xbox-360','stockage',3900,0,30,1,3,6),('xbox-360','ne-s-allume-plus',5900,2000,90,3,6,3),('xbox-360','nettoyage-entretien',4500,600,60,1,3,3),('xbox-360','autre',2500,0,45,2,5,0),
-  ('xbox-og','alimentation',5900,2000,45,2,5,6),('xbox-og','lecteur',5900,2000,60,3,6,6),('xbox-og','stockage',4900,1500,60,2,5,6),('xbox-og','recap-condensateurs',6500,1200,120,4,8,6),('xbox-og','nettoyage-entretien',4500,600,60,1,3,3),('xbox-og','autre',2500,0,45,2,5,0),
-  ('switch','usb-c',6900,1500,60,2,4,6),('switch','ecran',11900,5000,60,2,5,6),('switch','batterie',5900,2500,45,1,3,6),('switch','joystick',4500,1600,40,1,3,6),('switch','lecteur-cartouche',5900,1500,60,2,4,6),('switch','micro-sd',4900,1200,60,2,4,6),('switch','charge',6900,1500,60,2,4,6),('switch','surchauffe',4900,600,60,1,3,3),('switch','ne-s-allume-plus',6900,2000,90,3,6,3),('switch','nettoyage-entretien',3900,300,45,1,3,3),('switch','wifi-bluetooth',5900,1500,60,2,4,6),('switch','autre',2000,0,45,2,5,0),
-  ('switch-lite','usb-c',6900,1500,60,2,4,6),('switch-lite','ecran',9900,4000,60,2,5,6),('switch-lite','batterie',5900,2500,45,1,3,6),('switch-lite','joystick',4900,1800,45,1,3,6),('switch-lite','lecteur-cartouche',5900,1500,60,2,4,6),('switch-lite','micro-sd',4900,1200,60,2,4,6),('switch-lite','charge',6900,1500,60,2,4,6),('switch-lite','ne-s-allume-plus',6900,2000,90,3,6,3),('switch-lite','boutons',4500,900,45,2,4,6),('switch-lite','autre',2000,0,45,2,5,0),
-  ('wiiu','lecteur',6900,2500,60,3,6,6),('wiiu','alimentation',4900,1500,45,2,5,6),('wiiu','wifi-bluetooth',5900,1500,60,2,4,6),('wiiu','ecran',7900,3000,60,2,5,6),('wiiu','joystick',4500,1200,45,2,4,6),('wiiu','charge',4900,1200,60,2,4,6),('wiiu','ne-s-allume-plus',5900,2000,90,3,6,3),('wiiu','nettoyage-entretien',3900,300,45,1,3,3),('wiiu','autre',2000,0,45,2,5,0),
-  ('wii','lecteur',5900,2000,60,3,6,6),('wii','alimentation',3900,1200,45,2,5,6),('wii','wifi-bluetooth',4900,1200,60,2,4,6),('wii','ne-s-allume-plus',4900,1500,90,3,6,3),('wii','nettoyage-entretien',3500,300,45,1,3,3),('wii','autre',2000,0,45,2,5,0),
-  ('gamecube','lecteur',5900,2000,60,3,6,6),('gamecube','alimentation',3900,1200,45,2,5,6),('gamecube','connectique',3900,800,45,2,4,6),('gamecube','nettoyage-entretien',3500,300,45,1,3,3),('gamecube','sortie-video',4500,1000,60,3,6,6),('gamecube','autre',2000,0,45,2,5,0),
-  ('n64','connectique',3900,800,45,2,4,6),('n64','sortie-video',6900,2500,90,4,8,6),('n64','recap-condensateurs',6500,1200,120,4,8,6),('n64','lecteur-cartouche',3900,500,45,2,4,6),('n64','nettoyage-entretien',3500,300,45,1,3,3),('n64','alimentation',3500,1000,45,2,5,6),('n64','autre',2000,0,45,2,5,0),
-  ('snes','lecteur-cartouche',3900,500,45,2,4,6),('snes','recap-condensateurs',6500,1200,120,4,8,6),('snes','sortie-video',6900,2500,90,4,8,6),('snes','alimentation',3500,1000,45,2,5,6),('snes','nettoyage-entretien',3500,300,45,1,3,3),('snes','autre',2000,0,45,2,5,0),
-  ('nes','lecteur-cartouche',3900,800,45,2,4,6),('nes','recap-condensateurs',6500,1200,120,4,8,6),('nes','sortie-video',6900,2500,90,4,8,6),('nes','alimentation',3500,1000,45,2,5,6),('nes','nettoyage-entretien',3500,300,45,1,3,3),('nes','autre',2000,0,45,2,5,0),
-  ('gb','ecran',5900,2500,60,3,6,6),('gb','boutons',3500,500,45,2,4,6),('gb','connectique',2900,300,30,2,4,6),('gb','nettoyage-entretien',3000,200,45,1,3,3),('gb','pile-sauvegarde',1500,200,20,1,3,3),('gb','autre',2000,0,45,2,5,0),
-  ('gba','ecran',6900,3000,60,3,6,6),('gba','boutons',3500,500,45,2,4,6),('gba','batterie',3500,1200,30,1,3,6),('gba','nettoyage-entretien',3000,200,45,1,3,3),('gba','pile-sauvegarde',1500,200,20,1,3,3),('gba','autre',2000,0,45,2,5,0),
-  ('ds','ecran',6900,2800,60,3,6,6),('ds','charge',4500,1000,60,2,4,6),('ds','batterie',3900,1200,30,1,3,6),('ds','boutons',3500,500,45,2,4,6),('ds','joystick',3900,900,45,2,4,6),('ds','lecteur-cartouche',4500,900,45,2,4,6),('ds','autre',2000,0,45,2,5,0),
-  ('dreamcast','lecteur',5900,2000,60,3,6,6),('dreamcast','alimentation',4500,1200,45,2,5,6),('dreamcast','recap-condensateurs',6500,1200,120,4,8,6),('dreamcast','sortie-video',4900,1500,60,3,6,6),('dreamcast','nettoyage-entretien',3500,300,45,1,3,3),('dreamcast','autre',2000,0,45,2,5,0),
-  ('saturn','lecteur',5900,2000,60,3,6,6),('saturn','alimentation',4500,1200,45,2,5,6),('saturn','recap-condensateurs',6500,1200,120,4,8,6),('saturn','sortie-video',4900,1500,60,3,6,6),('saturn','pile-sauvegarde',1500,200,20,1,3,3),('saturn','autre',2000,0,45,2,5,0),
-  ('megadrive','recap-condensateurs',6500,1200,120,4,8,6),('megadrive','sortie-video',4900,1500,60,3,6,6),('megadrive','alimentation',3500,1000,45,2,5,6),('megadrive','connectique',3900,800,45,2,4,6),('megadrive','nettoyage-entretien',3000,200,45,1,3,3),('megadrive','autre',2000,0,45,2,5,0),
-  ('mastersystem','recap-condensateurs',6500,1200,120,4,8,6),('mastersystem','sortie-video',4900,1500,60,3,6,6),('mastersystem','alimentation',3500,1000,45,2,5,6),('mastersystem','connectique',3900,800,45,2,4,6),('mastersystem','autre',2000,0,45,2,5,0),
-  ('gamegear','recap-condensateurs',6900,1500,120,4,8,6),('gamegear','ecran',7900,3500,90,4,8,6),('gamegear','alimentation',3500,1000,45,2,5,6),('gamegear','boutons',3500,500,45,2,4,6),('gamegear','autre',2000,0,45,2,5,0);
-
--- Libellés de prestation par panne (%s = nom court du modèle)
-drop table if exists seed_labels;
-create temp table seed_labels (fault_slug text, label text, summary text, included text[]);
-insert into seed_labels values
-  ('hdmi', 'Réparation port HDMI %s', 'Remplacement du connecteur HDMI (micro-soudure), tests d''affichage.', '{"Diagnostic","Remplacement du connecteur HDMI","Remontage","Tests d''affichage"}'),
-  ('ne-s-allume-plus', 'Console %s ne s''allume plus', 'Recherche de panne, réparation de l''étage d''alimentation ou de la carte mère.', '{"Diagnostic","Réparation","Remontage","Tests"}'),
-  ('usb-c', 'Remplacement port USB-C %s', 'Connecteur de charge neuf soudé sur la carte mère.', '{"Diagnostic","Remplacement du port USB-C","Remontage","Tests de charge"}'),
-  ('charge', 'Problème de charge %s', 'Port, circuit de charge ou batterie : recherche et réparation.', '{"Diagnostic","Réparation","Tests de charge"}'),
-  ('surchauffe', 'Surchauffe / nettoyage thermique %s', 'Démontage complet, dépoussiérage, pâte thermique et pads neufs.', '{"Démontage","Nettoyage complet","Pâte thermique et pads","Tests sous charge"}'),
-  ('lecteur', 'Réparation lecteur %s', 'Lecteur optique remplacé ou réparé (laser, courroie, mécanisme).', '{"Diagnostic","Réparation du lecteur","Tests de lecture"}'),
-  ('alimentation', 'Réparation alimentation %s', 'Bloc ou étage d''alimentation réparé ou remplacé.', '{"Diagnostic","Réparation alimentation","Tests"}'),
-  ('stockage', 'Stockage / SSD %s', 'Remplacement ou installation du stockage et réinstallation du système.', '{"Diagnostic","Remplacement du stockage","Réinstallation système"}'),
-  ('connectique', 'Connectique %s', 'Ports USB, réseau, casque ou manettes remplacés.', '{"Diagnostic","Remplacement du port","Tests"}'),
-  ('joystick', 'Sticks / dérive %s', 'Sticks remplacés, calibration et tests.', '{"Remplacement des sticks","Calibration","Tests"}'),
-  ('ecran', 'Remplacement écran %s', 'Écran ou vitre d''origine remplacé, tactile testé.', '{"Remplacement de l''écran","Remontage","Tests tactile / affichage"}'),
-  ('autre', 'Diagnostic %s', 'Vous ne savez pas d''où vient la panne ? Nous diagnostiquons et vous envoyons un devis.', '{"Diagnostic complet","Devis détaillé"}'),
-  ('ventilateur', 'Remplacement ventilateur %s', 'Ventilateur neuf, nettoyage du radiateur.', '{"Remplacement du ventilateur","Nettoyage","Tests sous charge"}'),
-  ('nettoyage-entretien', 'Nettoyage complet %s', 'Dépoussiérage intégral, contrôle des connecteurs, pâte thermique si nécessaire.', '{"Démontage","Nettoyage complet","Contrôle final"}'),
-  ('lecteur-cartouche', 'Lecteur de cartouche %s', 'Contacts nettoyés ou connecteur remplacé.', '{"Nettoyage / remplacement du connecteur","Tests avec cartouche"}'),
-  ('micro-sd', 'Lecteur microSD %s', 'Lecteur de carte remplacé.', '{"Remplacement du lecteur","Tests"}'),
-  ('batterie', 'Remplacement batterie %s', 'Batterie neuve, cycle de charge testé.', '{"Remplacement de la batterie","Tests de charge"}'),
-  ('recap-condensateurs', 'Recap condensateurs %s', 'Condensateurs remplacés, carte nettoyée : image et son retrouvés.', '{"Remplacement des condensateurs","Nettoyage de la carte","Tests"}'),
-  ('pile-sauvegarde', 'Pile de sauvegarde %s', 'Pile remplacée (console ou cartouche) sans perdre le reste.', '{"Remplacement de la pile","Tests de sauvegarde"}'),
-  ('sortie-video', 'Sortie vidéo / RGB %s', 'Réparation de la sortie vidéo ou installation d''un mod RGB / HDMI.', '{"Diagnostic","Réparation ou mod vidéo","Tests"}'),
-  ('boutons', 'Boutons / gâchettes %s', 'Membranes, boutons ou gâchettes remplacés.', '{"Remplacement","Nettoyage des contacts","Tests"}'),
-  ('wifi-bluetooth', 'Wi-Fi / Bluetooth %s', 'Module ou antenne remplacés.', '{"Diagnostic","Remplacement du module","Tests de connexion"}'),
-  ('manette', 'Réparation manette %s', 'Sticks, gâchettes, batterie ou port de charge de la manette.', '{"Diagnostic","Réparation","Tests"}');
-
-insert into public.repairs (model_id, fault_id, name, slug, summary, price_cents, estimated_cost_cents, estimated_minutes, lead_time_days_min, lead_time_days_max, warranty_months, included_items, is_diagnostic_only, is_seo_published, display_order)
-select m.id, f.id, format(l.label, m.short_name), f.slug, l.summary, p.price, p.cost, p.minutes, p.lead_min, p.lead_max, p.warranty, l.included, f.slug = 'autre', true, f.display_order
-from public.console_models m
-join seed_prices p on p.family = m.family
-join public.faults f on f.slug = p.fault_slug
-join seed_labels l on l.fault_slug = f.slug
-where not exists (select 1 from public.repairs r where r.model_id = m.id and r.fault_id = f.id)
-  -- Un modèle dont le catalogue vient du document du client n'a pas besoin de
-  -- ces prestations génériques : les créer ferait doublon avec les siennes.
-  -- Sans cette clause, un rejeu de ce fichier APRÈS catalog-reparations.sql
-  -- garnirait les modèles que celui-ci a créés (Switch V2, Switch 2).
-  and not exists (select 1 from public.repairs pdf where pdf.model_id = m.id and pdf.category_id is not null);
 
 
 -- ---------------------------------------------------------------------------
@@ -481,6 +334,14 @@ select 'storefront', '/medias/facade-207-mediarom.webp',
        'Le magasin, 207 rue de Rome à Marseille : vitrine consoles et jeux, réparation express.',
        0, true
  where not exists (select 1 from public.gallery_items where image_path = '/medias/facade-207-mediarom.webp');
+
+-- ---------------------------------------------------------------------------
+-- Photos des 13 modèles, livrées avec le site (public/medias/consoles/).
+-- Renseignées seulement si le modèle n'a pas déjà sa propre photo.
+-- ---------------------------------------------------------------------------
+update public.console_models
+   set image_path = '/medias/consoles/' || slug || '.webp', updated_at = now()
+ where coalesce(image_path, '') = '';
 
 insert into public.site_settings (key, value, description, is_public) values
   ('shop', '{"shipping_enabled":true,"shipping_fee_cents":690,"free_shipping_threshold_cents":8000,"pickup_enabled":true,"pickup_note":"Retrait au magasin aux horaires d''ouverture, sans rendez-vous.","shipping_note":"Colissimo suivi, expédition sous 48 h ouvrées après paiement."}', 'Boutique : livraison et retrait', true)

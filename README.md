@@ -89,8 +89,7 @@ Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, 
 | `psql "$DB_URL" -f supabase/catalog-reparations.sql` | Charge le catalogue de réparation du client (13 modèles, 35 catégories, 887 prestations « sur devis ») — applicable en production, rejouable |
 | `npm run seeds:build` | Regénère les deux fichiers de données de production depuis `catalog.sql` et `catalog-reparations.sql` |
 | `npm run photos:consoles -- <dossier> [--dry-run]` | Importe les photos des 13 modèles du catalogue de réparation : identifie le vrai contenu de chaque fichier, extrait l'image d'une page enregistrée depuis Chrome, convertit en WebP (1200 px max), téléverse dans `content-media/consoles/<slug>.webp` et renseigne `console_models.image_path`. Ne télécharge jamais depuis Internet. |
-| `psql "$DB_URL" -f supabase/cleanup-demo-data.sql` | Retire les données de démonstration d'une base déjà garnie (51 produits, 98 anciennes prestations) — ciblé et rejouable |
-| `psql "$DB_URL" -f supabase/cleanup-non-pdf-models.sql` | Restreint le catalogue aux 13 modèles du document du client : supprime les 26 autres modèles et leurs prestations — ciblé et rejouable |
+| `psql "$DB_URL" -f supabase/cleanup-strict-pdf.sql` | Remet une base déjà garnie au périmètre du document : 13 modèles, 887 prestations, 0 produit de démonstration, photos des consoles renseignées — ciblé et rejouable |
 | `npm run check` | lint + typecheck + tests + build |
 | `npm run check:supabase [fichier .env]` | Diagnostique la configuration Supabase d'un déploiement (variables, clés, joignabilité, schéma) |
 | `scripts/apply-migrations.sh <url-postgres>` | Applique les migrations sur une base distante en une transaction, sans `supabase link` |

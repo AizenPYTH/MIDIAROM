@@ -14,7 +14,6 @@ declare
   n_pdf int;
   n_modeles int;
   n_categories int;
-  n_actives int;
 begin
   -- Les produits de démonstration sont reconnaissables à leurs SKU du seed.
   select count(*) into n_demo from public.products
@@ -24,13 +23,11 @@ begin
   end if;
 
   -- Plus aucune prestation sans catégorie et inactive sur un modèle du document.
-  select count(*) into n_inactives
-    from public.repairs r
-   where not r.is_active and r.category_id is null
-     and exists (select 1 from public.repairs pdf
-                  where pdf.model_id = r.model_id and pdf.category_id is not null);
+  -- Le catalogue de réparation est strictement celui du document : plus aucune
+  -- prestation sans catégorie, pas même un « Diagnostic » générique.
+  select count(*) into n_inactives from public.repairs where category_id is null;
   if n_inactives <> 0 then
-    raise exception 'anciennes prestations restantes : %', n_inactives;
+    raise exception 'prestations hors document restantes : %', n_inactives;
   end if;
 
   -- Ce que le nettoyage ne doit surtout pas avoir touché.
@@ -49,12 +46,6 @@ begin
     raise exception 'catégories de réparation : % au lieu de 35', n_categories;
   end if;
 
-  -- Les prestations des 26 modèles hors document restent actives : le nettoyage
-  -- ne visait que les modèles couverts par le catalogue du client.
-  select count(*) into n_actives from public.repairs where is_active and category_id is null;
-  if n_actives = 0 then
-    raise exception 'les prestations des modèles hors document ont disparu';
-  end if;
 
   -- L'historique des commandes survit à la suppression des produits : la ligne
   -- garde son libellé et son prix, seul le lien vers la fiche produit est coupé.

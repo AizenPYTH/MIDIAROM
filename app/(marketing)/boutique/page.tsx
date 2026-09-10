@@ -69,6 +69,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         </span>
       </div>
 
+      {total > 0 ? (
       <form method="get" action={ROUTES.shop} className="mb-4 flex flex-wrap items-center gap-2">
         {sp.cat ? <input type="hidden" name="cat" value={sp.cat} /> : null}
         {sp.retro ? <input type="hidden" name="retro" value={sp.retro} /> : null}
@@ -104,16 +105,22 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           Filtrer
         </button>
       </form>
+      ) : null}
 
+      {total > 0 ? (
       <div className="mb-[26px] flex flex-wrap gap-2">
         <Chip href={buildHref(sp, { cat: undefined, retro: undefined })} active={!sp.cat && sp.retro !== "1"}>
           Tout
         </Chip>
-        {(Object.keys(CATEGORY_LABELS) as ProductCategory[]).map((c) => (
-          <Chip key={c} href={buildHref(sp, { cat: CATEGORY_SLUGS[c], retro: undefined })} active={sp.cat === CATEGORY_SLUGS[c]}>
-            {CATEGORY_LABELS[c]} · {counts[c]}
-          </Chip>
-        ))}
+        {/* Une catégorie sans aucune référence n'est pas un filtre : c'est une
+            promesse vide. On n'affiche que celles qui ont du stock. */}
+        {(Object.keys(CATEGORY_LABELS) as ProductCategory[])
+          .filter((c) => counts[c] > 0)
+          .map((c) => (
+            <Chip key={c} href={buildHref(sp, { cat: CATEGORY_SLUGS[c], retro: undefined })} active={sp.cat === CATEGORY_SLUGS[c]}>
+              {CATEGORY_LABELS[c]} · {counts[c]}
+            </Chip>
+          ))}
         <Chip href={buildHref(sp, { retro: "1", cat: undefined })} active={sp.retro === "1"}>
           Rétro
         </Chip>
@@ -121,6 +128,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           Occasion
         </Chip>
       </div>
+      ) : null}
 
       {products.length ? (
         <div className="grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
