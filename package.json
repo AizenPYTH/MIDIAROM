@@ -18,7 +18,8 @@
     "db:types": "python3 scripts/gen-db-types.py > types/database.ts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build",
     "test:integration": "vitest run --config vitest.integration.config.mts",
-    "seeds:build": "node scripts/build-production-seeds.mjs"
+    "seeds:build": "node scripts/build-production-seeds.mjs",
+    "photos:consoles": "node scripts/import-console-photos.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
