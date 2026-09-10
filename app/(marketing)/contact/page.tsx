@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { Container, PageHeader } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { getSetting } from "@/lib/settings";
+import { getGalleryItems } from "@/lib/content";
+import { publicMediaUrl } from "@/components/marketing/gallery";
 
 export const revalidate = 600;
 
@@ -13,11 +16,19 @@ export const metadata: Metadata = {
 };
 
 export default async function ContactPage() {
-  const brand = await getSetting("brand");
+  const [brand, gallery] = await Promise.all([getSetting("brand"), getGalleryItems("storefront")]);
   const address = [brand.address_line1, [brand.postal_code, brand.city].filter(Boolean).join(" ")].filter(Boolean);
+  const facade = gallery[0] ?? null;
   return (
     <Container className="max-w-3xl py-10 sm:py-14">
       <PageHeader eyebrow="Contact" title="Nous contacter" description="Pour un dossier en cours, privilégiez la messagerie de votre espace client : le technicien y a directement accès." />
+      {/* La photo de la façade : « Le magasin » du menu mène ici, on doit y
+          reconnaître la boutique avant de lire l'adresse. */}
+      {facade ? (
+        <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden border border-border-strong bg-surface-muted">
+          <Image src={publicMediaUrl(facade.image_path)} alt={facade.title ?? "Le magasin"} fill sizes="(min-width: 768px) 768px, 100vw" className="object-cover object-[center_28%]" priority />
+        </div>
+      ) : null}
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {brand.email ? (
           <a href={`mailto:${brand.email}`} className="flex items-start gap-3 rounded-lg border border-border bg-surface p-5 hover:border-accent">

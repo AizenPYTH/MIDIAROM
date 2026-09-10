@@ -135,6 +135,23 @@ update public.console_models
    and coalesce(image_path, '') = '';
 
 -- ---------------------------------------------------------------------------
+-- Photo de la façade du magasin
+--
+-- Photo réelle du 207 rue de Rome, livrée avec le site
+-- (public/medias/facade-207-mediarom.webp). Elle s'affiche sur la page
+-- « Le magasin » et dans le bloc magasin de l'accueil.
+--
+-- gallery_items n'a pas de clé naturelle : la garde porte sur le chemin, ce qui
+-- rend l'insertion rejouable sans créer de doublon.
+-- ---------------------------------------------------------------------------
+insert into public.gallery_items (category, image_path, title, description, display_order, is_published)
+select 'storefront', '/medias/facade-207-mediarom.webp',
+       'Façade du magasin 207 Mediarom à Marseille',
+       'Le magasin, 207 rue de Rome à Marseille : vitrine consoles et jeux, réparation express.',
+       0, true
+ where not exists (select 1 from public.gallery_items where image_path = '/medias/facade-207-mediarom.webp');
+
+-- ---------------------------------------------------------------------------
 -- État des lieux (lecture seule) — dernier résultat affiché par le SQL Editor.
 -- ---------------------------------------------------------------------------
 select element, nombre from (
@@ -144,5 +161,7 @@ select element, nombre from (
   union all select 4, 'RÉPARATION — prestations hors document (attendu : 0)', count(*) from public.repairs where category_id is null
   union all select 5, 'RÉPARATION — catégories (attendu : 35)', count(*) from public.repair_categories
   union all select 6, 'BOUTIQUE — produits (attendu : 0)', count(*) from public.products
+  union all select 7, 'MAGASIN — photo de façade publiée (attendu : 1)', count(*)
+              from public.gallery_items where image_path = '/medias/facade-207-mediarom.webp' and is_published
 ) as etat (ordre, element, nombre)
 order by ordre;
