@@ -42,7 +42,10 @@ const QUALITY = 85;
 
 /**
  * Les 13 modèles du document du client, et les libellés sous lesquels leurs
- * photos peuvent arriver. La comparaison se fait sur une forme normalisée
+ * photos arrivent réellement — coquilles du client comprises (« xbobx one »,
+ * « swithc oled ») : mieux vaut les déclarer que laisser une approximation
+ * rapprocher un fichier du mauvais modèle.
+ * La comparaison se fait sur une forme normalisée
  * (minuscules, sans accent, sans ponctuation ni espace), ce qui absorbe
  * « PS4 FAT », « ps4-fat », « PS4_Fat (1).jpg »…
  */
@@ -53,11 +56,11 @@ const MODELS = [
   { slug: "switch", label: "Nintendo Switch V1", aliases: ["switchv1", "nintendoswitchv1", "switch1", "nintendoswitch", "switch"] },
   { slug: "switch-v2", label: "Nintendo Switch V2", aliases: ["switchv2", "nintendoswitchv2", "switch2019"] },
   { slug: "switch-lite", label: "Nintendo Switch Lite", aliases: ["switchlite", "nintendoswitchlite"] },
-  { slug: "switch-oled", label: "Nintendo Switch OLED", aliases: ["switcholed", "nintendoswitcholed"] },
+  { slug: "switch-oled", label: "Nintendo Switch OLED", aliases: ["switcholed", "nintendoswitcholed", "swithcoled"] },
   { slug: "switch-2", label: "Nintendo Switch 2", aliases: ["nintendoswitch2", "switch2"] },
-  { slug: "xbox-one", label: "Xbox One", aliases: ["xboxone"] },
+  { slug: "xbox-one", label: "Xbox One", aliases: ["xboxone", "xbobxone"] },
   { slug: "xbox-one-s", label: "Xbox One S", aliases: ["xboxones"] },
-  { slug: "xbox-one-x", label: "Xbox One X", aliases: ["xboxonex"] },
+  { slug: "xbox-one-x", label: "Xbox One X", aliases: ["xboxonex", "xbobxonex"] },
   { slug: "xbox-series-s", label: "Xbox Series S", aliases: ["xboxseriess"] },
   { slug: "xbox-series-x", label: "Xbox Series X", aliases: ["xboxseriesx"] },
 ];
@@ -272,7 +275,14 @@ const db = createClient(url, key, { auth: { persistSession: false } });
 let televerses = 0;
 for (const r of prêts) {
   const path = `${FOLDER}/${r.slug}.webp`;
-  const { error: up } = await db.storage.from(BUCKET).upload(path, readFileSync(r.cible), { contentType: "image/webp", upsert: true });
+  const bytes = readFileSync(r.cible);
+  let { error: up } = await db.storage.from(BUCKET).upload(path, bytes, { contentType: "image/webp", upsert: true });
+  // Un objet déjà présent se remplace par update() : tous les back-ends de
+  // stockage n'honorent pas upsert à l'upload, et réimporter une photo
+  // corrigée doit écraser l'ancienne, pas échouer.
+  if (up && /exist/i.test(up.message)) {
+    ({ error: up } = await db.storage.from(BUCKET).update(path, bytes, { contentType: "image/webp" }));
+  }
   if (up) {
     console.log(`✘ ${r.label} : téléversement refusé — ${up.message}`);
     continue;

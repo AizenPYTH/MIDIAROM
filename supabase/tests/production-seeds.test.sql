@@ -21,8 +21,8 @@ begin
   select count(*) into n_provisoires from public.repairs where price_is_provisional;
   select count(*) into n_produits from public.products;
 
-  if n_modeles <> 39 then
-    raise exception 'modèles de console : % au lieu de 39', n_modeles;
+  if n_modeles <> 13 then
+    raise exception 'modèles de console : % au lieu de 13', n_modeles;
   end if;
   if n_categories <> 35 then
     raise exception 'catégories de réparation : % au lieu de 35', n_categories;

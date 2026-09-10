@@ -6,7 +6,7 @@ Légende : **IMPLEMENTED** fonctionne sans configuration supplémentaire · **CO
 
 | Domaine | Statut | Détail |
 | --- | --- | --- |
-| Catalogue (marques, modèles, pannes, catégories de réparation, réparations, options, packs, compatibilités) | IMPLEMENTED | CRUD admin, règles de compatibilité, options incluses, aperçu de l'offre calculée ; catalogue de réparation du client (13 modèles, 35 catégories, 887 prestations) chargé par `supabase/catalog-reparations.sql`, tarifs provisoires affichés « sur devis » tant qu'ils ne sont pas saisis |
+| Catalogue (marques, modèles, pannes, catégories de réparation, réparations, options, packs, compatibilités) | IMPLEMENTED | CRUD admin, règles de compatibilité, options incluses, aperçu de l'offre calculée ; catalogue de réparation strictement limité au document du client (13 modèles, 35 catégories, 887 prestations, photos réelles) chargé par `supabase/catalog-reparations.sql`, tarifs provisoires affichés « sur devis » tant qu'ils ne sont pas saisis |
 | Pages réparation SEO (`/reparation/[modèle]/[panne]`) | IMPLEMENTED | Générées uniquement pour les réparations publiées ; sitemap, canonical, JSON-LD, FAQ |
 | Moteur de prix côté serveur | IMPLEMENTED | Testé unitairement et en intégration ; le navigateur n'envoie que des identifiants |
 | Fiche de réparation 4 étapes (design 207 Mediarom) | IMPLEMENTED | Plateforme → modèle exact → prestation liée au modèle + options compatibles → description + symptômes multiples + photos → coordonnées / transport / récapitulatif / CGV ; prix serveur, création de dossier (symptômes et photos rattachés) puis paiement. Voir `docs/DESIGN.md` |

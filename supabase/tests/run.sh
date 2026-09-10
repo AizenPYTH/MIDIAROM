@@ -44,6 +44,8 @@ psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/rls.test.sql
 echo "→ nettoyage des données de démonstration (rejoué, idempotence)"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-demo-data.sql > /dev/null
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-demo-data.sql > /dev/null
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-non-pdf-models.sql > /dev/null
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-non-pdf-models.sql > /dev/null
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/cleanup.test.sql
 
 # Import de production : les deux fichiers de données doivent suffire à garnir

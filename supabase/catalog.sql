@@ -42,11 +42,6 @@ on conflict (id) do nothing;
 
 -- Models
 insert into public.console_models (id, brand_id, name, slug, short_name, release_year, display_order, seo_title, seo_description, seo_intro) values
-  ('41000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000001', 'PlayStation 5', 'ps5', 'PS5', 2020, 1,
-   'Réparation PS5 à distance — envoi, diagnostic, réparation, retour', 'Faites réparer votre PS5 partout en France : port HDMI, surchauffe, alimentation, lecteur. Commande en ligne et suivi du dossier.',
-   'La PlayStation 5 est une console fiable mais certains composants (port HDMI, système de refroidissement, alimentation) peuvent nécessiter une intervention en atelier. Choisissez la panne qui correspond à vos symptômes.'),
-  ('41000000-0000-4000-8000-000000000002', '40000000-0000-4000-8000-000000000001', 'PlayStation 5 Slim', 'ps5-slim', 'PS5 Slim', 2023, 2, null, null, null),
-  ('41000000-0000-4000-8000-000000000003', '40000000-0000-4000-8000-000000000001', 'PlayStation 5 Pro', 'ps5-pro', 'PS5 Pro', 2024, 3, null, null, null),
   ('41000000-0000-4000-8000-000000000004', '40000000-0000-4000-8000-000000000001', 'PlayStation 4', 'ps4', 'PS4', 2013, 4, null, null, null),
   ('41000000-0000-4000-8000-000000000005', '40000000-0000-4000-8000-000000000001', 'PlayStation 4 Slim', 'ps4-slim', 'PS4 Slim', 2016, 5, null, null, null),
   ('41000000-0000-4000-8000-000000000006', '40000000-0000-4000-8000-000000000001', 'PlayStation 4 Pro', 'ps4-pro', 'PS4 Pro', 2016, 6, null, null, null),
@@ -107,17 +102,9 @@ on conflict (id) do nothing;
 do $seed$ begin
 if not exists (select 1 from public.repair_option_compatibility) then
 insert into public.repair_option_compatibility (option_id, mode, brand_id, model_id) values
-  -- Liquid metal check: PS5 family only
-  ('44000000-0000-4000-8000-000000000006', 'INCLUDE', null, '41000000-0000-4000-8000-000000000001'),
-  ('44000000-0000-4000-8000-000000000006', 'INCLUDE', null, '41000000-0000-4000-8000-000000000002'),
-  ('44000000-0000-4000-8000-000000000006', 'INCLUDE', null, '41000000-0000-4000-8000-000000000003'),
-  -- Stick drift: Nintendo (Joy-Con) and PlayStation controllers
+  -- Stick drift : manettes Nintendo (Joy-Con) et PlayStation
   ('44000000-0000-4000-8000-000000000010', 'INCLUDE', '40000000-0000-4000-8000-000000000003', null),
-  ('44000000-0000-4000-8000-000000000010', 'INCLUDE', '40000000-0000-4000-8000-000000000001', null),
-  -- SSD install: PS5 family
-  ('44000000-0000-4000-8000-000000000011', 'INCLUDE', null, '41000000-0000-4000-8000-000000000001'),
-  ('44000000-0000-4000-8000-000000000011', 'INCLUDE', null, '41000000-0000-4000-8000-000000000002'),
-  ('44000000-0000-4000-8000-000000000011', 'INCLUDE', null, '41000000-0000-4000-8000-000000000003');
+  ('44000000-0000-4000-8000-000000000010', 'INCLUDE', '40000000-0000-4000-8000-000000000001', null);
 end if;
 end $seed$;
 
@@ -149,82 +136,11 @@ on conflict do nothing;
 insert into public.repairs (id, model_id, fault_id, name, slug, summary, description, price_cents, estimated_cost_cents, estimated_minutes,
   lead_time_days_min, lead_time_days_max, warranty_months, warranty_scope, warranty_exclusions, included_items, important_notes,
   is_diagnostic_only, is_seo_published, seo_title, seo_description, seo_h1, seo_symptoms, seo_causes, seo_process, seo_faq, display_order) values
-  ('46000000-0000-4000-8000-000000000001', '41000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000001',
-   'Réparation port HDMI PS5', 'hdmi', 'Remplacement du connecteur HDMI de la carte mère.',
-   'Le port HDMI de la PS5 est soudé directement sur la carte mère. Nous le remplaçons par un connecteur neuf avec un équipement de soudure adapté, puis nous testons l''affichage sur plusieurs résolutions.',
-   5000, 600, 60, 2, 4, 6, 'Le connecteur HDMI remplacé et sa soudure.', 'Dommages ultérieurs au port (câble forcé, chute), oxydation, autre panne indépendante.',
-   array['Diagnostic', 'Remplacement du connecteur HDMI', 'Remontage', 'Tests d''affichage', 'Contrôle final'],
-   'Si des pistes de la carte mère sont arrachées, une reprise de pistes peut être nécessaire : elle vous est alors proposée par devis avant toute intervention.',
-   false, true,
-   'Réparation port HDMI PS5 — pas d''image ? Réparation à distance', 'Votre PS5 n''affiche plus d''image ? Remplacement du port HDMI en atelier, envoi depuis toute la France, suivi en ligne et garantie sur l''intervention.',
-   'Réparation port HDMI PS5',
-   'Aucun signal sur la TV, image qui apparaît puis disparaît, message « pas de signal », câble qui ne tient plus dans le port, broches visiblement tordues.',
-   'Le connecteur HDMI de la PS5 est fragile : un câble tiré, une chute ou des branchements répétés peuvent casser ses broches ou ses soudures. Dans la plupart des cas, la carte mère elle-même n''est pas touchée.',
-   'Après réception et diagnostic, nous dessoudons l''ancien connecteur, nettoyons les pastilles, soudons un connecteur neuf, puis testons l''affichage et l''audio avant remontage.',
-   '[{"question":"Mes données sont-elles conservées ?","answer":"Oui, l''intervention ne touche pas au stockage de la console."},{"question":"Et si ce n''est pas le port HDMI ?","answer":"Le diagnostic le confirme avant toute intervention. Si la cause est différente, nous vous proposons la réparation adaptée par devis, que vous êtes libre d''accepter ou non."}]'::jsonb, 1),
-
-  ('46000000-0000-4000-8000-000000000002', '41000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000005',
-   'Entretien thermique PS5 (surchauffe)', 'surchauffe', 'Nettoyage complet, remplacement des pads et contrôle du métal liquide.',
-   'Une PS5 qui souffle fort ou s''éteint en jeu manque souvent de refroidissement. Nous nettoyons le bloc de refroidissement, remplaçons les pads thermiques et contrôlons l''interface métal liquide.',
-   6990, 900, 75, 2, 4, 6, 'Les interfaces thermiques remplacées et le nettoyage effectué.', 'Composants défaillants non liés à la surchauffe.',
-   array['Diagnostic', 'Dépoussiérage interne', 'Nettoyage du ventilateur', 'Remplacement des pads thermiques', 'Contrôle du métal liquide', 'Tests de température', 'Contrôle final'],
-   null, false, true,
-   'PS5 en surchauffe ou bruyante — entretien thermique en atelier', 'PS5 qui surchauffe, ventilateur bruyant ou extinction en jeu : nettoyage complet et entretien thermique en atelier, avec suivi en ligne.',
-   'PS5 en surchauffe : entretien thermique',
-   'Ventilateur très bruyant, console chaude au toucher, message de température, extinction en pleine partie.',
-   'Poussière accumulée dans le radiateur, pads thermiques desséchés, métal liquide mal réparti.',
-   'Démontage complet, nettoyage, remplacement des interfaces thermiques, contrôle du métal liquide, tests de température sous charge.',
-   '[]'::jsonb, 2),
-
-  ('46000000-0000-4000-8000-000000000003', '41000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000007',
-   'Réparation alimentation PS5', 'alimentation', 'Diagnostic et remplacement du bloc d''alimentation interne.',
-   'Coupures, clignotement ou absence totale de démarrage peuvent venir du bloc d''alimentation. Après diagnostic, nous le remplaçons par un bloc compatible.',
-   7990, 3500, 45, 2, 4, 6, 'Le bloc d''alimentation remplacé.', 'Dommages liés à une surtension ultérieure.',
-   array['Diagnostic', 'Remplacement du bloc d''alimentation', 'Remontage', 'Tests', 'Contrôle final'],
-   'Si le diagnostic révèle une panne de carte mère plutôt que d''alimentation, un devis vous est proposé avant toute intervention.',
-   false, true, 'Réparation alimentation PS5 — console qui ne s''allume plus', 'PS5 qui ne s''allume plus ou s''éteint seule : diagnostic et remplacement de l''alimentation en atelier, envoi depuis toute la France.',
-   'Réparation alimentation PS5', 'Aucune réaction au bouton, voyant qui clignote puis s''éteint, coupures aléatoires.',
-   'Bloc d''alimentation fatigué, surtension, composant défaillant.', 'Diagnostic sur banc, remplacement du bloc, tests de stabilité.', '[]'::jsonb, 3),
-
-  ('46000000-0000-4000-8000-000000000004', '41000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000002',
-   'Diagnostic PS5 (ne s''allume plus)', 'ne-s-allume-plus', 'Diagnostic complet pour identifier la cause.',
-   'Une console qui ne s''allume plus peut avoir plusieurs causes (alimentation, carte mère, bouton). Nous réalisons un diagnostic complet et vous proposons la réparation adaptée par devis.',
-   2900, 0, 45, 1, 3, 0, null, null,
-   array['Diagnostic complet', 'Rapport avec photos', 'Devis de réparation'],
-   'Le montant du diagnostic est déduit de la réparation si vous acceptez le devis (règle configurable).',
-   true, true, 'PS5 ne s''allume plus — diagnostic en atelier', 'Votre PS5 ne s''allume plus ? Diagnostic complet en atelier puis devis de réparation, sans engagement.',
-   'PS5 qui ne s''allume plus', 'Aucun voyant, bip puis extinction, clignotement bleu ou blanc.', 'Alimentation, carte mère, bouton ou connectique interne.',
-   'Diagnostic complet, rapport photo, proposition de réparation par devis.', '[]'::jsonb, 4),
-
-  ('46000000-0000-4000-8000-000000000005', '41000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000006',
-   'Réparation lecteur PS5', 'lecteur', 'Lecteur Blu-ray remplacé ou réparé.',
-   'Disque non reconnu, bruit, éjection impossible : nous diagnostiquons le lecteur et le réparons ou le remplaçons en conservant l''appairage avec la carte mère.',
-   6900, 2500, 60, 2, 5, 6, 'Le lecteur réparé ou remplacé.', 'Disques rayés ou lecteur endommagé par un corps étranger ultérieur.',
-   array['Diagnostic', 'Réparation ou remplacement du lecteur', 'Remontage', 'Tests de lecture', 'Contrôle final'],
-   null, false, true, 'Réparation lecteur PS5 — disque non reconnu', 'Le lecteur de votre PS5 ne lit plus les disques ? Réparation en atelier avec conservation de l''appairage.',
-   'Réparation lecteur PS5', 'Disque non reconnu, bruit de moteur, éjection impossible.', 'Lentille, moteur ou carte du lecteur.', 'Diagnostic, réparation ou remplacement, tests de lecture.', '[]'::jsonb, 5),
-
-  ('46000000-0000-4000-8000-000000000006', '41000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000012',
-   'Diagnostic PS5', 'autre', 'Vous ne savez pas d''où vient la panne ? Nous diagnostiquons.',
-   'Décrivez vos symptômes lors de la commande. Nous réalisons un diagnostic complet et vous proposons la réparation adaptée par devis.',
-   2900, 0, 45, 1, 3, 0, null, null, array['Diagnostic complet', 'Rapport avec photos', 'Devis de réparation'],
-   'Le montant du diagnostic est déduit de la réparation si vous acceptez le devis (règle configurable).',
-   true, false, null, null, null, null, null, null, '[]'::jsonb, 99),
-
-  ('46000000-0000-4000-8000-000000000007', '41000000-0000-4000-8000-000000000002', '42000000-0000-4000-8000-000000000001',
-   'Réparation port HDMI PS5 Slim', 'hdmi', 'Remplacement du connecteur HDMI de la carte mère.',
-   'Remplacement du connecteur HDMI par un connecteur neuf, puis tests d''affichage.', 5000, 600, 60, 2, 4, 6,
-   'Le connecteur HDMI remplacé et sa soudure.', 'Dommages ultérieurs au port, oxydation, autre panne indépendante.',
-   array['Diagnostic', 'Remplacement du connecteur HDMI', 'Remontage', 'Tests d''affichage', 'Contrôle final'], null, false, true,
-   'Réparation port HDMI PS5 Slim', 'PS5 Slim sans image : remplacement du port HDMI en atelier, envoi depuis toute la France.',
-   'Réparation port HDMI PS5 Slim', 'Aucun signal, image instable, port abîmé.', 'Connecteur cassé ou dessoudé.', 'Dessoudage, pose d''un connecteur neuf, tests.', '[]'::jsonb, 1),
-
   ('46000000-0000-4000-8000-000000000008', '41000000-0000-4000-8000-000000000004', '42000000-0000-4000-8000-000000000001',
    'Réparation port HDMI PS4', 'hdmi', 'Remplacement du connecteur HDMI.', 'Remplacement du connecteur HDMI par un connecteur neuf, puis tests d''affichage.',
    4500, 500, 50, 2, 4, 6, 'Le connecteur HDMI remplacé et sa soudure.', 'Dommages ultérieurs au port, oxydation.',
    array['Diagnostic', 'Remplacement du connecteur HDMI', 'Remontage', 'Tests d''affichage', 'Contrôle final'], null, false, true,
    'Réparation port HDMI PS4', 'PS4 sans image : remplacement du port HDMI en atelier.', 'Réparation port HDMI PS4', 'Aucun signal, image instable.', 'Connecteur cassé ou dessoudé.', 'Dessoudage, pose d''un connecteur neuf, tests.', '[]'::jsonb, 1),
-
   ('46000000-0000-4000-8000-000000000009', '41000000-0000-4000-8000-000000000004', '42000000-0000-4000-8000-000000000005',
    'Entretien thermique PS4 (surchauffe)', 'surchauffe', 'Nettoyage complet et remplacement de la pâte thermique.',
    'Nettoyage du radiateur et du ventilateur, remplacement de la pâte thermique, tests de température.', 4990, 300, 60, 2, 4, 6,
@@ -232,14 +148,12 @@ insert into public.repairs (id, model_id, fault_id, name, slug, summary, descrip
    array['Diagnostic', 'Dépoussiérage interne', 'Nettoyage du ventilateur', 'Remplacement de la pâte thermique', 'Tests de température', 'Contrôle final'], null, false, true,
    'PS4 bruyante ou en surchauffe — entretien thermique', 'PS4 qui souffle fort ou s''éteint : nettoyage complet et pâte thermique neuve en atelier.',
    'PS4 en surchauffe : entretien thermique', 'Ventilateur bruyant, extinction en jeu.', 'Poussière, pâte thermique sèche.', 'Nettoyage, pâte thermique, tests.', '[]'::jsonb, 2),
-
   ('46000000-0000-4000-8000-000000000010', '41000000-0000-4000-8000-000000000011', '42000000-0000-4000-8000-000000000001',
    'Réparation port HDMI Xbox Series X', 'hdmi', 'Remplacement du connecteur HDMI.', 'Remplacement du connecteur HDMI par un connecteur neuf, puis tests d''affichage.',
    5900, 700, 60, 2, 4, 6, 'Le connecteur HDMI remplacé et sa soudure.', 'Dommages ultérieurs au port, oxydation.',
    array['Diagnostic', 'Remplacement du connecteur HDMI', 'Remontage', 'Tests d''affichage', 'Contrôle final'], null, false, true,
    'Réparation port HDMI Xbox Series X', 'Xbox Series X sans image : remplacement du port HDMI en atelier, envoi depuis toute la France.',
    'Réparation port HDMI Xbox Series X', 'Aucun signal, image instable, port abîmé.', 'Connecteur cassé ou dessoudé.', 'Dessoudage, pose d''un connecteur neuf, tests.', '[]'::jsonb, 1),
-
   ('46000000-0000-4000-8000-000000000011', '41000000-0000-4000-8000-000000000011', '42000000-0000-4000-8000-000000000005',
    'Entretien thermique Xbox Series X', 'surchauffe', 'Nettoyage complet et remplacement de la pâte thermique.',
    'Nettoyage du radiateur et du ventilateur, remplacement de la pâte thermique, tests de température.', 5990, 300, 60, 2, 4, 6,
@@ -247,14 +161,12 @@ insert into public.repairs (id, model_id, fault_id, name, slug, summary, descrip
    array['Diagnostic', 'Dépoussiérage interne', 'Nettoyage du ventilateur', 'Remplacement de la pâte thermique', 'Tests de température', 'Contrôle final'], null, false, true,
    'Xbox Series X en surchauffe — entretien thermique', 'Xbox Series X bruyante ou qui s''éteint : entretien thermique en atelier.',
    'Xbox Series X en surchauffe', 'Ventilateur bruyant, extinction.', 'Poussière, pâte thermique sèche.', 'Nettoyage, pâte thermique, tests.', '[]'::jsonb, 2),
-
   ('46000000-0000-4000-8000-000000000012', '41000000-0000-4000-8000-000000000012', '42000000-0000-4000-8000-000000000001',
    'Réparation port HDMI Xbox Series S', 'hdmi', 'Remplacement du connecteur HDMI.', 'Remplacement du connecteur HDMI par un connecteur neuf, puis tests d''affichage.',
    5500, 700, 60, 2, 4, 6, 'Le connecteur HDMI remplacé et sa soudure.', 'Dommages ultérieurs au port, oxydation.',
    array['Diagnostic', 'Remplacement du connecteur HDMI', 'Remontage', 'Tests d''affichage', 'Contrôle final'], null, false, true,
    'Réparation port HDMI Xbox Series S', 'Xbox Series S sans image : remplacement du port HDMI en atelier.', 'Réparation port HDMI Xbox Series S',
    'Aucun signal, image instable.', 'Connecteur cassé ou dessoudé.', 'Dessoudage, pose d''un connecteur neuf, tests.', '[]'::jsonb, 1),
-
   ('46000000-0000-4000-8000-000000000013', '41000000-0000-4000-8000-000000000021', '42000000-0000-4000-8000-000000000003',
    'Réparation port USB-C Nintendo Switch', 'usb-c', 'Remplacement du connecteur de charge USB-C.',
    'Le port USB-C de la Switch est soudé sur la carte mère. Nous le remplaçons par un connecteur neuf et testons la charge et le dock.',
@@ -264,7 +176,6 @@ insert into public.repairs (id, model_id, fault_id, name, slug, summary, descrip
    false, true, 'Réparation port USB-C Nintendo Switch — ne charge plus', 'Votre Switch ne charge plus ou le câble bouge dans le port ? Remplacement du connecteur USB-C en atelier, envoi depuis toute la France.',
    'Réparation port USB-C Nintendo Switch', 'La console ne charge plus, charge par intermittence, ne passe plus sur la TV via le dock, câble qui bouge dans le port.',
    'Connecteur USB-C usé ou cassé, soudures fissurées, chargeur non conforme.', 'Dessoudage du connecteur, nettoyage, pose d''un connecteur neuf, tests de charge et de sortie vidéo via le dock.', '[]'::jsonb, 1),
-
   ('46000000-0000-4000-8000-000000000014', '41000000-0000-4000-8000-000000000021', '42000000-0000-4000-8000-000000000011',
    'Remplacement écran Nintendo Switch', 'ecran', 'Écran LCD ou vitre tactile remplacés.',
    'Écran fissuré, lignes, tactile inopérant : nous remplaçons la dalle ou la vitre tactile selon le diagnostic.',
@@ -272,7 +183,6 @@ insert into public.repairs (id, model_id, fault_id, name, slug, summary, descrip
    array['Diagnostic', 'Remplacement de l''écran ou de la vitre', 'Remontage', 'Tests tactile et affichage', 'Contrôle final'], null, false, true,
    'Remplacement écran Nintendo Switch', 'Écran de Switch cassé ou tactile inopérant : remplacement en atelier avec suivi en ligne.',
    'Remplacement écran Nintendo Switch', 'Écran fissuré, lignes, taches, tactile inopérant.', 'Chute, pression, choc.', 'Diagnostic, remplacement, tests.', '[]'::jsonb, 2),
-
   ('46000000-0000-4000-8000-000000000015', '41000000-0000-4000-8000-000000000021', '42000000-0000-4000-8000-000000000010',
    'Réparation Joy-Con (stick drift)', 'joystick', 'Remplacement du module de stick d''un Joy-Con.',
    'Le personnage bouge tout seul ? Nous remplaçons le module de stick défaillant. Envoyez le Joy-Con concerné (ou la console avec ses Joy-Con).',
@@ -280,7 +190,6 @@ insert into public.repairs (id, model_id, fault_id, name, slug, summary, descrip
    array['Diagnostic', 'Remplacement du module de stick', 'Calibration', 'Tests', 'Contrôle final'], 'Le prix correspond à un Joy-Con. Ajoutez l''option « Réparation stick drift » pour le second.',
    false, true, 'Réparation Joy-Con stick drift — Nintendo Switch', 'Joy-Con qui dérive ? Remplacement du module de stick en atelier avec calibration.',
    'Réparation Joy-Con : stick drift', 'Le curseur ou le personnage bouge seul, direction fantôme.', 'Usure du module de stick.', 'Remplacement du module, calibration, tests.', '[]'::jsonb, 3),
-
   ('46000000-0000-4000-8000-000000000016', '41000000-0000-4000-8000-000000000022', '42000000-0000-4000-8000-000000000003',
    'Réparation port USB-C Nintendo Switch OLED', 'usb-c', 'Remplacement du connecteur de charge USB-C.',
    'Remplacement du connecteur USB-C par un connecteur neuf, puis tests de charge et de dock.', 6500, 500, 60, 2, 4, 6,
@@ -288,7 +197,6 @@ insert into public.repairs (id, model_id, fault_id, name, slug, summary, descrip
    array['Diagnostic', 'Remplacement du connecteur USB-C', 'Remontage', 'Tests de charge et dock', 'Contrôle final'], null, false, true,
    'Réparation port USB-C Switch OLED', 'Switch OLED qui ne charge plus : remplacement du port USB-C en atelier.', 'Réparation port USB-C Switch OLED',
    'Ne charge plus, câble qui bouge.', 'Connecteur usé ou cassé.', 'Dessoudage, connecteur neuf, tests.', '[]'::jsonb, 1),
-
   ('46000000-0000-4000-8000-000000000017', '41000000-0000-4000-8000-000000000021', '42000000-0000-4000-8000-000000000012',
    'Diagnostic Nintendo Switch', 'autre', 'Vous ne savez pas d''où vient la panne ? Nous diagnostiquons.',
    'Décrivez vos symptômes lors de la commande. Nous réalisons un diagnostic complet et vous proposons la réparation adaptée par devis.',
@@ -299,10 +207,6 @@ on conflict (id) do nothing;
 
 -- Options already included in some repairs (never sold on top)
 insert into public.repair_included_options (repair_id, option_id) values
-  ('46000000-0000-4000-8000-000000000002', '44000000-0000-4000-8000-000000000001'),
-  ('46000000-0000-4000-8000-000000000002', '44000000-0000-4000-8000-000000000003'),
-  ('46000000-0000-4000-8000-000000000002', '44000000-0000-4000-8000-000000000005'),
-  ('46000000-0000-4000-8000-000000000002', '44000000-0000-4000-8000-000000000006'),
   ('46000000-0000-4000-8000-000000000009', '44000000-0000-4000-8000-000000000001'),
   ('46000000-0000-4000-8000-000000000009', '44000000-0000-4000-8000-000000000003'),
   ('46000000-0000-4000-8000-000000000009', '44000000-0000-4000-8000-000000000005'),
@@ -326,7 +230,6 @@ on conflict (id) do nothing;
 -- ---------------------------------------------------------------------------
 insert into public.test_checklists (id, model_id, name) values
   ('48000000-0000-4000-8000-000000000001', null, 'Contrôle qualité générique'),
-  ('48000000-0000-4000-8000-000000000002', '41000000-0000-4000-8000-000000000001', 'Contrôle qualité PS5'),
   ('48000000-0000-4000-8000-000000000003', '41000000-0000-4000-8000-000000000021', 'Contrôle qualité Nintendo Switch')
 on conflict (id) do nothing;
 
@@ -342,16 +245,6 @@ insert into public.test_checklist_items (checklist_id, label, display_order) val
   ('48000000-0000-4000-8000-000000000001', 'Bluetooth / manette', 5),
   ('48000000-0000-4000-8000-000000000001', 'Ventilation et température', 6),
   ('48000000-0000-4000-8000-000000000001', 'Fonction concernée par la réparation', 7),
-  ('48000000-0000-4000-8000-000000000002', 'Démarrage', 1),
-  ('48000000-0000-4000-8000-000000000002', 'Affichage HDMI (1080p / 4K)', 2),
-  ('48000000-0000-4000-8000-000000000002', 'Ports USB avant et arrière', 3),
-  ('48000000-0000-4000-8000-000000000002', 'Wi-Fi', 4),
-  ('48000000-0000-4000-8000-000000000002', 'Bluetooth', 5),
-  ('48000000-0000-4000-8000-000000000002', 'Lecteur Blu-ray', 6),
-  ('48000000-0000-4000-8000-000000000002', 'Ventilation', 7),
-  ('48000000-0000-4000-8000-000000000002', 'Température sous charge', 8),
-  ('48000000-0000-4000-8000-000000000002', 'Test manette DualSense', 9),
-  ('48000000-0000-4000-8000-000000000002', 'Fonction concernée par la réparation', 10),
   ('48000000-0000-4000-8000-000000000003', 'Démarrage', 1),
   ('48000000-0000-4000-8000-000000000003', 'Charge USB-C', 2),
   ('48000000-0000-4000-8000-000000000003', 'Sortie vidéo via dock', 3),
@@ -464,43 +357,17 @@ on conflict (id) do nothing;
 drop table if exists seed_models;
 create temp table seed_models (brand_slug text, name text, slug text, short_name text, year int, family text, is_retro boolean, is_handheld boolean, variants text[], common_issues text[], display_order int);
 insert into seed_models values
-  ('playstation', 'PlayStation 5', 'ps5', 'PS5', 2020, 'ps5', false, false, '{"Standard (lecteur Blu-ray)","Digital Edition"}', '{"Port HDMI arraché ou sans image","Surchauffe et ventilateur bruyant","Lecteur Blu-ray qui éjecte","Bloc alimentation en panne"}', 1),
-  ('playstation', 'PlayStation 5 Slim', 'ps5-slim', 'PS5 Slim', 2023, 'ps5', false, false, '{"Slim avec lecteur","Slim Digital"}', '{"Port HDMI","Surchauffe","Lecteur amovible non reconnu"}', 2),
-  ('playstation', 'PlayStation 5 Pro', 'ps5-pro', 'PS5 Pro', 2024, 'ps5', false, false, '{"Pro (Digital, lecteur en option)"}', '{"Port HDMI","Surchauffe","Stockage"}', 3),
   ('playstation', 'PlayStation 4', 'ps4', 'PS4', 2013, 'ps4', false, false, '{"Fat (CUH-1000 à 1200)"}', '{"Port HDMI","Ventilateur bruyant","Lecteur Blu-ray","Disque dur"}', 4),
   ('playstation', 'PlayStation 4 Slim', 'ps4-slim', 'PS4 Slim', 2016, 'ps4', false, false, '{"Slim (CUH-2000 à 2200)"}', '{"Port HDMI","Surchauffe","Lecteur"}', 5),
   ('playstation', 'PlayStation 4 Pro', 'ps4-pro', 'PS4 Pro', 2016, 'ps4', false, false, '{"Pro (CUH-7000 à 7200)"}', '{"Ventilateur très bruyant","Port HDMI","Surchauffe"}', 6),
-  ('playstation', 'PlayStation 3', 'ps3', 'PS3', 2006, 'ps3', true, false, '{"Fat","Slim","Super Slim"}', '{"Yellow light (YLOD)","Lecteur Blu-ray","Alimentation"}', 7),
-  ('playstation', 'PlayStation 2', 'ps2', 'PS2', 2000, 'ps2', true, false, '{"Fat","Slim"}', '{"Lecteur DVD (laser)","Alimentation","Sortie vidéo"}', 8),
-  ('playstation', 'PlayStation 1', 'ps1', 'PS1', 1994, 'ps1', true, false, '{"PS1","PSone"}', '{"Lecteur CD (laser)","Condensateurs","Sortie vidéo"}', 9),
-  ('playstation', 'PSP', 'psp', 'PSP', 2004, 'psp', true, true, '{"1000","2000","3000","Street"}', '{"Écran","Batterie gonflée","Lecteur UMD","Stick"}', 10),
-  ('playstation', 'PS Vita', 'ps-vita', 'PS Vita', 2011, 'vita', true, true, '{"OLED (1000)","Slim (2000)"}', '{"Écran","Batterie","Port de charge","Sticks"}', 11),
   ('xbox', 'Xbox Series X', 'xbox-series-x', 'Series X', 2020, 'xbox-series', false, false, '{"Series X"}', '{"Port HDMI","Lecteur","Alimentation","Surchauffe"}', 1),
   ('xbox', 'Xbox Series S', 'xbox-series-s', 'Series S', 2020, 'xbox-series', false, false, '{"Series S (512 Go, 1 To)"}', '{"Port HDMI","Alimentation","Stockage"}', 2),
   ('xbox', 'Xbox One', 'xbox-one', 'Xbox One', 2013, 'xbox-one', false, false, '{"One (2013)"}', '{"Port HDMI","Lecteur Blu-ray","Alimentation externe"}', 3),
   ('xbox', 'Xbox One S', 'xbox-one-s', 'One S', 2016, 'xbox-one', false, false, '{"One S","One S All-Digital"}', '{"Port HDMI","Lecteur","Ventilateur"}', 4),
   ('xbox', 'Xbox One X', 'xbox-one-x', 'One X', 2017, 'xbox-one', false, false, '{"One X"}', '{"Port HDMI","Surchauffe","Alimentation"}', 5),
-  ('xbox', 'Xbox 360', 'xbox-360', 'Xbox 360', 2005, 'xbox-360', true, false, '{"Fat","Slim","E"}', '{"Red Ring (surchauffe)","Lecteur DVD","Alimentation"}', 6),
-  ('xbox', 'Xbox originale', 'xbox-originale', 'Xbox', 2001, 'xbox-og', true, false, '{"Xbox (2001)"}', '{"Pile d''horloge qui fuit","Lecteur DVD","Disque dur"}', 7),
   ('nintendo', 'Nintendo Switch', 'switch', 'Switch', 2017, 'switch', false, true, '{"V1 (2017)","V2 (2019)"}', '{"Port USB-C","Dérive des Joy-Con","Écran","Batterie"}', 1),
   ('nintendo', 'Nintendo Switch OLED', 'switch-oled', 'Switch OLED', 2021, 'switch', false, true, '{"OLED"}', '{"Port USB-C","Joy-Con","Écran OLED"}', 2),
-  ('nintendo', 'Nintendo Switch Lite', 'switch-lite', 'Switch Lite', 2019, 'switch-lite', false, true, '{"Lite"}', '{"Sticks intégrés (dérive)","Port USB-C","Écran"}', 3),
-  ('nintendo', 'Wii U', 'wii-u', 'Wii U', 2012, 'wiiu', true, false, '{"Basic","Premium"}', '{"GamePad (écran, batterie)","Lecteur","Wi-Fi"}', 4),
-  ('nintendo', 'Wii', 'wii', 'Wii', 2006, 'wii', true, false, '{"Wii","Wii Mini"}', '{"Lecteur de disque","Alimentation","Wi-Fi"}', 5),
-  ('nintendo', 'GameCube', 'gamecube', 'GameCube', 2001, 'gamecube', true, false, '{"GameCube"}', '{"Lecteur (laser)","Ports manettes","Sortie vidéo"}', 6),
-  ('nintendo', 'Nintendo 64', 'nintendo-64', 'N64', 1996, 'n64', true, false, '{"N64","Pikachu / couleurs"}', '{"Sticks de manette usés","Sortie vidéo","Lecteur de cartouche"}', 7),
-  ('nintendo', 'Super Nintendo', 'super-nintendo', 'SNES', 1990, 'snes', true, false, '{"SNES","SNES Jr."}', '{"Condensateurs","Lecteur de cartouche","Sortie vidéo"}', 8),
-  ('nintendo', 'NES', 'nes', 'NES', 1985, 'nes', true, false, '{"NES","NES Top Loader"}', '{"Connecteur 72 broches","Condensateurs","Sortie vidéo"}', 9),
-  ('nintendo', 'Game Boy', 'game-boy', 'Game Boy', 1989, 'gb', true, true, '{"Game Boy (DMG)","Pocket","Light"}', '{"Écran (lignes)","Contacts piles","Boutons"}', 10),
-  ('nintendo', 'Game Boy Color', 'game-boy-color', 'GB Color', 1998, 'gb', true, true, '{"Color"}', '{"Écran","Contacts piles","Boutons"}', 11),
-  ('nintendo', 'Game Boy Advance', 'game-boy-advance', 'GBA', 2001, 'gba', true, true, '{"Advance","SP","Micro"}', '{"Écran","Batterie SP","Boutons"}', 12),
-  ('nintendo', 'Nintendo DS', 'nintendo-ds', 'DS', 2004, 'ds', true, true, '{"DS","DS Lite","DSi","DSi XL"}', '{"Charnière / écran","Charge","Batterie"}', 13),
-  ('nintendo', 'Nintendo 3DS', 'nintendo-3ds', '3DS', 2011, 'ds', true, true, '{"3DS","3DS XL","2DS","New 3DS"}', '{"Écran","Circle Pad","Charge"}', 14),
-  ('sega', 'Dreamcast', 'dreamcast', 'Dreamcast', 1998, 'dreamcast', true, false, '{"Dreamcast"}', '{"Lecteur GD-ROM","Alimentation","Condensateurs"}', 1),
-  ('sega', 'Saturn', 'saturn', 'Saturn', 1994, 'saturn', true, false, '{"Saturn"}', '{"Lecteur CD","Pile de sauvegarde","Condensateurs"}', 2),
-  ('sega', 'Mega Drive', 'mega-drive', 'Mega Drive', 1988, 'megadrive', true, false, '{"Mega Drive","Mega Drive II"}', '{"Condensateurs","Sortie vidéo","Ports manettes"}', 3),
-  ('sega', 'Master System', 'master-system', 'Master System', 1985, 'mastersystem', true, false, '{"Master System","Master System II"}', '{"Condensateurs","Sortie vidéo","Alimentation"}', 4),
-  ('sega', 'Game Gear', 'game-gear', 'Game Gear', 1990, 'gamegear', true, true, '{"Game Gear"}', '{"Condensateurs (écran, son)","Écran","Alimentation"}', 5);
+  ('nintendo', 'Nintendo Switch Lite', 'switch-lite', 'Switch Lite', 2019, 'switch-lite', false, true, '{"Lite"}', '{"Sticks intégrés (dérive)","Port USB-C","Écran"}', 3);
 
 insert into public.console_models (id, brand_id, name, slug, short_name, release_year, display_order, family, variants, common_issues, is_retro, is_handheld)
 select gen_random_uuid(), b.id, m.name, m.slug, m.short_name, m.year, m.display_order, m.family, m.variants, m.common_issues, m.is_retro, m.is_handheld

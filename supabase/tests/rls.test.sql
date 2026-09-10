@@ -10,9 +10,9 @@ insert into public.repair_orders (id, customer_id, status, brand_name, model_nam
   customer_first_name, customer_last_name, customer_email, shipping_address, subtotal_cents, shipping_cents, total_cents,
   repair_id, model_id, brand_id, fault_id)
 values
-  ('50000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000003', 'DIAGNOSIS', 'PlayStation', 'PS5', 'HDMI', 'Réparation port HDMI PS5',
+  ('50000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000003', 'DIAGNOSIS', 'PlayStation', 'PS4', 'HDMI', 'Réparation port HDMI PS4',
    'Camille', 'Client', 'client@example.com', '{"line1":"1 rue Test","postal_code":"75001","city":"Paris","country_code":"FR"}', 5000, 1490, 6490,
-   '46000000-0000-4000-8000-000000000001', '41000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000001'),
+   '46000000-0000-4000-8000-000000000008', '41000000-0000-4000-8000-000000000004', '40000000-0000-4000-8000-000000000001', '42000000-0000-4000-8000-000000000001'),
   ('50000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000004', 'PAID', 'Nintendo', 'Switch', 'USB-C', 'Réparation port USB-C',
    'Dominique', 'Deux', 'client2@example.com', '{"line1":"2 rue Test","postal_code":"69001","city":"Lyon","country_code":"FR"}', 5900, 1490, 7390,
    '46000000-0000-4000-8000-000000000013', '41000000-0000-4000-8000-000000000021', '40000000-0000-4000-8000-000000000003', '42000000-0000-4000-8000-000000000003');
@@ -150,7 +150,7 @@ begin
   get diagnostics v_updated = row_count;
   assert v_updated = 1, 'technician can update order status';
   begin
-    update public.repairs set price_cents = 1 where id = '46000000-0000-4000-8000-000000000001';
+    update public.repairs set price_cents = 1 where id = '46000000-0000-4000-8000-000000000008';
     get diagnostics v_updated = row_count;
     assert v_updated = 0, 'technician cannot change catalog prices';
   end;
@@ -163,7 +163,7 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001
 do $$
 declare v_updated int;
 begin
-  update public.repairs set price_cents = price_cents where id = '46000000-0000-4000-8000-000000000001';
+  update public.repairs set price_cents = price_cents where id = '46000000-0000-4000-8000-000000000008';
   get diagnostics v_updated = row_count;
   assert v_updated = 1, 'admin can edit catalog';
   assert (select count(*) from public.audit_logs) >= 1, 'admin reads audit logs';

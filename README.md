@@ -61,7 +61,7 @@ update public.profiles set role = 'SUPER_ADMIN' where email = 'admin@example.com
 
 Le catalogue initial (consoles, pannes, prestations avec leurs prix de départ, produits de la boutique) est dans `supabase/catalog.sql`, séparé du seed de développement.
 
-Le catalogue de réparation du client — 13 modèles, 35 catégories et 887 prestations reprises du document fourni — est dans `supabase/catalog-reparations.sql`. Les tarifs n'y figurent pas : chaque prestation importée arrive à 0 € avec `price_is_provisional = true`, s'affiche « sur devis » côté client et se règle depuis `/admin/catalog/repairs` (enregistrer un prix non nul lève le drapeau). Le fichier est rejouable : la formulation du document fait foi et écrase le libellé, tandis que le prix, le résumé et l'activation saisis dans le back-office sont conservés.
+Le catalogue de réparation est **strictement** celui du document fourni par le client : 13 modèles de console, 35 catégories et 887 prestations. Les modèles qui n'y figurent pas (PS5, PS3, rétro, Sega…) ne sont plus au catalogue. Le contenu vient de `supabase/catalog-reparations.sql`. Les tarifs n'y figurent pas : chaque prestation importée arrive à 0 € avec `price_is_provisional = true`, s'affiche « sur devis » côté client et se règle depuis `/admin/catalog/repairs` (enregistrer un prix non nul lève le drapeau). Le fichier est rejouable : la formulation du document fait foi et écrase le libellé, tandis que le prix, le résumé et l'activation saisis dans le back-office sont conservés.
 
 Sur un projet de production, on n'applique **pas** ces deux fichiers directement : on applique leurs versions générées, `supabase/seed-production-catalog.sql` et `supabase/seed-production-repairs.sql`. Même contenu, plus une garde qui refuse de s'exécuter tant que les migrations ne sont pas passées, un état des lieux chiffré en fin de fichier, et une compatibilité assurée avec le SQL Editor de Supabase (collage direct, rejeu dans la même session) :
 
@@ -90,6 +90,7 @@ Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, 
 | `npm run seeds:build` | Regénère les deux fichiers de données de production depuis `catalog.sql` et `catalog-reparations.sql` |
 | `npm run photos:consoles -- <dossier> [--dry-run]` | Importe les photos des 13 modèles du catalogue de réparation : identifie le vrai contenu de chaque fichier, extrait l'image d'une page enregistrée depuis Chrome, convertit en WebP (1200 px max), téléverse dans `content-media/consoles/<slug>.webp` et renseigne `console_models.image_path`. Ne télécharge jamais depuis Internet. |
 | `psql "$DB_URL" -f supabase/cleanup-demo-data.sql` | Retire les données de démonstration d'une base déjà garnie (51 produits, 98 anciennes prestations) — ciblé et rejouable |
+| `psql "$DB_URL" -f supabase/cleanup-non-pdf-models.sql` | Restreint le catalogue aux 13 modèles du document du client : supprime les 26 autres modèles et leurs prestations — ciblé et rejouable |
 | `npm run check` | lint + typecheck + tests + build |
 | `npm run check:supabase [fichier .env]` | Diagnostique la configuration Supabase d'un déploiement (variables, clés, joignabilité, schéma) |
 | `scripts/apply-migrations.sh <url-postgres>` | Applique les migrations sur une base distante en une transaction, sans `supabase link` |

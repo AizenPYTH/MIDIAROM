@@ -40,8 +40,8 @@ begin
   end if;
 
   select count(*) into n_modeles from public.console_models;
-  if n_modeles <> 39 then
-    raise exception 'modèles de console : % au lieu de 39', n_modeles;
+  if n_modeles <> 13 then
+    raise exception 'modèles de console : % au lieu de 13', n_modeles;
   end if;
 
   select count(*) into n_categories from public.repair_categories;

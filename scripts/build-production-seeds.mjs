@@ -41,7 +41,8 @@ const TARGETS = [
     output: "supabase/seed-production-catalog.sql",
     title: "DONNÉES DE PRODUCTION — CATALOGUE",
     intro: [
-      "Marques, 39 modèles de console, pannes, prestations de départ, options,",
+      "Marques, les 13 modèles de console du document du client, pannes,",
+      "prestations de départ, options,",
       "packs, transports, contrôles qualité, contenus éditoriaux et documents",
       "légaux.",
       "",
@@ -52,7 +53,7 @@ const TARGETS = [
     tables: CATALOG_TABLES,
     checks: [
       ["marques", "public.brands"],
-      ["modèles de console", "public.console_models"],
+      ["modèles de console (attendu : 13)", "public.console_models"],
       ["pannes", "public.faults"],
       ["prestations", "public.repairs"],
       ["options", "public.repair_options"],
