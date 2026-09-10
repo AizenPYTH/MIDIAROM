@@ -51,6 +51,10 @@ Tests : `supabase/tests/rls.test.sql` (exécutés par `npm run test:db`) vérifi
 
 Le contenu vient de `supabase/catalog-reparations.sql`, appliqué en production sous sa forme générée `supabase/seed-production-repairs.sql` (voir README). Une prestation non rattachée à une catégorie reste valide : elle apparaît sous « Sans catégorie ».
 
+## Nettoyage des données de démonstration
+
+`supabase/cleanup-demo-data.sql` retire, sur une base déjà garnie, les 51 produits de démonstration (désignés un par un par leur SKU) et les 98 anciennes prestations sans catégorie désactivées lors de l'import du catalogue du client. Ciblé, rejouable, sans DELETE global. L'historique survit : `shop_order_items.product_id` et `repair_orders.repair_id` passent à NULL, les lignes gardent leur libellé et leur prix.
+
 ## Seed
 
 `supabase/seed.sql` contient des données de développement (catalogue exemple, prix exemples, comptes de test, textes). À adapter depuis le back-office avant mise en production ; aucun avis, chiffre ou certification fictif n'y figure.

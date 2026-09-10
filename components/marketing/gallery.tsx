@@ -2,8 +2,17 @@ import Image from "next/image";
 import type { Tables } from "@/types/database";
 import { getPublicEnv } from "@/lib/env";
 
-/** Real workshop photos uploaded from the back-office (content-media, public bucket). */
+/**
+ * URL d'une photo de la galerie ou d'un média public.
+ *
+ * Deux origines possibles, pour la même colonne `image_path` :
+ *   • un chemin commençant par « / » désigne un fichier livré avec le site
+ *     (public/), pour les visuels fixes de la marque — la façade du magasin ;
+ *   • tout autre chemin désigne un objet du bucket public `content-media`,
+ *     téléversé depuis le back-office (Contenu → Galerie → Médias publics).
+ */
 export function publicMediaUrl(path: string): string {
+  if (path.startsWith("/")) return path;
   const env = getPublicEnv();
   return `${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/content-media/${path}`;
 }

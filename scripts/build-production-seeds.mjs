@@ -42,8 +42,12 @@ const TARGETS = [
     title: "DONNÉES DE PRODUCTION — CATALOGUE",
     intro: [
       "Marques, 39 modèles de console, pannes, prestations de départ, options,",
-      "packs, transports, contrôles qualité, contenus éditoriaux, documents",
-      "légaux et produits de la boutique.",
+      "packs, transports, contrôles qualité, contenus éditoriaux et documents",
+      "légaux.",
+      "",
+      "Aucun produit de boutique : le stock réel se saisit depuis le back-office",
+      "(Stock → Nouveau produit). Tant qu'il est vide, la boutique affiche son",
+      "état vide, prévu par le design.",
     ],
     tables: CATALOG_TABLES,
     checks: [
@@ -54,7 +58,7 @@ const TARGETS = [
       ["options", "public.repair_options"],
       ["packs", "public.packs"],
       ["formules de transport", "public.shipping_methods"],
-      ["produits boutique", "public.products"],
+      ["produits boutique (le stock réel se saisit dans le back-office)", "public.products"],
     ],
   },
   {

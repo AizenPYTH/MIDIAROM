@@ -70,6 +70,8 @@ psql "$DB_URL" -f supabase/seed-production-catalog.sql
 psql "$DB_URL" -f supabase/seed-production-repairs.sql
 ```
 
+Le catalogue de production ne crée **aucun produit de boutique** : le stock réel se saisit depuis Stock → Nouveau produit, et la boutique affiche son état vide en attendant. Les 51 produits qui ont servi à bâtir la boutique vivent dans `supabase/seed.sql`, jamais appliqué en production. Sur une base déjà garnie par une version antérieure, `supabase/cleanup-demo-data.sql` les retire, avec les 98 anciennes prestations désactivées lors de l'import du catalogue du client.
+
 Ces deux fichiers sont générés — `npm run seeds:build` les regénère, et `npm run test:db` échoue s'ils ne correspondent plus à leur source. Ils ne créent aucune table : le schéma vient uniquement des migrations. Ne confondez pas `supabase/catalog.sql` (données) avec `supabase/migrations/20260908000002_catalog.sql` (création des tables) : appliquer le second sur une base déjà migrée échoue en 42P07.
 
 Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, `EMAIL_PROVIDER=console`, `SHIPPING_PROVIDER=mock`). Les mocks sont **refusés en production**.
@@ -86,6 +88,7 @@ Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, 
 | `psql "$DB_URL" -f supabase/catalog.sql` | Charge le catalogue initial (consoles, pannes, prestations, produits) — applicable en production |
 | `psql "$DB_URL" -f supabase/catalog-reparations.sql` | Charge le catalogue de réparation du client (13 modèles, 35 catégories, 887 prestations « sur devis ») — applicable en production, rejouable |
 | `npm run seeds:build` | Regénère les deux fichiers de données de production depuis `catalog.sql` et `catalog-reparations.sql` |
+| `psql "$DB_URL" -f supabase/cleanup-demo-data.sql` | Retire les données de démonstration d'une base déjà garnie (51 produits, 98 anciennes prestations) — ciblé et rejouable |
 | `npm run check` | lint + typecheck + tests + build |
 | `npm run check:supabase [fichier .env]` | Diagnostique la configuration Supabase d'un déploiement (variables, clés, joignabilité, schéma) |
 | `scripts/apply-migrations.sh <url-postgres>` | Applique les migrations sur une base distante en une transaction, sans `supabase link` |

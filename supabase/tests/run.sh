@@ -37,6 +37,15 @@ psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/accounts.test.sql
 echo "→ RLS tests"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/rls.test.sql
 
+# Nettoyage des données de démonstration, joué deux fois : la seconde exécution
+# ne doit plus rien trouver à supprimer et ne doit pas échouer. La base porte à
+# ce stade exactement ce que portait la production — catalogue, 887 prestations
+# du document, 98 anciennes prestations désactivées, 51 produits de démonstration.
+echo "→ nettoyage des données de démonstration (rejoué, idempotence)"
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-demo-data.sql > /dev/null
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/cleanup-demo-data.sql > /dev/null
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/cleanup.test.sql
+
 # Import de production : les deux fichiers de données doivent suffire à garnir
 # une base qui vient d'être migrée, et donner le même résultat à chaque rejeu.
 # C'est le scénario réel du client, qui n'a que le SQL Editor de Supabase.

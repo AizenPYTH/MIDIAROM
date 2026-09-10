@@ -306,7 +306,7 @@ export const ENTITIES: Record<string, EntityDef> = {
     basePath: "/admin/content/gallery",
     listColumns: ["title", "category", "image_path", "display_order", "is_published"],
     fields: [
-      { name: "category", label: "Catégorie", type: "select", width: "half", options: ["workshop", "repair", "before_after", "team"].map((v) => ({ value: v, label: v })) },
+      { name: "category", label: "Catégorie", type: "select", width: "half", options: ["storefront", "workshop", "repair", "before_after", "team"].map((v) => ({ value: v, label: v })) },
       { name: "display_order", label: "Ordre", type: "number", width: "half" },
       { name: "image_path", label: "Image (chemin dans content-media)", type: "text", required: true, hint: "Téléversez le fichier via « Médias publics » puis collez le chemin." },
       { name: "title", label: "Titre", type: "text" },

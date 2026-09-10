@@ -81,7 +81,12 @@ photos client, fiches consoles.
 - Les textes « diagnostic sous 48 h », « retour sous 5 jours », « garantie 3 mois » du
   prototype n'ont pas été repris : les délais et garanties affichés sont ceux du
   catalogue et des réglages.
-- Les photos (façade, vitrine, produits, consoles) sont des aperçus rayés tant qu'aucune
+- La photo de la façade du magasin est réelle, fournie par le client : elle est livrée
+  avec le site (`public/medias/facade-207-mediarom.webp`) et référencée dans
+  `gallery_items` sous la catégorie `storefront`, servie par `publicMediaUrl` qui laisse
+  passer les chemins commençant par « / ». Le bloc « Le magasin » de l'accueil la
+  privilégie ; le gérant peut la remplacer depuis Contenu → Galerie.
+- Les autres photos (vitrine, produits, consoles) sont des aperçus rayés tant qu'aucune
   photo n'est publiée depuis le back-office. La fiche console affiche la photo du modèle
   (`console_models.image_path`, téléversée dans Catalogue → Modèles) avec le nom complet
   du modèle en texte alternatif ; sans photo, l'aperçu annonce explicitement ce qui

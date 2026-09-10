@@ -130,14 +130,32 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         </div>
       ) : (
         <div className="border border-dashed border-border-strong bg-surface-muted px-6 py-8">
-          <p className="text-[15.5px] font-semibold text-ink">Aucun article ne correspond à ces critères.</p>
-          <p className="mt-1 text-sm text-ink-muted">
-            Élargissez la recherche ou{" "}
-            <Link href={ROUTES.shop} className="text-sale underline">
-              affichez tout le catalogue
-            </Link>
-            .
-          </p>
+          {/* Deux états vides distincts : un catalogue sans aucune référence n'est
+              pas un filtre trop étroit, et proposer d'élargir la recherche y
+              serait trompeur. Même bloc, même mise en forme. */}
+          {total === 0 ? (
+            <>
+              <p className="text-[15.5px] font-semibold text-ink">Aucun produit disponible pour le moment.</p>
+              <p className="mt-1 text-sm text-ink-muted">
+                Le rayon en ligne est en cours de mise à jour. Passez au magasin, ou{" "}
+                <Link href={ROUTES.repair} className="text-sale underline">
+                  faites réparer votre console
+                </Link>
+                .
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[15.5px] font-semibold text-ink">Aucun article ne correspond à ces critères.</p>
+              <p className="mt-1 text-sm text-ink-muted">
+                Élargissez la recherche ou{" "}
+                <Link href={ROUTES.shop} className="text-sale underline">
+                  affichez tout le catalogue
+                </Link>
+                .
+              </p>
+            </>
+          )}
         </div>
       )}
       <p className="mt-8 text-[13px] text-ink-faint">Les états d&apos;occasion sont indiqués sur chaque fiche (grade A, B ou C, défauts détaillés). Un article d&apos;occasion n&apos;est jamais présenté comme neuf.</p>

@@ -278,7 +278,7 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <StoreSection brand={brand} photo={gallery[0] ?? null} />
+      <StoreSection brand={brand} photo={gallery.find((g) => g.category === "storefront") ?? gallery[0] ?? null} />
 
       <CtaBanner title="Prêt à faire réparer votre console ?" text="Choisissez la plateforme et le modèle, la prestation, envoyez la console et suivez chaque étape depuis votre espace client." />
     </>

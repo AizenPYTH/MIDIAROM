@@ -34,8 +34,16 @@ begin
   if n_provisoires <> 874 then
     raise exception 'tarifs à configurer : % au lieu de 874', n_provisoires;
   end if;
-  if n_produits <> 51 then
-    raise exception 'produits boutique : % au lieu de 51', n_produits;
+  -- Le catalogue de production ne crée aucun produit : le stock réel est saisi
+  -- depuis le back-office, et la boutique affiche son état vide en attendant.
+  if n_produits <> 0 then
+    raise exception 'produits boutique : % au lieu de 0', n_produits;
+  end if;
+
+  -- La photo de façade est livrée avec le site, publiée dès le premier import.
+  if not exists (select 1 from public.gallery_items
+                  where image_path = '/medias/facade-207-mediarom.webp' and is_published) then
+    raise exception 'la photo de façade du magasin est absente de la galerie';
   end if;
 
   -- Un modèle ne peut pas porter deux fois la même panne : c'est la garantie
