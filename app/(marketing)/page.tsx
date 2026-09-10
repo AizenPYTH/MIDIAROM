@@ -107,15 +107,17 @@ export default async function HomePage() {
 
       {/* Hero deux colonnes du handoff : vente (papier, orange) / réparation (encre, bleu) */}
       <section id="top" className="grid [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
-        <div className="flex flex-col gap-[18px] border-r border-border bg-bg-alt px-11 pb-13 pt-16 max-sm:px-6">
+        <div className="flex flex-col gap-[18px] border-r border-border bg-bg-alt px-11 pb-13 pt-16 max-sm:px-5 max-sm:pb-6 max-sm:pt-[26px]">
           <Eyebrow>01 — Vente</Eyebrow>
-          <h1 className="text-[clamp(38px,5vw,62px)] font-extrabold leading-[0.98] tracking-[-0.03em] text-ink">{sale?.title ?? "Jeux, consoles et rétro."}</h1>
-          <p className="max-w-[38ch] text-[17px] leading-[1.5] text-ink-soft">{sale?.body ?? "Le stock du magasin, en ligne. Neuf, occasion révisée et garantie, accessoires et collector. Retrait boutique ou envoi partout en France."}</p>
-          <div className="mt-2 flex flex-wrap gap-2.5">
-            <Link href={ROUTES.shop} className="bg-sale px-[22px] py-3.5 text-[15px] font-semibold text-white hover:bg-ink-900">
+          <h1 className="text-[34px] font-extrabold leading-[0.98] tracking-[-0.03em] text-ink sm:text-[clamp(38px,5vw,62px)]">{sale?.title ?? "Jeux, consoles et rétro."}</h1>
+          <p className="max-w-[38ch] text-[15px] leading-[1.5] text-ink-soft sm:text-[17px]">{sale?.body ?? "Le stock du magasin, en ligne. Neuf, occasion révisée et garantie, accessoires et collector. Retrait boutique ou envoi partout en France."}</p>
+          {/* Un seul bouton par moitié au téléphone : le second (« Je revends ma
+              console ») a déjà sa place dans la section Reprise, plus bas. */}
+          <div className="mt-2 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+            <Link href={ROUTES.shop} className="bg-sale px-[22px] py-[15px] text-center text-[15px] font-semibold text-white hover:bg-ink-900 sm:py-3.5">
               {saleData.cta_primary}
             </Link>
-            <Link href={ROUTES.tradeIn} className="border border-ink px-[22px] py-3.5 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper">
+            <Link href={ROUTES.tradeIn} className="hidden border border-ink px-[22px] py-3.5 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper sm:inline-block">
               {saleData.cta_secondary}
             </Link>
           </div>
@@ -141,15 +143,17 @@ export default async function HomePage() {
             </Link>
           </p>
         </div>
-        <div className="flex flex-col gap-[18px] bg-ink-900 px-11 pb-13 pt-16 text-paper max-sm:px-6">
+        <div className="flex flex-col gap-[18px] bg-ink-900 px-11 pb-13 pt-16 text-paper max-sm:px-5 max-sm:pb-6 max-sm:pt-[26px]">
           <Eyebrow tone="repair">02 — Réparation</Eyebrow>
-          <h1 className="text-[clamp(38px,5vw,62px)] font-extrabold leading-[0.98] tracking-[-0.03em]">{hero?.title ?? "Envoyez-nous votre console."}</h1>
-          <p className="max-w-[38ch] text-[17px] leading-[1.5] text-[#c4bdae]">{hero?.body ?? "Décrivez la panne, choisissez la prestation, imprimez l'étiquette. Diagnostic à réception, devis avant toute intervention complémentaire."}</p>
-          <div className="mt-2 flex flex-wrap gap-2.5">
-            <Link href="#reparation" className="bg-accent px-[22px] py-3.5 text-[15px] font-semibold text-white hover:bg-paper hover:text-ink-900">
+          <h1 className="text-[34px] font-extrabold leading-[0.98] tracking-[-0.03em] sm:text-[clamp(38px,5vw,62px)]">{hero?.title ?? "Envoyez-nous votre console."}</h1>
+          <p className="max-w-[38ch] text-[15px] leading-[1.5] text-[#c4bdae] sm:text-[17px]">{hero?.body ?? "Décrivez la panne, choisissez la prestation, imprimez l'étiquette. Diagnostic à réception, devis avant toute intervention complémentaire."}</p>
+          {/* Idem côté réparation : « Grille tarifaire » reste accessible dans la
+              section Réparation, à l'ancre #tarifs. */}
+          <div className="mt-2 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+            <Link href="#reparation" className="bg-accent px-[22px] py-[15px] text-center text-[15px] font-semibold text-white hover:bg-paper hover:text-ink-900 sm:py-3.5">
               {heroData.cta_primary}
             </Link>
-            <Link href="#tarifs" className="border border-[#55503f] px-[22px] py-3.5 text-[15px] font-semibold text-paper hover:border-paper">
+            <Link href="#tarifs" className="hidden border border-[#55503f] px-[22px] py-3.5 text-[15px] font-semibold text-paper hover:border-paper sm:inline-block">
               {heroData.cta_secondary}
             </Link>
           </div>
@@ -185,13 +189,13 @@ export default async function HomePage() {
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             {shopChips.map((c, i) => (
-              <Link key={c.label} href={c.href} className={`whitespace-nowrap border border-border-strong px-3.5 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-ink hover:border-ink ${i === 0 ? "bg-paper-strong" : ""}`}>
+              <Link key={c.label} href={c.href} className={`whitespace-nowrap border border-border-strong chip text-ink hover:border-ink ${i === 0 ? "bg-paper-strong" : ""}`}>
                 {c.label}
               </Link>
             ))}
           </div>
           {shelf.length ? (
-            <div className="mt-6 grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
               {shelf.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
@@ -223,7 +227,7 @@ export default async function HomePage() {
               </Link>
             </p>
           </div>
-          <RepairForm models={form.models} conditions={form.conditions} initialCustomer={null} initialAddress={null} isLoggedIn={false} />
+          <RepairForm models={form.models} conditions={form.conditions} initialCustomer={null} initialAddress={null} isLoggedIn={false} stickyActions={false} />
         </div>
       </section>
 

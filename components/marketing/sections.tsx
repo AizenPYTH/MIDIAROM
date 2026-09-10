@@ -9,13 +9,20 @@ import type { Brand, ConsoleModel } from "@/lib/repair/catalog";
 import type { Tables, Views } from "@/types/database";
 import { cn } from "@/lib/utils/cn";
 
-/** Bandeau de garanties du handoff : cellules mono majuscules séparées par des filets. */
+/**
+ * Bandeau de garanties du handoff : cellules mono majuscules séparées par des
+ * filets.
+ *
+ * Au téléphone, la grille `auto-fit` retomberait sur une seule colonne et
+ * empilerait quatre lignes pleine hauteur avant même le premier produit : on en
+ * fait une bande à défilement horizontal, les libellés restent entiers.
+ */
 export function GuaranteeStrip({ items }: { items: string[] }) {
   if (!items.length) return null;
   return (
-    <div className="grid border-y border-border bg-bg [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+    <div className="scroll-strip border-y border-border bg-bg sm:grid sm:[grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
       {items.map((item, i) => (
-        <div key={item} className={cn("px-6 py-5 font-mono text-[12.5px] uppercase tracking-[0.04em] text-ink", i < items.length - 1 && "border-r border-border")}>
+        <div key={item} className={cn("max-w-[70vw] px-5 py-4 font-mono text-[12.5px] uppercase tracking-[0.04em] text-ink sm:max-w-none sm:px-6 sm:py-5", i < items.length - 1 && "border-r border-border")}>
           {item}
         </div>
       ))}
@@ -46,8 +53,10 @@ export function PriceList({ items, id, title = "Indicatif — options en sus", c
     <div id={id} className={cn("border border-ink-650 p-[18px]", className)} style={{ scrollMarginTop: 96 }}>
       <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">{title}</span>
       <div className="mt-3 flex flex-col gap-[9px]">
-        {items.map((t) => (
-          <div key={t.label} className="flex justify-between gap-4 border-b border-dotted border-[#3a3529] pb-[7px] text-[14.5px] text-paper">
+        {/* Deux modèles peuvent porter la même panne (« Ne s'allume plus ») : le
+            libellé seul ne fait pas une clé unique, et React en omettait une. */}
+        {items.map((t, i) => (
+          <div key={`${t.href ?? ""}-${t.label}-${i}`} className="flex justify-between gap-4 border-b border-dotted border-[#3a3529] pb-[7px] text-[14.5px] text-paper">
             {t.href ? (
               <Link href={t.href} className="hover:text-accent-light">
                 {t.label}
@@ -160,8 +169,8 @@ export function FaqList({ items }: { items: { id: string; question: string; answ
   return (
     <div className="divide-y divide-border border border-border bg-surface">
       {items.map((item) => (
-        <details key={item.id} className="group px-5 py-4">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15.5px] font-semibold text-ink [&::-webkit-details-marker]:hidden">
+        <details key={item.id} className="group px-5 py-2.5 sm:py-4">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 py-1.5 text-[15.5px] font-semibold text-ink sm:min-h-0 sm:py-0 [&::-webkit-details-marker]:hidden">
             {item.question}
             <span className="font-mono text-ink-muted group-open:hidden" aria-hidden="true">
               +
@@ -212,7 +221,24 @@ export function StoreSection({ brand, photo }: { brand: BrandSettings; photo: Ta
               ))}
             </div>
           ) : null}
-          <Link href={ROUTES.contact} className="mt-2 self-start border border-ink px-5 py-3 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper">
+          {/* Au téléphone, appeler est l'action la plus probable : elle passe
+              devant, en pleine largeur, avant l'itinéraire et le courriel. */}
+          {brand.phone ? (
+            <a href={`tel:${brand.phone.replace(/\s/g, "")}`} className="mt-2 bg-ink px-5 py-[15px] text-center text-[15px] font-semibold text-paper sm:hidden">
+              Appeler le magasin
+            </a>
+          ) : null}
+          {hasAddress ? (
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent([brand.address_line1, brand.postal_code, brand.city].filter(Boolean).join(" "))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-ink px-5 py-[15px] text-center text-[15px] font-semibold text-ink sm:hidden"
+            >
+              Itinéraire
+            </a>
+          ) : null}
+          <Link href={ROUTES.contact} className="mt-2 self-stretch border border-ink px-5 py-[15px] text-center text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper sm:mt-2 sm:self-start sm:py-3">
             Nous écrire
           </Link>
         </div>

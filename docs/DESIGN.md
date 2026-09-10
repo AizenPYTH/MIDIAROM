@@ -71,10 +71,18 @@ photos client, fiches consoles.
    réelles, récapitulatif (prix et TVA vérifiés par le serveur), conditions, CGV.
    « Envoyer ma demande » crée le dossier puis redirige vers le paiement.
 
+## Responsive
+
+Le handoff mobile (écrans M1 à M6) est intégré et documenté à part :
+**[MOBILE.md](./MOBILE.md)** — points de rupture, écran par écran, utilitaires
+partagés et écarts assumés. Le rendu de bureau décrit ici est inchangé : toutes
+les classes mobiles sont écrites en `max-sm` / `sm:` / `lg:`.
+
 ## Écarts assumés
 
-- Sur mobile, la navigation principale passe derrière un bouton « Menu » (le prototype
-  laisse le header s'enrouler sur plusieurs lignes, peu utilisable en sticky).
+- Sur mobile, la navigation principale passe derrière un burger de 38 px qui ouvre
+  un panneau plein écran, et une barre d'onglets basse (Accueil, Boutique, Réparer,
+  Compte) double les quatre destinations principales — voir MOBILE.md.
 - L'étape 2 combine une prestation principale (radio) et des options (cases) : le
   backend facture une prestation par dossier, les prestations supplémentaires passent
   par un devis complémentaire.

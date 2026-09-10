@@ -69,7 +69,7 @@ export default async function ShopOrdersPage({ searchParams }: { searchParams: P
           </Link>
         </form>
         <FilterChips items={FILTERS.map((x) => ({ key: x.key, label: x.label }))} current={filter.key} hrefFor={(key) => `/admin/shop-orders?${new URLSearchParams({ ...(q ? { q } : {}), f: key })}`} />
-        <Table minWidth={760}>
+        <Table minWidth={760} cards>
           <thead>
             <tr>
               <Th>N°</Th>
@@ -86,25 +86,29 @@ export default async function ShopOrdersPage({ searchParams }: { searchParams: P
               const items = o.items as { label: string; quantity: number }[];
               return (
                 <tr key={o.id} className="hover:bg-surface-muted">
-                  <Td>
+                  <Td label="N°">
                     <Link href={`/admin/shop-orders/${o.id}`} className="whitespace-nowrap font-mono text-[12.5px] text-ink-soft hover:text-ink">
                       {o.order_number}
                     </Link>
                   </Td>
-                  <Td>
-                    {o.customer_first_name} {o.customer_last_name}
-                    <span className="block text-[12.5px] text-ink-muted">{o.customer_email}</span>
+                  <Td label="Client" className="max-sm:text-right">
+                    <span className="block">
+                      {o.customer_first_name} {o.customer_last_name}
+                      <span className="block text-[12.5px] text-ink-muted">{o.customer_email}</span>
+                    </span>
                   </Td>
-                  <Td className="text-ink-faint">{items.map((i) => `${i.label}${i.quantity > 1 ? ` ×${i.quantity}` : ""}`).join(" · ")}</Td>
-                  <Td className="whitespace-nowrap text-right font-mono">{formatPrice(o.total_cents)}</Td>
-                  <Td className="text-[13px] text-ink-faint">
-                    {FULFILLMENT_LABELS[o.fulfillment]}
-                    {o.tracking_number ? <span className="block font-mono text-[11px]">{o.tracking_number}</span> : null}
+                  <Td label="Articles" className="text-ink-faint max-sm:text-right">{items.map((i) => `${i.label}${i.quantity > 1 ? ` ×${i.quantity}` : ""}`).join(" · ")}</Td>
+                  <Td label="Total" className="whitespace-nowrap text-right font-mono">{formatPrice(o.total_cents)}</Td>
+                  <Td label="Livraison" className="text-[13px] text-ink-faint max-sm:text-right">
+                    <span className="block">
+                      {FULFILLMENT_LABELS[o.fulfillment]}
+                      {o.tracking_number ? <span className="block font-mono text-[11px]">{o.tracking_number}</span> : null}
+                    </span>
                   </Td>
-                  <Td>
+                  <Td label="Statut">
                     <Badge tone={shopStatusTone(o.status)}>{shopStatusLabel(o.status, o.fulfillment)}</Badge>
                   </Td>
-                  <Td className="whitespace-nowrap text-[13px] text-ink-faint">{formatDateTime(o.created_at)}</Td>
+                  <Td label="Date" className="whitespace-nowrap text-[13px] text-ink-faint">{formatDateTime(o.created_at)}</Td>
                 </tr>
               );
             })}

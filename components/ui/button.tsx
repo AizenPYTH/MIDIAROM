@@ -30,7 +30,8 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  sm: "px-3.5 py-2.5 font-mono text-[12px] uppercase tracking-[0.06em]",
+  // 13 px de padding vertical au téléphone : la cible tactile atteint 44 px.
+  sm: "px-3.5 py-[13px] font-mono text-[12px] uppercase tracking-[0.06em] sm:py-2.5",
   md: "px-[22px] py-[14px] text-[15px] font-semibold",
   lg: "px-6 py-4 text-[15px] font-semibold",
 };

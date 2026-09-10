@@ -41,7 +41,7 @@ export default async function TradeInTrackingPage({ params }: { params: Promise<
       <p className="mt-3 text-[14.5px] text-ink-soft">{TRADE_IN_STATUS_DESCRIPTIONS[t.status]}</p>
       <ol className="mt-6 flex gap-[2px]" aria-label="Avancement">
         {TRADE_IN_TIMELINE.map((s, i) => (
-          <li key={s.key} className={cn("min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap px-1 py-[9px] text-center font-mono text-[10px] uppercase tracking-[0.04em]", i <= reachedIndex || t.status === "CLOSED" ? "bg-accent text-white" : "bg-surface-muted text-ink-muted")} title={s.label}>
+          <li key={s.key} className={cn("min-w-0 shrink-0 whitespace-nowrap px-[11px] py-[10px] text-center font-mono text-[10px] uppercase tracking-[0.04em] sm:flex-1 sm:shrink sm:overflow-hidden sm:text-ellipsis sm:px-1 sm:py-[9px]", i <= reachedIndex || t.status === "CLOSED" ? "bg-accent text-white" : "bg-surface-muted text-ink-muted")} title={s.label}>
             {s.label}
           </li>
         ))}

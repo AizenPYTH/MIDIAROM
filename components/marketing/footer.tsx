@@ -27,12 +27,12 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
 
   return (
     <footer className="mt-auto bg-ink-900 font-mono text-[12px] tracking-[0.04em] text-[#8a8271]">
-      <div className="flex flex-wrap justify-between gap-[18px] px-6 py-7">
+      <div className="flex flex-col gap-[18px] px-4 pb-[34px] pt-6 text-[11.5px] sm:flex-row sm:flex-wrap sm:justify-between sm:px-6 sm:py-7 sm:text-[12px]">
         <span>
           © {new Date().getFullYear()} {brand.name}
           {brand.city ? ` — ${brand.city}` : ""}
         </span>
-        <span className="flex flex-wrap gap-x-2 gap-y-1">
+        <span className="flex flex-wrap gap-x-2 gap-y-2 sm:gap-y-1">
           {links.map((link, i) => (
             <span key={link.label} className="contents">
               {i > 0 ? <span aria-hidden="true">·</span> : null}

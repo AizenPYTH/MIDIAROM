@@ -29,7 +29,7 @@ export default async function PackagingPage({ searchParams }: { searchParams: Pr
       {!model ? (
         <div className="mt-6 flex flex-wrap gap-2">
           {models.map((m) => (
-            <a key={m.id} href={`${ROUTES.packaging}?modele=${m.slug}`} className="rounded-full border border-border bg-surface px-3 py-1 text-sm text-ink-soft hover:border-accent hover:text-ink">
+            <a key={m.id} href={`${ROUTES.packaging}?modele=${m.slug}`} className="flex min-h-11 items-center border border-border bg-surface px-3 py-1 text-sm text-ink-soft hover:border-accent hover:text-ink sm:min-h-0">
               {m.name}
             </a>
           ))}

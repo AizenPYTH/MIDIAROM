@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/marketing/header";
 import { SiteFooter } from "@/components/marketing/footer";
+import { MobileTabBar } from "@/components/marketing/tab-bar";
 import { getSetting } from "@/lib/settings";
 import { getActiveModels } from "@/lib/repair/catalog";
 
@@ -15,6 +16,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
         {children}
       </main>
       <SiteFooter brand={brand} social={social} models={models.map((m) => ({ slug: m.slug, name: m.name }))} />
+      <MobileTabBar />
     </>
   );
 }

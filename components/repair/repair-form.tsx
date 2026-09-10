@@ -38,13 +38,42 @@ export interface RepairFormProps {
   showPrices?: boolean;
   /** Lorsque true, la fiche occupe toute la largeur (page /reparation). */
   wide?: boolean;
+  /**
+   * Barre d'action collée en bas de l'écran au téléphone. À laisser active sur
+   * les pages dont la fiche est le contenu ; à couper là où elle n'est qu'une
+   * section parmi d'autres (l'accueil), où elle entrerait en concurrence avec
+   * la barre d'onglets basse.
+   */
+  stickyActions?: boolean;
 }
 
 const SYMPTOMS = ["ne s'allume plus", "surchauffe", "pas d'image", "bruit anormal", "ne charge plus", "dégât liquide"];
+
+/**
+ * Au téléphone (écrans M3 / M4 du handoff mobile), les étapes 1 et 2 se lisent
+ * sur fond encre — on est dans l'univers réparation, et la carte se fond dans
+ * la section sombre qui l'accueille — puis les étapes 3 et 4 repassent sur
+ * papier, plus confortable pour saisir du texte et une photo.
+ *
+ * Au-delà de `sm`, la carte reste papier à toutes les étapes : c'est le handoff
+ * de bureau, inchangé. Chaque classe sombre est donc systématiquement suivie de
+ * son pendant `sm:`. Le piège, signalé par le handoff, est le texte des lignes
+ * sélectionnées : leur fond clair impose de repasser en encre foncée.
+ */
 const MIN_DESCRIPTION = 20;
 const RETRO_KEY = "retro";
 
 type Step = 1 | 2 | 3 | 4;
+
+/**
+ * « PlayStation 4 », et non « PlayStation PlayStation 4 » : les modèles du
+ * catalogue du client portent déjà le nom de la marque. On ne le préfixe que
+ * lorsqu'il manque (une console rétro nommée « Mega Drive », par exemple).
+ */
+function modelLabel(model: FormModel | null): string {
+  if (!model) return "—";
+  return model.name.toLowerCase().startsWith(model.brandName.toLowerCase()) ? model.name : `${model.brandName} ${model.name}`;
+}
 
 /** Plateformes de l'étape 1, dérivées du catalogue (marques actives + regroupement rétro). */
 function buildPlatforms(models: FormModel[]): FormPlatform[] {
@@ -301,17 +330,27 @@ export function RepairForm(props: RepairFormProps) {
   };
 
   const total = pricing?.totalCents ?? null;
+  // Étapes 1-2 sur fond encre au téléphone (M3), 3-4 sur papier (M4).
+  const darkOnPhone = step <= 2;
   const shipping = offer?.shippingMethods.find((m) => m.id === shippingId) ?? null;
   const pickedOptions = [...(offer?.packs.filter((p) => packIds.includes(p.id)) ?? []), ...(offer?.options.filter((o) => optionIds.includes(o.id) && !optionsInPacks.has(o.id)) ?? [])];
   const nextLabel = step === 4 ? "Envoyer ma demande" : "Continuer";
+  // Le bouton principal porte le total en cours au téléphone : c'est le chiffre
+  // que le client cherche, et il n'a pas la colonne de récapitulatif du bureau
+  // sous les yeux. Rien à afficher tant que la prestation est « sur devis ».
+  const runningTotal = showPrices && total !== null && step < 4 && !repair?.priceProvisional ? formatPrice(total) : null;
+  const sticky = props.stickyActions ?? true;
 
   return (
-    <div ref={rootRef} className={cn("bg-paper p-[26px] text-ink-900", props.wide && "w-full")} style={{ scrollMarginTop: 96 }}>
-      <div className="flex items-baseline justify-between gap-3">
+    <div ref={rootRef} className={cn("p-4 sm:bg-paper sm:p-[26px] sm:text-ink-900", darkOnPhone ? "text-paper" : "bg-paper text-ink-900", props.wide && "w-full")} style={{ scrollMarginTop: 96 }}>
+      <div className="mb-4 flex items-baseline justify-between gap-3 sm:mb-0">
         <strong className="font-mono text-[12px] uppercase tracking-[0.08em]">Fiche de réparation</strong>
         <span className="font-mono text-[12px] text-ink-muted">Étape {step} / 4</span>
       </div>
-      <div className="mb-[22px] mt-3 h-[3px] bg-[rgba(20,18,15,0.12)]" role="progressbar" aria-valuemin={1} aria-valuemax={4} aria-valuenow={step}>
+      {/* Au téléphone, la barre de progression est reportée sur la barre d'action
+          collée en bas : elle reste sous les yeux quand on descend dans l'étape,
+          au lieu de disparaître avec le haut de la carte. */}
+      <div className="mb-[22px] mt-3 hidden h-[3px] bg-[rgba(20,18,15,0.12)] sm:block" role="progressbar" aria-valuemin={1} aria-valuemax={4} aria-valuenow={step}>
         <div className="h-[3px] bg-accent" style={{ width: `${(step / 4) * 100}%` }} />
       </div>
 
@@ -337,7 +376,12 @@ export function RepairForm(props: RepairFormProps) {
                     setModelId(null);
                     setError(null);
                   }}
-                  className={cn("flex cursor-pointer flex-col gap-1 border p-[13px] text-left transition-colors hover:border-accent", selected ? "border-ink-900 bg-ink-900 text-paper" : "border-[rgba(20,18,15,0.22)] bg-transparent text-ink-900")}
+                  className={cn(
+                    "flex min-h-[60px] cursor-pointer flex-col justify-center gap-1 border p-[13px] text-left transition-colors hover:border-accent sm:min-h-0 sm:justify-start",
+                    selected
+                      ? "border-paper bg-paper text-ink-900 sm:border-ink-900 sm:bg-ink-900 sm:text-paper"
+                      : "border-ink-650 bg-transparent text-paper sm:border-[rgba(20,18,15,0.22)] sm:text-ink-900",
+                  )}
                 >
                   <span className="text-[15px] font-semibold">{p.label}</span>
                   <span className="font-mono text-[11px] opacity-70">{p.note}</span>
@@ -352,7 +396,17 @@ export function RepairForm(props: RepairFormProps) {
                 {platformModels.map((m) => {
                   const selected = modelId === m.id;
                   return (
-                    <button key={m.id} type="button" role="radio" aria-checked={selected} onClick={() => pickModel(m.id)} className={cn("flex cursor-pointer flex-col gap-1 border p-[13px] text-left transition-colors hover:border-accent", selected ? "border-accent bg-[var(--selection)] text-ink-900" : "border-[rgba(20,18,15,0.22)] bg-transparent text-ink-900")}>
+                    <button
+                      key={m.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => pickModel(m.id)}
+                      className={cn(
+                        "flex min-h-[60px] cursor-pointer flex-col justify-center gap-1 border p-[13px] text-left transition-colors hover:border-accent sm:min-h-0 sm:justify-start",
+                        selected ? "border-accent bg-[var(--selection)] text-ink-900" : "border-ink-650 bg-transparent text-paper sm:border-[rgba(20,18,15,0.22)] sm:text-ink-900",
+                      )}
+                    >
                       <span className="text-[15px] font-semibold">{m.name}</span>
                       <span className="font-mono text-[11px] opacity-70">{platform === RETRO_KEY ? m.brandName : m.tag || m.brandName}</span>
                     </button>
@@ -386,7 +440,7 @@ export function RepairForm(props: RepairFormProps) {
               onChange={(e) => setRepairQuery(e.target.value)}
               placeholder={`Rechercher parmi ${repairs.length} pannes (HDMI, charge, écran…)`}
               aria-label="Rechercher une panne"
-              className="w-full border border-[rgba(20,18,15,0.22)] bg-white p-3 text-[15px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none"
+              className="w-full border border-ink-650 bg-ink-800 p-3 text-[16px] text-paper placeholder:text-ink-muted focus:border-accent focus:outline-none sm:border-[rgba(20,18,15,0.22)] sm:bg-white sm:p-3 sm:text-[15px] sm:text-ink-900"
             />
           ) : null}
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Prestation">
@@ -394,15 +448,15 @@ export function RepairForm(props: RepairFormProps) {
               const open = isCategoryOpen(group.name, index);
               const panelId = `prestations-${index}`;
               return (
-                <div key={group.name} className="border border-[rgba(20,18,15,0.16)]">
+                <div key={group.name} className="border border-ink-700 sm:border-[rgba(20,18,15,0.16)]">
                   <button
                     type="button"
                     onClick={() => toggleCategory(group.name)}
                     aria-expanded={open}
                     aria-controls={panelId}
-                    className="flex w-full cursor-pointer items-center justify-between gap-3 bg-paper-alt px-[13px] py-2.5 text-left"
+                    className="flex w-full cursor-pointer items-center justify-between gap-3 bg-ink-800 px-[13px] py-3 text-left sm:bg-paper-alt sm:py-2.5"
                   >
-                    <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-900">{group.name}</span>
+                    <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-paper sm:text-ink-900">{group.name}</span>
                     <span className="flex items-center gap-2 font-mono text-[11px] text-ink-muted">
                       {group.items.length}
                       <span aria-hidden="true">{open ? "−" : "+"}</span>
@@ -411,7 +465,7 @@ export function RepairForm(props: RepairFormProps) {
                   {open ? (
                     <div id={panelId} className="flex flex-col gap-2 p-2">
                       {group.items.map((r) => (
-                        <OptionRow key={r.id} selected={repairId === r.id} onPick={() => pickRepair(r.id)} label={r.name} note={r.note} price={repairPrice(r)} role="radio" />
+                        <OptionRow key={r.id} selected={repairId === r.id} onPick={() => pickRepair(r.id)} label={r.name} note={r.note} price={repairPrice(r)} role="radio" darkOnPhone />
                       ))}
                     </div>
                   ) : null}
@@ -428,17 +482,17 @@ export function RepairForm(props: RepairFormProps) {
                   <span className="mt-2 font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Options d&apos;entretien — plusieurs choix possibles</span>
                   <div className="flex flex-col gap-2">
                     {offer.packs.map((p) => (
-                      <OptionRow key={p.id} selected={packIds.includes(p.id)} onPick={() => togglePack(p.id)} label={p.name} note={p.note} price={formatPriceDelta(p.priceCents)} badge={p.isRecommended ? "Recommandé" : "Pack"} />
+                      <OptionRow key={p.id} selected={packIds.includes(p.id)} onPick={() => togglePack(p.id)} label={p.name} note={p.note} price={formatPriceDelta(p.priceCents)} badge={p.isRecommended ? "Recommandé" : "Pack"} darkOnPhone />
                     ))}
                     {offer.options.map((o) => {
                       const inPack = optionsInPacks.has(o.id);
-                      return <OptionRow key={o.id} selected={optionIds.includes(o.id) && !inPack} disabled={inPack} onPick={() => toggleOption(o.id)} label={o.name} note={inPack ? "Inclus dans votre pack" : o.note} price={formatPriceDelta(o.priceCents)} badge={o.isRecommended ? "Recommandé" : undefined} />;
+                      return <OptionRow key={o.id} selected={optionIds.includes(o.id) && !inPack} disabled={inPack} onPick={() => toggleOption(o.id)} label={o.name} note={inPack ? "Inclus dans votre pack" : o.note} price={formatPriceDelta(o.priceCents)} badge={o.isRecommended ? "Recommandé" : undefined} darkOnPhone />;
                     })}
                   </div>
                 </>
               ) : null}
               {offer && !offer.packs.length && !offer.options.length ? <p className="font-mono text-[11.5px] text-ink-muted">Aucune option supplémentaire compatible avec cette prestation.</p> : null}
-              {pricing?.warnings.length ? <p className="text-[13px] text-ink-faint">{pricing.warnings.join(" ")}</p> : null}
+              {pricing?.warnings.length ? <p className="text-[13px] text-[#a39c8c] sm:text-ink-faint">{pricing.warnings.join(" ")}</p> : null}
             </>
           ) : null}
         </div>
@@ -453,23 +507,44 @@ export function RepairForm(props: RepairFormProps) {
             maxLength={2000}
             aria-label="Description du problème"
             placeholder="Ex. : la console s'allume mais s'éteint après 5 minutes, ventilateur très bruyant depuis 2 semaines. Déjà nettoyée l'an dernier."
-            className="min-h-[130px] w-full resize-y border border-[rgba(20,18,15,0.22)] bg-white p-[13px] text-[15px] leading-normal text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none"
+            className="min-h-[120px] w-full resize-none border border-[rgba(20,18,15,0.22)] bg-white p-[13px] text-[16px] leading-normal text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none sm:min-h-[130px] sm:resize-y sm:text-[15px]"
           />
           <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Symptômes — plusieurs choix possibles</span>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Symptômes">
             {symptomChoices.map((sym) => {
               const on = symptoms.includes(sym);
               return (
-                <button key={sym} type="button" aria-pressed={on} onClick={() => toggleSymptom(sym)} className={cn("whitespace-nowrap border px-[11px] py-2 font-mono text-[11.5px] uppercase tracking-[0.05em] transition-colors hover:border-accent", on ? "border-accent bg-accent text-white" : "border-dashed border-[rgba(20,18,15,0.3)] bg-paper-alt text-ink-900")}>
+                <button key={sym} type="button" aria-pressed={on} onClick={() => toggleSymptom(sym)} className={cn("whitespace-nowrap border px-[11px] py-[13px] font-mono text-[11.5px] uppercase tracking-[0.05em] transition-colors hover:border-accent sm:py-2", on ? "border-accent bg-accent text-white" : "border-dashed border-[rgba(20,18,15,0.3)] bg-paper-alt text-ink-900")}>
                   {on ? "✓" : "+"} {sym}
                 </button>
               );
             })}
           </div>
-          <DraftPhotoUploader photos={photos} onChange={setPhotos} label="déposez photos de la panne" />
+          <DraftPhotoUploader photos={photos} onChange={setPhotos} label="déposez photos de la panne" phoneLabel="prendre une photo de la panne" />
+
+          {/* Récapitulatif compact : au téléphone, le client n'a pas la colonne
+              de gauche du bureau, et attendre l'étape 4 pour lui montrer ce
+              qu'il a choisi l'oblige à revenir en arrière pour vérifier. */}
+          <div className="border border-[rgba(20,18,15,0.16)] bg-paper-alt p-[13px] sm:hidden">
+            <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted">Votre demande</span>
+            <dl className="mt-2 flex flex-col gap-1.5 text-[13.5px]">
+              <div className="flex justify-between gap-3">
+                <dt className="text-ink-faint">Appareil</dt>
+                <dd className="text-right font-medium">{modelLabel(model)}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-ink-faint">Prestation</dt>
+                <dd className="text-right font-medium">{repair?.name ?? "—"}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-ink-faint">Estimation</dt>
+                <dd className="whitespace-nowrap text-right font-mono">{repair?.priceProvisional ? "sur devis" : total !== null ? formatPrice(total) : "—"}</dd>
+              </div>
+            </dl>
+          </div>
           <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
-            <input value={serial} onChange={(e) => setSerial(e.target.value)} maxLength={60} placeholder="Numéro de série (facultatif)" aria-label="Numéro de série" className="border border-[rgba(20,18,15,0.22)] bg-white p-3 text-[15px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none" />
-            <label className="flex items-center gap-3 border border-[rgba(20,18,15,0.22)] px-3 py-2 text-[13px] text-ink-faint">
+            <input value={serial} onChange={(e) => setSerial(e.target.value)} maxLength={60} placeholder="Numéro de série (facultatif)" aria-label="Numéro de série" className="border border-[rgba(20,18,15,0.22)] bg-white p-3 text-[16px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[15px]" />
+            <label className="flex items-center gap-3 border border-[rgba(20,18,15,0.22)] px-3 py-3 text-[13px] text-ink-faint sm:py-2">
               <Checkbox checked={alreadyOpened} onChange={(e) => setAlreadyOpened(e.target.checked)} />
               Console déjà ouverte ou réparée
             </label>
@@ -488,7 +563,10 @@ export function RepairForm(props: RepairFormProps) {
               </Link>
             </p>
           ) : null}
-          <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
+          {/* Un champ par ligne au téléphone : deux colonnes de 150 px tiennent
+              à l'écran mais réduisent chaque champ à une dizaine de caractères
+              visibles, et une adresse ne s'y relit pas. */}
+          <div className="grid grid-cols-1 gap-2 sm:[grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
             <TextInput placeholder="Prénom" autoComplete="given-name" value={customer.first_name} onChange={(v) => setCustomer({ ...customer, first_name: v })} error={fieldErrors["customer.first_name"]} />
             <TextInput placeholder="Nom" autoComplete="family-name" value={customer.last_name} onChange={(v) => setCustomer({ ...customer, last_name: v })} error={fieldErrors["customer.last_name"]} />
             <TextInput placeholder="Téléphone" type="tel" autoComplete="tel" value={customer.phone} onChange={(v) => setCustomer({ ...customer, phone: v })} error={fieldErrors["customer.phone"]} />
@@ -500,7 +578,7 @@ export function RepairForm(props: RepairFormProps) {
           </div>
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Mode d'envoi">
             {(offer?.shippingMethods ?? []).map((m) => (
-              <button key={m.id} type="button" role="radio" aria-checked={shippingId === m.id} onClick={() => setShippingId(m.id)} className={cn("flex cursor-pointer items-center justify-between gap-3 border border-[rgba(20,18,15,0.22)] p-[13px_14px] text-left transition-colors hover:border-accent", shippingId === m.id ? "bg-[var(--selection)]" : "bg-transparent")}>
+              <button key={m.id} type="button" role="radio" aria-checked={shippingId === m.id} onClick={() => setShippingId(m.id)} className={cn("flex min-h-[60px] cursor-pointer items-center justify-between gap-3 border border-[rgba(20,18,15,0.22)] p-[13px_14px] text-left transition-colors hover:border-accent sm:min-h-0", shippingId === m.id ? "bg-[var(--selection)]" : "bg-transparent")}>
                 <span className="flex flex-col gap-0.5">
                   <span className="text-[15px] font-semibold">{m.name}</span>
                   <span className="text-[13px] text-ink-faint">{m.note}</span>
@@ -512,7 +590,7 @@ export function RepairForm(props: RepairFormProps) {
           <div className="bg-ink-900 p-4 text-paper">
             <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Récapitulatif</span>
             <div className="mt-[11px] flex flex-col gap-[7px] text-[14.5px]">
-              <RecapLine k="Appareil" v={model ? `${model.brandName} ${model.name}` : "—"} />
+              <RecapLine k="Appareil" v={modelLabel(model)} />
               <RecapLine k="Prestation" v={repair?.name ?? "—"} />
               {symptoms.length ? <RecapLine k="Symptômes" v={symptoms.join(", ")} muted /> : null}
               {photos.length ? <RecapLine k="Photos" v={`${photos.length} jointe${photos.length > 1 ? "s" : ""}`} muted /> : null}
@@ -550,26 +628,66 @@ export function RepairForm(props: RepairFormProps) {
         </div>
       ) : null}
 
-      <div className="mt-[22px] flex items-center gap-2">
-        <button type="button" onClick={back} disabled={step === 1 || submitting} className="cursor-pointer border border-[rgba(20,18,15,0.25)] bg-transparent px-4 py-[13px] font-mono text-[12px] uppercase tracking-[0.06em] text-ink-900 disabled:opacity-40">
-          Retour
-        </button>
-        <button
-          type="button"
-          onClick={step === 4 ? submit : next}
-          disabled={submitting || (step === 4 && (!pricing || Boolean(pricingError)))}
-          aria-busy={submitting || undefined}
-          className="flex-1 cursor-pointer bg-accent px-4 py-[14px] font-mono text-[12.5px] uppercase tracking-[0.06em] text-white transition-colors hover:bg-ink-900 disabled:opacity-60"
-        >
-          {submitting ? "Envoi…" : nextLabel}
-        </button>
+      {/* Barre d'action collée en bas de l'écran au téléphone. `sticky` et non
+          `fixed` : le clavier tactile pousse alors la barre au lieu de la
+          recouvrir. Au-delà de `sm`, elle redevient le pied de carte du
+          handoff de bureau. */}
+      <div
+        className={cn(
+          "safe-bottom -mx-4 mt-[22px] border-t px-4 pt-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:pt-0 sm:pb-0",
+          sticky && "sticky bottom-0 z-10",
+          darkOnPhone ? "border-ink-700 bg-ink-800" : "border-border bg-paper-alt",
+        )}
+        style={{ "--safe-pb": "14px" } as React.CSSProperties}
+      >
+        <div className={cn("mb-3 h-[3px] sm:hidden", darkOnPhone ? "bg-ink-700" : "bg-[rgba(20,18,15,0.12)]")} role="progressbar" aria-valuemin={1} aria-valuemax={4} aria-valuenow={step}>
+          <div className="h-[3px] bg-accent" style={{ width: `${(step / 4) * 100}%` }} />
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={back}
+            disabled={step === 1 || submitting}
+            className={cn(
+              "cursor-pointer border bg-transparent px-4 py-[13px] font-mono text-[12px] uppercase tracking-[0.06em] disabled:opacity-40",
+              darkOnPhone ? "border-ink-600 text-paper sm:border-[rgba(20,18,15,0.25)] sm:text-ink-900" : "border-[rgba(20,18,15,0.25)] text-ink-900",
+            )}
+          >
+            Retour
+          </button>
+          <button
+            type="button"
+            onClick={step === 4 ? submit : next}
+            disabled={submitting || (step === 4 && (!pricing || Boolean(pricingError)))}
+            aria-busy={submitting || undefined}
+            className="flex-1 cursor-pointer bg-accent px-4 py-[14px] font-mono text-[12.5px] uppercase tracking-[0.06em] text-white transition-colors hover:bg-ink-900 disabled:opacity-60"
+          >
+            {submitting ? (
+              "Envoi…"
+            ) : (
+              <>
+                {nextLabel}
+                {runningTotal ? <span className="sm:hidden"> · {runningTotal}</span> : null}
+              </>
+            )}
+          </button>
+        </div>
+        {step === 4 ? <p className="mt-2 text-center font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-muted">Paiement sécurisé à l&apos;étape suivante · prix vérifié par nos serveurs</p> : null}
       </div>
-      {step === 4 ? <p className="mt-2 text-center font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-muted">Paiement sécurisé à l&apos;étape suivante · prix vérifié par nos serveurs</p> : null}
     </div>
   );
 }
 
-function OptionRow({ selected, disabled, onPick, label, note, price, badge, role = "checkbox" }: { selected: boolean; disabled?: boolean; onPick: () => void; label: string; note: string; price: string; badge?: string; role?: "checkbox" | "radio" }) {
+/**
+ * Ligne de prestation ou d'option : case, libellé, note, prix aligné à droite.
+ *
+ * `darkOnPhone` sert les étapes 1-2 de la fiche, qui se lisent sur fond encre au
+ * téléphone. Une ligne sélectionnée garde son fond clair `--selection` : son
+ * texte doit alors repasser en encre foncée, sans quoi il devient illisible —
+ * c'est le piège que signale le handoff mobile.
+ */
+function OptionRow({ selected, disabled, onPick, label, note, price, badge, role = "checkbox", darkOnPhone }: { selected: boolean; disabled?: boolean; onPick: () => void; label: string; note: string; price: string; badge?: string; role?: "checkbox" | "radio"; darkOnPhone?: boolean }) {
+  const onDark = darkOnPhone && !selected;
   return (
     <button
       type="button"
@@ -577,15 +695,26 @@ function OptionRow({ selected, disabled, onPick, label, note, price, badge, role
       aria-checked={selected}
       disabled={disabled}
       onClick={onPick}
-      className={cn("flex cursor-pointer items-center gap-3 border border-[rgba(20,18,15,0.22)] p-[13px_14px] text-left transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-60", selected ? "bg-[var(--selection)]" : "bg-transparent")}
+      className={cn(
+        "flex cursor-pointer items-start gap-3 border p-[13px_14px] text-left transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-60 sm:items-center",
+        darkOnPhone ? "border-ink-650 sm:border-[rgba(20,18,15,0.22)]" : "border-[rgba(20,18,15,0.22)]",
+        selected ? "bg-[var(--selection)] text-ink-900" : "bg-transparent",
+        onDark && "text-paper sm:text-ink-900",
+      )}
     >
-      <span className={cn("h-4 w-4 flex-none border border-ink-900", selected ? "bg-accent" : "bg-white")} aria-hidden="true" />
+      <span
+        className={cn(
+          "mt-[3px] h-[18px] w-[18px] flex-none border sm:mt-0 sm:h-4 sm:w-4",
+          selected ? "border-ink-900 bg-accent" : onDark ? "border-ink-600 bg-ink-900 sm:border-ink-900 sm:bg-white" : "border-ink-900 bg-white",
+        )}
+        aria-hidden="true"
+      />
       <span className="flex flex-1 flex-col gap-0.5">
         <span className="text-[15px] font-semibold">
           {label}
           {badge ? <span className="ml-2 align-middle font-mono text-[10px] uppercase tracking-[0.06em] text-accent">{badge}</span> : null}
         </span>
-        {note ? <span className="text-[13px] text-ink-faint">{note}</span> : null}
+        {note ? <span className={cn("text-[13px]", onDark ? "text-[#a39c8c] sm:text-ink-faint" : "text-ink-faint")}>{note}</span> : null}
       </span>
       <span className="flex-none whitespace-nowrap font-mono text-[14px]">{price}</span>
     </button>
@@ -601,7 +730,7 @@ function TextInput({ value, onChange, error, className, ...rest }: { value: stri
         onChange={(e) => onChange(e.target.value)}
         aria-label={rest.placeholder}
         aria-invalid={Boolean(error)}
-        className={cn("w-full border bg-white p-3 text-[15px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none read-only:bg-paper-alt", error ? "border-danger" : "border-[rgba(20,18,15,0.22)]")}
+        className={cn("w-full border bg-white p-3 text-[16px] text-ink-900 placeholder:text-ink-muted read-only:bg-paper-alt focus:border-accent focus:outline-none sm:text-[15px]", error ? "border-danger" : "border-[rgba(20,18,15,0.22)]")}
       />
       {error ? (
         <span role="alert" className="text-xs font-medium text-danger">

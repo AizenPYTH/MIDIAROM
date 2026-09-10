@@ -1,9 +1,16 @@
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
-/** Champs du handoff : fond blanc (encre en admin), contour 1 px, padding 12 px, 15 px, aucun arrondi. */
+/**
+ * Champs du handoff : fond blanc (encre en admin), contour 1 px, padding 12 px,
+ * aucun arrondi.
+ *
+ * La taille est de 16 px au téléphone et de 15 px à partir de `sm` : en dessous
+ * de 16 px, iOS Safari zoome tout seul sur le champ dès la mise au point et ne
+ * dézoome jamais. Le 15 px du handoff reste donc la valeur de bureau.
+ */
 const inputBase =
-  "block w-full border border-border-strong bg-field px-3 py-3 text-[15px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none disabled:bg-surface-muted disabled:text-ink-muted aria-[invalid=true]:border-danger";
+  "block w-full border border-border-strong bg-field px-3 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none disabled:bg-surface-muted disabled:text-ink-muted aria-[invalid=true]:border-danger sm:text-[15px]";
 
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
   return <label className={cn("mb-1.5 block font-mono text-[11px] uppercase tracking-[0.08em] text-ink-soft", className)} {...props} />;
@@ -34,9 +41,10 @@ export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttrib
   );
 });
 
-/** Case à cocher 16 × 16 contour encre, remplie bleu quand cochée (comme les lignes de prestation). */
+/** Case à cocher contour encre, remplie bleu quand cochée (comme les lignes de
+ *  prestation) : 18 × 18 au doigt, 16 × 16 à la souris. */
 export function Checkbox({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input type="checkbox" className={cn("h-4 w-4 shrink-0 appearance-none border border-ink bg-field checked:border-accent checked:bg-accent", className)} {...props} />;
+  return <input type="checkbox" className={cn("h-[18px] w-[18px] shrink-0 appearance-none border border-ink bg-field checked:border-accent checked:bg-accent sm:h-4 sm:w-4", className)} {...props} />;
 }
 
 export interface FieldProps {

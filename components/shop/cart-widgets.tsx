@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils/cn";
 export function CartLink({ className }: { className?: string }) {
   const { count, ready } = useCart();
   return (
-    <Link href={ROUTES.cart} className={cn("whitespace-nowrap bg-ink-900 px-3.5 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-paper hover:bg-sale", className)} aria-label={`Panier, ${count} article${count > 1 ? "s" : ""}`}>
+    <Link href={ROUTES.cart} className={cn("bg-ink-900 chip text-paper hover:bg-sale", className)} aria-label={`Panier, ${count} article${count > 1 ? "s" : ""}`}>
       Panier · {ready ? count : 0}
     </Link>
   );
@@ -33,7 +33,9 @@ export function AddToCartButton({ productId, available, className, size = "sm" }
       }}
       className={cn(
         "cursor-pointer whitespace-nowrap border-0 bg-ink-900 font-mono uppercase tracking-[0.06em] text-paper transition-colors hover:bg-sale disabled:cursor-not-allowed disabled:opacity-40",
-        size === "sm" ? "px-3 py-[9px] text-[11.5px]" : "px-5 py-[14px] text-[12.5px]",
+        // Au doigt le bouton « Ajouter » fait 44 px de haut ; à la souris il reprend
+        // les proportions compactes de la carte du handoff.
+        size === "sm" ? "px-3 py-[14px] text-[11.5px] sm:py-[9px]" : "px-5 py-[14px] text-[12.5px]",
         className,
       )}
     >

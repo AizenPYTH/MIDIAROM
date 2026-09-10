@@ -229,6 +229,122 @@ body {
 .prose-cms code { font-family: var(--font-mono); font-size: 0.875em; background: var(--color-surface-muted); padding: 0.1em 0.3em; }
 .prose-cms strong { color: var(--color-ink); }
 
+/* ---------------------------------------------------------------------------
+   Mobile (handoff MOBILE.md)
+
+   Un seul site responsive : pas de version mobile séparée, pas de redirection.
+   Quatre outils suffisent au reste du fichier. Tous dans `@layer components`
+   pour que les utilitaires Tailwind du site d'appel (couleur, fond, bordure,
+   variantes `sm:`) gardent la main.
+--------------------------------------------------------------------------- */
+@layer components {
+  /* Chip / bouton mono du handoff (filtres, plateformes, catégories) : 12 px
+     majuscules sur un contour d'1 px. Au doigt la hauteur atteint les 44 px
+     exigés, à la souris elle revient aux 9 px de padding du handoff. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 13px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  @media (min-width: 640px) {
+    .chip {
+      min-height: 0;
+      padding: 9px 14px;
+    }
+  }
+
+  /* Bande à défilement horizontal plutôt que colonnes écrasées : bandeau de
+     garanties, chips de catégorie, onglets et KPI du back-office, avancement
+     d'un dossier. La barre de défilement est masquée, le geste reste naturel. */
+  .scroll-strip {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .scroll-strip::-webkit-scrollbar {
+    display: none;
+  }
+  .scroll-strip > * {
+    flex: 0 0 auto;
+  }
+
+  /* Barres collées en bas : ajoute la marge de sécurité de l'iPhone à encoche au
+     padding voulu, passé en `--safe-pb`. Sans elle, le dernier bouton se
+     retrouve sous la barre d'accueil du téléphone. */
+  .safe-bottom {
+    padding-bottom: calc(var(--safe-pb, 0px) + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Tableau du back-office converti en cartes empilées au téléphone (écran M5).
+     Un tableau qui défile horizontalement oblige à balayer pour lire une seule
+     ligne ; au comptoir, on veut voir une commande d'un coup d'œil. Chaque
+     cellule porte son intitulé en `data-label`, repris de l'en-tête masqué. */
+  @media (max-width: 639.98px) {
+    .table-cards,
+    .table-cards tbody,
+    .table-cards tr,
+    .table-cards td {
+      display: block;
+      width: auto;
+      /* `!important` : la largeur minimale du tableau est posée en style en
+         ligne pour le bureau, elle forcerait sinon un défilement horizontal. */
+      min-width: 0 !important;
+    }
+    .table-cards thead {
+      display: none;
+    }
+    .table-cards tr {
+      border: 1px solid var(--color-border);
+      margin-bottom: 8px;
+      padding: 10px 12px;
+      background: var(--color-surface);
+    }
+    .table-cards td {
+      border: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 3px 0;
+      text-align: left;
+    }
+    .table-cards td[data-label]::before {
+      content: attr(data-label);
+      flex: 0 0 auto;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-ink-muted);
+    }
+    /* Une cellule sans intitulé sert de titre à la carte : le nom de l'article
+       en tête, puis les lignes intitulé / valeur. (La ligne « aucun résultat »
+       porte déjà sa propre classe de centrage.) */
+    .table-cards td:not([data-label]) {
+      display: block;
+      font-weight: 600;
+      padding-bottom: 6px;
+    }
+  }
+
+  /* Hauteur d'écran réelle : `100vh` compte la barre d'URL de Safari, qui se
+     rétracte au défilement — l'écran « plein » dépasse alors d'une centaine de
+     pixels. `100dvh` suit la hauteur visible. */
+  .screen-dvh {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
 /* Le handoff n'a aucune animation : seules les transitions de couleur au survol. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

@@ -48,7 +48,7 @@ export default async function ConsolesIndexPage({ searchParams }: { searchParams
           <p className="mt-3 max-w-[48ch] text-[17px] leading-[1.5] text-ink-soft">Chaque fiche regroupe les variantes du modèle, ses pannes fréquentes, les réparations proposées par l&apos;atelier avec leurs prix, et ce que nous avons en rayon pour cette console.</p>
           <div className="mt-6 flex flex-wrap gap-2">
             {filters.map((x) => (
-              <Link key={x.key} href={x.key === "all" ? ROUTES.consoles : `${ROUTES.consoles}?f=${x.key}`} className={cn("whitespace-nowrap border border-border-strong px-3.5 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-ink", current === x.key ? "bg-paper-strong" : "bg-transparent hover:border-ink")} aria-current={current === x.key ? "true" : undefined}>
+              <Link key={x.key} href={x.key === "all" ? ROUTES.consoles : `${ROUTES.consoles}?f=${x.key}`} className={cn("whitespace-nowrap border border-border-strong chip text-ink", current === x.key ? "bg-paper-strong" : "bg-transparent hover:border-ink")} aria-current={current === x.key ? "true" : undefined}>
                 {x.label}
               </Link>
             ))}

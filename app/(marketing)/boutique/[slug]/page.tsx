@@ -144,7 +144,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       {others.length ? (
         <section className="mt-16">
           <Eyebrow>Dans le même rayon</Eyebrow>
-          <div className="mt-4 grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
             {others.map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}

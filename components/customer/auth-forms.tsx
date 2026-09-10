@@ -31,7 +31,7 @@ export function LoginForm({ next, initialError }: { next?: string; initialError?
         </Button>
       </form>
       <div className="mt-4 flex flex-col gap-2 text-sm">
-        <button type="button" className="text-accent hover:underline" onClick={() => setMode(mode === "password" ? "magic" : "password")}>
+        <button type="button" className="min-h-11 self-start text-left text-accent hover:underline sm:min-h-0" onClick={() => setMode(mode === "password" ? "magic" : "password")}>
           {mode === "password" ? "Recevoir un lien de connexion par e-mail" : "Se connecter avec un mot de passe"}
         </button>
         <Link href={ROUTES.forgotPassword} className="text-ink-muted hover:text-ink">

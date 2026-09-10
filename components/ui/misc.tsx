@@ -2,9 +2,13 @@ import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 
-/** Conteneur du handoff : max-width 1280 px, padding horizontal 24 px. */
+/**
+ * Conteneur du handoff : max-width 1280 px, padding horizontal 24 px — ramené à
+ * 16 px au téléphone, la gouttière minimale du handoff mobile. Les 8 px gagnés
+ * de chaque côté font la différence entre deux colonnes de produits et une.
+ */
 export function Container({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mx-auto w-full max-w-[1280px] px-6", className)} {...props} />;
+  return <div className={cn("mx-auto w-full max-w-[1280px] px-4 sm:px-6", className)} {...props} />;
 }
 
 /** Étiquette mono colorée au-dessus des titres (« 01 — Vente », « Atelier »…). */

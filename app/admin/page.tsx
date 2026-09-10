@@ -48,7 +48,13 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   ]);
 
   const rows = list ?? [];
-  const selectedId = rows.some((o) => o.id === sel) ? sel : rows[0]?.id;
+  const explicitSelection = rows.some((o) => o.id === sel);
+  // Au téléphone (écrans M5 / M6), le maître/détail devient une navigation à
+  // deux niveaux : la liste, puis la fiche avec un retour. Empilés, les vingt
+  // dossiers de la liste séparent le réparateur de la fiche qu'il vient
+  // d'ouvrir. Sur grand écran, les deux colonnes restent côte à côte et la
+  // première ligne est présélectionnée comme avant.
+  const selectedId = explicitSelection ? sel : rows[0]?.id;
   const selected = selectedId ? (await db.from("repair_orders").select("*").eq("id", selectedId).maybeSingle()).data : null;
   const [items, events, media, quotes] = selected
     ? await Promise.all([
@@ -80,10 +86,10 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
 
       <div className="grid bg-bg [grid-template-columns:minmax(0,1fr)] xl:[grid-template-columns:minmax(0,1fr)_minmax(380px,440px)]">
         {/* Liste : l'espace principal du travail quotidien */}
-        <section className="flex min-w-0 flex-col gap-4 p-5">
+        <section className={cn("min-w-0 flex-col gap-4 p-5", explicitSelection ? "hidden xl:flex" : "flex")}>
           <form method="get" action="/admin" className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="f" value={filter.key} />
-            <input name="q" defaultValue={q ?? ""} placeholder="Rechercher n° / nom / console" aria-label="Rechercher" className="min-w-0 flex-[1_1_180px] border border-border-strong bg-surface px-3 py-2.5 text-[14px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none" />
+            <input name="q" defaultValue={q ?? ""} placeholder="Rechercher n° / nom / console" aria-label="Rechercher" className="min-w-0 flex-[1_1_180px] border border-border-strong bg-surface px-3 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:py-2.5 sm:text-[14px]" />
             <FilterChips items={FILTERS.map((x) => ({ key: x.key, label: x.label }))} current={filter.key} hrefFor={(key) => hrefFor({ f: key === "all" ? undefined : key, sel: undefined })} />
           </form>
           {error ? <p className="border border-danger bg-danger-soft px-3 py-2 text-[13px] text-danger">{error}</p> : null}
@@ -116,9 +122,13 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
         </section>
 
         {/* Fiche */}
-        <aside className="flex min-w-0 flex-col gap-5 border-t border-border p-5 xl:border-l xl:border-t-0">
+        <aside className={cn("min-w-0 flex-col gap-5 border-t border-border p-5 xl:flex xl:border-l xl:border-t-0", explicitSelection ? "flex" : "hidden xl:flex")}>
           {selected ? (
             <>
+              {/* Retour vers la liste : le niveau 1 de la navigation mobile. */}
+              <Link href={hrefFor({ sel: undefined })} className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink xl:hidden">
+                ← Liste des dossiers
+              </Link>
               <div className="flex items-baseline justify-between gap-3">
                 <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Fiche {selected.order_number}</span>
                 <span className="whitespace-nowrap font-mono text-[11px] text-accent-light">{ORDER_STATUS_LABELS[selected.status]}</span>
@@ -157,13 +167,15 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
 
               <div className="flex flex-col gap-[9px]">
                 <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Avancement</span>
-                <div className="flex gap-[2px]">
+                {/* Bande à défilement horizontal au téléphone : les huit étapes
+                    gardent leur libellé au lieu d'être rognées (écran M6). */}
+                <div className="scroll-strip gap-[2px] sm:flex">
                   {WORKSHOP_STEPS.map((seg, i) => {
                     const reached = i <= pipelineIndex;
                     const allowed = canRoleTransition(user.profile.role, selected.status, seg.status);
-                    const cls = cn("min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap px-1 py-[9px] font-mono text-[10px] uppercase tracking-[0.04em]", reached ? "bg-accent text-white" : "bg-surface-muted text-ink-muted");
+                    const cls = cn("min-w-0 shrink-0 whitespace-nowrap px-[11px] py-[10px] sm:flex-1 sm:shrink sm:overflow-hidden sm:text-ellipsis sm:px-1 sm:py-[9px] font-mono text-[10px] uppercase tracking-[0.04em]", reached ? "bg-accent text-white" : "bg-surface-muted text-ink-muted");
                     return allowed ? (
-                      <form key={seg.status} action={advanceStatusAction} className="flex min-w-0 flex-1">
+                      <form key={seg.status} action={advanceStatusAction} className="flex min-w-0 shrink-0 sm:flex-1">
                         <input type="hidden" name="order_id" value={selected.id} />
                         <input type="hidden" name="status" value={seg.status} />
                         <input type="hidden" name="next" value={currentHref} />

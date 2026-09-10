@@ -79,7 +79,7 @@ export function TradeInForm(props: Props) {
       </div>
       <div className="mt-3 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
         <span className="flex flex-col gap-1">
-          <input list="trade-in-platforms" value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="Plateforme (PS5, Switch, Mega Drive…)" aria-label="Plateforme" aria-invalid={Boolean(fieldErrors.platform)} className={cn("w-full border bg-white p-3 text-[15px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none", fieldErrors.platform ? "border-danger" : "border-[rgba(20,18,15,0.22)]")} />
+          <input list="trade-in-platforms" value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="Plateforme (PS5, Switch, Mega Drive…)" aria-label="Plateforme" aria-invalid={Boolean(fieldErrors.platform)} className={cn("w-full border bg-white p-3 text-[16px] text-ink-900 sm:text-[15px] placeholder:text-ink-muted focus:border-accent focus:outline-none", fieldErrors.platform ? "border-danger" : "border-[rgba(20,18,15,0.22)]")} />
           <datalist id="trade-in-platforms">
             {props.platforms.map((p) => (
               <option key={p} value={p} />
@@ -87,7 +87,7 @@ export function TradeInForm(props: Props) {
           </datalist>
           {fieldErrors.platform ? <span className="text-xs font-medium text-danger">{fieldErrors.platform}</span> : null}
         </span>
-        <select value={modelId} onChange={(e) => setModelId(e.target.value)} aria-label="Modèle" className="border border-[rgba(20,18,15,0.22)] bg-white p-3 text-[15px] text-ink-900">
+        <select value={modelId} onChange={(e) => setModelId(e.target.value)} aria-label="Modèle" className="border border-[rgba(20,18,15,0.22)] bg-white p-3 text-[16px] text-ink-900 sm:text-[15px]">
           <option value="">Modèle (facultatif)</option>
           {modelsForPlatform.map((m) => (
             <option key={m.id} value={m.id}>
@@ -96,7 +96,7 @@ export function TradeInForm(props: Props) {
           ))}
         </select>
         <span className="flex flex-col gap-1 [grid-column:1/-1]">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder="Intitulé du lot — ex. : PS3 Fat + 14 jeux" aria-label="Intitulé du lot" aria-invalid={Boolean(fieldErrors.item_title)} className={cn("w-full border bg-white p-3 text-[15px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none", fieldErrors.item_title ? "border-danger" : "border-[rgba(20,18,15,0.22)]")} />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder="Intitulé du lot — ex. : PS3 Fat + 14 jeux" aria-label="Intitulé du lot" aria-invalid={Boolean(fieldErrors.item_title)} className={cn("w-full border bg-white p-3 text-[16px] text-ink-900 sm:text-[15px] placeholder:text-ink-muted focus:border-accent focus:outline-none", fieldErrors.item_title ? "border-danger" : "border-[rgba(20,18,15,0.22)]")} />
           {fieldErrors.item_title ? <span className="text-xs font-medium text-danger">{fieldErrors.item_title}</span> : null}
         </span>
       </div>
@@ -114,14 +114,14 @@ export function TradeInForm(props: Props) {
         {TRADE_IN_ACCESSORIES.map((a) => {
           const on = accessories.includes(a);
           return (
-            <button key={a} type="button" aria-pressed={on} onClick={() => setAccessories((prev) => (on ? prev.filter((x) => x !== a) : [...prev, a]))} className={cn("cursor-pointer whitespace-nowrap border px-[11px] py-2 font-mono text-[11.5px] uppercase tracking-[0.05em] hover:border-accent", on ? "border-ink-900 bg-ink-900 text-paper" : "border-dashed border-[rgba(20,18,15,0.3)] bg-paper-alt text-ink-900")}>
+            <button key={a} type="button" aria-pressed={on} onClick={() => setAccessories((prev) => (on ? prev.filter((x) => x !== a) : [...prev, a]))} className={cn("cursor-pointer whitespace-nowrap border px-[11px] py-[13px] font-mono text-[11.5px] uppercase tracking-[0.05em] hover:border-accent sm:py-2", on ? "border-ink-900 bg-ink-900 text-paper" : "border-dashed border-[rgba(20,18,15,0.3)] bg-paper-alt text-ink-900")}>
               {on ? "✓ " : "+ "}
               {a}
             </button>
           );
         })}
       </div>
-      <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} placeholder="Précisions : défauts, jeux inclus, historique, rayures, pièces manquantes…" aria-label="Description" className="mt-3 min-h-[110px] w-full resize-y border border-[rgba(20,18,15,0.22)] bg-white p-[13px] text-[15px] leading-normal text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none" />
+      <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={2000} placeholder="Précisions : défauts, jeux inclus, historique, rayures, pièces manquantes…" aria-label="Description" className="mt-3 min-h-[110px] w-full resize-y border border-[rgba(20,18,15,0.22)] bg-white p-[13px] text-[16px] leading-normal text-ink-900 sm:text-[15px] placeholder:text-ink-muted focus:border-accent focus:outline-none" />
       <div className="mt-3">
         <DraftPhotoUploader photos={photos} onChange={setPhotos} label="déposez des photos du lot" />
       </div>
@@ -157,7 +157,7 @@ export function TradeInForm(props: Props) {
 function Field({ value, onChange, error, className, ...rest }: { value: string; onChange: (v: string) => void; error?: string; className?: string } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "className">) {
   return (
     <span className={cn("flex flex-col gap-1", className)}>
-      <input {...rest} value={value} onChange={(e) => onChange(e.target.value)} aria-label={rest.placeholder} aria-invalid={Boolean(error)} className={cn("w-full border bg-white p-3 text-[15px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none read-only:bg-paper-alt", error ? "border-danger" : "border-[rgba(20,18,15,0.22)]")} />
+      <input {...rest} value={value} onChange={(e) => onChange(e.target.value)} aria-label={rest.placeholder} aria-invalid={Boolean(error)} className={cn("w-full border bg-white p-3 text-[16px] text-ink-900 sm:text-[15px] placeholder:text-ink-muted focus:border-accent focus:outline-none read-only:bg-paper-alt", error ? "border-danger" : "border-[rgba(20,18,15,0.22)]")} />
       {error ? (
         <span role="alert" className="text-xs font-medium text-danger">
           {error}

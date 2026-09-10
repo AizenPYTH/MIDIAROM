@@ -59,7 +59,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
           </Link>
         </form>
         <FilterChips items={FILTERS} current={filter} hrefFor={(key) => `/admin/stock?${new URLSearchParams({ ...(q ? { q } : {}), f: key })}`} />
-        <Table minWidth={720}>
+        <Table minWidth={720} cards>
           <thead>
             <tr>
               <Th>SKU</Th>
@@ -76,18 +76,18 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               const state = stockState(p.quantity, p.low_stock_threshold);
               return (
                 <tr key={p.id} className={cn("hover:bg-surface-muted", !p.is_active && "opacity-60")}>
-                  <Td className="whitespace-nowrap font-mono text-[12px] text-ink-soft">{p.sku}</Td>
+                  <Td label="SKU" className="whitespace-nowrap font-mono text-[12px] text-ink-soft">{p.sku}</Td>
                   <Td>
                     <Link href={`/admin/stock/${p.id}`} className="font-medium text-ink hover:text-accent-light">
                       {p.name}
                     </Link>
                     <span className="block text-[12px] text-ink-muted">{CATEGORY_LABELS[p.category]}</span>
                   </Td>
-                  <Td className="text-[13px] text-ink-faint">{p.platform}</Td>
-                  <Td className="font-mono text-[11.5px] text-ink-soft">{CONDITION_SHORT[p.condition]}</Td>
-                  <Td className="whitespace-nowrap text-right font-mono">{formatPrice(p.price_cents)}</Td>
-                  <Td className={cn("whitespace-nowrap text-right font-mono text-[12.5px]", state === "OUT" ? "text-danger" : state === "LOW" ? "text-warning" : "text-ink-soft")}>{p.quantity}</Td>
-                  <Td>
+                  <Td label="Plateforme" className="text-[13px] text-ink-faint">{p.platform}</Td>
+                  <Td label="État" className="font-mono text-[11.5px] text-ink-soft">{CONDITION_SHORT[p.condition]}</Td>
+                  <Td label="Prix" className="whitespace-nowrap text-right font-mono">{formatPrice(p.price_cents)}</Td>
+                  <Td label="Stock" className={cn("whitespace-nowrap text-right font-mono text-[12.5px]", state === "OUT" ? "text-danger" : state === "LOW" ? "text-warning" : "text-ink-soft")}>{p.quantity}</Td>
+                  <Td label="Disponibilité">
                     {!p.is_active ? <Badge>Hors vente</Badge> : state === "OUT" ? <Badge tone="danger">Rupture</Badge> : state === "LOW" ? <Badge tone="warning">Faible</Badge> : <Badge tone="success">Disponible</Badge>}
                   </Td>
                 </tr>

@@ -213,7 +213,7 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
             {consoles.length ? (
               <div>
                 <h3 className="mb-3 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-muted">Consoles et produits {model.name}</h3>
-                <div className="grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
+                <div className="grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
                   {consoles.slice(0, 8).map((p) => (
                     <ProductCard key={p.id} product={p} />
                   ))}
@@ -223,7 +223,7 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
             {games.length ? (
               <div>
                 <h3 className="mb-3 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-muted">Jeux</h3>
-                <div className="grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
+                <div className="grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
                   {games.slice(0, 8).map((p) => (
                     <ProductCard key={p.id} product={p} />
                   ))}
@@ -233,7 +233,7 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
             {accessories.length ? (
               <div>
                 <h3 className="mb-3 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-muted">Accessoires et pièces</h3>
-                <div className="grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
+                <div className="grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
                   {accessories.slice(0, 8).map((p) => (
                     <ProductCard key={p.id} product={p} />
                   ))}
@@ -258,7 +258,7 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
             <ul className="mt-3 flex flex-wrap gap-2">
               {siblings.map((m) => (
                 <li key={m.id}>
-                  <Link href={`${ROUTES.consoles}/${m.slug}`} className="inline-block border border-border-strong px-3.5 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-ink hover:border-ink">
+                  <Link href={`${ROUTES.consoles}/${m.slug}`} className="inline-block border border-border-strong chip text-ink hover:border-ink">
                     {m.name}
                   </Link>
                 </li>

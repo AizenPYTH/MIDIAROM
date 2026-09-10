@@ -19,8 +19,24 @@ export interface DraftPhoto {
   preview: string;
 }
 
-export function DraftPhotoUploader({ photos, onChange, max = 6, label = "déposez photos de la panne", className }: { photos: DraftPhoto[]; onChange: (photos: DraftPhoto[]) => void; max?: number; label?: string; className?: string }) {
+export function DraftPhotoUploader({
+  photos,
+  onChange,
+  max = 6,
+  label = "déposez photos de la panne",
+  phoneLabel,
+  className,
+}: {
+  photos: DraftPhoto[];
+  onChange: (photos: DraftPhoto[]) => void;
+  max?: number;
+  label?: string;
+  /** Libellé du bouton d'appareil photo, affiché au téléphone seulement. */
+  phoneLabel?: string;
+  className?: string;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const draftId = useRef<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +77,23 @@ export function DraftPhotoUploader({ photos, onChange, max = 6, label = "dépose
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <input ref={inputRef} type="file" accept={ACCEPTED.join(",")} multiple className="sr-only" id="draft-photos" onChange={(e) => upload(e.target.files)} disabled={busy} />
+      {/* Au téléphone, la panne se photographie sur place : `capture` ouvre
+          directement l'appareil photo arrière. Le bouton de dépôt reste à côté
+          pour choisir une photo déjà prise — `capture` seul enlèverait cet
+          accès à la galerie. */}
+      {phoneLabel ? (
+        <>
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="sr-only" id="draft-photos-camera" onChange={(e) => upload(e.target.files)} disabled={busy} />
+          <button
+            type="button"
+            onClick={() => cameraRef.current?.click()}
+            disabled={busy || photos.length >= max}
+            className="cursor-pointer bg-ink-900 px-4 py-[14px] font-mono text-[11.5px] uppercase tracking-[0.06em] text-paper disabled:cursor-not-allowed disabled:opacity-40 sm:hidden"
+          >
+            {phoneLabel}
+          </button>
+        </>
+      ) : null}
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -81,7 +114,7 @@ export function DraftPhotoUploader({ photos, onChange, max = 6, label = "dépose
             <li key={p.path} className="relative h-16 w-16 border border-[rgba(20,18,15,0.22)]">
               {/* eslint-disable-next-line @next/next/no-img-element -- aperçu local (object URL) */}
               <img src={p.preview} alt={p.name} className="h-full w-full object-cover" />
-              <button type="button" onClick={() => onChange(photos.filter((x) => x.path !== p.path))} aria-label={`Retirer ${p.name}`} className="absolute -right-1 -top-1 h-5 w-5 cursor-pointer bg-ink-900 font-mono text-[11px] leading-none text-paper">
+              <button type="button" onClick={() => onChange(photos.filter((x) => x.path !== p.path))} aria-label={`Retirer ${p.name}`} className="absolute -right-1 -top-1 h-6 w-6 cursor-pointer bg-ink-900 font-mono text-[12px] leading-none text-paper sm:h-5 sm:w-5 sm:text-[11px]">
                 ×
               </button>
             </li>
