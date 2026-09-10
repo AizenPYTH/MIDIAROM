@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ROUTES, SITE_URL } from "@/config/site";
@@ -8,8 +9,18 @@ import { getActiveModels, getModelBySlug, getRepairsForModel } from "@/lib/repai
 import { getProducts } from "@/lib/shop/catalog";
 import { getBrandSettings } from "@/lib/settings";
 import { formatPrice } from "@/lib/utils/format";
+import { publicMediaUrl } from "@/components/marketing/gallery";
 
 export const revalidate = 600;
+
+/**
+ * Nom complet d'un modèle. Beaucoup de modèles portent déjà la marque dans leur
+ * nom (« PlayStation 4 Pro » chez la marque « PlayStation ») : la préfixer une
+ * seconde fois donnerait « PlayStation PlayStation 4 Pro ».
+ */
+function fullModelName(model: { name: string; brand: { name: string } }): string {
+  return model.name.startsWith(model.brand.name) ? model.name : `${model.brand.name} ${model.name}`;
+}
 
 export async function generateStaticParams() {
   const models = await getActiveModels().catch(() => []);
@@ -21,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const model = await getModelBySlug(slug);
   if (!model) return { title: "Console introuvable" };
   return {
-    title: `${model.brand.name} ${model.name} — fiche console, réparations et produits`,
+    title: `${fullModelName(model)} — fiche console, réparations et produits`,
     description: model.description ?? `${model.name} : variantes, pannes fréquentes, réparations avec prix et garantie, consoles, jeux et accessoires en vente.`,
     alternates: { canonical: `${SITE_URL}${ROUTES.consoles}/${model.slug}` },
   };
@@ -55,7 +66,7 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: `${model.brand.name} ${model.name}`,
+    name: fullModelName(model),
     brand: { "@type": "Brand", name: model.brand.name },
     description: model.description ?? undefined,
     url: `${SITE_URL}${ROUTES.consoles}/${model.slug}`,
@@ -72,7 +83,7 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
             <div>
               <Eyebrow tone="repair">{model.brand.name}</Eyebrow>
               <h1 className="mt-2 text-[clamp(32px,4vw,52px)] font-extrabold leading-[1.02] tracking-[-0.03em] text-ink">{model.name}</h1>
-              <p className="mt-3 max-w-[48ch] text-[17px] leading-[1.5] text-ink-soft">{model.description ?? `${model.brand.name} ${model.name}${model.release_year ? `, sortie en ${model.release_year}` : ""}. Prise en charge à l'atelier pour diagnostic et réparation.`}</p>
+              <p className="mt-3 max-w-[48ch] text-[17px] leading-[1.5] text-ink-soft">{model.description ?? `${fullModelName(model)}${model.release_year ? `, sortie en ${model.release_year}` : ""}. Prise en charge à l'atelier pour diagnostic et réparation.`}</p>
               <dl className="mt-5 grid gap-x-8 gap-y-2 text-[14px] sm:grid-cols-2">
                 {model.release_year ? (
                   <div className="flex justify-between gap-3 border-b border-dotted border-border-strong pb-1">
@@ -103,6 +114,16 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
+              {/* Photo du modèle : téléversée depuis Catalogue → Modèles. Tant qu'aucune
+                  photo n'est publiée, l'aperçu rayé le dit explicitement plutôt que
+                  d'afficher une image d'illustration qui ne serait pas la console. */}
+              <div className="relative aspect-[4/3] w-full overflow-hidden border border-border-strong bg-surface sm:col-span-2">
+                {model.image_path ? (
+                  <Image src={publicMediaUrl(model.image_path)} alt={fullModelName(model)} fill sizes="(min-width: 640px) 50vw, 100vw" className="object-cover" priority />
+                ) : (
+                  <div className="photo-placeholder h-full w-full text-[11.5px]">photo {model.name.toLowerCase()}</div>
+                )}
+              </div>
               <div className="border border-border-strong bg-surface p-4">
                 <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Variantes prises en charge</span>
                 {model.variants.length ? (

@@ -81,5 +81,8 @@ photos client, fiches consoles.
 - Les textes « diagnostic sous 48 h », « retour sous 5 jours », « garantie 3 mois » du
   prototype n'ont pas été repris : les délais et garanties affichés sont ceux du
   catalogue et des réglages.
-- Les photos (façade, vitrine) sont des placeholders rayés tant qu'aucune photo n'est
-  publiée dans la galerie du back-office.
+- Les photos (façade, vitrine, produits, consoles) sont des aperçus rayés tant qu'aucune
+  photo n'est publiée depuis le back-office. La fiche console affiche la photo du modèle
+  (`console_models.image_path`, téléversée dans Catalogue → Modèles) avec le nom complet
+  du modèle en texte alternatif ; sans photo, l'aperçu annonce explicitement ce qui
+  manque plutôt que d'afficher une illustration qui ne serait pas la console.
