@@ -3,7 +3,7 @@
 ## Supabase
 
 1. Créer un projet, récupérer URL, clé anon et clé service-role.
-2. Appliquer les migrations. **Ne jamais** exécuter `seed.sql` en production : ce sont des données de développement.
+2. Appliquer les migrations. **Ne jamais** exécuter `seed.sql` en production : il crée des comptes de démonstration dont le mot de passe est public. Le catalogue, lui, vit dans `supabase/catalog.sql` et **est prévu pour la production**.
 
    La voie recommandée ne demande aucun `supabase link` :
 
@@ -40,9 +40,25 @@
 
    Prenez une sauvegarde avant toute application sur une base qui contient déjà des
    données (Database → Backups), et vérifiez ensuite avec `npm run check:supabase`.
+
+3. Charger le catalogue initial : marques, consoles, pannes, prestations de réparation
+   avec leurs prix de départ, options, packs, transports, contenus, documents légaux et
+   produits de la boutique.
+
+   ```bash
+   psql "$DB_URL" -f supabase/catalog.sql
+   ```
+
+   Sans lui, le site public affiche un catalogue vide (« Aucune console publiée »). Le
+   fichier est rejouable : une seconde exécution ne crée pas de doublon et **n'écrase
+   pas** ce que vous avez modifié depuis le back-office. Tous les prix sont des valeurs
+   de départ, à ajuster ensuite dans Catalogue → Réparations (prestations) et Stock
+   (produits). Aucune photo n'est fournie : les fiches affichent un aperçu rayé
+   explicitement identifié tant qu'aucune image n'a été téléversée depuis
+   Stock → produit → Photos.
 3. Auth → URL du site et URL de redirection : `https://<domaine>/auth/callback`. Personnaliser les templates d'e-mails Supabase (confirmation, magic link, récupération).
 4. Vérifier que les buckets ont bien été créés par la migration `0008_storage`.
-5. Créer le premier super administrateur. Créez le compte depuis Auth → Users (« Add user », en cochant la confirmation automatique de l'adresse), puis dans le SQL Editor :
+4. Créer le premier super administrateur. Créez le compte depuis Auth → Users (« Add user », en cochant la confirmation automatique de l'adresse), puis dans le SQL Editor :
 
    ```sql
    update public.profiles set role = 'SUPER_ADMIN' where email = 'vous@votre-domaine.fr';

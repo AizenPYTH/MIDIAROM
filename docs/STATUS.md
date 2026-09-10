@@ -42,6 +42,15 @@ Légende : **IMPLEMENTED** fonctionne sans configuration supplémentaire · **CO
 | Documents légaux | CONFIGURE | Structures CGV / confidentialité / mentions légales versionnées, contenu à valider juridiquement |
 | Multi-atelier, multi-pays, comptabilité, paiement en plusieurs fois, TVA sur marge (occasion) | NOT IMPLEMENTED | Schéma préparé (`workshops`, `technicians`, `repair_parts`), pas d'écran dédié ; la TVA boutique est calculée au taux global |
 
+## Back-office : hiérarchie
+
+Premier niveau : Réparations, Commandes, Stock, Clients. Le menu « Plus » regroupe
+Gestion (clients, techniciens, catalogue, reprises, contenu, avis), Atelier (réception,
+SAV, dossiers), Configuration (options, packs, transport, paramètres) et Administration
+(utilisateurs, statistiques, audit). Aucune route n'a été retirée. Les prestations de
+réparation se gèrent console par console dans Catalogue → Réparations (prix, résumé,
+ordre, activation, ajout, retrait) ; la vue tableau complète reste accessible.
+
 ## Ce qui a été testé réellement
 
 - `tests/*.test.ts` : moteur de prix, compatibilité, machine à états, numéros, règles métier, uploads, markdown, totaux boutique / panier / stock / étapes atelier (42 tests).

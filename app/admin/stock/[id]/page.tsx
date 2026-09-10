@@ -1,6 +1,7 @@
 import { EntityEditPage } from "@/components/admin/entity-pages";
 import { Section } from "@/components/admin/ui";
 import { StockAdjustForm } from "@/components/admin/shop-forms";
+import { PublicMediaUploader } from "@/components/admin/public-media-uploader";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatDateTime } from "@/lib/utils/format";
 
@@ -16,6 +17,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <div className="grid gap-5 lg:grid-cols-2">
             <Section title="Ajuster le stock" description={`Quantité actuelle : ${String(row.quantity)} · seuil de stock faible : ${String(row.low_stock_threshold)}`}>
               <StockAdjustForm productId={String(row.id)} />
+            </Section>
+            <Section title="Photos du produit" description="Téléversez les images puis collez leur chemin dans le champ « Photos » ci-dessus. La première photo sert de visuel principal ; les suivantes forment la galerie. Sans photo, la fiche affiche un aperçu rayé explicitement identifié.">
+              <PublicMediaUploader folder="produits" />
             </Section>
             <Section title="Mouvements de stock">
               <ol className="flex flex-col gap-2 text-[13px]">

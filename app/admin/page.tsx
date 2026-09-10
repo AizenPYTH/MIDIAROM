@@ -7,7 +7,7 @@ import { advanceStatusAction } from "@/app/admin/actions/orders";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireStaffOrRedirect } from "@/lib/security/auth";
 import { signMedia } from "@/lib/media/service";
-import { canRoleTransition, isAdminRole, ORDER_STATUS_LABELS, statusTone, WORKSHOP_STEPS, workshopStepIndex, type OrderStatus } from "@/lib/orders/status";
+import { canRoleTransition, ORDER_STATUS_LABELS, statusTone, WORKSHOP_STEPS, workshopStepIndex, type OrderStatus } from "@/lib/orders/status";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 
@@ -22,17 +22,9 @@ const FILTERS: { key: string; label: string; statuses: OrderStatus[] | null }[] 
 ];
 const ACTIVE_STATUSES: OrderStatus[] = ["PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "RECEPTION_CHECK", "DIAGNOSIS", "WAITING_CUSTOMER_APPROVAL", "APPROVED", "REPAIRING", "QUALITY_CONTROL", "READY_TO_SHIP", "SHIPPED", "DELIVERED", "RETURN_REQUIRED", "REFUSED_QUOTE", "UNREPAIRABLE", "SAV", "DISPUTED"];
 
-function periods(): { startOfDay: string; thirtyDaysAgo: string } {
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-  return { startOfDay: startOfDay.toISOString(), thirtyDaysAgo: new Date(startOfDay.getTime() - 30 * 86_400_000).toISOString() };
-}
-
 export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ q?: string; f?: string; sel?: string; error?: string }> }) {
   const [{ q, f, sel, error }, user] = await Promise.all([searchParams, requireStaffOrRedirect()]);
   const db = createSupabaseAdminClient();
-  const { startOfDay, thirtyDaysAgo } = periods();
-  const admin = isAdminRole(user.profile.role);
   const filter = FILTERS.find((x) => x.key === f) ?? FILTERS[0]!;
   const count = (query: PromiseLike<{ count: number | null }>) => query.then((r) => r.count ?? 0);
 
@@ -47,21 +39,13 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
     listQuery = listQuery.or(`order_number.ilike.%${term}%,customer_last_name.ilike.%${term}%,customer_first_name.ilike.%${term}%,model_name.ilike.%${term}%,customer_email.ilike.%${term}%`);
   }
 
-  const [{ data: list }, workshop, pendingQuotes, ready, delays, revenue30, purchases30, sav, today] = await Promise.all([
+  const [{ data: list }, workshop, pendingQuotes, ready, sav] = await Promise.all([
     listQuery,
     count(db.from("repair_orders").select("id", { count: "exact", head: true }).in("status", ["APPROVED", "REPAIRING", "QUALITY_CONTROL"])),
     count(db.from("supplementary_quotes").select("id", { count: "exact", head: true }).eq("status", "SENT")),
     count(db.from("repair_orders").select("id", { count: "exact", head: true }).eq("status", "READY_TO_SHIP")),
-    db.from("repair_orders").select("received_at, shipped_at").not("received_at", "is", null).not("shipped_at", "is", null).order("shipped_at", { ascending: false }).limit(30),
-    admin ? db.from("repair_orders").select("total_cents").gte("paid_at", thirtyDaysAgo).not("paid_at", "is", null) : Promise.resolve({ data: [] as { total_cents: number }[] }),
-    admin ? count(db.from("repair_orders").select("id", { count: "exact", head: true }).gte("paid_at", thirtyDaysAgo).not("paid_at", "is", null)) : Promise.resolve(0),
     count(db.from("sav_requests").select("id", { count: "exact", head: true }).in("status", ["NEW", "IN_ANALYSIS"])),
-    count(db.from("repair_orders").select("id", { count: "exact", head: true }).gte("created_at", startOfDay).neq("status", "PENDING_PAYMENT")),
   ]);
-
-  const delayDays = (delays.data ?? []).map((o) => (new Date(o.shipped_at!).getTime() - new Date(o.received_at!).getTime()) / 86_400_000).filter((d) => d >= 0);
-  const avgDelay = delayDays.length ? delayDays.reduce((a, b) => a + b, 0) / delayDays.length : null;
-  const revenue = (revenue30.data ?? []).reduce((s, o) => s + o.total_cents, 0);
 
   const rows = list ?? [];
   const selectedId = rows.some((o) => o.id === sel) ? sel : rows[0]?.id;
@@ -91,27 +75,23 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
         <StatCard label="En atelier" value={workshop} hint="accord reçu, réparation, contrôle qualité" href="/admin?f=workshop" />
         <StatCard label="Devis à valider" value={pendingQuotes} hint="en attente de décision client" href="/admin?f=diagnostic" tone={pendingQuotes ? "warning" : undefined} />
         <StatCard label="Prêts à expédier" value={ready} hint="contrôle qualité validé" href="/admin?f=ready" tone={ready ? "success" : undefined} />
-        <StatCard label="Délai moyen" value={avgDelay === null ? "—" : `${avgDelay.toFixed(1).replace(".", ",")} j`} hint={delayDays.length ? `réception → expédition, ${delayDays.length} derniers dossiers` : "aucun dossier expédié pour l'instant"} />
-        <StatCard label="Dossiers du jour" value={today} hint="commandes payées aujourd'hui" href="/admin/orders" />
         <StatCard label="SAV ouverts" value={sav} hint="nouvelles demandes et analyses" href="/admin/sav" tone={sav ? "warning" : undefined} />
-        {admin ? <StatCard label="CA 30 jours" value={formatPrice(revenue)} hint={`${purchases30} commandes payées`} href="/admin/analytics" tone="success" /> : null}
-        {admin ? <StatCard label="Panier moyen" value={formatPrice(purchases30 ? Math.round(revenue / purchases30) : 0)} hint="30 derniers jours" href="/admin/analytics" /> : null}
       </StatBand>
 
-      <div className="grid gap-px bg-border [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
-        {/* Liste */}
-        <section className="flex min-w-0 flex-col gap-3.5 bg-bg p-5">
+      <div className="grid bg-bg [grid-template-columns:minmax(0,1fr)] xl:[grid-template-columns:minmax(0,1fr)_minmax(380px,440px)]">
+        {/* Liste : l'espace principal du travail quotidien */}
+        <section className="flex min-w-0 flex-col gap-4 p-5">
           <form method="get" action="/admin" className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="f" value={filter.key} />
             <input name="q" defaultValue={q ?? ""} placeholder="Rechercher n° / nom / console" aria-label="Rechercher" className="min-w-0 flex-[1_1_180px] border border-border-strong bg-surface px-3 py-2.5 text-[14px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none" />
             <FilterChips items={FILTERS.map((x) => ({ key: x.key, label: x.label }))} current={filter.key} hrefFor={(key) => hrefFor({ f: key === "all" ? undefined : key, sel: undefined })} />
           </form>
           {error ? <p className="border border-danger bg-danger-soft px-3 py-2 text-[13px] text-danger">{error}</p> : null}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col border-t border-border">
             {rows.map((o) => {
               const active = o.id === selectedId;
               return (
-                <Link key={o.id} href={hrefFor({ sel: o.id })} scroll={false} className={cn("flex flex-col gap-2 border p-3.5 text-ink transition-colors", active ? "border-accent bg-surface-muted" : "border-border bg-surface hover:border-border-strong")} aria-current={active ? "true" : undefined}>
+                <Link key={o.id} href={hrefFor({ sel: o.id })} scroll={false} className={cn("flex flex-col gap-1.5 border-b border-l-2 py-3 pl-3.5 pr-2 text-ink transition-colors", active ? "border-l-accent border-b-border bg-surface-muted" : "border-l-transparent border-b-border hover:bg-surface-muted/50")} aria-current={active ? "true" : undefined}>
                   <span className="flex w-full items-center justify-between gap-3">
                     <span className="whitespace-nowrap font-mono text-[11.5px] text-ink-muted">{o.order_number}</span>
                     <Badge tone={statusTone(o.status)}>{ORDER_STATUS_LABELS[o.status]}</Badge>
@@ -136,7 +116,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
         </section>
 
         {/* Fiche */}
-        <aside className="flex min-w-0 flex-col gap-4 bg-surface p-5">
+        <aside className="flex min-w-0 flex-col gap-5 border-t border-border p-5 xl:border-l xl:border-t-0">
           {selected ? (
             <>
               <div className="flex items-baseline justify-between gap-3">
@@ -154,7 +134,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                 </span>
               </div>
 
-              <div className="flex flex-col gap-[7px] border border-border-strong p-3.5">
+              <div className="flex flex-col gap-[7px]">
                 <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Panne décrite par le client</span>
                 <p className="text-[14.5px] leading-[1.5] text-[#e4dccb]">
                   <span className="font-semibold">{selected.fault_name}.</span> {selected.customer_notes || "Aucune description complémentaire."}
@@ -172,9 +152,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                   <div className="mt-1 [&_li]:border-border [&_li]:bg-surface-muted">
                     <MediaGallery media={signed} />
                   </div>
-                ) : (
-                  <div className="photo-placeholder mt-1 h-[74px] text-[10.5px]">photos client, de réception et de diagnostic</div>
-                )}
+                ) : null}
               </div>
 
               <div className="flex flex-col gap-[9px]">
@@ -203,7 +181,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                 <span className="text-[12px] text-ink-muted">Reçu → Diagnostic → Devis envoyé → En attente client → En atelier → Réparé → Expédié → Terminé. Cliquer un segment change le statut si la transition est autorisée ; les autres statuts sont dans la fiche complète.</span>
               </div>
 
-              <div className="flex flex-col gap-[9px] border border-border-strong p-3.5">
+              <div className="flex flex-col gap-[9px] border-t border-border pt-4">
                 <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Devis</span>
                 {(items?.data ?? []).map((i) => (
                   <div key={i.id} className="flex justify-between gap-3.5 border-b border-dotted border-[#3a3529] pb-1.5 text-[14.5px]">

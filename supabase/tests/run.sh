@@ -20,11 +20,15 @@ for f in supabase/migrations/*.sql; do
   echo "→ migration $(basename "$f")"
   psql -v ON_ERROR_STOP=1 -d "$DB" -q -f "$f"
 done
-echo "→ seed"
+echo "→ catalogue (applicable en production)"
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog.sql
+echo "→ seed de développement"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
-# Replayed once more: the seed must stay idempotent, including on accounts that
-# already exist (regression: dev password never re-applied, missing identities).
-echo "→ seed (rejoué, idempotence)"
+# Rejoués une seconde fois : catalogue et seed doivent rester idempotents, y
+# compris sur des comptes déjà présents (régression : mot de passe de
+# développement jamais réappliqué, identités manquantes).
+echo "→ catalogue + seed (rejoués, idempotence)"
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog.sql
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/accounts.test.sql
 echo "→ RLS tests"

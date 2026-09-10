@@ -22,7 +22,7 @@ photos client, fiches consoles.
 | Zone « déposez photos / vidéo » (étape 3) | **Reproduit** (photos ; bucket privé `customer-media`, rattachées au dossier) |
 | Reprise & rétro | **Reproduit** (blocs CMS `homepage.tradein` / `homepage.retro`, formulaire `/reprise`, rayon rétro de la boutique) |
 | Le magasin (adresse, horaires, photo) | **Reproduit** (réglages `brand`, première photo de la galerie ou placeholder rayé) |
-| Back-office : header, onglets, bandeau KPI, maître/détail Réparations | **Reproduit** avec les vrais dossiers, permissions et audit existants |
+| Back-office : header, onglets, bandeau KPI, maître/détail Réparations | **Reproduit** avec les vrais dossiers, permissions et audit existants. Allégé ensuite : cinq entrées de premier niveau (Réparations, Commandes, Stock, Clients, Plus), le reste regroupé dans un menu « Plus » par usage (Gestion, Atelier, Configuration, Administration) ; quatre indicateurs sur le tableau de bord (en atelier, devis à valider, prêts à expédier, SAV ouverts), les statistiques financières étant dans Statistiques ; listes de dossiers en filets plutôt qu'en cartes encadrées |
 | Onglets Commandes / Stock / Reprises | **Reproduits** (`/admin/shop-orders`, `/admin/stock`, `/admin/trade-ins`) avec les vraies tables ; les modules existants (Dossiers, Réception, SAV, Clients, Catalogue, Options, Packs, Transport, Techniciens, Contenu, Avis, Analytics, Réglages, Audit) sont des onglets du même style |
 
 ## Design system

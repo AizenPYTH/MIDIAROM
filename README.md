@@ -59,6 +59,8 @@ on conflict (id) do nothing;
 update public.profiles set role = 'SUPER_ADMIN' where email = 'admin@example.com';
 ```
 
+Le catalogue initial (consoles, pannes, prestations avec leurs prix de départ, produits de la boutique) est dans `supabase/catalog.sql`, séparé du seed de développement : c'est le seul fichier à appliquer sur un projet de production.
+
 Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, `EMAIL_PROVIDER=console`, `SHIPPING_PROVIDER=mock`). Les mocks sont **refusés en production**.
 
 ## Commandes
@@ -70,6 +72,7 @@ Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, 
 | `npm run test:db` | Applique les migrations + seed sur un PostgreSQL jetable et exécute les tests RLS SQL |
 | `INTEGRATION=1 npm run test:integration` | Tests d'intégration contre une pile Supabase locale (injections refusées, numéros uniques) |
 | `npm run db:types` | Regénère `types/database.ts` depuis la base locale |
+| `psql "$DB_URL" -f supabase/catalog.sql` | Charge le catalogue initial (consoles, pannes, prestations, produits) — applicable en production |
 | `npm run check` | lint + typecheck + tests + build |
 | `npm run check:supabase [fichier .env]` | Diagnostique la configuration Supabase d'un déploiement (variables, clés, joignabilité, schéma) |
 | `scripts/apply-migrations.sh <url-postgres>` | Applique les migrations sur une base distante en une transaction, sans `supabase link` |

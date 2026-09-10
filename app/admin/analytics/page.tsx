@@ -99,6 +99,16 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     row.revenue += o.revenue_cents ?? 0;
     bySource.set(key, row);
   }
+  // Repris du tableau de bord, allégé pour ne montrer que le travail du jour.
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const [delays, todayCount] = await Promise.all([
+    db.from("repair_orders").select("received_at, shipped_at").not("received_at", "is", null).not("shipped_at", "is", null).order("shipped_at", { ascending: false }).limit(30),
+    db.from("repair_orders").select("id", { count: "exact", head: true }).gte("created_at", startOfDay.toISOString()).neq("status", "PENDING_PAYMENT").then((r) => r.count ?? 0),
+  ]);
+  const delayDays = (delays.data ?? []).map((o) => (new Date(o.shipped_at!).getTime() - new Date(o.received_at!).getTime()) / 86_400_000).filter((d) => d >= 0);
+  const avgDelay = delayDays.length ? delayDays.reduce((a, b) => a + b, 0) / delayDays.length : null;
+
   const landing = new Map<string, number>();
   for (const e of ev.filter((x) => x.event_name === "page_view" && x.landing_page)) landing.set(e.landing_page!, (landing.get(e.landing_page!) ?? 0) + 1);
 
@@ -123,6 +133,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <StatCard label="Coût transport" value={formatPrice(shippingCost)} />
         <StatCard label="Temps technicien" value={formatMinutes(minutes)} hint={orders.length ? `${formatMinutes(Math.round(minutes / orders.length))} / dossier` : undefined} />
         <StatCard label="Marge estimée" value={formatPrice(margin)} hint={`${pct(margin, revenue)} du CA · ${savCount} SAV`} tone={margin >= 0 ? "success" : "warning"} />
+        <StatCard label="Délai moyen" value={avgDelay === null ? "—" : `${avgDelay.toFixed(1).replace(".", ",")} j`} hint={delayDays.length ? `réception → expédition, ${delayDays.length} derniers dossiers` : "aucun dossier expédié"} />
+        <StatCard label="Dossiers du jour" value={todayCount} hint="commandes payées aujourd'hui" href="/admin/orders" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
