@@ -1,9 +1,9 @@
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
-/** Carte du handoff : fond surface, filet 1 px, padding 16–26 px, aucun arrondi. */
+/** Carte de la charte v4 : surface en verre, filet clair, rayon 24 px. */
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("border border-border bg-surface", className)} {...props} />;
+  return <div className={cn("glass rounded-[24px]", className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -11,7 +11,7 @@ export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDiv
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={cn("font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted", className)} {...props} />;
+  return <h2 className={cn("font-mono text-[11px] uppercase tracking-[0.12em] text-ink-muted", className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {

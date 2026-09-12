@@ -25,22 +25,22 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
   ];
 
   return (
-    <footer className="mt-auto bg-ink-900 font-mono text-[12px] tracking-[0.04em] text-[#8a8271]">
-      <div className="flex flex-col gap-[18px] px-4 pb-[34px] pt-6 text-[11.5px] sm:flex-row sm:flex-wrap sm:justify-between sm:px-6 sm:py-7 sm:text-[12px]">
+    <footer className="mt-auto border-t border-border font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-faint">
+      <div className="mx-auto flex w-full max-w-[1340px] flex-col gap-[18px] px-4 pb-[34px] pt-7 sm:flex-row sm:flex-wrap sm:justify-between sm:px-8 sm:py-8">
         <span>
           © {new Date().getFullYear()} {brand.name}
           {brand.city ? ` — ${brand.city}` : ""}
         </span>
-        <span className="flex flex-wrap gap-x-2 gap-y-2 sm:gap-y-1">
+        <span className="flex flex-wrap gap-x-3 gap-y-2 sm:gap-y-1">
           {links.map((link, i) => (
             <span key={link.label} className="contents">
               {i > 0 ? <span aria-hidden="true">·</span> : null}
               {link.external ? (
-                <a href={link.href} target="_blank" rel="noopener noreferrer" className="hover:text-paper">
+                <a href={link.href} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-sale">
                   {link.label}
                 </a>
               ) : (
-                <Link href={link.href} className="hover:text-paper">
+                <Link href={link.href} className="transition-colors hover:text-sale">
                   {link.label}
                 </Link>
               )}
@@ -49,26 +49,26 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
         </span>
       </div>
       {models.length ? (
-        <div className="flex flex-wrap gap-x-2 gap-y-1 border-t border-ink-700 px-6 py-4 text-[11px] text-[#6b6558]">
+        <div className="mx-auto flex w-full max-w-[1340px] flex-wrap gap-x-3 gap-y-1 border-t border-border px-4 py-4 text-[10.5px] text-ink-faint/70 sm:px-8">
           <span className="uppercase tracking-[0.08em]">Réparation</span>
           {models.slice(0, 10).map((m) => (
             <span key={m.slug} className="contents">
               <span aria-hidden="true">·</span>
-              <Link href={`${ROUTES.repair}/${m.slug}`} className="hover:text-paper">
+              <Link href={`${ROUTES.repair}/${m.slug}`} className="transition-colors hover:text-sale">
                 {m.name}
               </Link>
             </span>
           ))}
           <span aria-hidden="true">·</span>
-          <Link href={ROUTES.repair} className="hover:text-paper">
+          <Link href={ROUTES.repair} className="transition-colors hover:text-sale">
             Toutes les consoles
           </Link>
           <span aria-hidden="true">·</span>
-          <Link href={ROUTES.packaging} className="hover:text-paper">
+          <Link href={ROUTES.packaging} className="transition-colors hover:text-sale">
             Emballage
           </Link>
           <span aria-hidden="true">·</span>
-          <Link href={ROUTES.trust} className="hover:text-paper">
+          <Link href={ROUTES.trust} className="transition-colors hover:text-sale">
             Confiance
           </Link>
         </div>

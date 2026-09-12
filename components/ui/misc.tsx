@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils/cn";
  * de chaque côté font la différence entre deux colonnes de produits et une.
  */
 export function Container({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mx-auto w-full max-w-[1280px] px-4 sm:px-6", className)} {...props} />;
+  return <div className={cn("mx-auto w-full max-w-[1340px] px-4 sm:px-8", className)} {...props} />;
 }
 
 /** Étiquette mono colorée au-dessus des titres (« 01 — Vente », « Atelier »…). */
 export function Eyebrow({ tone = "sale", className, ...props }: React.HTMLAttributes<HTMLSpanElement> & { tone?: "sale" | "repair" | "muted" }) {
-  const color = tone === "sale" ? "text-sale" : tone === "repair" ? "text-accent-light" : "text-ink-muted";
+  const color = tone === "sale" ? "text-sale" : tone === "repair" ? "text-accent" : "text-ink-muted";
   return <span className={cn("mono-label block", color, className)} {...props} />;
 }
 
@@ -93,7 +93,7 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-start border border-dashed border-border-strong bg-surface-muted px-6 py-8", className)}>
+    <div className={cn("flex flex-col items-start rounded-[24px] border border-dashed border-border-strong bg-surface-muted px-6 py-8", className)}>
       <p className="text-[15.5px] font-semibold text-ink">{title}</p>
       {description ? <p className="mt-1 max-w-md text-sm text-ink-muted">{description}</p> : null}
       {action ? <div className="mt-4">{action}</div> : null}

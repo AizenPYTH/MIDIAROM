@@ -2,7 +2,8 @@ import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
 /**
- * Badge de statut du handoff : mono 10.5 px majuscules, fond plein, sans arrondi.
+ * Badge de statut : mono 10.5 px majuscules, pastille arrondie sur fond ton
+ * sur ton.
  * Tons : ambre (nouveau, devis envoyé, à préparer), bleu (reçu, diagnostic,
  * estimé), vert (en atelier, prêt, payé, accepté), neutre (expédié, en attente),
  * encre (état produit), danger (rupture, refus, litige).
@@ -16,9 +17,9 @@ const tones: Record<BadgeTone, string> = {
   warning: "bg-warning-soft text-warning",
   danger: "bg-danger-soft text-danger",
   primary: "bg-accent-soft text-info",
-  ink: "bg-ink-900 text-paper",
+  ink: "bg-paper text-ink-900",
 };
 
 export function Badge({ tone = "neutral", className, ...props }: React.HTMLAttributes<HTMLSpanElement> & { tone?: BadgeTone }) {
-  return <span className={cn("inline-flex items-center whitespace-nowrap px-[7px] py-[3px] font-mono text-[10.5px] uppercase tracking-[0.06em]", tones[tone], className)} {...props} />;
+  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-full px-[10px] py-[4px] font-mono text-[10.5px] uppercase tracking-[0.1em]", tones[tone], className)} {...props} />;
 }

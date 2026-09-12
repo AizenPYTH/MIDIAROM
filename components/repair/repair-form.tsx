@@ -12,6 +12,7 @@ import { createOrderAction, quoteSelectionAction } from "@/app/(marketing)/comma
 import { loadModelRepairsAction, loadOfferAction } from "@/app/(marketing)/reparation/actions";
 import type { FormAddress, FormConditions, FormCustomer, FormModel, FormOffer, FormPlatform, FormRepair } from "@/components/repair/repair-form-types";
 import { DraftPhotoUploader, type DraftPhoto } from "@/components/customer/draft-photo-uploader";
+import { ProgressRing } from "@/components/marketing/motion";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -330,104 +331,70 @@ export function RepairForm(props: RepairFormProps) {
   };
 
   const total = pricing?.totalCents ?? null;
-  // Étapes 1-2 sur fond encre au téléphone (M3), 3-4 sur papier (M4).
-  const darkOnPhone = step <= 2;
   const shipping = offer?.shippingMethods.find((m) => m.id === shippingId) ?? null;
   const pickedOptions = [...(offer?.packs.filter((p) => packIds.includes(p.id)) ?? []), ...(offer?.options.filter((o) => optionIds.includes(o.id) && !optionsInPacks.has(o.id)) ?? [])];
-  const nextLabel = step === 4 ? "Envoyer ma demande" : "Continuer";
+  const nextLabel = step === 4 ? "Envoyer la demande" : "Continuer";
   // Le bouton principal porte le total en cours au téléphone : c'est le chiffre
-  // que le client cherche, et il n'a pas la colonne de récapitulatif du bureau
-  // sous les yeux. Rien à afficher tant que la prestation est « sur devis ».
+  // que le client cherche, et il n'a pas la barre supérieure sous les yeux.
+  // Rien à afficher tant que la prestation est « sur devis ».
   const runningTotal = showPrices && total !== null && step < 4 && !repair?.priceProvisional ? formatPrice(total) : null;
   const sticky = props.stickyActions ?? true;
 
+  /** Estimation courante, affichée en permanence en haut du panneau. */
+  const estimate = !repairId ? "à définir" : repair?.priceProvisional ? "après diagnostic" : total !== null && showPrices ? formatPrice(total) : "calcul…";
+
+  const stepTitle = step === 1 ? "Quel appareil ?" : step === 2 ? (model?.name ?? "Quelle intervention ?") : step === 3 ? "Que se passe-t-il ?" : "Où la renvoyer ?";
+
   return (
-    <div ref={rootRef} className={cn("p-4 sm:bg-paper sm:p-[26px] sm:text-ink-900", darkOnPhone ? "text-paper" : "bg-paper text-ink-900", props.wide && "w-full")} style={{ scrollMarginTop: 96 }}>
-      <div className="mb-4 flex items-baseline justify-between gap-3 sm:mb-0">
-        <strong className="font-mono text-[12px] uppercase tracking-[0.08em]">Fiche de réparation</strong>
-        <span className="font-mono text-[12px] text-ink-muted">Étape {step} / 4</span>
-      </div>
-      {/* Au téléphone, la barre de progression est reportée sur la barre d'action
-          collée en bas : elle reste sous les yeux quand on descend dans l'étape,
-          au lieu de disparaître avec le haut de la carte. */}
-      <div className="mb-[22px] mt-3 hidden h-[3px] bg-[rgba(20,18,15,0.12)] sm:block" role="progressbar" aria-valuemin={1} aria-valuemax={4} aria-valuenow={step}>
-        <div className="h-[3px] bg-accent" style={{ width: `${(step / 4) * 100}%` }} />
+    <div ref={rootRef} className={cn("glass rounded-[32px] p-5 sm:p-9", props.wide && "w-full")} style={{ scrollMarginTop: 96 }}>
+      {/* Barre supérieure : anneau de progression, étape en cours, et à droite
+          l'estimation — le chiffre que le client suit d'un bout à l'autre. */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-b border-border pb-6">
+        <ProgressRing step={step} total={4} size={64} />
+        <div className="min-w-0 flex-1">
+          <span className="mono-label text-ink-muted">Devis en ligne</span>
+          <h3 className="mt-2 font-display text-[clamp(26px,3.4vw,42px)] font-bold leading-[1.02] tracking-[-0.035em] text-ink">{stepTitle}</h3>
+        </div>
+        <div className="text-right">
+          <span className="mono-label text-ink-muted">Estimation</span>
+          <p className="mt-2 whitespace-nowrap font-mono text-[19px] text-sale">{estimate}</p>
+        </div>
       </div>
 
       {props.cancelled && step === 2 ? (
-        <p className="mb-4 border border-warning bg-warning-soft px-3.5 py-2.5 text-[13.5px] text-warning">Votre paiement n&apos;a pas été finalisé. Vous pouvez reprendre votre demande ci-dessous.</p>
+        <p className="mt-6 rounded-[20px] border border-warning bg-warning-soft px-4 py-3 text-[13.5px] text-warning">Votre paiement n&apos;a pas été finalisé. Vous pouvez reprendre votre demande ci-dessous.</p>
       ) : null}
 
       {step === 1 ? (
-        <div className="flex flex-col gap-3.5">
-          <h3 className="text-[22px] font-extrabold tracking-[-0.01em]">Quel appareil ?</h3>
-          <span className="font-mono text-[11.5px] text-ink-muted">1. La plateforme, 2. le modèle exact — les prestations dépendent du modèle</span>
-          <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(140px,1fr))]" role="radiogroup" aria-label="Plateforme">
-            {platforms.map((p) => {
-              const selected = platform === p.key;
-              return (
-                <button
-                  key={p.key}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  onClick={() => {
-                    setPlatform(p.key);
-                    setModelId(null);
-                    setError(null);
-                  }}
-                  className={cn(
-                    "flex min-h-[60px] cursor-pointer flex-col justify-center gap-1 border p-[13px] text-left transition-colors hover:border-accent sm:min-h-0 sm:justify-start",
-                    selected
-                      ? "border-paper bg-paper text-ink-900 sm:border-ink-900 sm:bg-ink-900 sm:text-paper"
-                      : "border-ink-650 bg-transparent text-paper sm:border-[rgba(20,18,15,0.22)] sm:text-ink-900",
-                  )}
-                >
-                  <span className="text-[15px] font-semibold">{p.label}</span>
-                  <span className="font-mono text-[11px] opacity-70">{p.note}</span>
-                </button>
-              );
-            })}
+        <div className="mt-7 flex flex-col gap-4">
+          <span className="font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-muted">1. La plateforme, 2. le modèle exact — les interventions dépendent du modèle</span>
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(185px,1fr))]" role="radiogroup" aria-label="Plateforme">
+            {platforms.map((p) => (
+              <DeviceCard key={p.key} selected={platform === p.key} onPick={() => { setPlatform(p.key); setModelId(null); setError(null); }} label={p.label} note={p.note} />
+            ))}
           </div>
           {platform ? (
             <>
-              <span className="mt-1 font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Modèle exact</span>
-              <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(140px,1fr))]" role="radiogroup" aria-label="Modèle">
-                {platformModels.map((m) => {
-                  const selected = modelId === m.id;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => pickModel(m.id)}
-                      className={cn(
-                        "flex min-h-[60px] cursor-pointer flex-col justify-center gap-1 border p-[13px] text-left transition-colors hover:border-accent sm:min-h-0 sm:justify-start",
-                        selected ? "border-accent bg-[var(--selection)] text-ink-900" : "border-ink-650 bg-transparent text-paper sm:border-[rgba(20,18,15,0.22)] sm:text-ink-900",
-                      )}
-                    >
-                      <span className="text-[15px] font-semibold">{m.name}</span>
-                      <span className="font-mono text-[11px] opacity-70">{platform === RETRO_KEY ? m.brandName : m.tag || m.brandName}</span>
-                    </button>
-                  );
-                })}
+              <span className="mt-2 font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-muted">Modèle exact</span>
+              <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(185px,1fr))]" role="radiogroup" aria-label="Modèle">
+                {platformModels.map((m) => (
+                  <DeviceCard key={m.id} selected={modelId === m.id} onPick={() => pickModel(m.id)} label={m.name} note={platform === RETRO_KEY ? m.brandName : m.tag || m.brandName} />
+                ))}
               </div>
-              {!platformModels.length ? <p className="text-sm text-ink-muted">Aucun modèle publié pour cette plateforme.</p> : null}
+              {!platformModels.length ? <p className="text-[15px] text-ink-muted">Aucun modèle publié pour cette plateforme.</p> : null}
             </>
           ) : null}
-          {!models.length ? <p className="text-sm text-ink-muted">Aucune console publiée pour le moment.</p> : null}
+          {!models.length ? <p className="text-[15px] text-ink-muted">Aucune console publiée pour le moment.</p> : null}
         </div>
       ) : null}
 
       {step === 2 ? (
-        <div className="flex flex-col gap-3.5">
-          <h3 className="text-[22px] font-extrabold tracking-[-0.01em]">{model?.name ?? "Appareil"} — quelle prestation ?</h3>
-          <span className="font-mono text-[11.5px] text-ink-muted">Une prestation principale, puis les options d&apos;entretien compatibles</span>
-          {repairsLoading ? <p className="text-sm text-ink-muted">Chargement des prestations…</p> : null}
+        <div className="mt-7 flex flex-col gap-4">
+          <span className="font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-muted">Une intervention principale, puis les options compatibles</span>
+          {repairsLoading ? <p className="text-[15px] text-ink-muted">Chargement des interventions…</p> : null}
           {!repairsLoading && !repairs.length ? (
-            <p className="text-sm text-ink-muted">
-              Aucune prestation publiée pour ce modèle. Écrivez-nous depuis la page{" "}
+            <p className="text-[15px] text-ink-muted">
+              Aucune intervention publiée pour ce modèle. Écrivez-nous depuis la page{" "}
               <Link href={ROUTES.contact} className="text-sale underline">
                 contact
               </Link>
@@ -440,7 +407,7 @@ export function RepairForm(props: RepairFormProps) {
               onChange={(e) => setRepairQuery(e.target.value)}
               placeholder={`Rechercher parmi ${repairs.length} pannes (HDMI, charge, écran…)`}
               aria-label="Rechercher une panne"
-              className="w-full border border-ink-650 bg-ink-800 p-3 text-[16px] text-paper placeholder:text-ink-muted focus:border-accent focus:outline-none sm:border-[rgba(20,18,15,0.22)] sm:bg-white sm:p-3 sm:text-[15px] sm:text-ink-900"
+              className="w-full rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[15px]"
             />
           ) : null}
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Prestation">
@@ -448,15 +415,15 @@ export function RepairForm(props: RepairFormProps) {
               const open = isCategoryOpen(group.name, index);
               const panelId = `prestations-${index}`;
               return (
-                <div key={group.name} className="border border-ink-700 sm:border-[rgba(20,18,15,0.16)]">
+                <div key={group.name} className="overflow-hidden rounded-[20px] border border-border">
                   <button
                     type="button"
                     onClick={() => toggleCategory(group.name)}
                     aria-expanded={open}
                     aria-controls={panelId}
-                    className="flex w-full cursor-pointer items-center justify-between gap-3 bg-ink-800 px-[13px] py-3 text-left sm:bg-paper-alt sm:py-2.5"
+                    className="flex w-full cursor-pointer items-center justify-between gap-3 bg-surface-muted px-4 py-3.5 text-left transition-colors hover:bg-surface-strong"
                   >
-                    <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-paper sm:text-ink-900">{group.name}</span>
+                    <span className="font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink">{group.name}</span>
                     <span className="flex items-center gap-2 font-mono text-[11px] text-ink-muted">
                       {group.items.length}
                       <span aria-hidden="true">{open ? "−" : "+"}</span>
@@ -465,86 +432,93 @@ export function RepairForm(props: RepairFormProps) {
                   {open ? (
                     <div id={panelId} className="flex flex-col gap-2 p-2">
                       {group.items.map((r) => (
-                        <OptionRow key={r.id} selected={repairId === r.id} onPick={() => pickRepair(r.id)} label={r.name} note={r.note} price={repairPrice(r)} role="radio" darkOnPhone />
+                        <OptionRow key={r.id} selected={repairId === r.id} onPick={() => pickRepair(r.id)} label={r.name} note={r.note} price={repairPrice(r)} role="radio" />
                       ))}
                     </div>
                   ) : null}
                 </div>
               );
             })}
-            {searching && !repairGroups.length ? <p className="text-sm text-ink-muted">Aucune panne ne correspond. Choisissez « Autre panne » ou décrivez le problème à l&apos;étape suivante.</p> : null}
+            {searching && !repairGroups.length ? <p className="text-[15px] text-ink-muted">Aucune panne ne correspond. Décrivez le problème à l&apos;étape suivante.</p> : null}
           </div>
           {repairId ? (
             <>
               {offerLoading ? <p className="font-mono text-[11.5px] text-ink-muted">Chargement des options compatibles…</p> : null}
               {offer && (offer.packs.length || offer.options.length) ? (
                 <>
-                  <span className="mt-2 font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Options d&apos;entretien — plusieurs choix possibles</span>
+                  <span className="mt-2 font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-muted">Options d&apos;entretien — plusieurs choix possibles</span>
                   <div className="flex flex-col gap-2">
                     {offer.packs.map((p) => (
-                      <OptionRow key={p.id} selected={packIds.includes(p.id)} onPick={() => togglePack(p.id)} label={p.name} note={p.note} price={formatPriceDelta(p.priceCents)} badge={p.isRecommended ? "Recommandé" : "Pack"} darkOnPhone />
+                      <OptionRow key={p.id} selected={packIds.includes(p.id)} onPick={() => togglePack(p.id)} label={p.name} note={p.note} price={formatPriceDelta(p.priceCents)} badge={p.isRecommended ? "Recommandé" : "Pack"} />
                     ))}
                     {offer.options.map((o) => {
                       const inPack = optionsInPacks.has(o.id);
-                      return <OptionRow key={o.id} selected={optionIds.includes(o.id) && !inPack} disabled={inPack} onPick={() => toggleOption(o.id)} label={o.name} note={inPack ? "Inclus dans votre pack" : o.note} price={formatPriceDelta(o.priceCents)} badge={o.isRecommended ? "Recommandé" : undefined} darkOnPhone />;
+                      return <OptionRow key={o.id} selected={optionIds.includes(o.id) && !inPack} disabled={inPack} onPick={() => toggleOption(o.id)} label={o.name} note={inPack ? "Inclus dans votre pack" : o.note} price={formatPriceDelta(o.priceCents)} badge={o.isRecommended ? "Recommandé" : undefined} />;
                     })}
                   </div>
                 </>
               ) : null}
-              {offer && !offer.packs.length && !offer.options.length ? <p className="font-mono text-[11.5px] text-ink-muted">Aucune option supplémentaire compatible avec cette prestation.</p> : null}
-              {pricing?.warnings.length ? <p className="text-[13px] text-[#a39c8c] sm:text-ink-faint">{pricing.warnings.join(" ")}</p> : null}
+              {offer && !offer.packs.length && !offer.options.length ? <p className="font-mono text-[11.5px] text-ink-muted">Aucune option supplémentaire compatible avec cette intervention.</p> : null}
+              {pricing?.warnings.length ? <p className="text-[13px] text-ink-faint">{pricing.warnings.join(" ")}</p> : null}
             </>
           ) : null}
         </div>
       ) : null}
 
       {step === 3 ? (
-        <div className="flex flex-col gap-3.5">
-          <h3 className="text-[22px] font-extrabold tracking-[-0.01em]">Décrivez le problème</h3>
+        <div className="mt-7 flex flex-col gap-4">
           <textarea
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             maxLength={2000}
             aria-label="Description du problème"
-            placeholder="Ex. : la console s'allume mais s'éteint après 5 minutes, ventilateur très bruyant depuis 2 semaines. Déjà nettoyée l'an dernier."
-            className="min-h-[120px] w-full resize-none border border-[rgba(20,18,15,0.22)] bg-white p-[13px] text-[16px] leading-normal text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none sm:min-h-[130px] sm:resize-y sm:text-[15px]"
+            placeholder="Elle s'allume puis s'éteint au bout de cinq minutes…"
+            className="min-h-[124px] w-full resize-none rounded-[20px] border border-border-strong bg-field p-5 font-display text-[18px] leading-[1.35] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:min-h-[150px] sm:text-[22px]"
           />
-          <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Symptômes — plusieurs choix possibles</span>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Symptômes">
             {symptomChoices.map((sym) => {
               const on = symptoms.includes(sym);
               return (
-                <button key={sym} type="button" aria-pressed={on} onClick={() => toggleSymptom(sym)} className={cn("whitespace-nowrap border px-[11px] py-[13px] font-mono text-[11.5px] uppercase tracking-[0.05em] transition-colors hover:border-accent sm:py-2", on ? "border-accent bg-accent text-white" : "border-dashed border-[rgba(20,18,15,0.3)] bg-paper-alt text-ink-900")}>
-                  {on ? "✓" : "+"} {sym}
+                <button
+                  key={sym}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggleSymptom(sym)}
+                  className={cn(
+                    "chip border transition-colors duration-300",
+                    on ? "border-sale bg-sale text-[var(--color-on-accent)]" : "border-border-strong text-ink-soft hover:border-sale hover:bg-sale hover:text-[var(--color-on-accent)]",
+                  )}
+                >
+                  {sym}
                 </button>
               );
             })}
           </div>
-          <DraftPhotoUploader photos={photos} onChange={setPhotos} label="déposez photos de la panne" phoneLabel="prendre une photo de la panne" />
+          <DraftPhotoUploader photos={photos} onChange={setPhotos} label="Joindre une photo de la panne · facultatif" phoneLabel="Prendre une photo de la panne" />
 
-          {/* Récapitulatif compact : au téléphone, le client n'a pas la colonne
-              de gauche du bureau, et attendre l'étape 4 pour lui montrer ce
-              qu'il a choisi l'oblige à revenir en arrière pour vérifier. */}
-          <div className="border border-[rgba(20,18,15,0.16)] bg-paper-alt p-[13px] sm:hidden">
-            <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted">Votre demande</span>
-            <dl className="mt-2 flex flex-col gap-1.5 text-[13.5px]">
+          {/* Récapitulatif compact : au téléphone, le client n'a pas la barre
+              supérieure sous les yeux quand il est descendu dans l'étape. */}
+          <div className="rounded-[20px] border border-sale/40 bg-sale/[0.06] p-4 sm:hidden">
+            <span className="mono-label text-ink-muted">Votre demande</span>
+            <dl className="mt-3 flex flex-col gap-2 text-[14px]">
               <div className="flex justify-between gap-3">
-                <dt className="text-ink-faint">Appareil</dt>
-                <dd className="text-right font-medium">{modelLabel(model)}</dd>
+                <dt className="text-ink-muted">Appareil</dt>
+                <dd className="text-right font-medium text-ink">{modelLabel(model)}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-ink-faint">Prestation</dt>
-                <dd className="text-right font-medium">{repair?.name ?? "—"}</dd>
+                <dt className="text-ink-muted">Intervention</dt>
+                <dd className="text-right font-medium text-ink">{repair?.name ?? "—"}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-ink-faint">Estimation</dt>
-                <dd className="whitespace-nowrap text-right font-mono">{repair?.priceProvisional ? "sur devis" : total !== null ? formatPrice(total) : "—"}</dd>
+                <dt className="text-ink-muted">Estimation</dt>
+                <dd className="whitespace-nowrap text-right font-mono text-sale">{estimate}</dd>
               </div>
             </dl>
           </div>
-          <div className="grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
-            <input value={serial} onChange={(e) => setSerial(e.target.value)} maxLength={60} placeholder="Numéro de série (facultatif)" aria-label="Numéro de série" className="border border-[rgba(20,18,15,0.22)] bg-white p-3 text-[16px] text-ink-900 placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[15px]" />
-            <label className="flex items-center gap-3 border border-[rgba(20,18,15,0.22)] px-3 py-3 text-[13px] text-ink-faint sm:py-2">
+
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
+            <TextInput label="Numéro de série" placeholder="Facultatif" value={serial} onChange={setSerial} maxLength={60} />
+            <label className="flex min-h-[52px] items-center gap-3 self-end rounded-[14px] border border-border-strong px-4 py-3 text-[14px] text-ink-soft">
               <Checkbox checked={alreadyOpened} onChange={(e) => setAlreadyOpened(e.target.checked)} />
               Console déjà ouverte ou réparée
             </label>
@@ -553,59 +527,51 @@ export function RepairForm(props: RepairFormProps) {
       ) : null}
 
       {step === 4 ? (
-        <div className="flex flex-col gap-3.5">
-          <h3 className="text-[22px] font-extrabold tracking-[-0.01em]">Envoi et coordonnées</h3>
+        <div className="mt-7 flex flex-col gap-4">
           {!props.isLoggedIn ? (
-            <p className="text-[13px] text-ink-faint">
-              Un espace client est créé avec votre e-mail pour suivre le dossier.{" "}
+            <p className="text-[14px] text-ink-muted">
+              Un espace client est créé avec votre adresse pour suivre le dossier.{" "}
               <Link href={`${ROUTES.login}?next=${encodeURIComponent(repairId ? `${ROUTES.checkout}/${repairId}` : ROUTES.repair)}`} className="text-sale underline">
                 Déjà client ? Connectez-vous
               </Link>
             </p>
           ) : null}
-          {/* Un champ par ligne au téléphone : deux colonnes de 150 px tiennent
-              à l'écran mais réduisent chaque champ à une dizaine de caractères
-              visibles, et une adresse ne s'y relit pas. */}
-          <div className="grid grid-cols-1 gap-2 sm:[grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
-            <TextInput placeholder="Prénom" autoComplete="given-name" value={customer.first_name} onChange={(v) => setCustomer({ ...customer, first_name: v })} error={fieldErrors["customer.first_name"]} />
-            <TextInput placeholder="Nom" autoComplete="family-name" value={customer.last_name} onChange={(v) => setCustomer({ ...customer, last_name: v })} error={fieldErrors["customer.last_name"]} />
-            <TextInput placeholder="Téléphone" type="tel" autoComplete="tel" value={customer.phone} onChange={(v) => setCustomer({ ...customer, phone: v })} error={fieldErrors["customer.phone"]} />
-            <TextInput placeholder="E-mail" type="email" autoComplete="email" value={customer.email} onChange={(v) => setCustomer({ ...customer, email: v })} error={fieldErrors["customer.email"]} readOnly={props.isLoggedIn} />
-            <TextInput placeholder="Adresse de retour" autoComplete="address-line1" value={address.line1} onChange={(v) => setAddress({ ...address, line1: v })} error={fieldErrors["address.line1"]} className="[grid-column:1/-1]" />
-            <TextInput placeholder="Complément d'adresse (facultatif)" autoComplete="address-line2" value={address.line2} onChange={(v) => setAddress({ ...address, line2: v })} className="[grid-column:1/-1]" />
-            <TextInput placeholder="Code postal" autoComplete="postal-code" inputMode="numeric" value={address.postal_code} onChange={(v) => setAddress({ ...address, postal_code: v })} error={fieldErrors["address.postal_code"]} />
-            <TextInput placeholder="Ville" autoComplete="address-level2" value={address.city} onChange={(v) => setAddress({ ...address, city: v })} error={fieldErrors["address.city"]} />
+          {/* Libellés permanents au-dessus des champs : jamais un placeholder
+              seul en guise d'étiquette — il disparaît à la première frappe. */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <TextInput label="Prénom" autoComplete="given-name" value={customer.first_name} onChange={(v) => setCustomer({ ...customer, first_name: v })} error={fieldErrors["customer.first_name"]} />
+            <TextInput label="Nom" autoComplete="family-name" value={customer.last_name} onChange={(v) => setCustomer({ ...customer, last_name: v })} error={fieldErrors["customer.last_name"]} />
+            <TextInput label="Téléphone" type="tel" autoComplete="tel" value={customer.phone} onChange={(v) => setCustomer({ ...customer, phone: v })} error={fieldErrors["customer.phone"]} />
+            <TextInput label="Courriel" type="email" autoComplete="email" value={customer.email} onChange={(v) => setCustomer({ ...customer, email: v })} error={fieldErrors["customer.email"]} readOnly={props.isLoggedIn} />
+            <TextInput label="Adresse de retour" autoComplete="address-line1" value={address.line1} onChange={(v) => setAddress({ ...address, line1: v })} error={fieldErrors["address.line1"]} className="sm:col-span-2" />
+            <TextInput label="Complément d'adresse" placeholder="Facultatif" autoComplete="address-line2" value={address.line2} onChange={(v) => setAddress({ ...address, line2: v })} className="sm:col-span-2" />
+            <TextInput label="Code postal" autoComplete="postal-code" inputMode="numeric" value={address.postal_code} onChange={(v) => setAddress({ ...address, postal_code: v })} error={fieldErrors["address.postal_code"]} />
+            <TextInput label="Ville" autoComplete="address-level2" value={address.city} onChange={(v) => setAddress({ ...address, city: v })} error={fieldErrors["address.city"]} />
           </div>
-          <div className="flex flex-col gap-2" role="radiogroup" aria-label="Mode d'envoi">
+          <div className="mt-2 flex flex-col gap-2" role="radiogroup" aria-label="Mode d'envoi">
             {(offer?.shippingMethods ?? []).map((m) => (
-              <button key={m.id} type="button" role="radio" aria-checked={shippingId === m.id} onClick={() => setShippingId(m.id)} className={cn("flex min-h-[60px] cursor-pointer items-center justify-between gap-3 border border-[rgba(20,18,15,0.22)] p-[13px_14px] text-left transition-colors hover:border-accent sm:min-h-0", shippingId === m.id ? "bg-[var(--selection)]" : "bg-transparent")}>
-                <span className="flex flex-col gap-0.5">
-                  <span className="text-[15px] font-semibold">{m.name}</span>
-                  <span className="text-[13px] text-ink-faint">{m.note}</span>
-                </span>
-                <span className="shrink-0 whitespace-nowrap font-mono text-[14px]">{m.priceCents === 0 ? "0 €" : formatPrice(m.priceCents)}</span>
-              </button>
+              <OptionRow key={m.id} selected={shippingId === m.id} onPick={() => setShippingId(m.id)} label={m.name} note={m.note} price={m.priceCents === 0 ? "sans frais" : formatPrice(m.priceCents)} role="radio" />
             ))}
           </div>
-          <div className="bg-ink-900 p-4 text-paper">
-            <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Récapitulatif</span>
-            <div className="mt-[11px] flex flex-col gap-[7px] text-[14.5px]">
+          <div className="mt-2 rounded-[24px] border border-sale/40 bg-sale/[0.06] p-5">
+            <span className="mono-label text-ink-muted">Récapitulatif</span>
+            <div className="mt-4 flex flex-col gap-2.5 text-[15px]">
               <RecapLine k="Appareil" v={modelLabel(model)} />
-              <RecapLine k="Prestation" v={repair?.name ?? "—"} />
+              <RecapLine k="Intervention" v={repair?.name ?? "—"} />
               {symptoms.length ? <RecapLine k="Symptômes" v={symptoms.join(", ")} muted /> : null}
               {photos.length ? <RecapLine k="Photos" v={`${photos.length} jointe${photos.length > 1 ? "s" : ""}`} muted /> : null}
               <RecapLine k="Options" v={pickedOptions.length ? pickedOptions.map((o) => o.name).join(", ") : "aucune"} />
-              <RecapLine k="Envoi" v={shipping ? `${shipping.name} — ${formatPrice(shipping.priceCents)}` : "—"} />
-              <RecapLine k="Total TTC" v={repair?.priceProvisional ? "sur devis après diagnostic" : total !== null ? formatPrice(total) : "calcul…"} />
+              <RecapLine k="Envoi" v={shipping ? `${shipping.name} — ${shipping.priceCents === 0 ? "sans frais" : formatPrice(shipping.priceCents)}` : "—"} />
+              <RecapLine k="Estimation" v={repair?.priceProvisional ? "après diagnostic" : total !== null ? formatPrice(total) : "calcul…"} strong />
               {pricing ? <RecapLine k="dont TVA" v={formatPrice(pricing.vatCents)} muted /> : null}
             </div>
           </div>
-          <span className="text-[13px] leading-[1.45] text-ink-faint">
-            {repair?.priceProvisional ? "Le tarif de cette prestation est communiqué après diagnostic : vous ne réglez aujourd'hui que le transport. " : repair?.isDiagnosticOnly ? "Diagnostic puis devis. " : ""}
-            Si une autre intervention est nécessaire, vous recevez un devis complémentaire (valable {conditions.quoteValidityDays} jours) ; rien n&apos;est réalisé sans votre accord. Refus du devis : {conditions.refusalExplanation}
-            {conditions.refusalFeeCents > 0 ? ` Frais applicables : ${formatPrice(conditions.refusalFeeCents)}.` : " Aucun frais supplémentaire."}
-          </span>
-          <label className="flex items-start gap-3 text-[13px] text-ink-faint">
+          <p className="text-[13.5px] leading-[1.5] text-ink-muted">
+            {repair?.priceProvisional ? "Le tarif de cette intervention est communiqué après diagnostic : vous ne réglez aujourd'hui que le transport. " : repair?.isDiagnosticOnly ? "Diagnostic puis devis. " : ""}
+            Estimation indicative. Le devis définitif vous est adressé après diagnostic (valable {conditions.quoteValidityDays} jours) ; en cas de refus, la console vous est retournée, seul le port reste dû. {conditions.refusalExplanation}
+            {conditions.refusalFeeCents > 0 ? ` Frais applicables : ${formatPrice(conditions.refusalFeeCents)}.` : ""}
+          </p>
+          <label className="flex items-start gap-3 text-[13.5px] text-ink-muted">
             <Checkbox checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-0.5" required />
             <span>
               J&apos;ai lu et j&apos;accepte les{" "}
@@ -623,35 +589,26 @@ export function RepairForm(props: RepairFormProps) {
       ) : null}
 
       {error || pricingError ? (
-        <div className="mt-4">
+        <div className="mt-5">
           <FormError message={error ?? pricingError} />
         </div>
       ) : null}
 
-      {/* Barre d'action collée en bas de l'écran au téléphone. `sticky` et non
-          `fixed` : le clavier tactile pousse alors la barre au lieu de la
-          recouvrir. Au-delà de `sm`, elle redevient le pied de carte du
-          handoff de bureau. */}
+      {/* Barre d'action. Collée en bas au téléphone — `sticky` et non `fixed`,
+          le clavier tactile la pousse au lieu de la recouvrir. */}
       <div
         className={cn(
-          "safe-bottom -mx-4 mt-[22px] border-t px-4 pt-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:pt-0 sm:pb-0",
-          sticky && "sticky bottom-0 z-10",
-          darkOnPhone ? "border-ink-700 bg-ink-800" : "border-border bg-paper-alt",
+          "safe-bottom -mx-5 mt-8 border-t border-border px-5 pt-4 sm:static sm:mx-0 sm:border-0 sm:px-0 sm:pb-0 sm:pt-8",
+          sticky && "sticky bottom-0 z-10 backdrop-blur-[14px] max-sm:bg-[rgba(7,6,10,0.82)]",
         )}
-        style={{ "--safe-pb": "14px" } as React.CSSProperties}
+        style={{ "--safe-pb": "16px" } as React.CSSProperties}
       >
-        <div className={cn("mb-3 h-[3px] sm:hidden", darkOnPhone ? "bg-ink-700" : "bg-[rgba(20,18,15,0.12)]")} role="progressbar" aria-valuemin={1} aria-valuemax={4} aria-valuenow={step}>
-          <div className="h-[3px] bg-accent" style={{ width: `${(step / 4) * 100}%` }} />
-        </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={back}
             disabled={step === 1 || submitting}
-            className={cn(
-              "cursor-pointer border bg-transparent px-4 py-[13px] font-mono text-[12px] uppercase tracking-[0.06em] disabled:opacity-40",
-              darkOnPhone ? "border-ink-600 text-paper sm:border-[rgba(20,18,15,0.25)] sm:text-ink-900" : "border-[rgba(20,18,15,0.25)] text-ink-900",
-            )}
+            className="cursor-pointer rounded-full border border-border-strong bg-transparent px-6 py-[15px] font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-soft transition-colors duration-300 hover:border-ink hover:text-ink disabled:opacity-40"
           >
             Retour
           </button>
@@ -660,7 +617,7 @@ export function RepairForm(props: RepairFormProps) {
             onClick={step === 4 ? submit : next}
             disabled={submitting || (step === 4 && (!pricing || Boolean(pricingError)))}
             aria-busy={submitting || undefined}
-            className="flex-1 cursor-pointer bg-accent px-4 py-[14px] font-mono text-[12.5px] uppercase tracking-[0.06em] text-white transition-colors hover:bg-ink-900 disabled:opacity-60"
+            className="btn-gradient flex-1 cursor-pointer rounded-full px-6 py-[17px] text-[16px] font-semibold disabled:opacity-60"
           >
             {submitting ? (
               "Envoi…"
@@ -672,22 +629,41 @@ export function RepairForm(props: RepairFormProps) {
             )}
           </button>
         </div>
-        {step === 4 ? <p className="mt-2 text-center font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-muted">Paiement sécurisé à l&apos;étape suivante · prix vérifié par nos serveurs</p> : null}
+        {step === 4 ? <p className="mt-3 text-center font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-muted">Paiement sécurisé à l&apos;étape suivante · prix vérifié par nos serveurs</p> : null}
       </div>
     </div>
   );
 }
 
 /**
- * Ligne de prestation ou d'option : case, libellé, note, prix aligné à droite.
- *
- * `darkOnPhone` sert les étapes 1-2 de la fiche, qui se lisent sur fond encre au
- * téléphone. Une ligne sélectionnée garde son fond clair `--selection` : son
- * texte doit alors repasser en encre foncée, sans quoi il devient illisible —
- * c'est le piège que signale le handoff mobile.
+ * Carte d'appareil (étape 1) : nom en display, précision en mono. Au survol
+ * elle se soulève et son filet passe au cyan ; sélectionnée, elle se remplit
+ * d'un cyan translucide.
  */
-function OptionRow({ selected, disabled, onPick, label, note, price, badge, role = "checkbox", darkOnPhone }: { selected: boolean; disabled?: boolean; onPick: () => void; label: string; note: string; price: string; badge?: string; role?: "checkbox" | "radio"; darkOnPhone?: boolean }) {
-  const onDark = darkOnPhone && !selected;
+function DeviceCard({ selected, onPick, label, note }: { selected: boolean; onPick: () => void; label: string; note: string }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onPick}
+      className={cn(
+        "flex min-h-[96px] cursor-pointer flex-col justify-center gap-1.5 rounded-[20px] border p-5 text-left transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:-translate-y-1.5 hover:border-cyan",
+        selected ? "border-cyan bg-accent-soft" : "border-border-strong bg-transparent",
+      )}
+    >
+      <span className="font-display text-[21px] font-bold leading-[1.1] tracking-[-0.025em] text-ink">{label}</span>
+      <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">{note}</span>
+    </button>
+  );
+}
+
+/**
+ * Ligne d'intervention ou d'option : pastille ronde, libellé, note, prix à
+ * droite. Au survol, la ligne glisse de 6 px et son filet passe au lime ;
+ * sélectionnée, la pastille se remplit d'un ✓.
+ */
+function OptionRow({ selected, disabled, onPick, label, note, price, badge, role = "checkbox" }: { selected: boolean; disabled?: boolean; onPick: () => void; label: string; note: string; price: string; badge?: string; role?: "checkbox" | "radio" }) {
   return (
     <button
       type="button"
@@ -696,41 +672,53 @@ function OptionRow({ selected, disabled, onPick, label, note, price, badge, role
       disabled={disabled}
       onClick={onPick}
       className={cn(
-        "flex cursor-pointer items-start gap-3 border p-[13px_14px] text-left transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-60 sm:items-center",
-        darkOnPhone ? "border-ink-650 sm:border-[rgba(20,18,15,0.22)]" : "border-[rgba(20,18,15,0.22)]",
-        selected ? "bg-[var(--selection)] text-ink-900" : "bg-transparent",
-        onDark && "text-paper sm:text-ink-900",
+        "flex w-full cursor-pointer items-start gap-4 rounded-[20px] border p-4 text-left transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:translate-x-1.5 hover:border-sale disabled:cursor-not-allowed disabled:opacity-60 sm:items-center sm:p-5",
+        selected ? "border-sale bg-sale/[0.1]" : "border-border-strong bg-transparent",
       )}
     >
       <span
         className={cn(
-          "mt-[3px] h-[18px] w-[18px] flex-none border sm:mt-0 sm:h-4 sm:w-4",
-          selected ? "border-ink-900 bg-accent" : onDark ? "border-ink-600 bg-ink-900 sm:border-ink-900 sm:bg-white" : "border-ink-900 bg-white",
+          "mt-[3px] flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full border text-[12px] font-bold sm:mt-0",
+          selected ? "border-sale bg-sale text-[var(--color-on-accent)]" : "border-border-strong bg-transparent text-transparent",
         )}
         aria-hidden="true"
-      />
-      <span className="flex flex-1 flex-col gap-0.5">
-        <span className="text-[15px] font-semibold">
-          {label}
-          {badge ? <span className="ml-2 align-middle font-mono text-[10px] uppercase tracking-[0.06em] text-accent">{badge}</span> : null}
-        </span>
-        {note ? <span className={cn("text-[13px]", onDark ? "text-[#a39c8c] sm:text-ink-faint" : "text-ink-faint")}>{note}</span> : null}
+      >
+        ✓
       </span>
-      <span className="flex-none whitespace-nowrap font-mono text-[14px]">{price}</span>
+      <span className="flex flex-1 flex-col gap-1">
+        <span className="text-[17px] font-semibold leading-[1.2] text-ink sm:text-[20px]">
+          {label}
+          {badge ? <span className="ml-2 align-middle font-mono text-[10px] uppercase tracking-[0.12em] text-cyan">{badge}</span> : null}
+        </span>
+        {note ? <span className="text-[14px] leading-[1.4] text-ink-muted">{note}</span> : null}
+      </span>
+      <span className="flex-none whitespace-nowrap font-mono text-[16px] text-sale sm:text-[18px]">{price}</span>
     </button>
   );
 }
 
-function TextInput({ value, onChange, error, className, ...rest }: { value: string; onChange: (v: string) => void; error?: string; className?: string } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "className">) {
+/** Champ à libellé permanent : l'étiquette reste au-dessus, en mono majuscules. */
+function TextInput({
+  value,
+  onChange,
+  error,
+  className,
+  label,
+  ...rest
+}: { value: string; onChange: (v: string) => void; error?: string; className?: string; label: string } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "className">) {
   return (
-    <span className={cn("flex flex-col gap-1", className)}>
+    <span className={cn("flex flex-col gap-2", className)}>
+      <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">{label}</span>
       <input
         {...rest}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        aria-label={rest.placeholder}
+        aria-label={label}
         aria-invalid={Boolean(error)}
-        className={cn("w-full border bg-white p-3 text-[16px] text-ink-900 placeholder:text-ink-muted read-only:bg-paper-alt focus:border-accent focus:outline-none sm:text-[15px]", error ? "border-danger" : "border-[rgba(20,18,15,0.22)]")}
+        className={cn(
+          "w-full rounded-[14px] border bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted read-only:opacity-70 focus:border-accent focus:outline-none sm:text-[15px]",
+          error ? "border-danger" : "border-border-strong",
+        )}
       />
       {error ? (
         <span role="alert" className="text-xs font-medium text-danger">
@@ -741,11 +729,11 @@ function TextInput({ value, onChange, error, className, ...rest }: { value: stri
   );
 }
 
-function RecapLine({ k, v, muted }: { k: string; v: string; muted?: boolean }) {
+function RecapLine({ k, v, muted, strong }: { k: string; v: string; muted?: boolean; strong?: boolean }) {
   return (
-    <div className={cn("flex justify-between gap-3.5", muted && "text-[12.5px]")}>
-      <span className="text-[#c4bdae]">{k}</span>
-      <span className="text-right font-mono">{v}</span>
+    <div className={cn("flex justify-between gap-4", muted && "text-[13px]")}>
+      <span className="text-ink-muted">{k}</span>
+      <span className={cn("text-right font-mono", strong ? "text-[17px] text-sale" : "text-ink")}>{v}</span>
     </div>
   );
 }

@@ -1,3 +1,54 @@
+# Design « 207 MÉDI@ROME » — charte v4
+
+Le site public suit désormais le **handoff v4 de Claude Design**
+(`207 MEDI@ROME v4.dc.html`, `README.md` du bundle) : fond sombre et lumineux,
+quatre accents, surfaces en verre, formes arrondies et une charte de mouvement
+assumée. Elle remplace la charte « papier / encre » anguleuse décrite plus bas,
+qui reste **en vigueur dans le back-office**.
+
+## Tokens v4
+
+| Rôle | Valeur |
+| --- | --- |
+| Fond | `#07060a` |
+| Texte / secondaire / tertiaire / faible | `#f4f2ff` · `#b9b4e8` · `#9a95c4` · `#8f8ab8` |
+| Lime (accent principal, prix, jauge) | `#d8ff3e` |
+| Cyan (sélection) | `#33e1ff` |
+| Violet (dégradés, lueurs) | `#7c5cff` |
+| Rose (ponctuation) | `#ff5ca8` |
+| Verre | `linear-gradient(160deg, rgba(244,242,255,.09), rgba(244,242,255,.02))` + `blur(10px)` |
+| Dégradé de bouton | `linear-gradient(120deg, #7c5cff, #33e1ff)` sur texte `#07060a` |
+
+Polices : **Bricolage Grotesque** (titres), **Instrument Sans** (texte),
+**DM Mono** (étiquettes, prix, compteurs). Rayons 999 / 14 / 20 / 24-28 / 32 px.
+Courbe standard `cubic-bezier(.16, 1, .3, 1)`.
+
+Sur un aplat lime ou cyan, le texte repasse en fond (`--color-on-accent`) :
+c'est le seul couple lisible de la charte, et son piège le plus fréquent.
+
+## Mouvement
+
+`components/marketing/motion.tsx` porte les effets qui demandent du script —
+halo au curseur, tilt 3D, bouton magnétique, compteurs, anneau de progression,
+révélations au défilement. Les autres (nuées dérivantes, scintillement du titre,
+reflet balayant, bandeau défilant, point pulsant) sont des animations CSS de
+`globals.css`. Tout est coupé par `prefers-reduced-motion`.
+
+**Le piège signalé par le handoff est traité** : la translucidité des
+révélations n'est posée que sous `[data-reveal-armed]`, attribut ajouté par le
+script lui-même. Sans JavaScript, ou si l'observateur ne répond pas, la page
+reste entièrement visible. L'observateur interroge le `document`, se réarme sur
+mutation, et révèle immédiatement ce qui est déjà à l'écran.
+
+## Le back-office garde l'ancienne charte
+
+`.theme-ink` est écrit en valeurs littérales : il ne dépend plus d'aucun token
+de `:root`. Le back-office reste donc exactement ce qu'il était — sombre,
+anguleux, sans ombre — pendant que le site public change de charte. Seules les
+polices sont communes.
+
+---
+
 # Design « 207 Mediarom » — intégration du handoff Claude Design
 
 Le handoff (`207 Mediarom.dc.html`, `207 Mediarom Admin.dc.html`, `README.md`) est la

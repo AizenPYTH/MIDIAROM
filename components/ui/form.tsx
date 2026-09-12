@@ -10,10 +10,10 @@ import { cn } from "@/lib/utils/cn";
  * dézoome jamais. Le 15 px du handoff reste donc la valeur de bureau.
  */
 const inputBase =
-  "block w-full border border-border-strong bg-field px-3 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none disabled:bg-surface-muted disabled:text-ink-muted aria-[invalid=true]:border-danger sm:text-[15px]";
+  "block w-full rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none disabled:bg-surface-muted disabled:text-ink-muted aria-[invalid=true]:border-danger sm:text-[15px]";
 
 export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) {
-  return <label className={cn("mb-1.5 block font-mono text-[11px] uppercase tracking-[0.08em] text-ink-soft", className)} {...props} />;
+  return <label className={cn("mb-1.5 block font-mono text-[11px] uppercase tracking-[0.14em] text-ink-muted", className)} {...props} />;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...props }, ref) {
@@ -44,7 +44,7 @@ export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttrib
 /** Case à cocher contour encre, remplie bleu quand cochée (comme les lignes de
  *  prestation) : 18 × 18 au doigt, 16 × 16 à la souris. */
 export function Checkbox({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input type="checkbox" className={cn("h-[18px] w-[18px] shrink-0 appearance-none border border-ink bg-field checked:border-accent checked:bg-accent sm:h-4 sm:w-4", className)} {...props} />;
+  return <input type="checkbox" className={cn("h-[18px] w-[18px] shrink-0 appearance-none rounded-[5px] border border-border-strong bg-field checked:border-sale checked:bg-sale sm:h-4 sm:w-4", className)} {...props} />;
 }
 
 export interface FieldProps {
@@ -87,7 +87,7 @@ export function Field({ label, htmlFor, hint, error, required, children, classNa
 export function FormError({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <div role="alert" className="border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
+    <div role="alert" className="rounded-[20px] border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
       {message}
     </div>
   );
@@ -96,7 +96,7 @@ export function FormError({ message }: { message?: string | null }) {
 export function FormSuccess({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <div role="status" className="border border-success bg-success-soft px-4 py-3 text-sm text-success">
+    <div role="status" className="rounded-[20px] border border-success bg-success-soft px-4 py-3 text-sm text-success">
       {message}
     </div>
   );

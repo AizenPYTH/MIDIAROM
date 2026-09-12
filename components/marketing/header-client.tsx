@@ -28,7 +28,7 @@ export function AccountLink({ onNavigate, className }: { onNavigate?: () => void
     <Link
       href={loggedIn ? ROUTES.account : ROUTES.login}
       onClick={onNavigate}
-      className={className ?? "whitespace-nowrap px-2 py-[9px] font-mono text-[12px] uppercase tracking-[0.06em] text-ink hover:text-sale"}
+      className={className ?? "whitespace-nowrap px-2 py-[9px] font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-muted transition-colors hover:text-sale"}
     >
       {loggedIn ? "Mon espace" : "Connexion"}
     </Link>
@@ -65,14 +65,14 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
         aria-label="Ouvrir le menu"
         className="flex h-11 w-11 cursor-pointer items-center justify-center"
       >
-        <span className="flex h-[38px] w-[38px] flex-col items-center justify-center gap-[4px] border border-border-strong">
-          <span className="block h-[1.5px] w-4 bg-ink" />
-          <span className="block h-[1.5px] w-4 bg-ink" />
-          <span className="block h-[1.5px] w-4 bg-ink" />
+        {/* Burger de la charte v4 : carré arrondi, deux traits. */}
+        <span className="flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-[14px] border border-border-strong">
+          <span className="block h-[1.5px] w-[18px] bg-ink" />
+          <span className="block h-[1.5px] w-[18px] bg-ink" />
         </span>
       </button>
       {open ? (
-        <div id="mobile-nav" className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-paper">
+        <div id="mobile-nav" className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-bg">
           <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
             <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-muted">Menu</span>
             <button type="button" onClick={close} aria-label="Fermer le menu" className="flex h-11 w-11 cursor-pointer items-center justify-center text-[26px] leading-none text-ink">
@@ -81,16 +81,16 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
           </div>
           <nav className="flex flex-col divide-y divide-border" aria-label="Navigation mobile">
             {items.map((item) => (
-              <Link key={item.href} href={item.href} onClick={close} className="px-4 py-3.5 text-[24px] font-semibold leading-[1.2] text-ink">
+              <Link key={item.href} href={item.href} onClick={close} className="px-4 py-3.5 font-display text-[26px] font-bold leading-[1.15] tracking-[-0.03em] text-ink transition-colors hover:text-sale">
                 {item.label}
               </Link>
             ))}
           </nav>
-          <div className="mt-auto flex flex-col gap-3 border-t border-border bg-bg-alt px-4 py-5">
-            <Link href={ROUTES.tracking} onClick={close} className="border border-ink px-4 py-[14px] text-center font-mono text-[12px] uppercase tracking-[0.06em] text-ink">
+          <div className="mt-auto flex flex-col gap-3 border-t border-border px-4 py-5">
+            <Link href={ROUTES.tracking} onClick={close} className="btn-gradient rounded-full px-4 py-[15px] text-center font-mono text-[11.5px] uppercase tracking-[0.12em]">
               Suivre ma réparation
             </Link>
-            <AccountLink onNavigate={close} className="border border-border-strong px-4 py-[14px] text-center font-mono text-[12px] uppercase tracking-[0.06em] text-ink" />
+            <AccountLink onNavigate={close} className="rounded-full border border-border-strong px-4 py-[15px] text-center font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink" />
             {address || brand?.phone || brand?.hours ? (
               <div className="mt-1 flex flex-col gap-1 font-mono text-[12px] leading-[1.5] text-ink-muted">
                 {address ? <span>{address}</span> : null}

@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils/cn";
  * Barre d'onglets basse du téléphone (écran M1).
  *
  * Les quatre destinations que l'on cherche au doigt, toujours à portée du
- * pouce. Icônes linéaires 1,5 px sans arrondi, jamais pleines ni colorées :
- * seule l'icône active passe en orange, comme le carré rempli du prototype.
+ * pouce. Icônes linéaires 1,5 px, jamais pleines : seule l'icône active passe
+ * en lime, comme le carré rempli du prototype.
  *
  * L'onglet « Compte » pointe vers l'espace client : le proxy renvoie vers la
  * connexion quand la session manque, inutile de le deviner côté navigateur.
@@ -50,15 +50,15 @@ export function MobileTabBar() {
       <div aria-hidden="true" className="safe-bottom lg:hidden" style={{ "--safe-pb": "64px" } as React.CSSProperties} />
       <nav
         aria-label="Navigation principale du téléphone"
-        className="safe-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border bg-bg pt-3 lg:hidden"
-        style={{ "--safe-pb": "14px" } as React.CSSProperties}
+        className="safe-bottom fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border pt-3 backdrop-blur-[14px] lg:hidden"
+        style={{ "--safe-pb": "14px", background: "rgba(7,6,10,0.72)" } as React.CSSProperties}
       >
         {TABS.map(({ href, label, Icon }) => {
           const active = href === ROUTES.home ? pathname === ROUTES.home : pathname.startsWith(href);
           return (
             <Link key={href} href={href} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-1.5 px-1 pb-0.5", active ? "text-ink" : "text-ink-muted")}>
               <Icon size={18} strokeWidth={1.5} className={active ? "text-sale" : undefined} aria-hidden="true" />
-              <span className="font-mono text-[9.5px] uppercase tracking-[0.06em]">{label}</span>
+              <span className="font-mono text-[9.5px] uppercase tracking-[0.12em]">{label}</span>
             </Link>
           );
         })}
