@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils/cn";
 
 export const dynamic = "force-dynamic";
 
-const INPUT = "border border-border-strong bg-field px-2.5 py-2 text-[13px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none";
+const INPUT = "rounded-[14px] border border-border-strong bg-field px-3 py-2.5 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[13px]";
 
 /**
  * Prestations de réparation, console par console.
@@ -80,7 +80,7 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
   const todo = (repairs ?? []).filter((r) => r.price_is_provisional).length;
 
   return (
-    <div className="-m-5">
+    <div>
       {error ? <p className="border-b border-danger bg-danger-soft px-5 py-2.5 text-[13px] text-danger">{error}</p> : null}
       <div className="grid [grid-template-columns:minmax(0,1fr)] lg:[grid-template-columns:minmax(220px,270px)_minmax(0,1fr)]">
         {/* Consoles */}

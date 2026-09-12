@@ -40,6 +40,46 @@ script lui-même. Sans JavaScript, ou si l'observateur ne répond pas, la page
 reste entièrement visible. L'observateur interroge le `document`, se réarme sur
 mutation, et révèle immédiatement ce qui est déjà à l'écran.
 
+## L'espace réparateur
+
+Le back-office suit lui aussi la charte v4 (`ADMIN.md` du bundle). L'ancienne
+ambiance « encre » a disparu : `.theme-ink` n'existe plus, il n'y a qu'une seule
+charte dans le projet.
+
+**Un seul écran, une seule tâche.** `/admin` ne montre plus d'onglets Commandes,
+Stock ou Reprises — le magasin ne vend plus en ligne. On y trouve, dans l'ordre :
+le titre « L'atelier aujourd'hui » et le nombre de réparations en cours, quatre
+indicateurs calculés depuis la base (en atelier, devis à valider, prêts à rendre,
+délai moyen réellement constaté entre réception et expédition), puis la file de
+réparations à gauche et la fiche à droite.
+
+La fiche porte les cinq temps de l'atelier — Reçu · Diagnostic · Devis · Atelier
+· Prêt — sous forme de segments cliquables : un clic change le statut, la file et
+les indicateurs se recalculent. La description du client y est citée, jamais
+éditable depuis l'atelier.
+
+Au téléphone (écrans A1 et A2), le maître/détail devient une navigation à deux
+niveaux : la file, puis la fiche avec un retour ; les filtres et l'avancement
+défilent horizontalement, et la barre d'action se colle en bas.
+
+**Ce qui n'est pas dans le handoff mais reste accessible** : le catalogue et ses
+tarifs, le SAV, les reprises, les clients, les réglages, l'audit. Le handoff ne
+décrit que l'écran du quotidien ; supprimer ces modules aurait coupé l'atelier de
+ses propres réglages — c'est de là que se chiffrent les 1 189 prestations. Ils
+vivent sous un menu « Plus » discret, jamais sous forme d'onglets.
+
+## Écarts assumés de la charte v4
+
+- **Champ « R-0000 » de la carte de suivi** : la recherche publique demande aussi
+  l'adresse électronique du dossier. Un champ seul promettrait un résultat qu'il
+  ne peut pas donner ; la carte mène à la page de suivi.
+- **Tarifs de la page d'accueil** : le handoff liste des montants (Diagnostic
+  20 €, Port HDMI 79 €…). Ils ne sont pas repris : les prix affichés viennent du
+  catalogue, et une prestation non chiffrée reste « sur devis ». Rien n'est
+  inventé.
+- **Segment actif amené dans la vue** (A2) : la bande d'avancement défile à la
+  main ; le recentrage automatique demanderait du script pour un gain faible.
+
 ## Le back-office garde l'ancienne charte
 
 `.theme-ink` est écrit en valeurs littérales : il ne dépend plus d'aucun token

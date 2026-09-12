@@ -30,8 +30,8 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         <h1 className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-ink">Toutes les réparations</h1>
       </div>
       <form className="flex flex-wrap items-center gap-2" method="get">
-        <input id="q" name="q" defaultValue={q ?? ""} placeholder="Rechercher n° de dossier / client / console" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] border border-border-strong bg-surface px-3 py-2.5 text-[14px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none" />
-        <Select id="status" name="status" defaultValue={status ?? ""} aria-label="Statut" className="w-auto min-w-[200px] py-2.5 text-[13px]">
+        <input id="q" name="q" defaultValue={q ?? ""} placeholder="Rechercher n° de dossier / client / console" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[14px]" />
+        <Select id="status" name="status" defaultValue={status ?? ""} aria-label="Statut" className="w-auto min-w-[200px] py-2.5">
           <option value="">Tous les statuts</option>
           {ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>

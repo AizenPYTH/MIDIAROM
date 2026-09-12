@@ -40,7 +40,7 @@ export default async function TradeInsPage({ searchParams }: { searchParams: Pro
   const offered = (offersMonth.data ?? []).reduce((s, t) => s + (t.offer_cents ?? 0), 0);
 
   return (
-    <div className="-m-5">
+    <div>
       <StatBand>
         <StatCard label="Demandes ouvertes" value={open} hint="à estimer" href="/admin/trade-ins?f=new" tone={open ? "warning" : undefined} />
         <StatCard label="Offres en attente" value={pendingOffers} hint="décision client attendue" href="/admin/trade-ins?f=estimated" />
@@ -50,7 +50,7 @@ export default async function TradeInsPage({ searchParams }: { searchParams: Pro
       <section className="flex flex-col gap-3.5 p-5">
         <form method="get" action="/admin/trade-ins" className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="f" value={filter.key} />
-          <input name="q" defaultValue={q ?? ""} placeholder="Rechercher n° / lot / client / plateforme" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] border border-border-strong bg-surface px-3 py-2.5 text-[14px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none" />
+          <input name="q" defaultValue={q ?? ""} placeholder="Rechercher n° / lot / client / plateforme" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[14px]" />
           <FilterChips items={FILTERS.map((x) => ({ key: x.key, label: x.label }))} current={filter.key} hrefFor={(key) => `/admin/trade-ins?${new URLSearchParams({ ...(q ? { q } : {}), f: key })}`} />
         </form>
         <div className="grid gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">

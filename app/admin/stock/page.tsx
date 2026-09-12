@@ -43,7 +43,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
   const usedCount = active.filter((p) => p.condition !== "NEW").length;
 
   return (
-    <div className="-m-5">
+    <div>
       <StatBand>
         <StatCard label="Références" value={active.length} hint={`dont ${usedCount} en occasion / révisé`} />
         <StatCard label="Ruptures" value={outOfStock.length} hint={outOfStock.slice(0, 2).map((p) => p.name).join(", ") || "aucune"} href="/admin/stock?f=out" tone={outOfStock.length ? "warning" : undefined} />
@@ -53,7 +53,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
       <section className="flex min-w-0 flex-col gap-3.5 p-5">
         <form method="get" action="/admin/stock" className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="f" value={filter} />
-          <input name="q" defaultValue={q ?? ""} placeholder="Rechercher une référence, un nom, une plateforme" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] border border-border-strong bg-surface px-3 py-2.5 text-[14px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none" />
+          <input name="q" defaultValue={q ?? ""} placeholder="Rechercher une référence, un nom, une plateforme" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[14px]" />
           <Link href="/admin/stock/new" className="whitespace-nowrap bg-sale px-3.5 py-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-white hover:bg-paper hover:text-ink-900">
             + Nouvel article
           </Link>

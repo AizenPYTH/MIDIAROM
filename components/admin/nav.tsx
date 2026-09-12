@@ -18,10 +18,10 @@ export interface AdminMenuGroup {
   items: AdminTab[];
 }
 
-const TAB_CLASS = "flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3.5 font-mono text-[12px] uppercase tracking-[0.07em] transition-colors";
+const TAB_CLASS = "flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 font-mono text-[11.5px] uppercase tracking-[0.12em] transition-colors";
 
 function Count({ value }: { value: number }) {
-  return <span className="bg-surface-strong px-1.5 py-0.5 font-mono text-[10.5px] text-ink-soft">{value}</span>;
+  return <span className="rounded-full bg-surface-strong px-2 py-0.5 font-mono text-[10.5px] text-ink-soft">{value}</span>;
 }
 
 /**
@@ -59,12 +59,14 @@ export function AdminNav({ tabs, groups }: { tabs: AdminTab[]; groups: AdminMenu
   }, []);
 
   return (
-    <nav className="flex items-stretch gap-[2px] border-b border-border px-5" aria-label="Back-office">
-      <div className="flex min-w-0 flex-1 gap-[2px] overflow-x-auto">
+    <nav className="mx-auto flex w-full max-w-[1420px] items-stretch gap-2 px-4 pt-3 sm:px-[30px]" aria-label="Back-office">
+      {/* Sans onglet de premier niveau, pas de colonne vide : le menu « Plus »
+          se range à gauche avec le reste du contenu. */}
+      <div className={cn("flex min-w-0 gap-2 overflow-x-auto", tabs.length && "flex-1")}>
         {tabs.map((item) => {
           const active = isActive(item);
           return (
-            <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn(TAB_CLASS, active ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink")}>
+            <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn(TAB_CLASS, active ? "bg-paper text-ink-900" : "border border-border text-ink-muted hover:text-ink")}>
               {item.label}
               {item.count ? <Count value={item.count} /> : null}
             </Link>
@@ -75,7 +77,7 @@ export function AdminNav({ tabs, groups }: { tabs: AdminTab[]; groups: AdminMenu
       {groups.length ? (
         <details ref={menuRef} className="relative shrink-0">
           <summary
-            className={cn(TAB_CLASS, "cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden", activeInMenu ? "border-accent text-ink" : "border-transparent text-ink-muted hover:text-ink")}
+            className={cn(TAB_CLASS, "cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden", activeInMenu ? "bg-paper text-ink-900" : "border border-border text-ink-muted hover:text-ink")}
             aria-label="Plus de sections"
           >
             Plus
@@ -84,7 +86,7 @@ export function AdminNav({ tabs, groups }: { tabs: AdminTab[]; groups: AdminMenu
               ▾
             </span>
           </summary>
-          <div className="absolute right-0 top-full z-30 mt-px grid w-[min(560px,calc(100vw-2.5rem))] gap-x-6 gap-y-4 border border-border-strong bg-surface p-5 sm:grid-cols-2">
+          <div className="glass absolute right-0 top-full z-30 mt-2 grid w-[min(560px,calc(100vw-2rem))] gap-x-6 gap-y-4 rounded-[24px] p-6 sm:grid-cols-2">
             {groups.map((group) => (
               <div key={group.label} className="min-w-0">
                 <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-muted">{group.label}</p>

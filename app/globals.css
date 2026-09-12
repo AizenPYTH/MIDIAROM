@@ -7,13 +7,9 @@
    (lime, cyan, violet, rose), surfaces en verre. La profondeur vient des lueurs
    et du flou, jamais d'une ombre dure.
 
-   Deux ambiances partagent les mêmes noms de variables :
-     :root       → la charte v4 (site public, espace client, authentification)
-     .theme-ink  → l'ancienne charte « encre », conservée pour le back-office
-
-   `.theme-ink` est volontairement écrit en valeurs littérales : il ne dépend
-   plus d'aucun token de `:root`, si bien que le back-office reste exactement
-   ce qu'il était pendant que le site public change de charte.
+   Une seule ambiance : le site public, l'espace client et l'espace réparateur
+   partagent la charte v4. L'ancienne charte « papier / encre » a disparu avec
+   la reprise du back-office.
 --------------------------------------------------------------------------- */
 :root {
   /* Palette v4 */
@@ -100,67 +96,6 @@
   --font-mono: var(--font-dm-mono), "DM Mono", ui-monospace, monospace;
 
   color-scheme: dark;
-}
-
-/* Back-office : l'ancienne charte « encre », figée en valeurs littérales. */
-.theme-ink {
-  --color-bg: #14120f;
-  --color-bg-alt: #191712;
-  --color-surface: #191712;
-  --color-surface-muted: #201d17;
-  --color-surface-strong: #2a261e;
-  --color-border: #2a261e;
-  --color-border-strong: #3f3a2e;
-  --color-ink: #f6f3ec;
-  --color-ink-soft: #c4bdae;
-  --color-ink-muted: #8a8271;
-  --color-ink-faint: #a39c8c;
-  --color-primary: #3d7cd1;
-  --color-primary-hover: #f6f3ec;
-  --color-primary-fg: #ffffff;
-  --color-primary-soft: #201d17;
-  --color-accent: #3d7cd1;
-  --color-accent-hover: #f6f3ec;
-  --color-accent-soft: #243349;
-  --color-accent-light: #7fa8e0;
-  --color-sale: #c94d18;
-  --color-sale-hover: #f6f3ec;
-  --color-success: #a9cf85;
-  --color-success-soft: #2c3a22;
-  --color-warning: #f0b071;
-  --color-warning-soft: #3d2a16;
-  --color-danger: #e08b6b;
-  --color-danger-soft: #3d1c16;
-  --color-info: #9dc0ec;
-  --color-info-soft: #243349;
-  --color-field: #14120f;
-  --color-placeholder-a: #201d17;
-  --color-placeholder-b: #262218;
-  --color-placeholder-fg: #6b6558;
-  --color-on-accent: #ffffff;
-  --paper: #f6f3ec;
-  --paper-alt: #f0ebdf;
-  --paper-strong: #e0dacb;
-  --ink-900: #14120f;
-  --ink-800: #191712;
-  --ink-750: #201d17;
-  --ink-700: #2a261e;
-  --ink-650: #2f2b22;
-  --ink-600: #3f3a2e;
-  --sale: #c94d18;
-  --repair: #3d7cd1;
-  --repair-light: #7fa8e0;
-  --selection: #dbe6f6;
-  color-scheme: dark;
-}
-
-/* Le back-office garde la règle n°1 de l'ancienne charte : aucun arrondi,
-   aucune ombre. Le site public, lui, vit de ses rayons et de ses lueurs. */
-.theme-ink *,
-.theme-ink *::before,
-.theme-ink *::after {
-  border-radius: 0;
-  box-shadow: none;
 }
 
 @theme inline {
@@ -253,11 +188,6 @@ body {
 ::selection {
   background: rgba(216, 255, 62, 0.3);
   color: var(--text);
-}
-
-/* Titres de page plus compacts dans le back-office (fiche admin : 24–30 px). */
-.theme-ink .page-title {
-  font-size: 26px;
 }
 
 /* Étiquette mono : majuscules, interlettrage large. */

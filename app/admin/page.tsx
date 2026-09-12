@@ -1,37 +1,87 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { FilterChips, StatBand, StatCard } from "@/components/admin/ui";
 import { MediaGallery } from "@/components/customer/media-gallery";
 import { NoteForm, SendQuoteButton } from "@/components/admin/order-forms";
 import { advanceStatusAction } from "@/app/admin/actions/orders";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireStaffOrRedirect } from "@/lib/security/auth";
 import { signMedia } from "@/lib/media/service";
-import { canRoleTransition, ORDER_STATUS_LABELS, statusTone, WORKSHOP_STEPS, workshopStepIndex, type OrderStatus } from "@/lib/orders/status";
+import { canRoleTransition, ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/orders/status";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 
-/** Filtres de la liste (handoff : Tout, Diagnostic, En atelier, Prêt) mappés sur les statuts réels. */
-const FILTERS: { key: string; label: string; statuses: OrderStatus[] | null }[] = [
-  { key: "all", label: "Tout", statuses: null },
-  { key: "expected", label: "Attendus", statuses: ["PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP"] },
-  { key: "diagnostic", label: "Diagnostic", statuses: ["RECEIVED", "RECEPTION_CHECK", "DIAGNOSIS", "WAITING_CUSTOMER_APPROVAL"] },
-  { key: "workshop", label: "En atelier", statuses: ["APPROVED", "REPAIRING", "QUALITY_CONTROL"] },
-  { key: "ready", label: "Prêt", statuses: ["READY_TO_SHIP"] },
-  { key: "shipped", label: "Expédié", statuses: ["SHIPPED", "DELIVERED"] },
+/**
+ * Espace réparateur — un seul écran, une seule tâche.
+ *
+ * Le réparateur ouvre la page, voit ce qui l'attend, tape sur une réparation,
+ * change son statut, envoie le devis. Rien d'autre : ni onglets, ni tableaux,
+ * ni graphiques. Les quatre indicateurs se calculent depuis la file.
+ *
+ * Au téléphone, le maître/détail devient deux niveaux : la file (A1), puis la
+ * fiche (A2) avec un retour. Sans `?sel=`, la file seule ; avec, la fiche seule.
+ */
+
+/** Les cinq temps de l'atelier, et les statuts réels qu'ils recouvrent. */
+const STEPS: { key: string; label: string; status: OrderStatus; statuses: OrderStatus[] }[] = [
+  { key: "recu", label: "Reçu", status: "RECEIVED", statuses: ["PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "RECEPTION_CHECK"] },
+  { key: "diagnostic", label: "Diagnostic", status: "DIAGNOSIS", statuses: ["DIAGNOSIS"] },
+  { key: "devis", label: "Devis", status: "WAITING_CUSTOMER_APPROVAL", statuses: ["WAITING_CUSTOMER_APPROVAL", "APPROVED"] },
+  { key: "atelier", label: "Atelier", status: "REPAIRING", statuses: ["REPAIRING", "QUALITY_CONTROL"] },
+  { key: "pret", label: "Prêt", status: "READY_TO_SHIP", statuses: ["READY_TO_SHIP"] },
 ];
-const ACTIVE_STATUSES: OrderStatus[] = ["PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "RECEPTION_CHECK", "DIAGNOSIS", "WAITING_CUSTOMER_APPROVAL", "APPROVED", "REPAIRING", "QUALITY_CONTROL", "READY_TO_SHIP", "SHIPPED", "DELIVERED", "RETURN_REQUIRED", "REFUSED_QUOTE", "UNREPAIRABLE", "SAV", "DISPUTED"];
+
+const FILTERS = [{ key: "all", label: "Tout" }, ...STEPS.map((s) => ({ key: s.key, label: s.label }))];
+
+/** Tout ce qui n'est pas encore parti : le compteur « N en cours ». */
+const OPEN: OrderStatus[] = [
+  "PAID",
+  "AWAITING_SHIPMENT",
+  "IN_TRANSIT_TO_WORKSHOP",
+  "RECEIVED",
+  "RECEPTION_CHECK",
+  "DIAGNOSIS",
+  "WAITING_CUSTOMER_APPROVAL",
+  "APPROVED",
+  "REPAIRING",
+  "QUALITY_CONTROL",
+  "READY_TO_SHIP",
+  "RETURN_REQUIRED",
+  "REFUSED_QUOTE",
+  "UNREPAIRABLE",
+  "SAV",
+  "DISPUTED",
+];
+
+/** Index du temps atelier atteint par un statut (-1 s'il est déjà expédié). */
+function stepIndex(status: OrderStatus): number {
+  return STEPS.findIndex((s) => s.statuses.includes(status));
+}
+
+/** Pastille de statut : un fond translucide et un texte de la même famille. */
+const PILL: Record<string, string> = {
+  recu: "bg-[rgba(244,242,255,0.10)] text-ink",
+  diagnostic: "bg-[rgba(51,225,255,0.16)] text-cyan",
+  devis: "bg-[rgba(255,92,168,0.16)] text-rose",
+  atelier: "bg-[rgba(124,92,255,0.22)] text-[#c9c4ff]",
+  pret: "bg-[rgba(216,255,62,0.16)] text-lime",
+  parti: "bg-[rgba(244,242,255,0.07)] text-ink-muted",
+};
+
+function StatusPill({ status }: { status: OrderStatus }) {
+  const i = stepIndex(status);
+  const key = i === -1 ? "parti" : STEPS[i]!.key;
+  return <span className={cn("whitespace-nowrap rounded-full px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.12em]", PILL[key])}>{ORDER_STATUS_LABELS[status]}</span>;
+}
 
 export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ q?: string; f?: string; sel?: string; error?: string }> }) {
   const [{ q, f, sel, error }, user] = await Promise.all([searchParams, requireStaffOrRedirect()]);
   const db = createSupabaseAdminClient();
   const filter = FILTERS.find((x) => x.key === f) ?? FILTERS[0]!;
-  const count = (query: PromiseLike<{ count: number | null }>) => query.then((r) => r.count ?? 0);
+  const statuses = STEPS.find((s) => s.key === filter.key)?.statuses ?? OPEN;
 
   let listQuery = db
     .from("repair_orders")
     .select("id, order_number, model_name, repair_name, status, customer_first_name, customer_last_name, customer_notes, fault_name, received_at, created_at")
-    .in("status", filter.statuses ?? ACTIVE_STATUSES)
+    .in("status", statuses)
     .order("created_at", { ascending: false })
     .limit(60);
   if (q?.trim()) {
@@ -39,21 +89,23 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
     listQuery = listQuery.or(`order_number.ilike.%${term}%,customer_last_name.ilike.%${term}%,customer_first_name.ilike.%${term}%,model_name.ilike.%${term}%,customer_email.ilike.%${term}%`);
   }
 
-  const [{ data: list }, workshop, pendingQuotes, ready, sav] = await Promise.all([
+  const count = (query: PromiseLike<{ count: number | null }>) => query.then((r) => r.count ?? 0);
+  const [{ data: list }, enCours, enAtelier, devisAValider, prets, { data: delais }] = await Promise.all([
     listQuery,
-    count(db.from("repair_orders").select("id", { count: "exact", head: true }).in("status", ["APPROVED", "REPAIRING", "QUALITY_CONTROL"])),
-    count(db.from("supplementary_quotes").select("id", { count: "exact", head: true }).eq("status", "SENT")),
+    count(db.from("repair_orders").select("id", { count: "exact", head: true }).in("status", OPEN)),
+    count(db.from("repair_orders").select("id", { count: "exact", head: true }).in("status", ["REPAIRING", "QUALITY_CONTROL"])),
+    count(db.from("repair_orders").select("id", { count: "exact", head: true }).eq("status", "WAITING_CUSTOMER_APPROVAL")),
     count(db.from("repair_orders").select("id", { count: "exact", head: true }).eq("status", "READY_TO_SHIP")),
-    count(db.from("sav_requests").select("id", { count: "exact", head: true }).in("status", ["NEW", "IN_ANALYSIS"])),
+    // Délai moyen réellement constaté : rien n'est affiché tant qu'aucun
+    // dossier n'est allé de la réception à l'expédition.
+    db.from("repair_orders").select("received_at, shipped_at").not("received_at", "is", null).not("shipped_at", "is", null).order("shipped_at", { ascending: false }).limit(50),
   ]);
+
+  const spans = (delais ?? []).map((d) => (new Date(d.shipped_at as string).getTime() - new Date(d.received_at as string).getTime()) / 86_400_000).filter((n) => n >= 0);
+  const delaiMoyen = spans.length ? (spans.reduce((a, b) => a + b, 0) / spans.length).toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " j" : "—";
 
   const rows = list ?? [];
   const explicitSelection = rows.some((o) => o.id === sel);
-  // Au téléphone (écrans M5 / M6), le maître/détail devient une navigation à
-  // deux niveaux : la liste, puis la fiche avec un retour. Empilés, les vingt
-  // dossiers de la liste séparent le réparateur de la fiche qu'il vient
-  // d'ouvrir. Sur grand écran, les deux colonnes restent côte à côte et la
-  // première ligne est présélectionnée comme avant.
   const selectedId = explicitSelection ? sel : rows[0]?.id;
   const selected = selectedId ? (await db.from("repair_orders").select("*").eq("id", selectedId).maybeSingle()).data : null;
   const [items, events, media, quotes] = selected
@@ -66,7 +118,8 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
     : [null, null, null, null];
   const signed = media?.data ? await signMedia(media.data) : [];
   const draftQuote = (quotes?.data ?? []).find((qu) => qu.status === "DRAFT");
-  const pipelineIndex = selected ? workshopStepIndex(selected.status) : -1;
+  const current = selected ? stepIndex(selected.status) : -1;
+
   const hrefFor = (params: Record<string, string | undefined>) => {
     const sp = new URLSearchParams();
     for (const [k, v] of Object.entries({ q, f, sel: selectedId, ...params })) if (v) sp.set(k, v);
@@ -75,111 +128,146 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   };
   const currentHref = hrefFor({});
 
-  return (
-    <div className="-m-5">
-      <StatBand>
-        <StatCard label="En atelier" value={workshop} hint="accord reçu, réparation, contrôle qualité" href="/admin?f=workshop" />
-        <StatCard label="Devis à valider" value={pendingQuotes} hint="en attente de décision client" href="/admin?f=diagnostic" tone={pendingQuotes ? "warning" : undefined} />
-        <StatCard label="Prêts à expédier" value={ready} hint="contrôle qualité validé" href="/admin?f=ready" tone={ready ? "success" : undefined} />
-        <StatCard label="SAV ouverts" value={sav} hint="nouvelles demandes et analyses" href="/admin/sav" tone={sav ? "warning" : undefined} />
-      </StatBand>
+  const kpis = [
+    { label: "En atelier", value: String(enAtelier), glow: "rgba(124,92,255,0.3)", tone: "text-violet" },
+    { label: "Devis à valider", value: String(devisAValider), glow: "rgba(255,92,168,0.24)", tone: "text-rose" },
+    { label: "Prêts à rendre", value: String(prets), glow: "rgba(216,255,62,0.22)", tone: "text-lime" },
+    { label: "Délai moyen", value: delaiMoyen, glow: "rgba(51,225,255,0.24)", tone: "text-cyan" },
+  ];
 
-      <div className="grid bg-bg [grid-template-columns:minmax(0,1fr)] xl:[grid-template-columns:minmax(0,1fr)_minmax(380px,440px)]">
-        {/* Liste : l'espace principal du travail quotidien */}
-        <section className={cn("min-w-0 flex-col gap-4 p-5", explicitSelection ? "hidden xl:flex" : "flex")}>
-          <form method="get" action="/admin" className="flex flex-wrap items-center gap-2">
+  return (
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h1 className="font-display text-[clamp(32px,4.4vw,60px)] font-extrabold leading-[0.92] tracking-[-0.04em] text-ink">L&apos;atelier aujourd&apos;hui</h1>
+        <span className="font-mono text-[11.5px] uppercase tracking-[0.14em] text-ink-muted">{enCours} en cours</span>
+      </div>
+
+      {/* 2 × 2 au téléphone (écran A1), une rangée de quatre au-delà. */}
+      <div className="grid grid-cols-2 gap-[18px] sm:[grid-template-columns:repeat(auto-fit,minmax(210px,1fr))]">
+        {kpis.map((k) => (
+          <div key={k.label} className="glass anim-rise relative overflow-hidden rounded-[24px] p-5 sm:p-6">
+            <span aria-hidden="true" className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full" style={{ background: `radial-gradient(circle, ${k.glow}, transparent 70%)` }} />
+            <p className={cn("relative font-display text-[34px] font-extrabold leading-none tracking-[-0.035em] sm:text-[46px]", k.tone)}>{k.value}</p>
+            <p className="relative mt-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">{k.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {error ? <p className="rounded-[20px] border border-danger bg-danger-soft px-4 py-3 text-[13px] text-danger">{error}</p> : null}
+
+      <div className="grid items-start gap-[18px] [grid-template-columns:minmax(0,1fr)] xl:[grid-template-columns:minmax(330px,1fr)_minmax(380px,1.1fr)]">
+        {/* ---------------------------------------------------------------
+            A1 — la file
+        --------------------------------------------------------------- */}
+        <section className={cn("min-w-0 flex-col gap-4", explicitSelection ? "hidden xl:flex" : "flex")}>
+          <form method="get" action="/admin" className="flex flex-col gap-3">
             <input type="hidden" name="f" value={filter.key} />
-            <input name="q" defaultValue={q ?? ""} placeholder="Rechercher n° / nom / console" aria-label="Rechercher" className="min-w-0 flex-[1_1_180px] border border-border-strong bg-surface px-3 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:py-2.5 sm:text-[14px]" />
-            <FilterChips items={FILTERS.map((x) => ({ key: x.key, label: x.label }))} current={filter.key} hrefFor={(key) => hrefFor({ f: key === "all" ? undefined : key, sel: undefined })} />
+            <input
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="Rechercher un numéro, un nom, une console"
+              aria-label="Rechercher"
+              className="w-full rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none"
+            />
+            <div className="scroll-strip gap-2 sm:flex-wrap">
+              {FILTERS.map((x) => (
+                <Link
+                  key={x.key}
+                  href={hrefFor({ f: x.key === "all" ? undefined : x.key, sel: undefined })}
+                  aria-current={filter.key === x.key ? "true" : undefined}
+                  className={cn("chip", filter.key === x.key ? "bg-paper text-ink-900" : "border border-border text-ink-muted hover:text-ink")}
+                >
+                  {x.label}
+                </Link>
+              ))}
+            </div>
           </form>
-          {error ? <p className="border border-danger bg-danger-soft px-3 py-2 text-[13px] text-danger">{error}</p> : null}
-          <div className="flex flex-col border-t border-border">
+
+          <div className="flex flex-col gap-2.5">
             {rows.map((o) => {
               const active = o.id === selectedId;
               return (
-                <Link key={o.id} href={hrefFor({ sel: o.id })} scroll={false} className={cn("flex flex-col gap-1.5 border-b border-l-2 py-3 pl-3.5 pr-2 text-ink transition-colors", active ? "border-l-accent border-b-border bg-surface-muted" : "border-l-transparent border-b-border hover:bg-surface-muted/50")} aria-current={active ? "true" : undefined}>
+                <Link
+                  key={o.id}
+                  href={hrefFor({ sel: o.id })}
+                  scroll={false}
+                  aria-current={active ? "true" : undefined}
+                  className={cn(
+                    "flex flex-col gap-2.5 rounded-[22px] border p-4 transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:translate-x-1.5 hover:border-border-strong sm:p-5",
+                    active ? "border-violet bg-[rgba(124,92,255,0.12)]" : "border-border bg-surface-muted",
+                  )}
+                >
                   <span className="flex w-full items-center justify-between gap-3">
                     <span className="whitespace-nowrap font-mono text-[11.5px] text-ink-muted">{o.order_number}</span>
-                    <Badge tone={statusTone(o.status)}>{ORDER_STATUS_LABELS[o.status]}</Badge>
+                    <StatusPill status={o.status} />
                   </span>
-                  <span className="flex flex-col gap-[3px]">
-                    <strong className="text-[15.5px] font-semibold">
-                      {o.model_name} — {o.repair_name}
-                    </strong>
-                    <span className="text-[13px] text-ink-faint">
-                      {o.customer_first_name} {o.customer_last_name} · {o.received_at ? `reçu ${formatDate(o.received_at)}` : `commandé ${formatDate(o.created_at)}`}
+                  <span className="font-display text-[18px] font-bold leading-[1.1] tracking-[-0.025em] text-ink sm:text-[21px]">{o.model_name}</span>
+                  <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[13px] text-ink-muted">
+                    <span>
+                      {o.repair_name} · {o.customer_first_name} {o.customer_last_name}
                     </span>
+                    <span className="font-mono text-[11.5px]">{o.received_at ? formatDate(o.received_at) : formatDate(o.created_at)}</span>
                   </span>
-                  <span className="line-clamp-2 text-[13px] text-ink-muted">{o.customer_notes || o.fault_name}</span>
                 </Link>
               );
             })}
-            {!rows.length ? <p className="text-[13.5px] text-ink-muted">Aucun dossier ne correspond.</p> : null}
+            {!rows.length ? <p className="text-[14px] text-ink-muted">Aucune réparation ne correspond.</p> : null}
           </div>
-          <Link href="/admin/orders" className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted hover:text-ink">
-            Tous les dossiers →
-          </Link>
         </section>
 
-        {/* Fiche */}
-        <aside className={cn("min-w-0 flex-col gap-5 border-t border-border p-5 xl:flex xl:border-l xl:border-t-0", explicitSelection ? "flex" : "hidden xl:flex")}>
+        {/* ---------------------------------------------------------------
+            A2 — la fiche
+        --------------------------------------------------------------- */}
+        <aside
+          className={cn("glass min-w-0 flex-col gap-6 rounded-[28px] p-5 sm:p-7 xl:sticky xl:top-24 xl:flex", explicitSelection ? "flex" : "hidden xl:flex")}
+          style={{ boxShadow: "var(--glow-panel)" }}
+        >
           {selected ? (
             <>
-              {/* Retour vers la liste : le niveau 1 de la navigation mobile. */}
-              <Link href={hrefFor({ sel: undefined })} className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted hover:text-ink xl:hidden">
-                ← Liste des dossiers
+              <Link href={hrefFor({ sel: undefined })} className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-muted transition-colors hover:text-sale xl:hidden">
+                ← La file
               </Link>
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Fiche {selected.order_number}</span>
-                <span className="whitespace-nowrap font-mono text-[11px] text-accent-light">{ORDER_STATUS_LABELS[selected.status]}</span>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <h2 className="text-[24px] font-extrabold tracking-[-0.02em] text-ink">{selected.model_name}</h2>
-                <span className="text-[14px] text-ink-faint">
+
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="font-mono text-[11.5px] uppercase tracking-[0.14em] text-ink-muted">{selected.order_number}</span>
+                  <StatusPill status={selected.status} />
+                </div>
+                <h2 className="font-display text-[clamp(26px,3.2vw,38px)] font-extrabold leading-[0.95] tracking-[-0.035em] text-ink">{selected.model_name}</h2>
+                <p className="text-[14.5px] text-ink-muted">
                   {selected.repair_name} ·{" "}
-                  <Link href={`/admin/customers/${selected.customer_id}`} className="hover:text-ink">
+                  <Link href={`/admin/customers/${selected.customer_id}`} className="transition-colors hover:text-sale">
                     {selected.customer_first_name} {selected.customer_last_name}
                   </Link>
-                  {selected.customer_phone ? ` · ${selected.customer_phone}` : ""}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-[7px]">
-                <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Panne décrite par le client</span>
-                <p className="text-[14.5px] leading-[1.5] text-[#e4dccb]">
-                  <span className="font-semibold">{selected.fault_name}.</span> {selected.customer_notes || "Aucune description complémentaire."}
+                  {selected.customer_phone ? (
+                    <>
+                      {" · "}
+                      <a href={`tel:${selected.customer_phone.replace(/\s/g, "")}`} className="transition-colors hover:text-sale">
+                        {selected.customer_phone}
+                      </a>
+                    </>
+                  ) : null}
                 </p>
-                {selected.symptoms.length ? (
-                  <ul className="flex flex-wrap gap-1.5">
-                    {selected.symptoms.map((sym) => (
-                      <li key={sym} className="border border-border-strong px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-faint">
-                        {sym}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                {signed.length ? (
-                  <div className="mt-1 [&_li]:border-border [&_li]:bg-surface-muted">
-                    <MediaGallery media={signed} />
-                  </div>
-                ) : null}
               </div>
 
-              <div className="flex flex-col gap-[9px]">
-                <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Avancement</span>
-                {/* Bande à défilement horizontal au téléphone : les huit étapes
-                    gardent leur libellé au lieu d'être rognées (écran M6). */}
-                <div className="scroll-strip gap-[2px] sm:flex">
-                  {WORKSHOP_STEPS.map((seg, i) => {
-                    const reached = i <= pipelineIndex;
+              {/* Avancement : cinq segments cliquables. Au téléphone la bande
+                  défile — cinq libellés écrasés dans 360 px sont illisibles. */}
+              <div className="flex flex-col gap-2.5">
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">Avancement</span>
+                <div className="scroll-strip gap-2">
+                  {STEPS.map((seg, i) => {
+                    const reached = current >= 0 && i <= current;
                     const allowed = canRoleTransition(user.profile.role, selected.status, seg.status);
-                    const cls = cn("min-w-0 shrink-0 whitespace-nowrap px-[11px] py-[10px] sm:flex-1 sm:shrink sm:overflow-hidden sm:text-ellipsis sm:px-1 sm:py-[9px] font-mono text-[10px] uppercase tracking-[0.04em]", reached ? "bg-accent text-white" : "bg-surface-muted text-ink-muted");
+                    const cls = cn(
+                      "min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors duration-300",
+                      reached ? "border-sale bg-[rgba(216,255,62,0.16)] text-lime" : "border-border text-ink-muted",
+                    );
                     return allowed ? (
-                      <form key={seg.status} action={advanceStatusAction} className="flex min-w-0 shrink-0 sm:flex-1">
+                      <form key={seg.status} action={advanceStatusAction} className="shrink-0">
                         <input type="hidden" name="order_id" value={selected.id} />
                         <input type="hidden" name="status" value={seg.status} />
                         <input type="hidden" name="next" value={currentHref} />
-                        <button type="submit" className={cn(cls, "w-full cursor-pointer hover:bg-paper hover:text-ink-900")} title={`Passer en « ${ORDER_STATUS_LABELS[seg.status]} »`}>
+                        <button type="submit" className={cn(cls, "cursor-pointer hover:border-sale hover:text-lime")} title={`Passer en « ${ORDER_STATUS_LABELS[seg.status]} »`}>
                           {seg.label}
                         </button>
                       </form>
@@ -190,30 +278,53 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                     );
                   })}
                 </div>
-                <span className="text-[12px] text-ink-muted">Reçu → Diagnostic → Devis envoyé → En attente client → En atelier → Réparé → Expédié → Terminé. Cliquer un segment change le statut si la transition est autorisée ; les autres statuts sont dans la fiche complète.</span>
               </div>
 
-              <div className="flex flex-col gap-[9px] border-t border-border pt-4">
-                <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Devis</span>
+              {/* La parole du client : citée, jamais éditable depuis l'atelier. */}
+              <div className="flex flex-col gap-3">
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">Ce que dit le client</span>
+                <blockquote className="border-l-2 border-sale pl-4 font-display text-[17px] font-bold leading-[1.3] tracking-[-0.02em] text-ink sm:text-[19px]">
+                  {selected.customer_notes || selected.fault_name}
+                </blockquote>
+                {selected.symptoms.length ? (
+                  <ul className="flex flex-wrap gap-2">
+                    {selected.symptoms.map((sym) => (
+                      <li key={sym} className="rounded-full border border-border px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">
+                        {sym}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {signed.length ? (
+                  <div className="[&_li]:rounded-[14px] [&_li]:border-border">
+                    <MediaGallery media={signed} />
+                  </div>
+                ) : (
+                  <p className="rounded-[20px] border border-dashed border-border px-4 py-3 text-center font-mono text-[11px] uppercase tracking-[0.12em] text-ink-muted">Aucune photo envoyée par le client</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2.5 border-t border-border pt-6">
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">Devis</span>
                 {(items?.data ?? []).map((i) => (
-                  <div key={i.id} className="flex justify-between gap-3.5 border-b border-dotted border-[#3a3529] pb-1.5 text-[14.5px]">
+                  <div key={i.id} className="flex justify-between gap-4 border-b border-border pb-2 text-[14.5px] text-ink-soft">
                     <span>
                       {i.label}
-                      {i.source === "QUOTE" ? <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.06em] text-accent-light">devis</span> : null}
+                      {i.source === "QUOTE" ? <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan">devis</span> : null}
                     </span>
-                    <span className="whitespace-nowrap font-mono text-[#e4dccb]">{formatPrice(i.total_cents)}</span>
+                    <span className="whitespace-nowrap font-mono text-ink">{formatPrice(i.total_cents)}</span>
                   </div>
                 ))}
-                <div className="mt-0.5 flex justify-between gap-3.5 text-[16px] font-semibold">
-                  <span>Total</span>
-                  <span className="whitespace-nowrap font-mono">{formatPrice(selected.total_cents)}</span>
+                <div className="mt-2 flex items-baseline justify-between gap-4 border-t border-sale pt-3">
+                  <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">Total</span>
+                  <span className="whitespace-nowrap font-display text-[26px] font-extrabold tracking-[-0.03em] text-lime">{formatPrice(selected.total_cents)}</span>
                 </div>
-                <div className="flex justify-between gap-3.5 text-[12.5px] text-ink-muted">
+                <div className="flex justify-between gap-4 text-[12.5px] text-ink-muted">
                   <span>Encaissé</span>
                   <span className="whitespace-nowrap font-mono">{formatPrice(selected.paid_cents)}</span>
                 </div>
                 {(quotes?.data ?? []).map((qu) => (
-                  <div key={qu.id} className="flex justify-between gap-3.5 text-[13px] text-ink-faint">
+                  <div key={qu.id} className="flex justify-between gap-4 text-[13px] text-ink-muted">
                     <span>
                       {qu.quote_number} · {qu.title}
                     </span>
@@ -226,38 +337,52 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
 
               <NoteForm orderId={selected.id} compact />
 
-              <div className="flex flex-wrap gap-2">
-                {draftQuote ? (
-                  <SendQuoteButton quoteId={draftQuote.id} className="flex-[1_1_150px] bg-accent px-3 py-[13px] text-white hover:bg-paper hover:text-ink-900" label={`Envoyer le devis ${draftQuote.quote_number}`} />
-                ) : (
-                  <Link href={`/admin/orders/${selected.id}?tab=quotes`} className="flex-[1_1_150px] whitespace-nowrap bg-accent px-3 py-[13px] text-center font-mono text-[12px] uppercase tracking-[0.06em] text-white hover:bg-paper hover:text-ink-900">
-                    Devis complémentaire
-                  </Link>
-                )}
-                <Link href={`/admin/orders/${selected.id}?tab=shipping`} className="whitespace-nowrap border border-border-strong px-[15px] py-[13px] font-mono text-[12px] uppercase tracking-[0.06em] text-ink hover:border-paper">
-                  Étiquette retour
-                </Link>
-                <Link href={`/admin/orders/${selected.id}`} className="whitespace-nowrap border border-border-strong px-[15px] py-[13px] font-mono text-[12px] uppercase tracking-[0.06em] text-ink hover:border-paper">
-                  Fiche complète
-                </Link>
-              </div>
-
-              <div className="flex flex-col gap-[7px] border-t border-border pt-3.5">
-                <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Historique</span>
+              <div className="flex flex-col gap-3 border-t border-border pt-6">
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">Historique</span>
                 {(events?.data ?? []).map((e) => (
-                  <div key={e.id} className="flex gap-3 text-[13px] text-ink-faint">
-                    <span className="whitespace-nowrap font-mono text-[#6b6558]">{formatDateTime(e.created_at)}</span>
-                    <span>
+                  <div key={e.id} className="flex gap-4 text-[13px] text-ink-muted">
+                    <span className="whitespace-nowrap font-mono text-[11.5px] text-ink-faint">{formatDateTime(e.created_at)}</span>
+                    <span className="text-ink-soft">
                       {e.title}
-                      {!e.is_public ? <span className="ml-1 font-mono text-[10px] uppercase text-ink-muted">interne</span> : null}
+                      {!e.is_public ? <span className="ml-1.5 font-mono text-[10px] uppercase text-ink-muted">interne</span> : null}
                     </span>
                   </div>
                 ))}
                 {!events?.data?.length ? <span className="text-[13px] text-ink-muted">Aucun événement.</span> : null}
               </div>
+
+              {/* Barre d'action : collée en bas de l'écran au téléphone. */}
+              <div
+                className="safe-bottom sticky bottom-0 -mx-5 flex flex-wrap gap-2.5 border-t border-border px-5 pt-4 backdrop-blur-[14px] max-sm:bg-[rgba(7,6,10,0.82)] sm:static sm:mx-0 sm:border-0 sm:px-0 sm:pb-0 sm:pt-2"
+                style={{ "--safe-pb": "16px" } as React.CSSProperties}
+              >
+                {draftQuote ? (
+                  <SendQuoteButton
+                    quoteId={draftQuote.id}
+                    className="btn-gradient min-h-11 flex-[1_1_180px] rounded-full px-5 py-3 text-[14px] font-semibold"
+                    label={`Envoyer le devis ${draftQuote.quote_number}`}
+                  />
+                ) : (
+                  <Link href={`/admin/orders/${selected.id}?tab=quotes`} className="btn-gradient flex min-h-11 flex-[1_1_180px] items-center justify-center rounded-full px-5 py-3 text-center text-[14px] font-semibold">
+                    Envoyer le devis
+                  </Link>
+                )}
+                <Link
+                  href={`/admin/orders/${selected.id}?tab=shipping`}
+                  className="flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-border-strong px-5 py-3 font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-soft transition-colors hover:border-ink hover:text-ink"
+                >
+                  Étiquette
+                </Link>
+                <Link
+                  href={`/admin/orders/${selected.id}`}
+                  className="flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-border-strong px-5 py-3 font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-soft transition-colors hover:border-ink hover:text-ink"
+                >
+                  Fiche complète
+                </Link>
+              </div>
             </>
           ) : (
-            <p className="text-[14px] text-ink-muted">Sélectionnez un dossier dans la liste.</p>
+            <p className="text-[14px] text-ink-muted">Sélectionnez une réparation dans la file.</p>
           )}
         </aside>
       </div>

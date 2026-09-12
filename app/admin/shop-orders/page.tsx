@@ -50,7 +50,7 @@ export default async function ShopOrdersPage({ searchParams }: { searchParams: P
   const exportHref = `/admin/shop-orders/export?${new URLSearchParams({ ...(q ? { q } : {}), f: filter.key })}`;
 
   return (
-    <div className="-m-5">
+    <div>
       <StatBand>
         <StatCard label="À préparer" value={toPrepare} hint="payées, non préparées" href="/admin/shop-orders?f=paid" tone={toPrepare ? "warning" : undefined} />
         <StatCard label="Retraits prêts" value={pickupsToday} hint="préparées, à retirer au magasin" href="/admin/shop-orders?f=prepared" />
@@ -60,7 +60,7 @@ export default async function ShopOrdersPage({ searchParams }: { searchParams: P
       <section className="flex min-w-0 flex-col gap-3.5 p-5">
         <form method="get" action="/admin/shop-orders" className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="f" value={filter.key} />
-          <input name="q" defaultValue={q ?? ""} placeholder="Rechercher n° de commande / client" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] border border-border-strong bg-surface px-3 py-2.5 text-[14px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none" />
+          <input name="q" defaultValue={q ?? ""} placeholder="Rechercher n° de commande / client" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[14px]" />
           <a href={exportHref} className="whitespace-nowrap border border-border-strong bg-surface px-3.5 py-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-ink hover:border-paper">
             Exporter CSV
           </a>

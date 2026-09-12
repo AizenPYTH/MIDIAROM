@@ -94,7 +94,7 @@ export default async function TradeInPage({ params, searchParams }: { params: Pr
               <form action={tradeInStatusAction} className="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="request_id" value={t.id} />
                 <input type="hidden" name="status" value="CLOSED" />
-                <input name="note" placeholder="Note (montant payé au comptoir, entrée en stock…)" aria-label="Note de clôture" className="border border-border-strong bg-field px-3 py-2 text-[13px] text-ink placeholder:text-ink-muted" />
+                <input name="note" placeholder="Note (montant payé au comptoir, entrée en stock…)" aria-label="Note de clôture" className="rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted sm:text-[13px]" />
                 <button type="submit" className="cursor-pointer bg-accent px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-white hover:bg-paper hover:text-ink-900">
                   Clôturer (lot déposé et payé)
                 </button>
@@ -104,7 +104,7 @@ export default async function TradeInPage({ params, searchParams }: { params: Pr
               <form action={tradeInStatusAction} className="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="request_id" value={t.id} />
                 <input type="hidden" name="status" value="REFUSED" />
-                <input name="note" placeholder="Motif (facultatif)" aria-label="Motif du refus" className="border border-border-strong bg-field px-3 py-2 text-[13px] text-ink placeholder:text-ink-muted" />
+                <input name="note" placeholder="Motif (facultatif)" aria-label="Motif du refus" className="rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted sm:text-[13px]" />
                 <button type="submit" className="cursor-pointer border border-border-strong px-3 py-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-faint hover:border-paper">
                   Refuser la reprise
                 </button>

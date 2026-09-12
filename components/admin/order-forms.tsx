@@ -94,7 +94,7 @@ export function NoteForm({ orderId, compact }: { orderId: string; compact?: bool
   return (
     <form action={action} className="flex flex-col gap-2" key={state?.ok ? "sent" : "draft"}>
       <input type="hidden" name="order_id" value={orderId} />
-      <Textarea name="body" required minLength={2} placeholder={compact ? "Note d'atelier interne — pièces commandées, mesures, tests effectués…" : "Note interne ou message au client…"} aria-label="Message" className={compact ? "min-h-[80px] text-[14px]" : undefined} />
+      <Textarea name="body" required minLength={2} placeholder={compact ? "Note d'atelier interne — pièces commandées, mesures, tests effectués…" : "Note interne ou message au client…"} aria-label="Message" className={compact ? "min-h-[80px] sm:text-[14px]" : undefined} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <label className="flex items-center gap-2 text-[13px] text-ink-soft">
           <Checkbox name="internal" defaultChecked /> Note interne (non visible par le client)
