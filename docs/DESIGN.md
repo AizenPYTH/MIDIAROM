@@ -5,6 +5,23 @@ Le handoff (`207 Mediarom.dc.html`, `207 Mediarom Admin.dc.html`, `README.md`) e
 l'application Next.js existante, ce qui a été volontairement laissé de côté et les
 écarts restants.
 
+## Le site ne vend plus rien
+
+Le client a retiré la vente : plus de boutique, plus de panier, plus de tunnel
+de commande. Les routes publiques `/boutique`, `/panier`, `/commande-boutique`
+et `/compte/commandes` sont supprimées, ainsi que la moitié « Vente » du hero et
+la section « En rayon » de l'accueil. Ce qui subsiste :
+
+- le **back-office** garde ses modules Stock et Commandes : ils portent
+  l'historique, et `lib/shop/*` reste branché sur le retour de paiement ;
+- la **reprise** reste en ligne : l'atelier rachète des consoles, il n'en revend
+  pas ;
+- les lignes de `ROUTES` liées à la vente sont conservées et commentées comme
+  vestiges — elles ne servent plus qu'à construire des URL côté back-office.
+
+Le tableau ci-dessous décrit le site tel qu'il a été construit ; les lignes
+« Boutique » n'ont donc plus d'équivalent en ligne.
+
 ## Périmètre retenu
 
 Première passe : seul le périmètre « réparation » du projet initial avait été retenu.

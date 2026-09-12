@@ -5,6 +5,7 @@
  *
  *   supabase/catalog.sql             → supabase/seed-production-catalog.sql
  *   supabase/catalog-reparations.sql → supabase/seed-production-repairs.sql
+ *   supabase/catalog-ps5.sql         → supabase/seed-production-ps5.sql
  *
  *   node scripts/build-production-seeds.mjs           # (re)génère
  *   node scripts/build-production-seeds.mjs --check   # échoue si périmés
@@ -34,6 +35,7 @@ const CATALOG_TABLES = [
   "workshops",
 ];
 const REPAIR_TABLES = ["console_models", "content_blocks", "faults", "repair_categories", "repairs"];
+const PS5_TABLES = ["brands", "console_models", "faults", "repair_categories", "repairs"];
 
 const TARGETS = [
   {
@@ -82,6 +84,32 @@ const TARGETS = [
       ["catégories de réparation", "public.repair_categories"],
       ["prestations rattachées à une catégorie", "public.repairs where category_id is not null"],
       ["prestations au tarif à configurer", "public.repairs where price_is_provisional"],
+    ],
+  },
+  {
+    source: "supabase/catalog-ps5.sql",
+    output: "supabase/seed-production-ps5.sql",
+    title: "DONNÉES DE PRODUCTION — GAMME PLAYSTATION 5",
+    intro: [
+      "Les 5 modèles de la gamme PlayStation 5 et leurs 302 prestations.",
+      "",
+      "ATTENTION — ce fichier est le seul dont le contenu ne vient PAS du",
+      "document « Liste de réparation » du client : la PS5 n'y figure pas. Les",
+      "pannes sont celles couramment rencontrées sur la gamme, calquées sur la",
+      "structure retenue pour la PS4 dans le document. À faire relire par",
+      "l'atelier avant mise en ligne.",
+      "",
+      "À exécuter APRÈS seed-production-repairs.sql : les catégories et une",
+      "grande partie des pannes sont créées par celui-ci.",
+      "",
+      "Aucun tarif n'est importé : chaque prestation arrive « sur devis ».",
+    ],
+    tables: PS5_TABLES,
+    checks: [
+      ["modèles PlayStation 5", "public.console_models where family = 'ps5'"],
+      ["prestations PlayStation 5", "public.repairs r where exists (select 1 from public.console_models m where m.id = r.model_id and m.family = 'ps5')"],
+      ["modèles de console, tous catalogues", "public.console_models"],
+      ["prestations, tous catalogues", "public.repairs"],
     ],
   },
 ];

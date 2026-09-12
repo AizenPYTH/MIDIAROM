@@ -49,7 +49,7 @@ Tests : `supabase/tests/rls.test.sql` (exécutés par `npm run test:db`) vérifi
 - côté back-office (`/admin/catalog/repairs`), elle est comptée dans « tarifs à configurer » ;
 - enregistrer un prix non nul lève automatiquement le drapeau.
 
-Le contenu vient de `supabase/catalog-reparations.sql`, appliqué en production sous sa forme générée `supabase/seed-production-repairs.sql` (voir README). Une prestation non rattachée à une catégorie reste valide : elle apparaît sous « Sans catégorie ».
+Le contenu vient de `supabase/catalog-reparations.sql`, appliqué en production sous sa forme générée `supabase/seed-production-repairs.sql` (voir README). La gamme PlayStation 5 s'ajoute par `supabase/catalog-ps5.sql` / `supabase/seed-production-ps5.sql` : elle ne figure pas dans le document du client et a été construite sur le modèle de la PS4. Une prestation non rattachée à une catégorie reste valide : elle apparaît sous « Sans catégorie ».
 
 ## Périmètre du catalogue
 

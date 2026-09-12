@@ -31,14 +31,16 @@ begin
   end if;
 
   -- Ce que le nettoyage ne doit surtout pas avoir touché.
+  -- 887 prestations du document + 302 pour la gamme PlayStation 5, ajoutée
+  -- hors document à la demande du client (supabase/catalog-ps5.sql).
   select count(*) into n_pdf from public.repairs where category_id is not null;
-  if n_pdf <> 887 then
-    raise exception 'prestations du document du client : % au lieu de 887', n_pdf;
+  if n_pdf <> 1189 then
+    raise exception 'prestations du catalogue : % au lieu de 1189', n_pdf;
   end if;
 
   select count(*) into n_modeles from public.console_models;
-  if n_modeles <> 13 then
-    raise exception 'modèles de console : % au lieu de 13', n_modeles;
+  if n_modeles <> 18 then
+    raise exception 'modèles de console : % au lieu de 18 (13 du document + 5 PS5)', n_modeles;
   end if;
 
   select count(*) into n_categories from public.repair_categories;

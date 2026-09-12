@@ -12,7 +12,7 @@ Un seul site responsive : pas de version mobile séparée, pas de redirection `m
 | | Largeur | Mise en page |
 | --- | --- | --- |
 | Téléphone | `< 640px` (`max-sm`) | une colonne, barre d'onglets basse, menu plein écran |
-| Tablette | `640–1023px` (`sm`) | deux colonnes de produits, header sans nav |
+| Tablette | `640–1023px` (`sm`) | header sans nav, grilles à deux colonnes |
 | Bureau | `≥ 1024px` (`lg`) | la mise en page de DESIGN.md, inchangée |
 
 Toutes les classes mobiles sont écrites **mobile-first** avec leur pendant `sm:`
@@ -24,8 +24,8 @@ ou `lg:` : le rendu de bureau du handoff n'a pas bougé d'un pixel.
 | --- | --- |
 | `meta name="viewport"` | `app/layout.tsx` (`export const viewport`) |
 | Aucun débordement horizontal | vérifié à 360 / 390 / 430 px sur les 14 routes publiques et sur `/admin`, `/admin/shop-orders`, `/admin/stock` |
-| Cibles tactiles ≥ 44 px | `.chip` (`min-height: 44px`), `Button` taille `sm`, `AddToCartButton`, pastilles de symptômes, `FilterChips`, résumés de FAQ, burger |
-| Champs ≥ 16 px | `components/ui/form.tsx` (`inputBase`), fiche de réparation, formulaire de reprise, recherche boutique et back-office |
+| Cibles tactiles ≥ 44 px | `.chip` (`min-height: 44px`), `Button` taille `sm`, pastilles de symptômes, `FilterChips`, résumés de FAQ, burger |
+| Champs ≥ 16 px | `components/ui/form.tsx` (`inputBase`), fiche de réparation, formulaire de reprise, recherche du back-office |
 | Corps de texte ≥ 15 px | aucune taille n'a été réduite pour faire tenir une mise en page |
 | `env(safe-area-inset-bottom)` | utilitaire `.safe-bottom` (barre d'onglets, barre d'action de la fiche) |
 | Aucun arrondi, aucune ombre, aucune animation | inchangé — la règle globale de `globals.css` reste la seule autorité |
@@ -52,28 +52,24 @@ gardent la main.
 
 - Bandeau d'infos réduit à une ligne (`207 rue de Rome · Marseille · depuis 1997`) ;
   téléphone et horaires restent dans la section magasin, le pied de page et le menu.
-- Header sur une seule ligne : logo réduit, « Panier · N », burger 38 × 38 dans une
-  zone cliquable de 44 px.
+- Header sur une seule ligne : logo réduit et burger 38 × 38 dans une zone
+  cliquable de 44 px. (Le lien « Panier · N » a disparu avec la boutique.)
 - Menu **plein écran** sur fond papier, liens 24 px / 600, fermeture par « × »,
   puis suivi de réparation, connexion, adresse et horaires. Apparition immédiate.
-- Hero empilé, vente d'abord, titre 34 px, **un seul bouton par moitié** — les
-  boutons secondaires vivent déjà dans les sections Reprise et Réparation.
+- Hero : le bloc « vente / réparation » du handoff est devenu un bloc unique
+  consacré à l'atelier, titre 34 px, deux boutons pleine largeur.
 - Bandeau de garanties en bande à défilement horizontal.
 - Section magasin : « Appeler le magasin » puis « Itinéraire » en pleine largeur.
 - **Barre d'onglets basse** (`components/marketing/tab-bar.tsx`) : Accueil,
-  Boutique, Réparer, Compte. Icônes Lucide linéaires 1,5 px, l'active en orange.
+  Réparer, Suivi, Compte. Icônes Lucide linéaires 1,5 px, l'active en orange.
   Un talon de 64 px l'empêche de recouvrir le pied de page.
 
-### M2 — Boutique
+### M2 — Boutique (supprimée)
 
-Grille produits à **2 colonnes**, carte resserrée (padding 12 px, badge 9,5 px,
-nom 14 px, prix 15 px) et bouton « Ajouter » **en pleine largeur sous le prix** :
-côte à côte dans 160 px, prix et bouton se chevauchaient. Chips de catégorie en
-bande à défilement, contrôles de filtre en pleine largeur.
-
-Le conteneur du site (`components/ui/misc.tsx`) passe à 16 px de gouttière au
-téléphone : les 8 px gagnés de chaque côté font la différence entre deux colonnes
-et une.
+Le site ne vend plus rien : la boutique, le panier et le tunnel de commande ont
+été retirés. La grille produits à deux colonnes et la carte compacte décrites
+par le handoff mobile n'ont plus de page où s'afficher. Le conteneur du site
+garde en revanche sa gouttière de 16 px au téléphone, posée à cette occasion.
 
 ### M3 / M4 — Fiche de réparation
 
@@ -115,10 +111,6 @@ barre d'action au flux de la page.
 
 ## Écarts assumés
 
-- **Feuille de filtres de la boutique** : les filtres s'empilent en pleine largeur
-  au lieu de s'ouvrir dans une feuille plein écran. Rien n'est caché, et la
-  boutique est vide tant que le stock réel n'est pas saisi — le formulaire ne
-  s'affiche même pas.
 - **Libellés courts du bandeau de garanties** : les textes viennent du bloc CMS
   `homepage.reassurance`. Les raccourcir automatiquement reviendrait à réécrire du
   contenu client ; la bande défile, les libellés restent entiers.
@@ -137,7 +129,7 @@ barre d'action au flux de la page.
 ## Vérification
 
 `scripts` de contrôle utilisés (Playwright, hors dépôt) : chargement des 14 routes
-publiques et des 3 routes de back-office à 360, 390 et 430 px, mesure de
+publiques et des 3 routes de back-office à 360, 390 et 430 px (la boutique et le panier ont depuis été retirés), mesure de
 `scrollWidth - clientWidth`, de la hauteur de chaque commande et de la taille de
 police de chaque champ. Résultat attendu et obtenu : **aucun débordement, aucune
 cible sous 44 px, aucun champ sous 16 px**, à chacune des trois largeurs.

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, ShoppingBag, User, Wrench } from "lucide-react";
+import { House, PackageSearch, User, Wrench } from "lucide-react";
 import { ROUTES } from "@/config/site";
 import { cn } from "@/lib/utils/cn";
 
@@ -18,8 +18,8 @@ import { cn } from "@/lib/utils/cn";
  */
 const TABS = [
   { href: ROUTES.home, label: "Accueil", Icon: House },
-  { href: ROUTES.shop, label: "Boutique", Icon: ShoppingBag },
   { href: ROUTES.repair, label: "Réparer", Icon: Wrench },
+  { href: ROUTES.tracking, label: "Suivi", Icon: PackageSearch },
   { href: ROUTES.account, label: "Compte", Icon: User },
 ];
 

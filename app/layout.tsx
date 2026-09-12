@@ -3,7 +3,6 @@ import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AnalyticsProvider } from "@/lib/analytics/client";
 import { CookieBanner } from "@/components/marketing/cookie-banner";
-import { CartProvider } from "@/components/shop/cart-provider";
 import { SITE_URL } from "@/config/site";
 import { getBrandSettings } from "@/lib/settings";
 
@@ -36,10 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`h-full ${archivo.variable} ${plexMono.variable}`}>
       <body className="flex min-h-full flex-col">
         <AnalyticsProvider gaId={gaId} adsId={adsId}>
-          <CartProvider>
-            {children}
-            <CookieBanner enabled={Boolean(gaId || adsId)} />
-          </CartProvider>
+          {children}
+          <CookieBanner enabled={Boolean(gaId || adsId)} />
         </AnalyticsProvider>
       </body>
     </html>

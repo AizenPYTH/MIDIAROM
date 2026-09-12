@@ -61,13 +61,14 @@ update public.profiles set role = 'SUPER_ADMIN' where email = 'admin@example.com
 
 Le catalogue initial (consoles, pannes, prestations avec leurs prix de départ, produits de la boutique) est dans `supabase/catalog.sql`, séparé du seed de développement.
 
-Le catalogue de réparation est **strictement** celui du document fourni par le client : 13 modèles de console, 35 catégories et 887 prestations. Les modèles qui n'y figurent pas (PS5, PS3, rétro, Sega…) ne sont plus au catalogue. Le contenu vient de `supabase/catalog-reparations.sql`. Les tarifs n'y figurent pas : chaque prestation importée arrive à 0 € avec `price_is_provisional = true`, s'affiche « sur devis » côté client et se règle depuis `/admin/catalog/repairs` (enregistrer un prix non nul lève le drapeau). Le fichier est rejouable : la formulation du document fait foi et écrase le libellé, tandis que le prix, le résumé et l'activation saisis dans le back-office sont conservés.
+Le catalogue de réparation vient du document fourni par le client — 13 modèles de console, 35 catégories, 887 prestations, dans `supabase/catalog-reparations.sql` — auquel s'ajoute la **gamme PlayStation 5**, absente du document et ajoutée à la demande du client : 5 modèles et 302 prestations dans `supabase/catalog-ps5.sql`, calquées sur la structure retenue pour la PS4 et à faire relire par l'atelier. Les modèles restants (PS3, rétro, Sega…) ne sont pas au catalogue. Les tarifs n'y figurent pas : chaque prestation importée arrive à 0 € avec `price_is_provisional = true`, s'affiche « sur devis » côté client et se règle depuis `/admin/catalog/repairs` (enregistrer un prix non nul lève le drapeau). Le fichier est rejouable : la formulation du document fait foi et écrase le libellé, tandis que le prix, le résumé et l'activation saisis dans le back-office sont conservés.
 
-Sur un projet de production, on n'applique **pas** ces deux fichiers directement : on applique leurs versions générées, `supabase/seed-production-catalog.sql` et `supabase/seed-production-repairs.sql`. Même contenu, plus une garde qui refuse de s'exécuter tant que les migrations ne sont pas passées, un état des lieux chiffré en fin de fichier, et une compatibilité assurée avec le SQL Editor de Supabase (collage direct, rejeu dans la même session) :
+Sur un projet de production, on n'applique **pas** ces fichiers directement : on applique leurs versions générées, `supabase/seed-production-catalog.sql`, `supabase/seed-production-repairs.sql` et `supabase/seed-production-ps5.sql`. Même contenu, plus une garde qui refuse de s'exécuter tant que les migrations ne sont pas passées, un état des lieux chiffré en fin de fichier, et une compatibilité assurée avec le SQL Editor de Supabase (collage direct, rejeu dans la même session) :
 
 ```bash
 psql "$DB_URL" -f supabase/seed-production-catalog.sql
 psql "$DB_URL" -f supabase/seed-production-repairs.sql
+psql "$DB_URL" -f supabase/seed-production-ps5.sql
 ```
 
 Le catalogue de production ne crée **aucun produit de boutique** : le stock réel se saisit depuis Stock → Nouveau produit, et la boutique affiche son état vide en attendant. Les 51 produits qui ont servi à bâtir la boutique vivent dans `supabase/seed.sql`, jamais appliqué en production. Sur une base déjà garnie par une version antérieure, `supabase/cleanup-demo-data.sql` les retire, avec les 98 anciennes prestations désactivées lors de l'import du catalogue du client.
@@ -87,7 +88,8 @@ Les intégrations externes sont simulées par défaut (`PAYMENT_PROVIDER=mock`, 
 | `npm run db:types` | Regénère `types/database.ts` depuis la base locale |
 | `psql "$DB_URL" -f supabase/catalog.sql` | Charge le catalogue initial (consoles, pannes, prestations, produits) — applicable en production |
 | `psql "$DB_URL" -f supabase/catalog-reparations.sql` | Charge le catalogue de réparation du client (13 modèles, 35 catégories, 887 prestations « sur devis ») — applicable en production, rejouable |
-| `npm run seeds:build` | Regénère les deux fichiers de données de production depuis `catalog.sql` et `catalog-reparations.sql` |
+| `psql "$DB_URL" -f supabase/catalog-ps5.sql` | Ajoute la gamme PlayStation 5 (5 modèles, 302 prestations « sur devis »), hors document du client |
+| `npm run seeds:build` | Regénère les trois fichiers de données de production depuis `catalog.sql`, `catalog-reparations.sql` et `catalog-ps5.sql` |
 | `npm run photos:consoles -- <dossier> [--dry-run]` | Importe les photos des 13 modèles du catalogue de réparation : identifie le vrai contenu de chaque fichier, extrait l'image d'une page enregistrée depuis Chrome, convertit en WebP (1200 px max), téléverse dans `content-media/consoles/<slug>.webp` et renseigne `console_models.image_path`. Ne télécharge jamais depuis Internet. |
 | `psql "$DB_URL" -f supabase/cleanup-strict-pdf.sql` | Remet une base déjà garnie au périmètre du document : 13 modèles, 887 prestations, 0 produit de démonstration, photos des consoles renseignées — ciblé et rejouable |
 | `npm run check` | lint + typecheck + tests + build |

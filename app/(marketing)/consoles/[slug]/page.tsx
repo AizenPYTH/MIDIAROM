@@ -4,9 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { Breadcrumbs, Container, Eyebrow } from "@/components/ui/misc";
-import { ProductCard } from "@/components/shop/product-card";
 import { getActiveModels, getModelBySlug, getRepairsForModel } from "@/lib/repair/catalog";
-import { getProducts } from "@/lib/shop/catalog";
 import { getBrandSettings } from "@/lib/settings";
 import { formatPrice } from "@/lib/utils/format";
 import { publicMediaUrl } from "@/components/marketing/gallery";
@@ -47,18 +45,7 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const model = await getModelBySlug(slug);
   if (!model) notFound();
-  const [repairs, brand, models, forModel, forPlatform] = await Promise.all([
-    getRepairsForModel(model.id),
-    getBrandSettings(),
-    getActiveModels(model.brand_id),
-    getProducts({ modelId: model.id, sort: "recent" }, 8),
-    getProducts({ platform: model.short_name ?? model.name, sort: "recent" }, 24),
-  ]);
-  const seen = new Set(forModel.map((p) => p.id));
-  // Consoles / collectors de la plateforme non rattachés au modèle exact (ex. autre révision) : avec le modèle.
-  const consoles = [...forModel, ...forPlatform.filter((p) => !seen.has(p.id) && (p.category === "CONSOLE" || p.category === "COLLECTIBLE"))];
-  const accessories = forPlatform.filter((p) => !seen.has(p.id) && (p.category === "ACCESSORY" || p.category === "PART"));
-  const games = forPlatform.filter((p) => !seen.has(p.id) && p.category === "GAME");
+  const [repairs, brand, models] = await Promise.all([getRepairsForModel(model.id), getBrandSettings(), getActiveModels(model.brand_id)]);
   const siblings = models.filter((m) => m.id !== model.id && (model.family ? m.family === model.family : true)).slice(0, 8);
   const mainRepairs = repairs.filter((r) => !r.is_diagnostic_only);
   const diagnostic = repairs.find((r) => r.is_diagnostic_only);
@@ -108,8 +95,8 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
                 <Link href={`${ROUTES.repair}/${model.slug}`} className="bg-accent px-[22px] py-3.5 text-[15px] font-semibold text-white hover:bg-ink-900">
                   Faire réparer ma {model.name}
                 </Link>
-                <Link href={`${ROUTES.shop}?plateforme=${encodeURIComponent(model.short_name ?? model.name)}`} className="border border-ink px-[22px] py-3.5 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper">
-                  Voir en boutique
+                <Link href={ROUTES.tradeIn} className="border border-ink px-[22px] py-3.5 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper">
+                  Estimer une reprise
                 </Link>
               </div>
             </div>
@@ -197,59 +184,6 @@ export default async function ConsolePage({ params }: { params: Promise<{ slug: 
           )}
         </Container>
       </section>
-
-      <Container className="py-14">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <Eyebrow>Boutique</Eyebrow>
-            <h2 className="mt-2 text-[clamp(26px,3vw,38px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">En rayon pour la {model.name}</h2>
-          </div>
-          <Link href={`${ROUTES.shop}?plateforme=${encodeURIComponent(model.short_name ?? model.name)}`} className="font-mono text-[12px] uppercase tracking-[0.06em] text-sale underline underline-offset-4">
-            Tout voir en boutique
-          </Link>
-        </div>
-        {consoles.length || games.length || accessories.length ? (
-          <div className="mt-8 space-y-10">
-            {consoles.length ? (
-              <div>
-                <h3 className="mb-3 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-muted">Consoles et produits {model.name}</h3>
-                <div className="grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
-                  {consoles.slice(0, 8).map((p) => (
-                    <ProductCard key={p.id} product={p} />
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            {games.length ? (
-              <div>
-                <h3 className="mb-3 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-muted">Jeux</h3>
-                <div className="grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
-                  {games.slice(0, 8).map((p) => (
-                    <ProductCard key={p.id} product={p} />
-                  ))}
-                </div>
-              </div>
-            ) : null}
-            {accessories.length ? (
-              <div>
-                <h3 className="mb-3 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-muted">Accessoires et pièces</h3>
-                <div className="grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
-                  {accessories.slice(0, 8).map((p) => (
-                    <ProductCard key={p.id} product={p} />
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <p className="mt-6 text-[14.5px] text-ink-faint">
-            Rien en rayon pour ce modèle en ce moment. Vous en avez une à vendre ?{" "}
-            <Link href={ROUTES.tradeIn} className="text-sale underline">
-              Estimer ma reprise
-            </Link>
-          </p>
-        )}
-      </Container>
 
       {siblings.length ? (
         <section className="border-t border-border bg-bg-alt">

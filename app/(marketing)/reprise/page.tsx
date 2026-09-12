@@ -38,8 +38,8 @@ export default async function TradeInPage() {
           </div>
           <HowToList steps={STEPS} />
           <p className="font-mono text-[11.5px] text-ink-muted">
-            <Link href={`${ROUTES.shop}?retro=1`} className="hover:text-paper">
-              Voir le rayon rétro
+            <Link href={ROUTES.repair} className="hover:text-paper">
+              Faire réparer une console
             </Link>
             {" · "}
             <Link href={ROUTES.contact} className="hover:text-paper">

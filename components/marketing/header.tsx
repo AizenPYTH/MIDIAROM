@@ -2,10 +2,8 @@ import Link from "next/link";
 import { ROUTES } from "@/config/site";
 import type { BrandSettings } from "@/config/brand";
 import { AccountLink, MobileNav } from "@/components/marketing/header-client";
-import { CartLink } from "@/components/shop/cart-widgets";
 
 const NAV = [
-  { href: ROUTES.shop, label: "Boutique" },
   { href: ROUTES.repair, label: "Réparation" },
   { href: ROUTES.consoles, label: "Consoles" },
   { href: ROUTES.tradeIn, label: "Reprise" },
@@ -86,7 +84,6 @@ export function SiteHeader({ brand }: { brand: BrandSettings }) {
           <Link href={ROUTES.tracking} className="hidden whitespace-nowrap border border-border-strong chip text-ink hover:border-ink sm:inline-block">
             Suivre ma réparation
           </Link>
-          <CartLink className="text-[10.5px] sm:text-[12px]" />
           <MobileNav items={NAV} brand={brand} />
         </div>
       </header>

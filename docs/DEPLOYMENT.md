@@ -3,7 +3,7 @@
 ## Supabase
 
 1. Créer un projet, récupérer URL, clé anon et clé service-role.
-2. Appliquer les migrations. **Ne jamais** exécuter `seed.sql` en production : il crée des comptes de démonstration dont le mot de passe est public. Le catalogue, lui, s'applique par `supabase/seed-production-catalog.sql` puis `supabase/seed-production-repairs.sql` : ces deux fichiers **sont prévus pour la production**. Ils sont générés depuis `supabase/catalog.sql` et `supabase/catalog-reparations.sql` (`npm run seeds:build`) et n'en diffèrent que par une garde de schéma, un état des lieux final et le rechargement du cache PostgREST.
+2. Appliquer les migrations. **Ne jamais** exécuter `seed.sql` en production : il crée des comptes de démonstration dont le mot de passe est public. Le catalogue, lui, s'applique par `supabase/seed-production-catalog.sql`, puis `supabase/seed-production-repairs.sql`, puis `supabase/seed-production-ps5.sql` : ces trois fichiers **sont prévus pour la production**. Ils sont générés depuis `supabase/catalog.sql`, `supabase/catalog-reparations.sql` et `supabase/catalog-ps5.sql` (`npm run seeds:build`) et n'en diffèrent que par une garde de schéma, un état des lieux final et le rechargement du cache PostgREST.
 
    La voie recommandée ne demande aucun `supabase link` :
 
@@ -68,6 +68,7 @@
 
    ```bash
    psql "$DB_URL" -f supabase/seed-production-repairs.sql
+   psql "$DB_URL" -f supabase/seed-production-ps5.sql
    ```
 
    Ce fichier suppose `seed-production-catalog.sql` déjà appliqué (il s'appuie sur les

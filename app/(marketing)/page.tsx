@@ -3,19 +3,17 @@ import Link from "next/link";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { Container, Eyebrow } from "@/components/ui/misc";
 import { CtaBanner, FaqList, GuaranteeStrip, HowToList, PriceList, ReviewsSection, StoreSection } from "@/components/marketing/sections";
-import { ProductCard } from "@/components/shop/product-card";
 import { RepairForm } from "@/components/repair/repair-form";
 import { getRepairFormBase } from "@/lib/repair/form-data";
 import { blockData, getContentBlocks, getFaqItems, getGalleryItems, getSeoPage } from "@/lib/content";
 import { getBrandSettings } from "@/lib/settings";
-import { getFeaturedProducts, getProductCategoryCounts, getProductPlatforms, getProducts } from "@/lib/shop/catalog";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatPrice } from "@/lib/utils/format";
 
 /**
  * Rendu à la demande, pour la même raison que /reparation : consoles prises en
- * charge, produits en rayon et blocs éditoriaux viennent tous de la base. Un
- * rendu statique fige l'état du catalogue au moment du build.
+ * charge, tarifs et blocs éditoriaux viennent tous de la base. Un rendu
+ * statique fige l'état du catalogue au moment du build.
  */
 export const dynamic = "force-dynamic";
 
@@ -28,7 +26,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const DEFAULT_GUARANTEES = ["Occasion révisée et garantie", "Devis avant toute intervention", "Retrait boutique ou envoi", "Reprise de vos jeux au comptoir"];
+// Le site ne vend rien : les quatre garanties parlent de l'atelier, pas du
+// rayon. Elles ne servent que si le bloc « homepage.reassurance » est vide.
+const DEFAULT_GUARANTEES = ["Diagnostic avant toute intervention", "Devis gratuit, refus sans frais", "Réparation garantie 3 mois", "Dépôt au magasin ou envoi"];
 const DEFAULT_HOWTO = [
   { title: "Vous décrivez la panne", text: "Console, prestation, symptômes. Trois minutes." },
   { title: "Étiquette prépayée", text: "Reçue par e-mail selon la formule choisie, à imprimer et coller sur le colis." },
@@ -37,33 +37,17 @@ const DEFAULT_HOWTO = [
 ];
 
 export default async function HomePage() {
-  const [blocks, faq, brand, form, gallery, featured, platforms, counts] = await Promise.all([
-    getContentBlocks(["homepage.hero", "homepage.sale", "homepage.tradein", "homepage.retro", "homepage.repair", "homepage.reassurance", "trust.intro"]),
+  const [blocks, faq, brand, form, gallery] = await Promise.all([
+    getContentBlocks(["homepage.hero", "homepage.tradein", "homepage.repair", "homepage.reassurance", "trust.intro"]),
     getFaqItems(),
     getBrandSettings(),
     getRepairFormBase(),
     getGalleryItems(),
-    getFeaturedProducts(8),
-    getProductPlatforms(),
-    getProductCategoryCounts(),
   ]);
   const hero = blocks["homepage.hero"];
   const heroData = blockData(hero, { cta_primary: "Démarrer une réparation", cta_secondary: "Grille tarifaire" });
-  const sale = blocks["homepage.sale"];
-  const saleData = blockData(sale, { cta_primary: "Voir la boutique", cta_secondary: "Je revends ma console" });
   const tradeIn = blocks["homepage.tradein"];
   const tradeInData = blockData(tradeIn, { cta: "Estimer mon lot" });
-  const retro = blocks["homepage.retro"];
-  const shelf = featured.length ? featured : await getProducts({ availability: "stock", sort: "recent" }, 8);
-  const totalProducts = Object.values(counts).reduce((a, b) => a + b, 0);
-  const shopChips = [
-    { label: "Tout", href: ROUTES.shop },
-    ...platforms.slice(0, 3).map((p) => ({ label: p, href: `${ROUTES.shop}?plateforme=${encodeURIComponent(p)}` })),
-    { label: "Rétro", href: `${ROUTES.shop}?retro=1` },
-    { label: "Jeux", href: `${ROUTES.shop}?cat=jeux` },
-    { label: "Accessoires", href: `${ROUTES.shop}?cat=accessoires` },
-    { label: "Occasion", href: `${ROUTES.shop}?etat=occasion` },
-  ];
   const repairBlock = blocks["homepage.repair"];
   const howto = blockData(repairBlock, { howto: DEFAULT_HOWTO }).howto;
   const reassurance = blockData(blocks["homepage.reassurance"], { items: [] as { title: string }[] }).items.map((i) => i.title);
@@ -105,55 +89,20 @@ export default async function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* Hero deux colonnes du handoff : vente (papier, orange) / réparation (encre, bleu) */}
-      <section id="top" className="grid [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
-        <div className="flex flex-col gap-[18px] border-r border-border bg-bg-alt px-11 pb-13 pt-16 max-sm:px-5 max-sm:pb-6 max-sm:pt-[26px]">
-          <Eyebrow>01 — Vente</Eyebrow>
-          <h1 className="text-[34px] font-extrabold leading-[0.98] tracking-[-0.03em] text-ink sm:text-[clamp(38px,5vw,62px)]">{sale?.title ?? "Jeux, consoles et rétro."}</h1>
-          <p className="max-w-[38ch] text-[15px] leading-[1.5] text-ink-soft sm:text-[17px]">{sale?.body ?? "Le stock du magasin, en ligne. Neuf, occasion révisée et garantie, accessoires et collector. Retrait boutique ou envoi partout en France."}</p>
-          {/* Un seul bouton par moitié au téléphone : le second (« Je revends ma
-              console ») a déjà sa place dans la section Reprise, plus bas. */}
-          <div className="mt-2 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
-            <Link href={ROUTES.shop} className="bg-sale px-[22px] py-[15px] text-center text-[15px] font-semibold text-white hover:bg-ink-900 sm:py-3.5">
-              {saleData.cta_primary}
-            </Link>
-            <Link href={ROUTES.tradeIn} className="hidden border border-ink px-[22px] py-3.5 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper sm:inline-block">
-              {saleData.cta_secondary}
-            </Link>
-          </div>
-          <p className="font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-muted">
-            <Link href={`${ROUTES.shop}?cat=consoles`} className="hover:text-ink">
-              Consoles
-            </Link>
-            {" · "}
-            <Link href={`${ROUTES.shop}?cat=jeux`} className="hover:text-ink">
-              Jeux
-            </Link>
-            {" · "}
-            <Link href={`${ROUTES.shop}?cat=accessoires`} className="hover:text-ink">
-              Accessoires
-            </Link>
-            {" · "}
-            <Link href={`${ROUTES.shop}?retro=1`} className="hover:text-ink">
-              Rétro
-            </Link>
-            {" · "}
-            <Link href={ROUTES.consoles} className="hover:text-ink">
-              Fiches consoles
-            </Link>
-          </p>
-        </div>
-        <div className="flex flex-col gap-[18px] bg-ink-900 px-11 pb-13 pt-16 text-paper max-sm:px-5 max-sm:pb-6 max-sm:pt-[26px]">
-          <Eyebrow tone="repair">02 — Réparation</Eyebrow>
+      {/* Le site ne vend rien : le hero « vente / réparation » du handoff
+          devient un bloc unique, pleine largeur, consacré à l'atelier. */}
+      <section id="top" className="bg-ink-900 px-11 pb-13 pt-16 text-paper max-sm:px-5 max-sm:pb-8 max-sm:pt-[26px]">
+        <div className="mx-auto flex max-w-[1280px] flex-col gap-[18px]">
+          <Eyebrow tone="repair">Atelier — depuis 1997</Eyebrow>
           <h1 className="text-[34px] font-extrabold leading-[0.98] tracking-[-0.03em] sm:text-[clamp(38px,5vw,62px)]">{hero?.title ?? "Envoyez-nous votre console."}</h1>
-          <p className="max-w-[38ch] text-[15px] leading-[1.5] text-[#c4bdae] sm:text-[17px]">{hero?.body ?? "Décrivez la panne, choisissez la prestation, imprimez l'étiquette. Diagnostic à réception, devis avant toute intervention complémentaire."}</p>
-          {/* Idem côté réparation : « Grille tarifaire » reste accessible dans la
-              section Réparation, à l'ancre #tarifs. */}
+          <p className="max-w-[52ch] text-[15px] leading-[1.5] text-[#c4bdae] sm:text-[17px]">{hero?.body ?? "Décrivez la panne, choisissez la prestation, imprimez l'étiquette. Diagnostic à réception, devis avant toute intervention complémentaire."}</p>
+          {/* Le hero n'ayant plus qu'une moitié, les deux boutons tiennent
+              désormais côte à côte, même au téléphone. */}
           <div className="mt-2 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
             <Link href="#reparation" className="bg-accent px-[22px] py-[15px] text-center text-[15px] font-semibold text-white hover:bg-paper hover:text-ink-900 sm:py-3.5">
               {heroData.cta_primary}
             </Link>
-            <Link href="#tarifs" className="hidden border border-[#55503f] px-[22px] py-3.5 text-[15px] font-semibold text-paper hover:border-paper sm:inline-block">
+            <Link href="#tarifs" className="border border-[#55503f] px-[22px] py-[15px] text-center text-[15px] font-semibold text-paper hover:border-paper sm:py-3.5">
               {heroData.cta_secondary}
             </Link>
           </div>
@@ -174,37 +123,6 @@ export default async function HomePage() {
       </section>
 
       <GuaranteeStrip items={guarantees} />
-
-      {/* Boutique : sélection réelle du stock + filtres vers le catalogue */}
-      <section id="boutique" className="bg-bg" style={{ scrollMarginTop: 80 }}>
-        <Container className="py-[72px]">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <Eyebrow>Boutique</Eyebrow>
-              <h2 className="mt-2 text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">En rayon cette semaine</h2>
-            </div>
-            <Link href={ROUTES.shop} className="font-mono text-[12.5px] uppercase tracking-[0.06em] text-sale underline underline-offset-4">
-              Tout le catalogue ({totalProducts} réf.)
-            </Link>
-          </div>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {shopChips.map((c, i) => (
-              <Link key={c.label} href={c.href} className={`whitespace-nowrap border border-border-strong chip text-ink hover:border-ink ${i === 0 ? "bg-paper-strong" : ""}`}>
-                {c.label}
-              </Link>
-            ))}
-          </div>
-          {shelf.length ? (
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
-              {shelf.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          ) : (
-            <p className="mt-6 text-[14.5px] text-ink-faint">Le rayon en ligne est en cours de mise à jour. Passez au magasin ou revenez bientôt.</p>
-          )}
-        </Container>
-      </section>
 
       {/* Réparation : explication + fiche */}
       <section id="reparation" className="bg-ink-900 px-6 py-[76px] text-paper" style={{ scrollMarginTop: 80 }}>
@@ -231,35 +149,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Reprise & rétro : deux cellules dans un cadre */}
-      <section id="retro" className="border-y border-border">
+      {/* Reprise : l'atelier rachète les consoles, il n'en revend pas. Le
+          « mur du rétrogaming » qui accompagnait cette cellule renvoyait au
+          rayon de la boutique : il disparaît avec elle. */}
+      <section id="reprise" className="border-y border-border">
         <Container className="py-[64px]">
-          <div className="grid gap-px border border-border bg-border [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
-            <div className="flex flex-col gap-3 bg-bg-alt p-8">
-              <Eyebrow>Reprise</Eyebrow>
-              <h2 className="text-[clamp(24px,2.6vw,30px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{tradeIn?.title ?? "Vendez-nous votre console"}</h2>
-              <p className="max-w-[42ch] text-[16px] leading-[1.55] text-ink-soft">{tradeIn?.body ?? "Estimation en ligne, paiement au comptoir le jour même. Consoles, jeux, manettes, collectors."}</p>
-              <Link href={ROUTES.tradeIn} className="mt-2 self-start bg-ink-900 px-[22px] py-3.5 text-[15px] font-semibold text-paper hover:bg-sale">
-                {tradeInData.cta}
-              </Link>
-            </div>
-            <div className="grid gap-6 bg-bg p-8 [grid-template-columns:minmax(0,1fr)_120px] max-sm:[grid-template-columns:1fr]">
-              <div className="flex flex-col gap-3">
-                <Eyebrow>Rétro</Eyebrow>
-                <h2 className="text-[clamp(24px,2.6vw,30px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{retro?.title ?? "Le mur du rétrogaming"}</h2>
-                <p className="max-w-[42ch] text-[16px] leading-[1.55] text-ink-soft">{retro?.body ?? "Cartouches testées une à une, consoles recapées, notices d'origine."}</p>
-                <p className="font-mono text-[11.5px] uppercase tracking-[0.06em]">
-                  <Link href={`${ROUTES.shop}?retro=1`} className="text-sale underline underline-offset-4">
-                    Voir le rayon rétro
-                  </Link>
-                  {" · "}
-                  <Link href={`${ROUTES.consoles}?f=retro`} className="text-ink-muted hover:text-ink">
-                    Consoles rétro réparables
-                  </Link>
-                </p>
-              </div>
-              <div className="photo-placeholder min-h-[120px] text-[10.5px]">photo vitrine rétro</div>
-            </div>
+          <div className="flex flex-col gap-3 border border-border bg-bg-alt p-8">
+            <Eyebrow>Reprise</Eyebrow>
+            <h2 className="text-[clamp(24px,2.6vw,30px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{tradeIn?.title ?? "Vendez-nous votre console"}</h2>
+            <p className="max-w-[52ch] text-[16px] leading-[1.55] text-ink-soft">{tradeIn?.body ?? "Estimation en ligne, paiement au comptoir le jour même. Consoles, jeux, manettes, collectors."}</p>
+            <Link href={ROUTES.tradeIn} className="mt-2 self-stretch bg-ink-900 px-[22px] py-[15px] text-center text-[15px] font-semibold text-paper hover:bg-sale sm:self-start sm:py-3.5">
+              {tradeInData.cta}
+            </Link>
           </div>
         </Container>
       </section>

@@ -24,8 +24,8 @@ export default async function TradeInConfirmationPage({ params, searchParams }: 
         <Link href={`${ROUTES.tradeInTracking}/${t.access_token}`} className="bg-ink-900 px-[22px] py-3.5 text-[15px] font-semibold text-paper hover:bg-sale">
           Suivre ma demande
         </Link>
-        <Link href={ROUTES.shop} className="border border-ink px-[22px] py-3.5 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper">
-          Voir la boutique
+        <Link href={ROUTES.repair} className="border border-ink px-[22px] py-3.5 text-[15px] font-semibold text-ink hover:bg-ink hover:text-paper">
+          Faire réparer une console
         </Link>
       </div>
     </Container>

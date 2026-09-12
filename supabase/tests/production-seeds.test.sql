@@ -21,26 +21,35 @@ begin
   select count(*) into n_provisoires from public.repairs where price_is_provisional;
   select count(*) into n_produits from public.products;
 
-  if n_modeles <> 13 then
-    raise exception 'modèles de console : % au lieu de 13', n_modeles;
+  if n_modeles <> 18 then
+    raise exception 'modèles de console : % au lieu de 18 (13 du document + 5 PS5)', n_modeles;
   end if;
   if n_categories <> 35 then
     raise exception 'catégories de réparation : % au lieu de 35', n_categories;
   end if;
-  -- Les 887 prestations du document du client, ni une de plus ni une de moins.
-  if n_pdf <> 887 then
-    raise exception 'prestations issues du document : % au lieu de 887', n_pdf;
+  -- Les 887 prestations du document du client, plus les 302 de la gamme
+  -- PlayStation 5 ajoutée hors document : ni une de plus, ni une de moins.
+  if n_pdf <> 1189 then
+    raise exception 'prestations du catalogue : % au lieu de 1189', n_pdf;
   end if;
-  -- Le document ne contient aucun prix : sur une base neuve, les 887
-  -- prestations arrivent toutes « sur devis ». En production, celles déjà
-  -- chiffrées depuis le back-office conservent leur tarif.
-  if n_provisoires <> 887 then
-    raise exception 'tarifs à configurer : % au lieu de 887', n_provisoires;
+  -- Ni le document ni le catalogue PS5 ne contiennent de prix : sur une base
+  -- neuve, toutes les prestations arrivent « sur devis ». En production, celles
+  -- déjà chiffrées depuis le back-office conservent leur tarif.
+  if n_provisoires <> 1189 then
+    raise exception 'tarifs à configurer : % au lieu de 1189', n_provisoires;
   end if;
-  -- Le catalogue de production ne crée aucun produit : le stock réel est saisi
-  -- depuis le back-office, et la boutique affiche son état vide en attendant.
+  -- Le site ne vend rien : l'import ne doit créer aucun produit.
   if n_produits <> 0 then
     raise exception 'produits boutique : % au lieu de 0', n_produits;
+  end if;
+
+  -- La gamme PlayStation 5, ajoutée hors document à la demande du client.
+  if (select count(*) from public.console_models where family = 'ps5') <> 5 then
+    raise exception 'modèles PlayStation 5 : % au lieu de 5', (select count(*) from public.console_models where family = 'ps5');
+  end if;
+  if (select count(*) from public.repairs r join public.console_models m on m.id = r.model_id where m.family = 'ps5') <> 302 then
+    raise exception 'prestations PlayStation 5 : % au lieu de 302',
+      (select count(*) from public.repairs r join public.console_models m on m.id = r.model_id where m.family = 'ps5');
   end if;
 
   -- La photo de façade est livrée avec le site, publiée dès le premier import.

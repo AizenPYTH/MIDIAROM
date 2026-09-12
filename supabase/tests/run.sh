@@ -24,6 +24,8 @@ echo "→ catalogue (applicable en production)"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog.sql
 echo "→ catalogue de réparation du client (PDF)"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog-reparations.sql
+echo "→ gamme PlayStation 5 (hors PDF, ajoutée à la demande du client)"
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog-ps5.sql
 echo "→ seed de développement"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
 # Rejoués une seconde fois : catalogue et seed doivent rester idempotents, y
@@ -32,6 +34,7 @@ psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
 echo "→ catalogue + seed (rejoués, idempotence)"
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog.sql
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog-reparations.sql
+psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/catalog-ps5.sql
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/seed.sql
 psql -v ON_ERROR_STOP=1 -d "$DB" -q -f supabase/tests/accounts.test.sql
 echo "→ RLS tests"
@@ -63,8 +66,8 @@ done
 # Deux passages, le second dans la même session que le premier : le SQL Editor
 # de Supabase réutilise ses connexions, une table temporaire y survit d'un
 # « Run » à l'autre.
-cat supabase/seed-production-catalog.sql supabase/seed-production-repairs.sql \
-    supabase/seed-production-catalog.sql supabase/seed-production-repairs.sql |
+cat supabase/seed-production-catalog.sql supabase/seed-production-repairs.sql supabase/seed-production-ps5.sql \
+    supabase/seed-production-catalog.sql supabase/seed-production-repairs.sql supabase/seed-production-ps5.sql |
   psql -v ON_ERROR_STOP=1 -d "$PROD_DB" -q
 psql -v ON_ERROR_STOP=1 -d "$PROD_DB" -q -f supabase/tests/production-seeds.test.sql
 

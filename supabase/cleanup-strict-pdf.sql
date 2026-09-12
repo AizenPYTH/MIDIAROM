@@ -4,13 +4,16 @@
 -- Un seul fichier à exécuter sur une base déjà garnie. Il aligne les trois
 -- espaces du site sur le document fourni par le client :
 --
---   CONSOLES   : seuls les 13 modèles du document restent ; les 26 autres
---                (PS5, PS3, rétro, Sega…) sont supprimés.
+--   CONSOLES   : seuls les 13 modèles du document et les 5 modèles de la gamme
+--                PlayStation 5 restent ; les autres (PS3, rétro, Sega…) sont
+--                supprimés. La PS5 ne figure pas dans le document du client :
+--                elle a été ajoutée à sa demande, voir supabase/catalog-ps5.sql.
 --   RÉPARATION : seules les 887 prestations du document restent ; toutes les
 --                autres — anciennes prestations génériques, « Diagnostic … »
 --                inventés — sont supprimées.
---   BOUTIQUE   : les 51 produits de démonstration sont supprimés. La boutique
---                reste vide jusqu'à la saisie du stock réel dans le back-office.
+--   BOUTIQUE   : les 51 produits de démonstration sont supprimés. Le site ne
+--                vend plus rien : la boutique a été retirée, seule la
+--                réparation subsiste.
 --
 -- Rien n'est créé ni remplacé : ce fichier ne contient que des suppressions
 -- ciblées. Aucune table n'est touchée, aucun DELETE global.
@@ -46,8 +49,13 @@ $garde$;
 
 do $nettoyage$
 declare
+  -- Les 13 modèles du document du client, puis les 5 modèles PlayStation 5
+  -- ajoutés à sa demande. Tout modèle absent de cette liste est supprimé : ne
+  -- pas oublier d'y inscrire un modèle que l'on ajoute au catalogue, sans quoi
+  -- le prochain passage de ce fichier l'effacerait.
   pdf constant text[] := array[
     'ps4', 'ps4-slim', 'ps4-pro',
+    'ps5', 'ps5-digital', 'ps5-slim', 'ps5-slim-digital', 'ps5-pro',
     'switch', 'switch-v2', 'switch-lite', 'switch-oled', 'switch-2',
     'xbox-one', 'xbox-one-s', 'xbox-one-x', 'xbox-series-s', 'xbox-series-x'
   ];
@@ -96,7 +104,7 @@ begin
     from public.repairs r join public.console_models m on m.id = r.model_id
    where m.slug <> all (pdf) and r.category_id is not null;
   if n > 0 then
-    raise exception 'Arrêt : % prestation(s) du document rattachée(s) à un modèle hors périmètre', n;
+    raise exception 'Arrêt : % prestation(s) catalogue rattachée(s) à un modèle hors périmètre', n;
   end if;
 
   delete from public.repairs r using public.console_models m
@@ -171,12 +179,12 @@ update public.gallery_items
 -- État des lieux (lecture seule) — dernier résultat affiché par le SQL Editor.
 -- ---------------------------------------------------------------------------
 select element, nombre from (
-  select 1, 'CONSOLES — modèles (attendu : 13)', count(*) from public.console_models
+  select 1, 'CONSOLES — modèles (13 du document + 5 PS5)', count(*) from public.console_models
   union all select 2, 'CONSOLES — modèles avec photo', count(*) from public.console_models where image_path is not null
-  union all select 3, 'RÉPARATION — prestations du document (attendu : 887)', count(*) from public.repairs where category_id is not null
+  union all select 3, 'RÉPARATION — prestations (887 du document + 302 PS5)', count(*) from public.repairs where category_id is not null
   union all select 4, 'RÉPARATION — prestations hors document (attendu : 0)', count(*) from public.repairs where category_id is null
   union all select 5, 'RÉPARATION — catégories (attendu : 35)', count(*) from public.repair_categories
-  union all select 6, 'BOUTIQUE — produits (attendu : 0)', count(*) from public.products
+  union all select 6, 'BOUTIQUE — produits résiduels (attendu : 0, le site ne vend plus)', count(*) from public.products
   union all select 7, 'MAGASIN — photo de façade publiée (attendu : 1)', count(*)
               from public.gallery_items where image_path = '/medias/facade-207-mediarom.webp' and is_published
 ) as etat (ordre, element, nombre)

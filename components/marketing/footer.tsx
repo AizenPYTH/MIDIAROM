@@ -17,7 +17,6 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
     { label: "CGV", href: ROUTES.cgv },
     { label: "Confidentialité", href: ROUTES.privacy },
     { label: "Mentions légales", href: ROUTES.legal },
-    { label: "Boutique", href: ROUTES.shop },
     { label: "Consoles", href: ROUTES.consoles },
     { label: "Reprise", href: ROUTES.tradeIn },
     { label: "Suivi réparation", href: ROUTES.tracking },

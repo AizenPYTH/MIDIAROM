@@ -12,7 +12,6 @@ export default async function AccountLayout({ children }: { children: React.Reac
   const [user, brand] = await Promise.all([requireUserOrRedirect(ROUTES.account), getBrandSettings()]);
   const items = [
     { href: ROUTES.accountOrders, label: "Mes réparations" },
-    { href: ROUTES.accountShopOrders, label: "Mes commandes" },
     { href: ROUTES.accountTradeIns, label: "Mes reprises" },
     { href: ROUTES.accountProfile, label: "Mon profil" },
     { href: ROUTES.accountAddresses, label: "Mes adresses" },
