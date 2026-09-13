@@ -425,6 +425,43 @@ on conflict (model_id, fault_id) do update
        updated_at = now();
 
 -- ---------------------------------------------------------------------------
+-- Compatibilité des options propres à la PS5
+--
+-- « Contrôle métal liquide PS5 » et « Installation / remplacement SSD » sont
+-- posées par supabase/catalog.sql avec applies_to_all = false, mais ce fichier
+-- ne leur donnait aucune règle INCLUDE : sans règle d'inclusion, le moteur de
+-- compatibilité (lib/repair/compatibility.ts, raison « no_include_rule ») ne
+-- les proposait donc jamais, sur aucune console. Les deux sont pourtant au
+-- catalogue d'options du cahier des charges.
+--
+-- Les deux sont des faits PS5 : l'interface thermique au métal liquide et la
+-- baie M.2 accessible à l'utilisateur n'existent que sur cette gamme. La règle
+-- porte donc sur les 5 modèles de la famille « ps5 ».
+--
+-- Rejouable : rien n'est écrasé, on n'insère que ce qui manque.
+-- ---------------------------------------------------------------------------
+insert into public.repair_option_compatibility (option_id, mode, model_id)
+select o.id, 'INCLUDE', m.id
+  from public.repair_options o
+  join public.console_models m on m.family = 'ps5'
+ where o.slug in ('controle-metal-liquide-ps5', 'installation-ssd')
+   and not exists (
+     select 1 from public.repair_option_compatibility c
+      where c.option_id = o.id and c.model_id = m.id and c.mode = 'INCLUDE'
+   );
+
+do $ps5opt$
+declare n integer;
+begin
+  select count(*) into n
+    from public.repair_options o
+    join public.repair_option_compatibility c on c.option_id = o.id
+   where o.slug in ('controle-metal-liquide-ps5', 'installation-ssd');
+  raise notice 'Options PS5 : % règles de compatibilité (attendu 10 = 2 options x 5 modèles).', n;
+end
+$ps5opt$;
+
+-- ---------------------------------------------------------------------------
 -- Rechargement du cache de schéma de PostgREST.
 --
 -- Sans effet si le schéma n'a pas bougé, mais indispensable juste après une

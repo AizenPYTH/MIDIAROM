@@ -52,6 +52,22 @@ begin
       (select count(*) from public.repairs r join public.console_models m on m.id = r.model_id where m.family = 'ps5');
   end if;
 
+  -- Une option non universelle sans règle INCLUDE n'est proposée sur aucune
+  -- console : le moteur de compatibilité la rejette pour « no_include_rule ».
+  -- Elle serait invisible au catalogue sans que rien ne le signale.
+  if exists (
+    select 1 from public.repair_options o
+     where o.is_active and not o.applies_to_all
+       and not exists (select 1 from public.repair_option_compatibility c
+                        where c.option_id = o.id and c.mode = 'INCLUDE')
+  ) then
+    raise exception 'option(s) jamais proposable(s), sans règle INCLUDE : %',
+      (select string_agg(o.name, ', ') from public.repair_options o
+        where o.is_active and not o.applies_to_all
+          and not exists (select 1 from public.repair_option_compatibility c
+                           where c.option_id = o.id and c.mode = 'INCLUDE'));
+  end if;
+
   -- La photo de façade est livrée avec le site, publiée dès le premier import.
   if not exists (select 1 from public.gallery_items
                   where image_path = '/medias/facade-207-mediarom.webp' and is_published) then
