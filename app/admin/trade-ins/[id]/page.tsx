@@ -30,7 +30,7 @@ export default async function TradeInPage({ params, searchParams }: { params: Pr
             ← Reprises
           </Link>
           <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Reprise {t.request_number}</p>
-          <h1 className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-ink">{t.item_title}</h1>
+          <h1 className="mt-1 text-[22px] font-extrabold tracking-[-0.02em] text-ink">{t.item_title}</h1>
           <p className="text-[14px] text-ink-faint">
             {TRADE_IN_ITEM_TYPE_LABELS[t.item_type]} · {t.platform} ·{" "}
             {t.customer_id ? (

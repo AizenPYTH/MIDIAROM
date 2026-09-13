@@ -353,7 +353,7 @@ export function RepairForm(props: RepairFormProps) {
         <ProgressRing step={step} total={4} size={64} />
         <div className="min-w-0 flex-1">
           <span className="mono-label text-ink-muted">Devis en ligne</span>
-          <h3 className="mt-2 font-display text-[clamp(26px,3.4vw,42px)] font-bold leading-[1.02] tracking-[-0.035em] text-ink">{stepTitle}</h3>
+          <h3 className="mt-2 font-display text-[clamp(24px,2.5vw,33px)] font-bold leading-[1.02] tracking-[-0.035em] text-ink">{stepTitle}</h3>
         </div>
         <div className="text-right">
           <span className="mono-label text-ink-muted">Estimation</span>
@@ -652,7 +652,7 @@ function DeviceCard({ selected, onPick, label, note }: { selected: boolean; onPi
         selected ? "border-cyan bg-accent-soft" : "border-border-strong bg-transparent",
       )}
     >
-      <span className="font-display text-[21px] font-bold leading-[1.1] tracking-[-0.025em] text-ink">{label}</span>
+      <span className="font-display text-[19px] font-bold leading-[1.1] tracking-[-0.025em] text-ink">{label}</span>
       <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">{note}</span>
     </button>
   );
@@ -686,7 +686,7 @@ function OptionRow({ selected, disabled, onPick, label, note, price, badge, role
         ✓
       </span>
       <span className="flex flex-1 flex-col gap-1">
-        <span className="text-[17px] font-semibold leading-[1.2] text-ink sm:text-[20px]">
+        <span className="text-[16px] font-semibold leading-[1.2] text-ink sm:text-[18px]">
           {label}
           {badge ? <span className="ml-2 align-middle font-mono text-[10px] uppercase tracking-[0.12em] text-cyan">{badge}</span> : null}
         </span>

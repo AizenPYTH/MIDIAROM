@@ -6,7 +6,6 @@ import { PulseDot } from "@/components/marketing/backdrop";
 
 const NAV = [
   { href: ROUTES.repair, label: "Réparation" },
-  { href: ROUTES.consoles, label: "Consoles" },
   { href: ROUTES.tradeIn, label: "Reprise" },
   { href: ROUTES.tracking, label: "Suivi" },
   { href: ROUTES.contact, label: "Le magasin" },

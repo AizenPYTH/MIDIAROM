@@ -9,8 +9,6 @@ import { getRepairFormBase } from "@/lib/repair/form-data";
 import { blockData, getContentBlock } from "@/lib/content";
 
 /**
- * Rendu à la demande, comme /consoles.
- *
  * Cette page n'affiche presque que du catalogue vivant : les plateformes et les
  * modèles de l'étape 1, puis la grille des consoles prises en charge. Un rendu
  * statique fige l'état de la base au moment du build — un déploiement joué
@@ -36,7 +34,7 @@ export default async function RepairIndexPage() {
           <div className="flex flex-col gap-[26px]">
             <div>
               <Eyebrow tone="repair">Atelier</Eyebrow>
-              <h1 className="mt-2 text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em]">Démarrer une réparation</h1>
+              <h1 className="mt-2 text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em]">Démarrer une réparation</h1>
               <p className="mt-3.5 max-w-[42ch] text-[16.5px] leading-[1.55] text-[#c4bdae]">Choisissez votre console, la prestation et décrivez la panne : le prix s&apos;affiche immédiatement, le paiement se fait en ligne et vous recevez vos instructions d&apos;envoi.</p>
             </div>
             {howto.length ? <HowToList steps={howto.slice(0, 4)} /> : null}
@@ -55,7 +53,7 @@ export default async function RepairIndexPage() {
       </section>
       <Container className="py-[64px]">
         <Eyebrow tone="repair">Catalogue</Eyebrow>
-        <h2 className="mt-2 text-[clamp(28px,3.4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">Toutes les consoles prises en charge</h2>
+        <h2 className="mt-2 text-[clamp(24px,2.4vw,32px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">Toutes les consoles prises en charge</h2>
         <p className="mt-3 max-w-[42ch] text-[16px] text-ink-soft">Chaque modèle a sa page : pannes réparables, prix, garantie et délais.</p>
         <div className="mt-8">
           <ConsoleGrid brands={brands} models={models} />

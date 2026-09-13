@@ -27,7 +27,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
     <div className="flex flex-col gap-3.5">
       <div>
         <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Dossiers</span>
-        <h1 className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-ink">Toutes les réparations</h1>
+        <h1 className="mt-1 text-[22px] font-extrabold tracking-[-0.02em] text-ink">Toutes les réparations</h1>
       </div>
       <form className="flex flex-wrap items-center gap-2" method="get">
         <input id="q" name="q" defaultValue={q ?? ""} placeholder="Rechercher n° de dossier / client / console" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[14px]" />

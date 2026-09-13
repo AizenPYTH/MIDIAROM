@@ -115,12 +115,12 @@ export default async function HomePage() {
             <PulseDot />
             Atelier ouvert · {brand.city ?? "Marseille"} · depuis {brand.founded_year ?? 1997}
           </span>
-          <h1 className="anim-rise mt-7 max-w-[15ch] font-display text-[clamp(52px,10.5vw,158px)] font-extrabold leading-[0.84] tracking-[-0.05em]" style={{ animationDelay: "0.05s" }}>
+          <h1 className="anim-rise mt-7 max-w-[15ch] font-display text-[clamp(44px,7.4vw,92px)] font-extrabold leading-[0.84] tracking-[-0.05em]" style={{ animationDelay: "0.05s" }}>
             Votre console
             <br />
             revient <span className="shimmer-text">vivante</span>.
           </h1>
-          <p className="anim-rise mt-7 max-w-[30ch] text-[clamp(17px,1.7vw,22px)] leading-[1.4] text-ink-soft" style={{ animationDelay: "0.1s" }}>
+          <p className="anim-rise mt-7 max-w-[30ch] text-[clamp(16px,1.25vw,19px)] leading-[1.4] text-ink-soft" style={{ animationDelay: "0.1s" }}>
             Diagnostic sous 48 heures. Devis avant toute intervention. Garantie trois mois.
           </p>
           <div className="anim-rise mt-9 flex flex-wrap items-center gap-4" style={{ animationDelay: "0.18s" }}>
@@ -144,7 +144,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-2 gap-x-6 gap-y-9 sm:[grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
               {stats.map((s) => (
                 <div key={s.label}>
-                  <p className={`font-display text-[clamp(38px,4.6vw,62px)] font-bold leading-none tracking-[-0.035em] ${s.tone}`}>
+                  <p className={`font-display text-[clamp(30px,3.1vw,42px)] font-bold leading-none tracking-[-0.035em] ${s.tone}`}>
                     {s.raw ? s.value : <Counter value={s.value} decimals={s.decimals ?? 0} suffix={s.suffix ?? ""} />}
                   </p>
                   <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-muted">{s.label}</p>
@@ -161,7 +161,7 @@ export default async function HomePage() {
       <section id="methode" className="scroll-mt-24">
         <Container className="py-[92px]">
           <Eyebrow tone="repair">Méthode</Eyebrow>
-          <h2 className="reveal mt-3 max-w-[18ch] font-display text-[clamp(34px,5.4vw,78px)] font-extrabold leading-[0.9] tracking-[-0.04em]">Quatre temps, zéro surprise.</h2>
+          <h2 className="reveal mt-3 max-w-[18ch] font-display text-[clamp(28px,3.9vw,50px)] font-extrabold leading-[0.9] tracking-[-0.04em]">Quatre temps, zéro surprise.</h2>
           <MethodCards steps={howto.slice(0, 4)} className="mt-12" />
         </Container>
       </section>
@@ -177,7 +177,7 @@ export default async function HomePage() {
       <section id="tarifs" className="scroll-mt-24">
         <Container className="py-[92px]">
           <Eyebrow>Tarifs</Eyebrow>
-          <h2 className="reveal mt-3 font-display text-[clamp(34px,5.4vw,78px)] font-extrabold leading-[0.9] tracking-[-0.04em]">Tarifs, hors pièces.</h2>
+          <h2 className="reveal mt-3 font-display text-[clamp(28px,3.9vw,50px)] font-extrabold leading-[0.9] tracking-[-0.04em]">Tarifs, hors pièces.</h2>
           <p className="reveal mt-4 max-w-[52ch] text-[17px] leading-[1.45] text-ink-soft">
             {repairBlock?.body ?? "Le devis définitif vous est adressé après diagnostic. Une prestation dont le tarif n'est pas encore arbitré s'affiche « sur devis »."}
           </p>
@@ -189,7 +189,7 @@ export default async function HomePage() {
       <section id="atelier" className="scroll-mt-24">
         <Container className="py-[92px]">
           <Eyebrow tone="repair">Atelier</Eyebrow>
-          <h2 className="reveal mt-3 font-display text-[clamp(34px,5.4vw,78px)] font-extrabold leading-[0.9] tracking-[-0.04em]">{brand.address_line1 ?? "207 rue de Rome"}</h2>
+          <h2 className="reveal mt-3 font-display text-[clamp(28px,3.9vw,50px)] font-extrabold leading-[0.9] tracking-[-0.04em]">{brand.address_line1 ?? "207 rue de Rome"}</h2>
           <StoreCards brand={brand} photo={storePhoto} className="mt-12" />
         </Container>
       </section>
@@ -201,7 +201,7 @@ export default async function HomePage() {
           <Container className="grid gap-12 py-[92px] lg:grid-cols-[1fr_1.2fr]">
             <div>
               <Eyebrow>FAQ</Eyebrow>
-              <h2 className="reveal mt-3 font-display text-[clamp(30px,4vw,54px)] font-extrabold leading-[0.92] tracking-[-0.04em]">Questions fréquentes</h2>
+              <h2 className="reveal mt-3 font-display text-[clamp(26px,3.1vw,40px)] font-extrabold leading-[0.92] tracking-[-0.04em]">Questions fréquentes</h2>
               <p className="reveal mt-4 max-w-[42ch] text-[16px] text-ink-soft">{blocks["trust.intro"]?.body ?? "Envoi, délais, devis complémentaire, garantie : les réponses avant de confier votre console."}</p>
               <Link href={ROUTES.faq} className="reveal mt-5 inline-block font-mono text-[11.5px] uppercase tracking-[0.12em] text-sale underline underline-offset-4">
                 Toutes les questions
@@ -217,7 +217,7 @@ export default async function HomePage() {
         <Container className="pb-[92px]">
           <div className="glass reveal flex flex-col gap-4 rounded-[28px] p-8 sm:p-10">
             <Eyebrow>Reprise</Eyebrow>
-            <h2 className="font-display text-[clamp(26px,3.4vw,42px)] font-bold leading-[0.95] tracking-[-0.035em]">{tradeIn?.title ?? "Vendez-nous votre console"}</h2>
+            <h2 className="font-display text-[clamp(24px,2.5vw,33px)] font-bold leading-[0.95] tracking-[-0.035em]">{tradeIn?.title ?? "Vendez-nous votre console"}</h2>
             <p className="max-w-[52ch] text-[16px] leading-[1.45] text-ink-soft">{tradeIn?.body ?? "Estimation en ligne, paiement au comptoir le jour même. Consoles, jeux, manettes, collectors."}</p>
             <Link href={ROUTES.tradeIn} className="btn-gradient mt-2 self-stretch rounded-full px-[22px] py-[15px] text-center text-[15px] font-semibold sm:self-start">
               {tradeInData.cta}

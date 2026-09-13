@@ -138,7 +138,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="font-display text-[clamp(32px,4.4vw,60px)] font-extrabold leading-[0.92] tracking-[-0.04em] text-ink">L&apos;atelier aujourd&apos;hui</h1>
+        <h1 className="font-display text-[clamp(27px,2.9vw,40px)] font-extrabold leading-[0.92] tracking-[-0.04em] text-ink">L&apos;atelier aujourd&apos;hui</h1>
         <span className="font-mono text-[11.5px] uppercase tracking-[0.14em] text-ink-muted">{enCours} en cours</span>
       </div>
 
@@ -147,7 +147,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
         {kpis.map((k) => (
           <div key={k.label} className="glass anim-rise relative overflow-hidden rounded-[24px] p-5 sm:p-6">
             <span aria-hidden="true" className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full" style={{ background: `radial-gradient(circle, ${k.glow}, transparent 70%)` }} />
-            <p className={cn("relative font-display text-[34px] font-extrabold leading-none tracking-[-0.035em] sm:text-[46px]", k.tone)}>{k.value}</p>
+            <p className={cn("relative font-display text-[28px] font-extrabold leading-none tracking-[-0.035em] sm:text-[36px]", k.tone)}>{k.value}</p>
             <p className="relative mt-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">{k.label}</p>
           </div>
         ))}
@@ -201,7 +201,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                     <span className="whitespace-nowrap font-mono text-[11.5px] text-ink-muted">{o.order_number}</span>
                     <StatusPill status={o.status} />
                   </span>
-                  <span className="font-display text-[18px] font-bold leading-[1.1] tracking-[-0.025em] text-ink sm:text-[21px]">{o.model_name}</span>
+                  <span className="font-display text-[17px] font-bold leading-[1.1] tracking-[-0.025em] text-ink sm:text-[19px]">{o.model_name}</span>
                   <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-[13px] text-ink-muted">
                     <span>
                       {o.repair_name} · {o.customer_first_name} {o.customer_last_name}
@@ -233,7 +233,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                   <span className="font-mono text-[11.5px] uppercase tracking-[0.14em] text-ink-muted">{selected.order_number}</span>
                   <StatusPill status={selected.status} />
                 </div>
-                <h2 className="font-display text-[clamp(26px,3.2vw,38px)] font-extrabold leading-[0.95] tracking-[-0.035em] text-ink">{selected.model_name}</h2>
+                <h2 className="font-display text-[clamp(23px,2.3vw,30px)] font-extrabold leading-[0.95] tracking-[-0.035em] text-ink">{selected.model_name}</h2>
                 <p className="text-[14.5px] text-ink-muted">
                   {selected.repair_name} ·{" "}
                   <Link href={`/admin/customers/${selected.customer_id}`} className="transition-colors hover:text-sale">
@@ -317,7 +317,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                 ))}
                 <div className="mt-2 flex items-baseline justify-between gap-4 border-t border-sale pt-3">
                   <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">Total</span>
-                  <span className="whitespace-nowrap font-display text-[26px] font-extrabold tracking-[-0.03em] text-lime">{formatPrice(selected.total_cents)}</span>
+                  <span className="whitespace-nowrap font-display text-[23px] font-extrabold tracking-[-0.03em] text-lime">{formatPrice(selected.total_cents)}</span>
                 </div>
                 <div className="flex justify-between gap-4 text-[12.5px] text-ink-muted">
                   <span>Encaissé</span>

@@ -114,7 +114,7 @@ export default async function RepairPage({ params }: { params: Promise<{ model: 
             <Eyebrow tone="repair">
               {repair.model.brand.name} · {repair.model.name}
             </Eyebrow>
-            <h1 className="text-[clamp(32px,4vw,52px)] font-extrabold leading-[1] tracking-[-0.03em]">{repair.seo_h1 ?? repair.name}</h1>
+            <h1 className="text-[clamp(27px,2.8vw,38px)] font-extrabold leading-[1] tracking-[-0.03em]">{repair.seo_h1 ?? repair.name}</h1>
             {repair.summary ? <p className="max-w-[42ch] text-[17px] leading-[1.5] text-[#c4bdae]">{repair.summary}</p> : null}
             {repair.included_items.length ? (
               <ul className="flex flex-wrap gap-2">

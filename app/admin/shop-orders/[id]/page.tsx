@@ -34,7 +34,7 @@ export default async function ShopOrderPage({ params }: { params: Promise<{ id: 
             ← Commandes
           </Link>
           <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Commande {order.order_number}</p>
-          <h1 className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-ink">
+          <h1 className="mt-1 text-[22px] font-extrabold tracking-[-0.02em] text-ink">
             {order.customer_first_name} {order.customer_last_name}
           </h1>
           <p className="text-[14px] text-ink-faint">

@@ -29,7 +29,7 @@ export function MethodCards({ steps, className }: { steps: { title: string; text
           <li key={step.title} className="glass reveal relative overflow-hidden rounded-[24px] p-6">
             <span aria-hidden="true" className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full" style={{ background: `radial-gradient(circle, ${tone.glow}, transparent 70%)` }} />
             <span className={cn("relative font-mono text-[11.5px] tracking-[0.14em]", tone.text)}>{String(i + 1).padStart(2, "0")}</span>
-            <h3 className="relative mt-4 font-display text-[26px] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{step.title}</h3>
+            <h3 className="relative mt-4 font-display text-[22px] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{step.title}</h3>
             <p className="relative mt-2.5 text-[15.5px] leading-[1.45] text-ink-soft">{step.text}</p>
           </li>
         );
@@ -52,7 +52,7 @@ export function PriceLines({ items, className }: { items: { label: string; price
       {items.map((item, i) => {
         const row = (
           <>
-            <span className="font-display text-[clamp(20px,2.4vw,30px)] font-bold leading-[1.1] tracking-[-0.03em] text-ink">{item.label}</span>
+            <span className="font-display text-[clamp(18px,1.6vw,23px)] font-bold leading-[1.1] tracking-[-0.03em] text-ink">{item.label}</span>
             <span className="whitespace-nowrap font-mono text-[18px] text-sale">{item.price}</span>
           </>
         );
@@ -88,7 +88,7 @@ export function StoreCards({ brand, photo, className }: { brand: BrandSettings; 
       <div className="reveal relative overflow-hidden rounded-[28px] border border-border p-8" style={{ background: "linear-gradient(160deg, rgba(124,92,255,0.35), rgba(124,92,255,0.06))" }}>
         <span aria-hidden="true" className="anim-drift2 pointer-events-none absolute -bottom-16 -right-12 h-56 w-56 rounded-full" style={{ background: "radial-gradient(circle, rgba(51,225,255,0.35), transparent 68%)", filter: "blur(24px)" }} />
         <div className="relative">
-          <p className="font-display text-[30px] font-bold leading-[1.05] tracking-[-0.035em] text-ink">{address[0] ?? brand.name}</p>
+          <p className="font-display text-[25px] font-bold leading-[1.05] tracking-[-0.035em] text-ink">{address[0] ?? brand.name}</p>
           {address[1] ? <p className="mt-1 text-[16px] text-ink-soft">{address[1]}</p> : null}
           {brand.hours ? (
             <div className="mt-5 flex flex-col gap-1 font-mono text-[12px] uppercase tracking-[0.12em] text-ink-soft">
@@ -115,7 +115,7 @@ export function StoreCards({ brand, photo, className }: { brand: BrandSettings; 
 
       <div className="glass reveal flex flex-col rounded-[28px] p-8">
         <Eyebrow tone="repair">Suivi</Eyebrow>
-        <p className="mt-3 font-display text-[30px] font-bold leading-[1.05] tracking-[-0.035em] text-ink">Où en est ma console ?</p>
+        <p className="mt-3 font-display text-[25px] font-bold leading-[1.05] tracking-[-0.035em] text-ink">Où en est ma console ?</p>
         <p className="mt-3 text-[15.5px] leading-[1.45] text-ink-soft">Votre numéro de dossier et l&apos;adresse utilisée à la commande suffisent — aucun compte n&apos;est nécessaire.</p>
         <Link href={ROUTES.tracking} className="btn-gradient mt-auto flex items-center justify-center rounded-full px-6 py-[15px] text-[15px] font-semibold">
           Suivre ma réparation
@@ -198,7 +198,7 @@ export function ReviewsSection({ reviews }: { reviews: Views<"public_reviews">[]
     <section>
       <Container className="py-[92px]">
         <Eyebrow>Avis</Eyebrow>
-        <h2 className="reveal mt-3 font-display text-[clamp(30px,4vw,54px)] font-extrabold leading-[0.92] tracking-[-0.04em]">Ce que disent les clients</h2>
+        <h2 className="reveal mt-3 font-display text-[clamp(26px,3.1vw,40px)] font-extrabold leading-[0.92] tracking-[-0.04em]">Ce que disent les clients</h2>
         <p className="reveal mt-4 max-w-[42ch] text-[16px] text-ink-soft">Avis authentiques laissés après une réparation, modérés par l&apos;atelier.</p>
         <ul className="mt-10 grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
           {reviews.map((review) => (
@@ -249,7 +249,7 @@ export function CtaBanner({ title, text }: { title: string; text: string }) {
         <div className="glass reveal flex flex-wrap items-end justify-between gap-8 rounded-[28px] p-8 sm:p-10">
           <div>
             <Eyebrow tone="repair">Atelier</Eyebrow>
-            <h2 className="mt-3 font-display text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[0.95] tracking-[-0.035em]">{title}</h2>
+            <h2 className="mt-3 font-display text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[0.95] tracking-[-0.035em]">{title}</h2>
             <p className="mt-3 max-w-[46ch] text-[16.5px] leading-[1.45] text-ink-soft">{text}</p>
           </div>
           <Link href={ROUTES.repair} className="btn-gradient flex items-center justify-center rounded-full px-7 py-[15px] text-[15px] font-semibold max-sm:w-full">

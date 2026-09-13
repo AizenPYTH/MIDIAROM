@@ -13,7 +13,7 @@ export function StatCard({ label, value, hint, href, tone }: { label: string; va
   const body = (
     <div className={cn("glass flex h-full min-w-[160px] flex-col gap-[5px] rounded-[24px] px-5 py-4 sm:min-w-0", href && "transition-colors hover:bg-surface-muted")}>
       <span className="font-mono text-[9.5px] uppercase tracking-[0.1em] text-ink-muted sm:text-[10.5px]">{label}</span>
-      <strong className={cn("text-[22px] font-extrabold tracking-[-0.02em] sm:text-[26px]", tone === "warning" ? "text-warning" : tone === "success" ? "text-success" : tone === "info" ? "text-info" : "text-ink")}>{value}</strong>
+      <strong className={cn("text-[20px] font-extrabold tracking-[-0.02em] sm:text-[23px]", tone === "warning" ? "text-warning" : tone === "success" ? "text-success" : tone === "info" ? "text-info" : "text-ink")}>{value}</strong>
       {hint ? <span className="hidden text-[12.5px] text-ink-muted sm:block">{hint}</span> : <span className="hidden text-[12.5px] text-transparent sm:block" aria-hidden="true">·</span>}
     </div>
   );

@@ -80,12 +80,29 @@ vivent sous un menu « Plus » discret, jamais sous forme d'onglets.
 - **Segment actif amené dans la vue** (A2) : la bande d'avancement défile à la
   main ; le recentrage automatique demanderait du script pour un gain faible.
 
-## Le back-office garde l'ancienne charte
+## Échelle typographique (v4.1)
 
-`.theme-ink` est écrit en valeurs littérales : il ne dépend plus d'aucun token
-de `:root`. Le back-office reste donc exactement ce qu'il était — sombre,
-anguleux, sans ombre — pendant que le site public change de charte. Seules les
-polices sont communes.
+Les maquettes du handoff sont des images plein écran : leurs titres ont été
+transcrits en `clamp()` dont les maxima donnaient, dans un navigateur à 100 %,
+une typographie nettement trop grosse (H1 d'accueil à 151 px sur un écran de
+1440). L'échelle a été réduite d'environ un tiers et la pente en `vw`
+assouplie, pour que le palier haut soit atteint vers 1300 px au lieu de 1500.
+
+| Rôle | v4 | v4.1 | à 1440 px |
+| --- | --- | --- | --- |
+| H1 accueil | `clamp(52px,10.5vw,158px)` | `clamp(44px,7.4vw,92px)` | 92 px |
+| Sous-titre accueil | `clamp(17px,1.7vw,22px)` | `clamp(16px,1.25vw,19px)` | 18 px |
+| Compteurs | `clamp(38px,4.6vw,62px)` | `clamp(30px,3.1vw,42px)` | 42 px |
+| H2 de section | `clamp(34px,5.4vw,78px)` | `clamp(28px,3.9vw,50px)` | 50 px |
+| H2 avis / FAQ | `clamp(30px,4vw,54px)` | `clamp(26px,3.1vw,40px)` | 40 px |
+| Titre de page | `clamp(28px,3.4vw,42px)` | `clamp(25px,2.6vw,34px)` | 34 px |
+| Titre d'étape (devis) | `clamp(26px,3.4vw,42px)` | `clamp(24px,2.5vw,33px)` | 33 px |
+| Lignes de tarif | `clamp(20px,2.4vw,30px)` | `clamp(18px,1.6vw,23px)` | 23 px |
+| H1 atelier | `clamp(32px,4.4vw,60px)` | `clamp(27px,2.9vw,40px)` | 40 px |
+| KPI atelier | `46px` | `36px` | 36 px |
+
+Les minima (valeurs mobiles) bougent peu : le rendu à 360/390/430 px avait été
+vérifié et n'était pas en cause. Le corps de texte (14,5 à 16 px) est inchangé.
 
 ---
 
@@ -155,9 +172,7 @@ photos client, fiches consoles.
 | Confirmation | `/commande/confirmation/[id]` | récapitulatif encre, étapes 01-04 |
 | Admin Réparations | `/admin` | `app/admin/page.tsx` (liste + filtres + fiche : panne décrite, photos, avancement cliquable, devis, note d'atelier, actions, historique) |
 | Fiche dossier complète | `/admin/orders/[id]` | onglets Réception / Diagnostic / Devis / Réparation / Tests / Expédition / Médias / Historique |
-| Boutique | `/boutique`, `/boutique/[produit]`, `/panier`, `/commande-boutique`, `/commande-boutique/confirmation/[id]` | `components/shop/*` |
 | Reprise | `/reprise`, `/reprise/confirmation/[id]`, `/reprise/suivi/[jeton]` | `components/tradein/*`, `components/customer/draft-photo-uploader.tsx` |
-| Fiches consoles | `/consoles`, `/consoles/[modèle]` | `app/(marketing)/consoles/*` |
 | Admin Commandes / Stock / Reprises | `/admin/shop-orders`, `/admin/stock`, `/admin/trade-ins` (+ `/admin/clients` → clients) | `components/admin/shop-forms.tsx` |
 
 ## Comportement de la fiche de réparation

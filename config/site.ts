@@ -31,7 +31,6 @@ export const ROUTES = {
   accountTradeIns: "/compte/reprises",
   tradeIn: "/reprise",
   tradeInTracking: "/reprise/suivi",
-  consoles: "/consoles",
   admin: "/admin",
 } as const;
 

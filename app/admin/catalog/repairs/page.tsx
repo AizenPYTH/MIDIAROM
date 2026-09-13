@@ -128,7 +128,7 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
                   <p className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">{selected.brandName}</p>
-                  <h1 className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-ink">{selected.name}</h1>
+                  <h1 className="mt-1 text-[22px] font-extrabold tracking-[-0.02em] text-ink">{selected.name}</h1>
                 </div>
                 <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">
                   <a href={`/reparation/${selected.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-ink">

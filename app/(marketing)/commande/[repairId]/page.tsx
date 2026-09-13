@@ -41,7 +41,7 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
           <Eyebrow tone="repair">
             {repair.model.brand.name} · {repair.model.name}
           </Eyebrow>
-          <h1 className="text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em]">{repair.name}</h1>
+          <h1 className="text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em]">{repair.name}</h1>
           {repair.summary ? <p className="max-w-[42ch] text-[16.5px] leading-[1.55] text-[#c4bdae]">{repair.summary}</p> : null}
           <div className="border border-ink-650 p-[18px]">
             <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} />

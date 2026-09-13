@@ -100,7 +100,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { name: "is_active", label: "Actif", type: "checkbox", width: "half" },
     ],
     schema: z.object({ brand_id: z.string().uuid(), name: text(80).min(1), slug, short_name: optText(40), release_year: nullableInt, display_order: int.default(0), description: optText(), seo_title: optText(200), seo_description: optText(400), seo_intro: optText(), image_path: optText(300), family: optText(40), variants: list, common_issues: list, is_retro: bool.default(false), is_handheld: bool.default(false), is_active: bool.default(true) }),
-    revalidate: ["/", "/reparation", "/consoles"],
+    revalidate: ["/", "/reparation"],
   },
   faults: {
     table: "faults",
@@ -453,7 +453,7 @@ ENTITIES.products = {
     is_active: bool.default(true),
     display_order: int.default(0),
   }),
-  revalidate: ["/", "/boutique", "/consoles"],
+  revalidate: ["/"],
 };
 
 export function getEntity(key: string): EntityDef | null {

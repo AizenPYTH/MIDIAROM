@@ -32,7 +32,7 @@ export default async function TradeInTrackingPage({ params }: { params: Promise<
       <Eyebrow>Reprise</Eyebrow>
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-mono text-[30px] font-semibold tracking-[-0.02em] text-ink">{t.request_number}</h1>
+          <h1 className="font-mono text-[26px] font-semibold tracking-[-0.02em] text-ink">{t.request_number}</h1>
           <p className="text-[16px] text-ink">{t.item_title}</p>
           <p className="text-[13px] text-ink-muted">Demande du {formatDateTime(t.created_at)}</p>
         </div>
@@ -50,7 +50,7 @@ export default async function TradeInTrackingPage({ params }: { params: Promise<
       {t.status === "ESTIMATED" || t.status === "ACCEPTED" ? (
         <div className="mt-6 bg-ink-900 p-5 text-paper">
           <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Offre de l&apos;atelier</span>
-          <p className="mt-1 font-mono text-[30px] font-semibold">{t.offer_cents !== null ? formatPrice(t.offer_cents) : "—"}</p>
+          <p className="mt-1 font-mono text-[26px] font-semibold">{t.offer_cents !== null ? formatPrice(t.offer_cents) : "—"}</p>
           {t.offer_note ? <p className="mt-2 text-[14.5px] text-[#c4bdae]">{t.offer_note}</p> : null}
           {t.offer_expires_at ? <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">Valable jusqu&apos;au {formatDate(t.offer_expires_at)}</p> : null}
           {canDecide ? (

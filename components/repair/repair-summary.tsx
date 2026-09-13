@@ -35,7 +35,7 @@ export function RepairFacts({ repair }: { repair: Repair }) {
 export function PriceTag({ cents, compareAt, size = "lg" }: { cents: number; compareAt?: number | null; size?: "md" | "lg" }) {
   return (
     <div className="flex items-baseline gap-2">
-      <span className={size === "lg" ? "font-mono text-[30px] font-semibold text-ink" : "font-mono text-[20px] font-semibold text-ink"}>{formatPrice(cents)}</span>
+      <span className={size === "lg" ? "font-mono text-[26px] font-semibold text-ink" : "font-mono text-[19px] font-semibold text-ink"}>{formatPrice(cents)}</span>
       {compareAt && compareAt > cents ? <span className="font-mono text-[13px] text-ink-muted line-through">{formatPrice(compareAt)}</span> : null}
       <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">TTC</span>
     </div>

@@ -19,7 +19,7 @@ export function ConsoleMarquee({ items, className }: { items: string[]; classNam
     <ul aria-hidden={hidden || undefined} className="flex shrink-0 items-center">
       {items.map((label, i) => (
         <li key={`${label}-${i}`} className="flex items-center gap-6 whitespace-nowrap pr-6">
-          <span className="font-display text-[18px] font-bold tracking-[-0.02em] text-ink-soft sm:text-[22px]">{label}</span>
+          <span className="font-display text-[16px] font-bold tracking-[-0.02em] text-ink-soft sm:text-[19px]">{label}</span>
           <span aria-hidden="true" className={cn("text-[13px]", DIAMOND_TONES[i % DIAMOND_TONES.length])}>
             ◆
           </span>

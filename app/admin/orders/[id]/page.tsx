@@ -82,7 +82,7 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
         <div className="min-w-0">
           <Link href="/admin" className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted hover:text-ink">← Réparations</Link>
           <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">Fiche {order.order_number}</p>
-          <h1 className="mt-1 text-[24px] font-extrabold tracking-[-0.02em] text-ink">{order.model_name.startsWith(order.brand_name) ? order.model_name : `${order.brand_name} ${order.model_name}`}</h1>
+          <h1 className="mt-1 text-[22px] font-extrabold tracking-[-0.02em] text-ink">{order.model_name.startsWith(order.brand_name) ? order.model_name : `${order.brand_name} ${order.model_name}`}</h1>
           <p className="text-[14px] text-ink-faint">
             {order.repair_name} · <Link href={`/admin/customers/${order.customer_id}`} className="hover:text-ink">{order.customer_first_name} {order.customer_last_name}</Link> · {order.customer_email}{order.customer_phone ? ` · ${order.customer_phone}` : ""}
           </p>

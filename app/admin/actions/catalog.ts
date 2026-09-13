@@ -205,7 +205,6 @@ export async function updateRepairRowAction(formData: FormData): Promise<void> {
   await audit({ actorId: user.id, actorRole: user.profile.role, action: "repairs.updated", resourceType: "repairs", resourceId: id, oldValue: old as Json, newValue: patch as Json });
   revalidatePath("/admin/catalog/repairs", "layout");
   revalidatePath("/reparation", "layout");
-  revalidatePath("/consoles", "layout");
   redirect(backToModel(modelId));
 }
 
