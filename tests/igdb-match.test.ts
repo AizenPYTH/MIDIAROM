@@ -62,6 +62,17 @@ describe("scoreMatch — le piège des versions par plateforme", () => {
     expect(wrong.reasons.join(" ")).toContain("ABSENTE");
   });
 
+  it("enfonce la mauvaise plateforme dans la bande « Peu probable »", () => {
+    // Sans le bonus de plateforme, le plafond est déjà de 0,75 : ce n'est donc
+    // pas la pénalité qui bloque l'association automatique. Son rôle est de
+    // faire passer le candidat sous 0,60, seuil auquel le back-office bascule
+    // de l'orange « À vérifier » au rouge « Peu probable ». C'est ce signal-là
+    // qui évite qu'un titre parfaitement identique donne l'illusion d'un bon
+    // candidat. Voir confidenceTone() dans components/admin/game-match.tsx.
+    const wrong = scoreMatch(ps4, hints);
+    expect(wrong.confidence).toBeLessThan(0.6);
+  });
+
   it("reste sous le seuil quand la plateforme du produit est inconnue", () => {
     // Titre parfait mais rien pour départager : c'est exactement le cas où une
     // validation humaine doit être demandée.
