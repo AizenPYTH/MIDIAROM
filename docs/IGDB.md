@@ -87,6 +87,7 @@ au démarrage du processus, et non figée à la compilation.
 | `scripts/lib/igdb-cli.mjs` | **Socle des scripts** : jeton Twitch, requête, champs. Une seule définition. |
 | `scripts/check-igdb.mjs` | Vérifie la connexion, n'écrit rien |
 | `scripts/demo-games.mjs` | Remplit la vitrine de démonstration de l'accueil |
+| `scripts/lib/supabase-cli.mjs` | Configuration Supabase des scripts : validation, réparation, erreurs lisibles |
 
 Aucun composant d'affichage n'importe quoi que ce soit de `lib/igdb/` :
 ils reçoivent un `GameListing` et ignorent d'où il vient.
@@ -213,6 +214,34 @@ Deux choses distinctes, volontairement :
 `GameListing.video` vaut `null` quand rien n'est renseigné — la section affiche
 alors `heroUrl`. Un fond vidéo doit être `autoplay muted loop playsinline`,
 avec `poster` renseigné, et ne se charger qu'une fois la section visible.
+
+## Écrire dans le cache
+
+`demo:games` valide sa configuration Supabase **avant** d'interroger IGDB :
+découvrir après 28 requêtes que la base est injoignable gaspille le quota.
+
+Le piège le plus courant est une `NEXT_PUBLIC_SUPABASE_URL` à laquelle on a
+collé un chemin — `https://<ref>.supabase.co/rest/v1`, ou l'URL du tableau de
+bord. `supabase-js` ajoute `/rest/v1` par-dessus, la passerelle Supabase reçoit
+`/rest/v1/rest/v1/igdb_games` et répond **« Invalid path specified in request
+URL »**, message qui ne désigne rien tout seul. `scripts/lib/supabase-cli.mjs`
+ne garde donc que l'origine, le signale, et nomme l'endpoint appelé en cas
+d'échec. Il remonte aussi `code`, `details` et `hint` de PostgREST, qui
+distinguent une table absente (`PGRST205`, migrations non appliquées) d'un refus
+RLS (`42501`, ce n'est pas la clé `service_role`).
+
+Attendu dans `.env.local` :
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co   # l'URL du projet, rien de plus
+SUPABASE_SERVICE_ROLE_KEY=eyJ...                     # la clé service_role, jamais l'anon
+```
+
+**Quelle base ?** L'accueil lit le cache `igdb_games` et n'appelle jamais IGDB
+au moment de l'affichage. Remplir une base locale ne remplit donc que le site
+local. Pour que la vitrine apparaisse en ligne, il faut lancer le script avec
+les identifiants du projet Supabase **de production** — le script affiche l'hôte
+utilisé et avertit quand il est local.
 
 ## Diagnostiquer une recherche qui ne rend rien
 

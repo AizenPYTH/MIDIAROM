@@ -20,16 +20,23 @@
  *   4. jeu sans aucune fiche IGDB (photos du produit seules)
  *   5. jeu en rupture de stock
  */
-import { readFileSync } from "node:fs";
-import { createClient } from "@supabase/supabase-js";
+import { loadEnvLocal } from "./lib/igdb-cli.mjs";
+import { adminClient, supabaseConfig } from "./lib/supabase-cli.mjs";
 
-for (const line of readFileSync(new URL("../.env.local", import.meta.url), "utf8").split("\n")) {
-  const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-  if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+loadEnvLocal();
+
+// Même configuration vérifiée que `demo:games` : une URL de projet mal formée
+// donne « Invalid path specified in request URL », message qui ne dit rien tout
+// seul. Le module explique et répare le cas courant.
+let config;
+try {
+  config = supabaseConfig();
+} catch (error) {
+  console.error(`✗ Configuration Supabase : ${error.message}`);
+  process.exit(1);
 }
-const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-});
+for (const a of config.avertissements) console.warn(`⚠ ${a}`);
+const db = adminClient(config);
 
 const PREFIX = "DEMO-HP-";
 

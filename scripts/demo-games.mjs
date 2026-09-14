@@ -20,9 +20,9 @@
  * Demande TWITCH_CLIENT_ID et TWITCH_CLIENT_SECRET (voir docs/IGDB.md) et un
  * accès réseau à api.igdb.com.
  */
-import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
-import { createClient } from "@supabase/supabase-js";
+import { readFileSync, writeFileSync } from "node:fs";
 import { explainAuthFailure, IgdbCliError, igdbGames, loadEnvLocal, searchBody, twitchToken } from "./lib/igdb-cli.mjs";
+import { adminClient, describeDbError, maskKey, supabaseConfig } from "./lib/supabase-cli.mjs";
 
 loadEnvLocal();
 
@@ -31,12 +31,11 @@ const debug = process.argv.includes("--debug");
 const dryRun = process.argv.includes("--dry-run");
 
 if (process.argv.includes("--clear")) {
-  try {
-    unlinkSync(OUT);
-    console.log("✓ Vitrine de démonstration vidée.");
-  } catch {
-    console.log("Rien à vider.");
-  }
+  // On écrit une liste vide plutôt que d'effacer le fichier : `demo-games.ts`
+  // l'importe statiquement, pour que Vercel l'embarque dans le bundle. Un
+  // fichier absent ferait échouer la compilation.
+  writeFileSync(OUT, "[]\n");
+  console.log("✓ Vitrine de démonstration vidée (lib/shop/demo-games.json remis à []).");
   process.exit(0);
 }
 
@@ -72,6 +71,38 @@ const titles = [
     .match(/export const DEMO_GAME_TITLES = \[([\s\S]*?)\] as const;/)[1]
     .matchAll(/"((?:[^"\\]|\\.)*)"/g),
 ].map((m) => m[1].replace(/\\"/g, '"'));
+
+/**
+ * Configuration Supabase, vérifiée **avant** d'interroger IGDB.
+ *
+ * Le cache est la destination finale : découvrir après 28 requêtes que la base
+ * est injoignable, c'est gaspiller le quota et perdre le travail. On valide
+ * donc la configuration et l'accès à la table d'abord.
+ */
+let config = null;
+let db = null;
+if (!dryRun) {
+  try {
+    config = supabaseConfig();
+  } catch (error) {
+    console.error(`✗ Configuration Supabase : ${error.message}`);
+    process.exit(1);
+  }
+  for (const a of config.avertissements) console.warn(`⚠ ${a}`);
+  console.log(`Cache Supabase : ${config.host}`);
+  console.log(`Clé service_role : ${maskKey(config.key)}`);
+
+  db = adminClient(config);
+  // Une vraie lecture, pas un HEAD : sans corps de réponse, une passerelle en
+  // erreur ne dirait rien de ce qui cloche.
+  const { error } = await db.from("igdb_games").select("igdb_id").limit(1);
+  if (error) {
+    console.error(describeDbError(error, { config, table: "igdb_games" }));
+    console.error("\n  Rien n'a été écrit, et aucune requête IGDB n'a été dépensée.");
+    process.exit(1);
+  }
+  console.log("✓ Table igdb_games accessible en écriture.\n");
+}
 
 console.log(`${titles.length} titres à résoudre.`);
 
@@ -155,15 +186,33 @@ if (dryRun) {
   process.exit(0);
 }
 
-const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const { error } = await db.from("igdb_games").upsert(rows, { onConflict: "igdb_id" });
 if (error) {
-  console.error(`✗ Écriture du cache : ${error.message}`);
+  console.error(`\n✗ Écriture du cache dans igdb_games :`);
+  console.error(describeDbError(error, { config, table: "igdb_games" }));
   process.exit(1);
 }
 
 writeFileSync(OUT, JSON.stringify(entries, null, 2) + "\n");
-console.log(`\n✓ ${entries.length} jeux en cache et dans lib/shop/demo-games.json.`);
+console.log(`\n✓ ${entries.length} jeux écrits dans igdb_games sur ${config.host}`);
+console.log("  et listés dans lib/shop/demo-games.json.");
+// Le site lit le cache, jamais IGDB au moment de l'affichage : la vitrine
+// n'apparaît que sur le déploiement branché à CETTE base.
+// Le site lit le cache, jamais IGDB au moment de l'affichage. Écrire dans une
+// base locale ne remplit donc que le site local : c'est l'erreur qui coûte le
+// plus de temps, autant la dire ici.
+const local = /^(localhost|127\.0\.0\.1|\[::1\])/.test(config.host);
+console.log("");
+if (local) {
+  console.log(`  ⚠ ${config.host} est une base LOCALE : le déploiement ne la verra pas.`);
+  console.log("    Pour remplir la vitrine en ligne, relancez avec NEXT_PUBLIC_SUPABASE_URL");
+  console.log("    et SUPABASE_SERVICE_ROLE_KEY du projet Supabase de production.");
+} else {
+  console.log(`  L'accueil lit ce cache : la vitrine apparaîtra sur tout déploiement`);
+  console.log(`  branché à ${config.host}.`);
+}
+console.log("  Committez lib/shop/demo-games.json : il est embarqué dans le bundle,");
+console.log("  et sans lui le déploiement ne sait pas quels jeux afficher.");
 if (failures.vide || failures.sansJaquette || failures.erreur) {
   console.log(`  Écartés — sans résultat : ${failures.vide} · sans jaquette : ${failures.sansJaquette} · en erreur : ${failures.erreur}`);
 }

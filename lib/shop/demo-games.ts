@@ -1,7 +1,6 @@
 import "server-only";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { getGames } from "@/lib/igdb/service";
+import demoEntries from "@/lib/shop/demo-games.json";
 import type { GameListing } from "@/lib/shop/games";
 
 /**
@@ -71,15 +70,27 @@ interface DemoEntry {
 }
 
 /** Le fichier écrit par `npm run demo:games`. Absent tant qu'il n'a pas tourné. */
-async function readDemoFile(): Promise<DemoEntry[]> {
-  try {
-    const raw = await readFile(path.join(process.cwd(), "lib/shop/demo-games.json"), "utf8");
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((e): e is DemoEntry => typeof e?.igdbId === "number" && typeof e?.title === "string");
-  } catch {
-    return [];
-  }
+/**
+ * Les entrées de la vitrine, **importées** et non lues sur le disque.
+ *
+ * C'était un vrai bug de production. Le fichier était lu au runtime par
+ * `readFile(path.join(process.cwd(), …))` : en local ça marche, mais le
+ * traçage de fichiers de Next ne suit pas un chemin construit à l'exécution.
+ * Le JSON n'était donc pas embarqué dans la fonction serverless, la lecture
+ * échouait silencieusement (`catch → []`), et l'accueil déployé restait vide —
+ * sans jeu vedette, donc sans scène, donc sans vidéo.
+ *
+ * Un import statique est résolu à la compilation : le contenu part dans le
+ * bundle. Le fichier est donc versionné, vaut `[]` par défaut, et
+ * `npm run demo:games` le réécrit — il faut ensuite le committer.
+ */
+function readDemoFile(): DemoEntry[] {
+  const parsed: unknown = demoEntries;
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(
+    (e): e is DemoEntry =>
+      typeof (e as DemoEntry)?.igdbId === "number" && typeof (e as DemoEntry)?.title === "string",
+  );
 }
 
 /**
@@ -90,7 +101,7 @@ async function readDemoFile(): Promise<DemoEntry[]> {
  * faux, `productId` préfixé `demo:` — de quoi les reconnaître sans ambiguïté.
  */
 export async function getDemoGames(limit = 24): Promise<GameListing[]> {
-  const entries = (await readDemoFile()).slice(0, Math.max(1, limit));
+  const entries = readDemoFile().slice(0, Math.max(1, limit));
   if (!entries.length) return [];
   const games = await getGames(entries.map((e) => e.igdbId));
   const out: GameListing[] = [];

@@ -81,6 +81,22 @@ stock. Elle est tenue à l'écart du stock, et ça se voit :
 - une mention sous la scène dit que la sélection est une démonstration ;
 - `isDemo` porte l'information jusqu'aux composants, qui ne devinent rien.
 
+### Le fichier est importé, pas lu sur le disque
+
+`lib/shop/demo-games.json` est **versionné** (vide par défaut) et **importé**
+par `lib/shop/demo-games.ts`. Ce n'est pas un détail : il était auparavant lu
+au runtime par `readFile(path.join(process.cwd(), …))`, ce que le traçage de
+fichiers de Next ne suit pas. Le JSON n'était donc pas embarqué dans la fonction
+serverless, la lecture échouait en silence, et l'accueil déployé restait vide —
+sans jeu vedette, donc sans scène, donc **sans vidéo**. Un import statique part
+dans le bundle : vérifiable en cherchant un titre dans `.next/server` après un
+build.
+
+Conséquence pratique : après `npm run demo:games`, **committer le fichier**.
+Sans lui, le déploiement ne sait pas quels jeux afficher. Et comme l'accueil lit
+le cache `igdb_games`, il faut aussi que ce cache soit rempli sur la base du
+déploiement (voir docs/IGDB.md).
+
 Dès qu'**un seul** jeu entre au catalogue, la vitrine s'efface entièrement.
 Pour la supprimer définitivement : effacer `lib/shop/demo-games.json` et l'appel
 dans `lib/shop/games.ts`. Rien d'autre n'en dépend.
