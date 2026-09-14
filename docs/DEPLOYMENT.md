@@ -32,7 +32,7 @@
    ```
 
    Le script refuse de s'exécuter si `public.profiles` existe déjà (les migrations
-   créent les tables sans `if not exists` : les rejouer échouerait), applique les neuf
+   créent les tables sans `if not exists` : les rejouer échouerait), applique tous les
    fichiers dans une transaction unique — une erreur annule tout et ne laisse pas la
    base à moitié migrée — puis enregistre les versions dans
    `supabase_migrations.schema_migrations` pour qu'un `db push` ultérieur reparte
@@ -90,6 +90,77 @@
    ```
 
    Si la connexion échoue avec « E-mail ou mot de passe incorrect » alors que le compte existe, c'est en général une adresse non confirmée ou un compte importé sans identité. Le bloc SQL du README (« Pour définir un mot de passe d'administration ») repose le mot de passe, confirme l'adresse et crée l'identité `email`.
+
+### Ajouter une migration à un projet déjà migré
+
+Le cas courant après coup : la base tourne, une seule migration manque (par
+exemple `igdb_games`, dont l'absence donne `PGRST205 — Could not find the table
+'public.igdb_games'`). `scripts/apply-migrations.sh` ne convient pas ici : il est
+prévu pour une base vierge et refuse de s'exécuter si le schéma est déjà là.
+
+**La référence du projet est dans la chaîne de connexion** (`postgres.<ref>@…`) :
+c'est elle, et rien d'autre, qui désigne la base. Il n'y a aucun lien implicite à
+se tromper — `project_id = "MIDIAROM"` dans `supabase/config.toml` est le nom du
+projet **local**, jamais une cible distante.
+
+```bash
+# 0. La chaîne vient de Supabase → Connect → Session pooler (port 5432),
+#    sur le projet voulu. Mot de passe encodé pour une URL.
+export DB_URL="postgresql://postgres.<ref>:<mot-de-passe>@aws-0-<region>.pooler.supabase.com:5432/postgres"
+
+# 1. Confirmer la cible SANS afficher le mot de passe. La référence du projet
+#    apparaît dans l'utilisateur (pooler) ou dans l'hôte (connexion directe).
+echo "$DB_URL" | sed -E 's|^[^/]+//([^:]+):[^@]*@([^:/]+).*|utilisateur=\1   hôte=\2|'
+
+# 2. Voir ce qui manque réellement, sans rien appliquer.
+npx supabase migration list --db-url "$DB_URL"
+```
+
+La colonne `Remote` dit ce que la base connaît déjà. Deux cas :
+
+- **Seule la migration voulue manque** — c'est la situation normale. Appliquez :
+
+  ```bash
+  npx supabase db push --db-url "$DB_URL" --dry-run   # liste, n'applique rien
+  npx supabase db push --db-url "$DB_URL"
+  ```
+
+- **Aucune migration n'apparaît côté `Remote`** — l'historique
+  (`supabase_migrations.schema_migrations`) est vide alors que les tables
+  existent, typiquement parce que le schéma a été posé à la main. **Ne lancez pas
+  `db push`** : il tenterait les onze fichiers et les dix premiers échoueraient,
+  faute de `if not exists`. Appliquez seulement le fichier manquant, puis
+  inscrivez sa version :
+
+  ```bash
+  psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction \
+    -f supabase/migrations/20260914000001_igdb.sql
+
+  psql "$DB_URL" -v ON_ERROR_STOP=1 -c "
+    create schema if not exists supabase_migrations;
+    create table if not exists supabase_migrations.schema_migrations
+      (version text primary key, statements text[], name text);
+    insert into supabase_migrations.schema_migrations (version, name)
+    values ('20260914000001', 'igdb') on conflict (version) do nothing;"
+  ```
+
+  La migration IGDB est écrite pour supporter ce traitement : chacune de ses
+  instructions est gardée par `if not exists` ou un bloc `do $$ … end $$`. La
+  rejouer ne casse rien.
+
+Dans les deux cas, terminez en rechargeant le cache de schéma de PostgREST —
+sans quoi l'API continue de répondre `PGRST205` sur une table qui existe :
+
+```bash
+psql "$DB_URL" -c "notify pgrst, 'reload schema';"
+```
+
+Puis vérifiez que la table est visible par l'API :
+
+```bash
+psql "$DB_URL" -Atc "select to_regclass('public.igdb_games');"   # → igdb_games
+```
+
 
 ## Application (Vercel ou Node)
 
