@@ -1280,6 +1280,10 @@ export type Database = {
           igdb_match_confidence: number | null;
           hero_video_url: string | null;
           hero_video_poster_path: string | null;
+          source: string | null;
+          source_ref: string | null;
+          source_url: string | null;
+          external_images: Json;
         };
         Insert: {
           id?: string;
@@ -1317,6 +1321,10 @@ export type Database = {
           igdb_match_confidence?: number | null;
           hero_video_url?: string | null;
           hero_video_poster_path?: string | null;
+          source?: string | null;
+          source_ref?: string | null;
+          source_url?: string | null;
+          external_images?: Json;
         };
         Update: {
           id?: string;
@@ -1354,6 +1362,10 @@ export type Database = {
           igdb_match_confidence?: number | null;
           hero_video_url?: string | null;
           hero_video_poster_path?: string | null;
+          source?: string | null;
+          source_ref?: string | null;
+          source_url?: string | null;
+          external_images?: Json;
         };
         Relationships: [
           {
