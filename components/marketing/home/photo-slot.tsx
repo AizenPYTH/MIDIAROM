@@ -1,26 +1,37 @@
 import type { CSSProperties, ReactNode } from "react";
 
 /**
- * L'emplacement d'une photo qui n'est pas encore fournie.
+ * L'emplacement d'une photo que le magasin n'a pas encore fournie.
  *
- * Le magasin fournira ses propres visuels. En attendant, mettre une photo
- * choisie à sa place serait mentir sur son rayon, et laisser un cadre vide
- * donnerait une page inachevée. On dessine donc une plaque : la lueur de
- * l'accent, une trame fine, et l'initiale du sujet en filigrane. C'est un état
- * prévu par la charte, pas un trou — et il disparaît dès qu'un chemin est
- * renseigné dans `lib/content/assets.ts` ou qu'une photo produit est déposée
- * dans le back-office.
+ * Mettre une image choisie à sa place mentirait sur le rayon ; laisser un cadre
+ * vide donnerait une page inachevée. On dessine donc une plaque : un aplat
+ * sourd, une trame fine, et l'initiale du sujet en filigrane. C'est un état
+ * prévu par la charte, pas un trou — et il disparaît dès qu'une photo est
+ * déposée dans le back-office ou qu'un chemin est renseigné dans
+ * `lib/content/assets.ts`.
+ *
+ * Sans teinte de couleur : cette direction n'a qu'un rouge, et il est réservé à
+ * six emplois. Une plaque d'attente n'en fait pas partie.
+ *
+ * Emplacements attendus sur l'accueil, avec la photo que chacun réclame :
+ *
+ *   hero          composition à plat : console ouverte, manette, composants
+ *   plateformes   PlayStation sur l'établi · Switch démontée · Xbox ouverte ·
+ *                 consoles rétro en vitrine            (4 visuels, 16/10)
+ *   atelier       image d'attente de la vidéo — plan d'atelier
+ *   rayons        rayon jeux vidéo · rayon consoles · vitrine figurines de
+ *                 **personnages** de manga et d'anime  (3 visuels, 4/3)
+ *   magasin       façade ou intérieur, 207 rue de Rome
  */
 export function PhotoSlot({
   label,
-  accent = "rgba(20,17,15,0.06)",
   radius,
   style,
   children,
 }: {
   /** Sujet de la photo : son initiale sert de filigrane. */
   label: string;
-  /** Accent de la charte porté par la plaque. */
+  /** Conservé pour les appelants existants ; cette direction n'arrondit rien. */
   accent?: string;
   radius?: number;
   style?: CSSProperties;
@@ -33,11 +44,11 @@ export function PhotoSlot({
       style={{
         position: "absolute",
         inset: 0,
-        borderRadius: radius,
+        borderRadius: radius ?? 0,
         overflow: "hidden",
         display: "grid",
         placeItems: "center",
-        background: `radial-gradient(130% 120% at 62% 26%, ${accent}, transparent 68%), var(--bg-alt)`,
+        background: "var(--bg-sunken)",
         ...style,
       }}
     >
@@ -46,19 +57,18 @@ export function PhotoSlot({
         style={{
           position: "absolute",
           inset: 0,
-          // Sur un fond clair, la trame se dessine en encre, pas en lumière.
-          background: "repeating-linear-gradient(48deg, rgba(20,17,15,0.05) 0 1px, transparent 1px 11px)",
+          background: "repeating-linear-gradient(48deg, rgba(15,15,17,0.05) 0 1px, transparent 1px 11px)",
         }}
       />
       <span
         style={{
           position: "relative",
           fontFamily: "var(--font-display)",
-          fontWeight: 800,
+          fontWeight: 700,
           fontSize: "clamp(54px, 26%, 132px)",
           lineHeight: 1,
           letterSpacing: "-0.06em",
-          color: "rgba(20,17,15,0.09)",
+          color: "rgba(15,15,17,0.08)",
         }}
       >
         {initial}

@@ -1,108 +1,83 @@
-# Design « 207 MÉDI@ROME » — charte v4
+# Design « 207 MÉDI@ROME » — direction actuelle
 
-Le site public suit désormais le **handoff v4 de Claude Design**
-(`207 MEDI@ROME v4.dc.html`, `README.md` du bundle) : fond sombre et lumineux,
-quatre accents, surfaces en verre, formes arrondies et une charte de mouvement
-assumée. Elle remplace la charte « papier / encre » anguleuse décrite plus bas,
-qui reste **en vigueur dans le back-office**.
+Le site public suit le handoff **« Direction visuelle 207 MÉDI@ROME »**
+(`MIDIAROM Direction visuelle.dc.html` + son README). Blanc, noir, gris, un
+seul rouge. Elle remplace la charte v4 sombre — fond `#07060a`, quatre accents,
+surfaces en verre, formes arrondies — qui n'existe plus nulle part sur le site
+public. **Le back-office n'a pas été repris** et garde son apparence propre.
 
-## Tokens v4
+Le nom s'écrit toujours **207 MÉDI@ROME**, en capitales. Il vient des réglages
+(`site_settings.brand`) : rien ne l'écrit en dur, seule la mise en capitales est
+une affaire d'affichage.
+
+## Tokens
 
 | Rôle | Valeur |
 | --- | --- |
-| Fond | `#07060a` |
-| Texte / secondaire / tertiaire / faible | `#f4f2ff` · `#b9b4e8` · `#9a95c4` · `#8f8ab8` |
-| Lime (accent principal, prix, jauge) | `#d8ff3e` |
-| Cyan (sélection) | `#33e1ff` |
-| Violet (dégradés, lueurs) | `#7c5cff` |
-| Rose (ponctuation) | `#ff5ca8` |
-| Verre | `linear-gradient(160deg, rgba(244,242,255,.09), rgba(244,242,255,.02))` + `blur(10px)` |
-| Dégradé de bouton | `linear-gradient(120deg, #7c5cff, #33e1ff)` sur texte `#07060a` |
+| Fond | `#ffffff` |
+| Fond sourd (encadrés) · plaque d'attente | `#fafafa` · `#f4f4f6` |
+| Encre | `#0f0f11` |
+| Texte secondaire · tertiaire | `#4a4a51` · `#6e6e73` |
+| **Rouge d'accent** | `#d81f26` |
+| Rouge sur fond noir | `#ff5a60` |
+| Filets : interne · carte · section · fort | `#ededf0` · `#e0e0e4` · `#e6e6e9` · `#dcdce0` |
+| Sur fond noir : texte · secondaire · labels | `#f2f2f4` · `#b9b9c0` · `#7e7e86` |
 
-Polices : **Bricolage Grotesque** (titres), **Instrument Sans** (texte),
-**DM Mono** (étiquettes, prix, compteurs). Rayons 999 / 14 / 20 / 24-28 / 32 px.
-Courbe standard `cubic-bezier(.16, 1, .3, 1)`.
+Contrastes mesurés sur blanc : encre 18,4:1 · `#4a4a51` 8,3:1 · `#6e6e73` 5,07:1
+· rouge 5,07:1. Tout passe AA. **Ne pas éclaircir ces gris** : `#8b8b93` tombe à
+3,4:1 et n'est admis qu'en décor (`--text-4`).
 
-Sur un aplat lime ou cyan, le texte repasse en fond (`--color-on-accent`) :
-c'est le seul couple lisible de la charte, et son piège le plus fréquent.
+**Le rouge ne sert qu'à six choses** : le carré du logo, les intitulés de
+section, le CTA principal, le soulignement de l'onglet actif, l'affordance au
+survol (flèche d'une ligne de panne, bouton d'une carte produit) et les puces de
+la liste savoir-faire. Nulle part ailleurs. Aucun néon, aucun dégradé, aucun
+violet ni cyan.
+
+Polices : **Archivo** 400/500/600/700 (titres et corps), **IBM Plex Mono**
+400/500 (étiquettes, prix, références, badges, HUD). Le mono ne porte jamais un
+paragraphe : il marque ce qui se lit d'un coup d'œil.
+
+**Angles nets.** Rayon 0 partout, sauf les boutons du header, les deux CTA du
+hero (`8–9px`) et le champ de recherche (`8px`). Les primitives partagées
+(`components/ui/*`) sont à `2px`. Aucune ombre au repos ; une seule, au survol
+d'une carte : `0 14px 30px rgba(15,15,17,0.1)`.
 
 ## Mouvement
 
-`components/marketing/motion.tsx` porte les effets qui demandent du script —
-halo au curseur, tilt 3D, bouton magnétique, compteurs, anneau de progression,
-révélations au défilement. Les autres (nuées dérivantes, scintillement du titre,
-reflet balayant, bandeau défilant, point pulsant) sont des animations CSS de
-`globals.css`. Tout est coupé par `prefers-reduced-motion`.
+Une courbe, `cubic-bezier(.2,.8,.25,1)`, et quatre effets — tout en CSS, aucune
+bibliothèque :
 
-**Le piège signalé par le handoff est traité** : la translucidité des
-révélations n'est posée que sous `[data-reveal-armed]`, attribut ajouté par le
-script lui-même. Sans JavaScript, ou si l'observateur ne répond pas, la page
-reste entièrement visible. L'observateur interroge le `document`, se réarme sur
-mutation, et révèle immédiatement ce qui est déjà à l'écran.
+| Effet | Où |
+| --- | --- |
+| `riseIn` | arrivée d'un bloc, au chargement (`data-enter="1..4"`, décalé de 60 ms) et au défilement (`data-rise`, `animation-timeline: view()`) |
+| survol de carte | `data-card` : `translateY(-3px)`, bordure encre, ombre, photo `data-zoom` à 1.05, bouton `data-buy` au rouge |
+| survol de ligne | `data-row` : fond `#fafafa`, `padding-left: 10px`, flèche `data-arrow` décalée et rouge |
+| identité gaming | `data-scan` (balayage de diagnostic), `data-pad` (croix directionnelle), `data-hud-dot` (témoin qui clignote) — **uniquement dans le cadre du visuel du hero**, jamais sur un titre ni un CTA. Les deux premiers disparaissent sous 700px |
 
-## L'espace réparateur
+`prefers-reduced-motion: reduce` coupe tout et laisse la page entièrement
+visible. Deux pièges traités :
 
-Le back-office suit lui aussi la charte v4 (`ADMIN.md` du bundle). L'ancienne
-ambiance « encre » a disparu : `.theme-ink` n'existe plus, il n'y a qu'une seule
-charte dans le projet.
+- `[data-rise]` ne pose sa translucidité que sous `@supports (animation-timeline: view())` :
+  un navigateur qui ne connaît pas `view()` affiche le bloc tel quel, au lieu de
+  le laisser invisible en attendant un observateur qui n'existe pas.
+- **Un ancêtre en `overflow: hidden` devient un conteneur de défilement** :
+  `view()` s'y accroche et la révélation se fige à mi-course. On clippe la
+  photo, jamais la section.
 
-**Un seul écran, une seule tâche.** `/admin` ne montre plus d'onglets Commandes,
-Stock ou Reprises — le magasin ne vend plus en ligne. On y trouve, dans l'ordre :
-le titre « L'atelier aujourd'hui » et le nombre de réparations en cours, quatre
-indicateurs calculés depuis la base (en atelier, devis à valider, prêts à rendre,
-délai moyen réellement constaté entre réception et expédition), puis la file de
-réparations à gauche et la fiche à droite.
+## Grilles
 
-La fiche porte les cinq temps de l'atelier — Reçu · Diagnostic · Devis · Atelier
-· Prêt — sous forme de segments cliquables : un clic change le statut, la file et
-les indicateurs se recalculent. La description du client y est citée, jamais
-éditable depuis l'atelier.
+Conteneur `max-width: 1380px`, gouttière latérale 22px. Toutes les grilles sont
+en `auto-fit` / `auto-fill` + `minmax` — hero 320px, plateformes 290px, parcours
+224px, savoir-faire 300px, rayons 268px, produits 232px.
 
-Au téléphone (écrans A1 et A2), le maître/détail devient une navigation à deux
-niveaux : la file, puis la fiche avec un retour ; les filtres et l'avancement
-défilent horizontalement, et la barre d'action se colle en bas.
+**Une exception : la bande de confiance.** Ses pistes sont **fixées** — 4, puis
+2 sous 1000px, puis 1 sous 520px — et aucune cellule ne porte de bordure : c'est
+la gouttière d'1 px sur fond gris qui dessine les filets. C'est ce qui empêche
+un trait de pendre dans le vide quand la rangée se replie.
 
-**Ce qui n'est pas dans le handoff mais reste accessible** : le catalogue et ses
-tarifs, le SAV, les reprises, les clients, les réglages, l'audit. Le handoff ne
-décrit que l'écran du quotidien ; supprimer ces modules aurait coupé l'atelier de
-ses propres réglages — c'est de là que se chiffrent les 1 189 prestations. Ils
-vivent sous un menu « Plus » discret, jamais sous forme d'onglets.
-
-## Écarts assumés de la charte v4
-
-- **Champ « R-0000 » de la carte de suivi** : la recherche publique demande aussi
-  l'adresse électronique du dossier. Un champ seul promettrait un résultat qu'il
-  ne peut pas donner ; la carte mène à la page de suivi.
-- **Tarifs de la page d'accueil** : le handoff liste des montants (Diagnostic
-  20 €, Port HDMI 79 €…). Ils ne sont pas repris : les prix affichés viennent du
-  catalogue, et une prestation non chiffrée reste « sur devis ». Rien n'est
-  inventé.
-- **Segment actif amené dans la vue** (A2) : la bande d'avancement défile à la
-  main ; le recentrage automatique demanderait du script pour un gain faible.
-
-## Échelle typographique (v4.1)
-
-Les maquettes du handoff sont des images plein écran : leurs titres ont été
-transcrits en `clamp()` dont les maxima donnaient, dans un navigateur à 100 %,
-une typographie nettement trop grosse (H1 d'accueil à 151 px sur un écran de
-1440). L'échelle a été réduite d'environ un tiers et la pente en `vw`
-assouplie, pour que le palier haut soit atteint vers 1300 px au lieu de 1500.
-
-| Rôle | v4 | v4.1 | à 1440 px |
-| --- | --- | --- | --- |
-| H1 accueil | `clamp(52px,10.5vw,158px)` | `clamp(44px,7.4vw,92px)` | 92 px |
-| Sous-titre accueil | `clamp(17px,1.7vw,22px)` | `clamp(16px,1.25vw,19px)` | 18 px |
-| Compteurs | `clamp(38px,4.6vw,62px)` | `clamp(30px,3.1vw,42px)` | 42 px |
-| H2 de section | `clamp(34px,5.4vw,78px)` | `clamp(28px,3.9vw,50px)` | 50 px |
-| H2 avis / FAQ | `clamp(30px,4vw,54px)` | `clamp(26px,3.1vw,40px)` | 40 px |
-| Titre de page | `clamp(28px,3.4vw,42px)` | `clamp(25px,2.6vw,34px)` | 34 px |
-| Titre d'étape (devis) | `clamp(26px,3.4vw,42px)` | `clamp(24px,2.5vw,33px)` | 33 px |
-| Lignes de tarif | `clamp(20px,2.4vw,30px)` | `clamp(18px,1.6vw,23px)` | 23 px |
-| H1 atelier | `clamp(32px,4.4vw,60px)` | `clamp(27px,2.9vw,40px)` | 40 px |
-| KPI atelier | `46px` | `36px` | 36 px |
-
-Les minima (valeurs mobiles) bougent peu : le rendu à 360/390/430 px avait été
-vérifié et n'était pas en cause. Le corps de texte (14,5 à 16 px) est inchangé.
+Vérifié sans débordement horizontal à **390, 760, 924, 1100 et 1380 px**
+(mesure `document.scrollWidth` contre `clientWidth`, via le protocole de
+débogage de Chrome).
 
 ---
 

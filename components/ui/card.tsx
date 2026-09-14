@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils/cn";
 
 /** Carte de la charte v4 : surface en verre, filet clair, rayon 24 px. */
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("glass rounded-[24px]", className)} {...props} />;
+  return <div className={cn("glass rounded-[2px]", className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

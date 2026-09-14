@@ -38,7 +38,7 @@ export default async function PackagingPage({ searchParams }: { searchParams: Pr
       <ol className="mt-8 space-y-4">
         {generic.map((step, i) => (
           <li key={step.id} className="flex gap-4 rounded-lg border border-border bg-surface p-5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">{i + 1}</span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[2px] bg-primary text-sm font-semibold text-white">{i + 1}</span>
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-ink">{step.title}</p>
               <p className="mt-1 text-sm text-ink-soft">{step.body}</p>

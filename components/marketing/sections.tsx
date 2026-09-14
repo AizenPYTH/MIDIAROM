@@ -8,13 +8,14 @@ import type { Brand, ConsoleModel } from "@/lib/repair/catalog";
 import type { Tables, Views } from "@/types/database";
 import { cn } from "@/lib/utils/cn";
 
-/** Les quatre accents de la charte, dans l'ordre où ils ponctuent la page. */
-const TONES = [
-  { text: "text-lime", glow: "rgba(216,255,62,0.22)" },
-  { text: "text-cyan", glow: "rgba(51,225,255,0.22)" },
-  { text: "text-violet", glow: "rgba(124,92,255,0.28)" },
-  { text: "text-rose", glow: "rgba(255,92,168,0.22)" },
-];
+/**
+ * Le numéro d'étape, en rouge.
+ *
+ * Il y avait quatre accents et une lueur d'angle par carte, hérités d'une
+ * charte sombre. Cette direction n'a qu'une couleur, et une lueur colorée sur
+ * du blanc se lit comme une tache. Il ne reste que le chiffre.
+ */
+const STEP_TONE = "text-red";
 
 /**
  * « Quatre temps, zéro surprise » : quatre cartes en verre, chacune portant une
@@ -24,11 +25,9 @@ export function MethodCards({ steps, className }: { steps: { title: string; text
   return (
     <ol className={cn("grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(230px,1fr))]", className)}>
       {steps.map((step, i) => {
-        const tone = TONES[i % TONES.length]!;
         return (
-          <li key={step.title} className="glass reveal relative overflow-hidden rounded-[24px] p-6">
-            <span aria-hidden="true" className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full" style={{ background: `radial-gradient(circle, ${tone.glow}, transparent 70%)` }} />
-            <span className={cn("relative font-mono text-[11.5px] tracking-[0.14em]", tone.text)}>{String(i + 1).padStart(2, "0")}</span>
+          <li key={step.title} className="glass reveal relative overflow-hidden rounded-[2px] p-6">
+            <span className={cn("relative font-mono text-[11.5px] tracking-[0.14em]", STEP_TONE)}>{String(i + 1).padStart(2, "0")}</span>
             <h3 className="relative mt-4 font-display text-[22px] font-bold leading-[1.05] tracking-[-0.025em] text-ink">{step.title}</h3>
             <p className="relative mt-2.5 text-[15.5px] leading-[1.45] text-ink-soft">{step.text}</p>
           </li>
@@ -85,8 +84,7 @@ export function StoreCards({ brand, photo, className }: { brand: BrandSettings; 
   const address = [brand.address_line1, [brand.postal_code, brand.city].filter(Boolean).join(" ")].filter(Boolean);
   return (
     <div className={cn("grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]", className)}>
-      <div className="reveal relative overflow-hidden rounded-[28px] border border-border p-8" style={{ background: "linear-gradient(160deg, rgba(124,92,255,0.35), rgba(124,92,255,0.06))" }}>
-        <span aria-hidden="true" className="anim-drift2 pointer-events-none absolute -bottom-16 -right-12 h-56 w-56 rounded-full" style={{ background: "radial-gradient(circle, rgba(51,225,255,0.35), transparent 68%)", filter: "blur(24px)" }} />
+      <div className="reveal relative overflow-hidden rounded-[2px] border border-border bg-surface-muted p-8">
         <div className="relative">
           <p className="font-display text-[25px] font-bold leading-[1.05] tracking-[-0.035em] text-ink">{address[0] ?? brand.name}</p>
           {address[1] ? <p className="mt-1 text-[16px] text-ink-soft">{address[1]}</p> : null}
@@ -105,7 +103,7 @@ export function StoreCards({ brand, photo, className }: { brand: BrandSettings; 
         </div>
       </div>
 
-      <div className="reveal overflow-hidden rounded-[28px] border border-border">
+      <div className="reveal overflow-hidden rounded-[2px] border border-border">
         {photo ? (
           <Image src={publicMediaUrl(photo.image_path)} alt={photo.title ?? "L'atelier"} width={765} height={1020} sizes="(min-width: 1024px) 420px, 100vw" className="h-full w-full object-cover" />
         ) : (
@@ -113,11 +111,11 @@ export function StoreCards({ brand, photo, className }: { brand: BrandSettings; 
         )}
       </div>
 
-      <div className="glass reveal flex flex-col rounded-[28px] p-8">
+      <div className="glass reveal flex flex-col rounded-[2px] p-8">
         <Eyebrow tone="repair">Suivi</Eyebrow>
         <p className="mt-3 font-display text-[25px] font-bold leading-[1.05] tracking-[-0.035em] text-ink">Où en est ma console ?</p>
         <p className="mt-3 text-[15.5px] leading-[1.45] text-ink-soft">Votre numéro de dossier et l&apos;adresse utilisée à la commande suffisent — aucun compte n&apos;est nécessaire.</p>
-        <Link href={ROUTES.tracking} className="btn-gradient mt-auto flex items-center justify-center rounded-full px-6 py-[15px] text-[15px] font-semibold">
+        <Link href={ROUTES.tracking} className="btn-gradient mt-auto flex items-center justify-center rounded-[2px] px-6 py-[15px] text-[15px] font-semibold">
           Suivre ma réparation
         </Link>
       </div>
@@ -130,10 +128,9 @@ export function HowToList({ steps, className }: { steps: { title: string; text: 
   return (
     <ol className={cn("flex flex-col gap-3", className)}>
       {steps.map((step, i) => {
-        const tone = TONES[i % TONES.length]!;
         return (
-          <li key={step.title} className="glass flex items-baseline gap-4 rounded-[20px] px-5 py-4">
-            <span className={cn("min-w-[22px] font-mono text-[11.5px] tracking-[0.14em]", tone.text)}>{String(i + 1).padStart(2, "0")}</span>
+          <li key={step.title} className="glass flex items-baseline gap-4 rounded-[2px] px-5 py-4">
+            <span className={cn("min-w-[22px] font-mono text-[11.5px] tracking-[0.14em]", STEP_TONE)}>{String(i + 1).padStart(2, "0")}</span>
             <span className="flex flex-col gap-1">
               <strong className="font-display text-[17px] font-bold tracking-[-0.02em] text-ink">{step.title}</strong>
               <span className="text-[14.5px] leading-[1.45] text-ink-soft">{step.text}</span>
@@ -158,7 +155,7 @@ export function ConsoleGrid({ brands, models }: { brands: Brand[]; models: Conso
             <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(190px,1fr))]">
               {brandModels.map((model) => (
                 <li key={model.id}>
-                  <Link href={`${ROUTES.repair}/${model.slug}`} className="glass flex flex-col gap-1.5 rounded-[20px] p-[18px] transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:-translate-y-1.5 hover:border-cyan">
+                  <Link href={`${ROUTES.repair}/${model.slug}`} className="glass flex flex-col gap-1.5 rounded-[2px] p-[18px] transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:-translate-y-1.5 hover:border-cyan">
                     <span className="font-display text-[18px] font-bold tracking-[-0.02em] text-ink">{model.name}</span>
                     <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink-muted">{model.release_year ? `depuis ${model.release_year}` : brand.name}</span>
                   </Link>
@@ -176,10 +173,9 @@ export function StepsList({ steps, compact }: { steps: { title: string; text: st
   return (
     <ol className={cn("flex flex-col gap-3", compact && "sm:grid sm:grid-cols-3")}>
       {steps.map((step, i) => {
-        const tone = TONES[i % TONES.length]!;
         return (
-          <li key={step.title} className="glass flex items-baseline gap-4 rounded-[20px] px-5 py-4">
-            <span className={cn("min-w-[22px] font-mono text-[11.5px] tracking-[0.14em]", tone.text)}>{String(i + 1).padStart(2, "0")}</span>
+          <li key={step.title} className="glass flex items-baseline gap-4 rounded-[2px] px-5 py-4">
+            <span className={cn("min-w-[22px] font-mono text-[11.5px] tracking-[0.14em]", STEP_TONE)}>{String(i + 1).padStart(2, "0")}</span>
             <span className="flex flex-col gap-1">
               <strong className="font-display text-[17px] font-bold tracking-[-0.02em] text-ink">{step.title}</strong>
               <span className="text-[14.5px] leading-[1.45] text-ink-soft">{step.text}</span>
@@ -202,7 +198,7 @@ export function ReviewsSection({ reviews }: { reviews: Views<"public_reviews">[]
         <p className="reveal mt-4 max-w-[42ch] text-[16px] text-ink-soft">Avis authentiques laissés après une réparation, modérés par l&apos;atelier.</p>
         <ul className="mt-10 grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
           {reviews.map((review) => (
-            <li key={review.id} className="glass reveal flex flex-col gap-3 rounded-[24px] p-6">
+            <li key={review.id} className="glass reveal flex flex-col gap-3 rounded-[2px] p-6">
               <span className="font-mono text-[13px] tracking-[0.2em] text-sale" aria-label={`${review.rating ?? 0} sur 5`}>
                 {"★".repeat(review.rating ?? 0)}
                 <span className="text-border-strong">{"★".repeat(Math.max(0, 5 - (review.rating ?? 0)))}</span>
@@ -224,7 +220,7 @@ export function FaqList({ items }: { items: { id: string; question: string; answ
   return (
     <div className="flex flex-col gap-2">
       {items.map((item) => (
-        <details key={item.id} className="glass group rounded-[20px] px-5 py-2.5 sm:py-4">
+        <details key={item.id} className="glass group rounded-[2px] px-5 py-2.5 sm:py-4">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 py-1.5 font-display text-[17px] font-bold tracking-[-0.02em] text-ink sm:min-h-0 sm:py-0 [&::-webkit-details-marker]:hidden">
             {item.question}
             <span className="font-mono text-ink-muted group-open:hidden" aria-hidden="true">
@@ -246,13 +242,13 @@ export function CtaBanner({ title, text }: { title: string; text: string }) {
   return (
     <section>
       <Container className="py-[92px]">
-        <div className="glass reveal flex flex-wrap items-end justify-between gap-8 rounded-[28px] p-8 sm:p-10">
+        <div className="glass reveal flex flex-wrap items-end justify-between gap-8 rounded-[2px] p-8 sm:p-10">
           <div>
             <Eyebrow tone="repair">Atelier</Eyebrow>
             <h2 className="mt-3 font-display text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[0.95] tracking-[-0.035em]">{title}</h2>
             <p className="mt-3 max-w-[46ch] text-[16.5px] leading-[1.45] text-ink-soft">{text}</p>
           </div>
-          <Link href={ROUTES.repair} className="btn-gradient flex items-center justify-center rounded-full px-7 py-[15px] text-[15px] font-semibold max-sm:w-full">
+          <Link href={ROUTES.repair} className="btn-gradient flex items-center justify-center rounded-[2px] px-7 py-[15px] text-[15px] font-semibold max-sm:w-full">
             Démarrer mon devis
           </Link>
         </div>

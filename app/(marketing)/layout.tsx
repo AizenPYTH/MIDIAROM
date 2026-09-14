@@ -12,7 +12,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
     <>
       <Backdrop />
       <RevealArmer />
-      <a href="#contenu" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-paper focus:px-4 focus:py-2 focus:text-ink-900">
+      <a href="#contenu" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-paper focus:px-4 focus:py-2 focus:text-ink-900">
         Aller au contenu
       </a>
       <SiteHeader brand={brand} />

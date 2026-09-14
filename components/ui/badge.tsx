@@ -21,5 +21,5 @@ const tones: Record<BadgeTone, string> = {
 };
 
 export function Badge({ tone = "neutral", className, ...props }: React.HTMLAttributes<HTMLSpanElement> & { tone?: BadgeTone }) {
-  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-full px-[10px] py-[4px] font-mono text-[10.5px] uppercase tracking-[0.1em]", tones[tone], className)} {...props} />;
+  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-[2px] px-[10px] py-[4px] font-mono text-[10.5px] uppercase tracking-[0.1em]", tones[tone], className)} {...props} />;
 }

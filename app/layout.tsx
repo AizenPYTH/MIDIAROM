@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, DM_Mono, Instrument_Sans } from "next/font/google";
+import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AnalyticsProvider } from "@/lib/analytics/client";
 import { CartProvider } from "@/components/shop/cart-provider";
@@ -8,13 +8,16 @@ import { SITE_URL } from "@/config/site";
 import { getBrandSettings } from "@/lib/settings";
 
 /**
- * Les trois polices de la charte v4 : Bricolage Grotesque pour les titres (axe
- * optique variable), Instrument Sans pour le texte, DM Mono pour les étiquettes,
- * les prix et les compteurs.
+ * Deux polices, deux rôles.
+ *
+ * **Archivo** porte les titres comme le corps : une grotesque étroite et
+ * droite, qui tient les grands titres serrés du hero sans devenir décorative.
+ * **IBM Plex Mono** marque ce qui se lit d'un coup d'œil — étiquettes, prix,
+ * références, badges, HUD. C'est ce mono qui donne le registre atelier, et il
+ * ne sert jamais à un paragraphe.
  */
-const bricolage = Bricolage_Grotesque({ subsets: ["latin"], weight: ["700", "800"], variable: "--font-bricolage", display: "swap" });
-const instrument = Instrument_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-instrument", display: "swap" });
-const dmMono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-dm-mono", display: "swap" });
+const archivo = Archivo({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-archivo", display: "swap" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono", display: "swap" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandSettings();
@@ -39,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
   return (
-    <html lang="fr" className={`h-full ${bricolage.variable} ${instrument.variable} ${dmMono.variable}`}>
+    <html lang="fr" className={`h-full ${archivo.variable} ${plexMono.variable}`}>
       <body className="flex min-h-full flex-col">
         <AnalyticsProvider gaId={gaId} adsId={adsId}>
           {/* Le panier vit dans le stockage local du visiteur : il doit

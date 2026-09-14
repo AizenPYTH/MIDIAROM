@@ -1,17 +1,16 @@
 import "server-only";
 
 /**
- * Les visuels réellement présents dans le projet.
+ * Les visuels de l'accueil.
  *
- * **Aucune photo n'est branchée sur l'accueil pour l'instant, et c'est
- * volontaire.** Le client fournira lui-même les visuels des consoles, des
- * figurines manga/anime et des services ; il ne veut pas d'images choisies à sa
- * place, même issues du projet.
+ * **Aucune photo n'est branchée, et c'est volontaire.** Le magasin fournira ses
+ * propres visuels — consoles, figurines de personnages, atelier, façade — et ne
+ * veut pas d'images choisies à sa place, même issues du projet.
  *
  * Les emplacements existent donc dans les composants, vides, et attendent
- * simplement qu'on renseigne une entrée ici : rien d'autre ne sera à changer.
- * En attendant, chaque emplacement affiche l'aplat teinté de son accent, qui
- * est un état prévu par la charte et non un trou.
+ * qu'on renseigne une entrée ici : rien d'autre ne sera à changer. En
+ * attendant, chaque emplacement affiche la plaque d'attente de la charte, qui
+ * est un état prévu et non un trou.
  *
  * Ce qui existe par ailleurs dans le dépôt, non branché sur l'accueil :
  * 13 détourés de consoles sur fond blanc (`public/medias/consoles/`, importés
@@ -21,51 +20,45 @@ import "server-only";
  */
 
 /**
- * Visuel des cartes « Ce qui passe sur le banc ».
+ * La vidéo d'atelier de la section « Dans l'atelier ».
  *
- * Toutes nulles : les photos viendront du client. Renseigner un chemin ici
- * suffit à faire apparaître l'image, sans toucher au composant.
+ * `undefined` tant qu'aucune vidéo n'est fournie : le cadre reste alors son
+ * image d'attente et le bouton Lire disparaît — la section est belle sans, ce
+ * qui est la condition pour qu'elle ne soit jamais bloquante.
+ *
+ * Attendu : MP4 H.264 **et** WebM, 1920×1080, 20 à 40 s, moins de 6 Mo, sans
+ * piste sonore dans le fichier. Plans utiles : console ouverte, nettoyage,
+ * microsoudure au fer, test HDMI à l'écran, fermeture du boîtier.
+ *
+ *   export const WORKSHOP_VIDEO = { src: "/medias/atelier.mp4", poster: "/medias/atelier.jpg" };
  */
-export const SERVICE_PHOTOS: Record<string, string | null> = {
-  "Consoles de salon": null,
-  Manettes: null,
-  Smartphones: null,
-  iPhone: null,
-  "PC et portables": null,
-  Rétro: null,
-};
-
-/** Visuel du hero de réparation. À renseigner par le client. */
-export const HERO_PHOTO: string | null = null;
-
-/** Volet « avant / après » du récit de l'atelier. À renseigner par le client. */
-export const STORY_BEFORE: string | null = null;
-export const STORY_AFTER: string | null = null;
-
-/** Visuel de l'entrée boutique. À renseigner par le client. */
-export const SHOP_PHOTO: string | null = null;
+export const WORKSHOP_VIDEO: { src: string; poster?: string } | undefined = undefined;
 
 /**
  * Boucle vidéo de démonstration du jeu vedette.
  *
- * Fabriquée pour ce projet : une animation de nuées dessinée sur un canvas puis
+ * Fabriquée pour ce projet : une animation dessinée sur un canvas puis
  * enregistrée. Elle n'est empruntée à personne, aucune licence tierce n'est en
- * jeu. Elle sert à éprouver la scène ; le champ `hero_video_url` d'un produit
- * la remplace dès qu'une vraie vidéo est disponible.
+ * jeu. Le champ `hero_video_url` d'un produit la remplace dès qu'une vraie
+ * vidéo est disponible.
  */
 export const DEMO_FEATURED_VIDEO = "/medias/demo/featured-loop.webm";
 
 /**
- * Ce que le client fournira. Tenu à jour à la main : c'est la liste à lui
- * donner quand il demande pourquoi une scène reste sur un aplat.
+ * Ce que le magasin fournira. Tenu à jour à la main : c'est la liste à lui
+ * donner quand il demande pourquoi un emplacement reste sur une plaque.
+ *
+ * **Consoles uniquement** côté atelier : ni téléphone, ni ordinateur, ni
+ * tablette n'apparaît sur ce site, donc aucune photo de ce genre n'est
+ * attendue.
  */
 export const MISSING_ASSETS = [
-  { role: "Hero réparation", need: "Visuel principal : appareil démonté, composants, écran. 4/3, 1600 px." },
-  { role: "Récit — avant", need: "Appareil en panne, ouvert sur le banc. 5/4, 1600 px." },
-  { role: "Récit — après", need: "Le même réparé, cadrage identique : c'est le volet qui se découvre." },
-  { role: "Services — les six cartes", need: "Une photo par prestation (consoles, manettes, smartphones, iPhone, PC, rétro). 16/11." },
-  { role: "Entrée boutique", need: "Photo du magasin ou d'un rayon. 4/5, 1400 px." },
-  { role: "Consoles, figurines manga/anime", need: "Photos des produits, à déposer dans la fiche produit du back-office." },
-  { role: "Jeu vedette — vidéo", need: "Facultatif : une vidéo dont vous disposez légalement, dans `hero_video_url`. Une boucle de démonstration tient la place." },
-  { role: "Jeux — covers et artworks", need: "Rien à fournir : ils viennent d'IGDB." },
+  { role: "Hero", need: "Composition à plat : console ouverte, manette, composants, tournevis. Fond clair, cadrage net. 5/4, 1600 px." },
+  { role: "Plateformes — quatre cartes", need: "PlayStation sur l'établi · Nintendo Switch démontée · Xbox ouverte · consoles rétro en vitrine. 16/10, 1200 px." },
+  { role: "Atelier — image d'attente", need: "Plan d'atelier, sert de poster à la vidéo. 16/9, 1920 px." },
+  { role: "Atelier — vidéo", need: "MP4 + WebM, 1920×1080, 20 à 40 s, moins de 6 Mo, sans son. À renseigner dans WORKSHOP_VIDEO." },
+  { role: "Rayons — trois cartes", need: "Rayon jeux vidéo · rayon consoles · vitrine de figurines de personnages de manga et d'anime. 4/3, 1200 px." },
+  { role: "Magasin", need: "Façade ou intérieur, 207 rue de Rome. 4/3, 1600 px." },
+  { role: "Produits", need: "Photos à déposer dans la fiche produit du back-office — ce sont elles que la boutique affiche." },
+  { role: "Jeux — jaquettes", need: "Rien à fournir : elles viennent d'IGDB." },
 ] as const;

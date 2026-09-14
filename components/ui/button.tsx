@@ -20,7 +20,7 @@ type Variant = "primary" | "accent" | "sale" | "light" | "secondary" | "outline"
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)] disabled:opacity-60 disabled:pointer-events-none select-none cursor-pointer";
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[2px] border transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)] disabled:opacity-60 disabled:pointer-events-none select-none cursor-pointer";
 
 const variants: Record<Variant, string> = {
   primary: "btn-gradient border-transparent font-semibold hover:brightness-110",

@@ -127,13 +127,13 @@ export default async function DemoGamePage({ params }: { params: Promise<{ slug:
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 href={ROUTES.contact}
-                className="inline-flex min-h-[48px] items-center rounded-full bg-ink px-6 font-semibold text-bg transition-opacity hover:opacity-85"
+                className="inline-flex min-h-[48px] items-center rounded-[2px] bg-ink px-6 font-semibold text-bg transition-opacity hover:opacity-85"
               >
                 Demander ce jeu
               </Link>
               <Link
                 href={`${ROUTES.shop}?cat=${CATEGORY_SLUGS.GAME}`}
-                className="inline-flex min-h-[48px] items-center rounded-full border border-border-strong px-6 font-mono text-[11px] uppercase tracking-[0.12em] text-ink transition-colors hover:border-ink"
+                className="inline-flex min-h-[48px] items-center rounded-[2px] border border-border-strong px-6 font-mono text-[11px] uppercase tracking-[0.12em] text-ink transition-colors hover:border-ink"
               >
                 Voir le rayon
               </Link>
@@ -142,7 +142,7 @@ export default async function DemoGamePage({ params }: { params: Promise<{ slug:
                   href={`https://www.youtube-nocookie.com/watch?v=${trailer}`}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="inline-flex min-h-[48px] items-center rounded-full border border-border px-6 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-soft transition-colors hover:border-ink hover:text-ink"
+                  className="inline-flex min-h-[48px] items-center rounded-[2px] border border-border px-6 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-soft transition-colors hover:border-ink hover:text-ink"
                 >
                   Bande-annonce
                 </a>

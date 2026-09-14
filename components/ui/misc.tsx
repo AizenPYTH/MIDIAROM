@@ -93,7 +93,7 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-start rounded-[24px] border border-dashed border-border-strong bg-surface-muted px-6 py-8", className)}>
+    <div className={cn("flex flex-col items-start rounded-[2px] border border-dashed border-border-strong bg-surface-muted px-6 py-8", className)}>
       <p className="text-[15.5px] font-semibold text-ink">{title}</p>
       {description ? <p className="mt-1 max-w-md text-sm text-ink-muted">{description}</p> : null}
       {action ? <div className="mt-4">{action}</div> : null}

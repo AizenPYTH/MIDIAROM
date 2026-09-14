@@ -5,7 +5,8 @@ import { Container, Eyebrow } from "@/components/ui/misc";
 import { ProductCard, ProductGrid } from "@/components/shop/product-card";
 import { getProductCategoryCounts, getProductPlatforms, getProducts, type ProductFilters } from "@/lib/shop/catalog";
 import { CATEGORY_LABELS, CATEGORY_SLUGS, PUBLIC_CATEGORIES, type ProductCategory } from "@/lib/shop/status";
-import { CategoryCards, DemoGamesRail } from "@/components/marketing/home/shop-sections";
+import { ShopCategories } from "@/components/marketing/home/sections";
+import { GameCard } from "@/components/shop/product-card";
 import { getHomepageGames } from "@/lib/shop/games";
 import { cn } from "@/lib/utils/cn";
 
@@ -120,7 +121,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           première chose qu'une boutique doit montrer. */}
       {!sp.cat && sp.retro !== "1" && !sp.q ? (
         <div className="-mx-5 mb-8 sm:-mx-8">
-          <CategoryCards counts={counts} />
+          <ShopCategories />
         </div>
       ) : null}
 
@@ -188,10 +189,22 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       )}
       <p className="mt-8 text-[13px] text-ink-faint">Les états d&apos;occasion sont indiqués sur chaque fiche (grade A, B ou C, défauts détaillés). Un article d&apos;occasion n&apos;est jamais présenté comme neuf.</p>
 
+      {/* La sélection IGDB, quand le rayon jeux est encore vide. Mêmes cartes
+          que le catalogue, mais badgées « Démo » et sans bouton d'achat : ces
+          titres ne sont pas en stock, on peut seulement les faire venir. */}
       {demoGames.length ? (
-        <div className="-mx-5 mt-4 sm:-mx-8">
-          <DemoGamesRail games={demoGames} />
-        </div>
+        <section aria-label="Jeux vidéo — notre sélection" className="mt-10">
+          <p className="mb-5 font-mono text-[11.5px] tracking-[0.04em] text-ink-muted">
+            Notre sélection du moment — ces titres ne sont pas encore en rayon, les prix sont indicatifs.
+          </p>
+          <ProductGrid>
+            {demoGames.map((g) => (
+              <li key={g.productId} className="min-w-0">
+                <GameCard game={g} />
+              </li>
+            ))}
+          </ProductGrid>
+        </section>
       ) : null}
     </Container>
   );

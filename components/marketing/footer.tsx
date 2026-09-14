@@ -1,9 +1,21 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/site";
+import { CATEGORY_SLUGS } from "@/lib/shop/status";
+import { BrandMark } from "@/components/marketing/header";
 import type { BrandSettings } from "@/config/brand";
 import type { SocialSettings } from "@/lib/settings";
 
-/** Pied de page du handoff : fond encre, mono 12 px, une ligne « © » et une ligne de liens séparés par « · ». */
+/**
+ * Le pied de page : une tuile noire, trois colonnes de liens.
+ *
+ * Il tenait sur une ligne de « · » en petites capitales — compact, mais illisible
+ * pour qui cherche une page précise. Cette direction lui donne la place d'un
+ * plan de site : ce que l'atelier répare, ce que la boutique vend, et les
+ * informations légales.
+ *
+ * L'adresse, la ville et les réseaux viennent des réglages. Un réseau non
+ * renseigné ne laisse pas de trou : sa ligne n'existe pas.
+ */
 export function SiteFooter({ brand, social, models }: { brand: BrandSettings; social: SocialSettings; models: { slug: string; name: string }[] }) {
   const socials = [
     { label: "Instagram", href: social.instagram },
@@ -13,65 +25,85 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
     { label: "Google", href: social.google_business },
   ].filter((s) => s.href);
 
-  const links: { label: string; href: string; external?: boolean }[] = [
-    { label: "CGV", href: ROUTES.cgv },
-    { label: "Confidentialité", href: ROUTES.privacy },
-    { label: "Mentions légales", href: ROUTES.legal },
-    { label: "Reprise", href: ROUTES.tradeIn },
-    { label: "Suivi réparation", href: ROUTES.tracking },
-    { label: "Espace client", href: ROUTES.account },
-    ...socials.map((s) => ({ label: s.label, href: s.href, external: true })),
+  // Les consoles réellement réparables viennent du catalogue ; en leur absence,
+  // la colonne retombe sur le parcours de devis plutôt que sur des liens morts.
+  const consoles = models.slice(0, 5).map((m) => ({ label: m.name, href: `${ROUTES.repair}/${m.slug}` }));
+
+  const colonnes: { title: string; links: { label: string; href: string; external?: boolean }[] }[] = [
+    {
+      title: "Réparation",
+      links: [
+        ...(consoles.length ? consoles : [{ label: "Toutes les consoles", href: ROUTES.repair }]),
+        { label: "Suivi de réparation", href: ROUTES.tracking },
+        { label: "Envoi de colis", href: ROUTES.packaging },
+      ],
+    },
+    {
+      title: "Boutique",
+      links: [
+        { label: "Jeux vidéo", href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.GAME}` },
+        { label: "Consoles", href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.CONSOLE}` },
+        { label: "Figurines manga / anime", href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.COLLECTIBLE}` },
+        { label: "Mon compte", href: ROUTES.account },
+        { label: "Panier", href: ROUTES.cart },
+      ],
+    },
+    {
+      title: "Informations",
+      links: [
+        { label: "Reprise de console", href: ROUTES.tradeIn },
+        { label: "Garantie et retours", href: ROUTES.trust },
+        { label: "Conditions générales de vente", href: ROUTES.cgv },
+        { label: "Mentions légales", href: ROUTES.legal },
+        { label: "Contact", href: ROUTES.contact },
+        ...socials.map((s) => ({ label: s.label, href: s.href, external: true })),
+      ],
+    },
   ];
 
+  const adresse = [brand.address_line1, [brand.postal_code, brand.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+
   return (
-    <footer className="mt-auto border-t border-border font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-faint">
-      <div className="mx-auto flex w-full max-w-[1340px] flex-col gap-[18px] px-4 pb-[34px] pt-7 sm:flex-row sm:flex-wrap sm:justify-between sm:px-8 sm:py-8">
+    <footer className="mt-auto bg-ink px-[22px] pb-[26px] pt-[46px] text-on-dark-2">
+      <div className="mx-auto grid max-w-[1380px] gap-8" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(208px, 1fr))" }}>
+        <div className="flex flex-col gap-[11px]">
+          <span className="text-on-dark">
+            <BrandMark name={brand.name} size="sm" />
+          </span>
+          <span className="max-w-[32ch] text-[14px] leading-[1.55]">
+            Atelier de réparation de consoles et boutique gaming.
+            {adresse ? ` ${adresse}.` : ""}
+          </span>
+        </div>
+
+        {colonnes.map((col) => (
+          <div key={col.title} className="flex flex-col gap-2.5">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-on-dark-3">{col.title}</span>
+            {col.links.map((link) =>
+              link.external ? (
+                <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="text-[14px] transition-colors hover:text-on-dark">
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.label} href={link.href} className="text-[14px] transition-colors hover:text-on-dark">
+                  {link.label}
+                </Link>
+              ),
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div
+        className="mx-auto mt-[30px] flex max-w-[1380px] flex-wrap justify-between gap-[18px] pt-[18px] font-mono text-[11px] uppercase tracking-[0.06em] text-on-dark-3"
+        style={{ borderTop: "1px solid rgba(242,242,244,0.16)" }}
+      >
         <span>
           © {new Date().getFullYear()} {brand.name}
           {brand.city ? ` — ${brand.city}` : ""}
         </span>
-        <span className="flex flex-wrap gap-x-3 gap-y-2 sm:gap-y-1">
-          {links.map((link, i) => (
-            <span key={link.label} className="contents">
-              {i > 0 ? <span aria-hidden="true">·</span> : null}
-              {link.external ? (
-                <a href={link.href} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-sale">
-                  {link.label}
-                </a>
-              ) : (
-                <Link href={link.href} className="transition-colors hover:text-sale">
-                  {link.label}
-                </Link>
-              )}
-            </span>
-          ))}
-        </span>
+        <span>Paiement sécurisé · Envoi suivi · Garantie 3 mois</span>
       </div>
-      {models.length ? (
-        <div className="mx-auto flex w-full max-w-[1340px] flex-wrap gap-x-3 gap-y-1 border-t border-border px-4 py-4 text-[10.5px] text-ink-faint/70 sm:px-8">
-          <span className="uppercase tracking-[0.08em]">Réparation</span>
-          {models.slice(0, 10).map((m) => (
-            <span key={m.slug} className="contents">
-              <span aria-hidden="true">·</span>
-              <Link href={`${ROUTES.repair}/${m.slug}`} className="transition-colors hover:text-sale">
-                {m.name}
-              </Link>
-            </span>
-          ))}
-          <span aria-hidden="true">·</span>
-          <Link href={ROUTES.repair} className="transition-colors hover:text-sale">
-            Toutes les consoles
-          </Link>
-          <span aria-hidden="true">·</span>
-          <Link href={ROUTES.packaging} className="transition-colors hover:text-sale">
-            Emballage
-          </Link>
-          <span aria-hidden="true">·</span>
-          <Link href={ROUTES.trust} className="transition-colors hover:text-sale">
-            Confiance
-          </Link>
-        </div>
-      ) : null}
     </footer>
   );
 }

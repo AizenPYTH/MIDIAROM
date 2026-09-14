@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ROUTES } from "@/config/site";
 import type { BrandSettings } from "@/config/brand";
@@ -28,9 +29,9 @@ export function AccountLink({ onNavigate, className }: { onNavigate?: () => void
     <Link
       href={loggedIn ? ROUTES.account : ROUTES.login}
       onClick={onNavigate}
-      className={className ?? "whitespace-nowrap px-2 py-[9px] font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-muted transition-colors hover:text-sale"}
+      className={className ?? "whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-soft transition-colors hover:text-red"}
     >
-      {loggedIn ? "Mon espace" : "Connexion"}
+      {loggedIn ? "Mon espace" : "Compte"}
     </Link>
   );
 }
@@ -66,7 +67,7 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
         className="flex h-11 w-11 cursor-pointer items-center justify-center"
       >
         {/* Burger de la charte v4 : carré arrondi, deux traits. */}
-        <span className="flex h-10 w-10 flex-col items-center justify-center gap-[5px] rounded-[14px] border border-border-strong">
+        <span className="flex h-10 w-10 flex-col items-center justify-center gap-[5px] border border-border-strong">
           <span className="block h-[1.5px] w-[18px] bg-ink" />
           <span className="block h-[1.5px] w-[18px] bg-ink" />
         </span>
@@ -81,16 +82,16 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
           </div>
           <nav className="flex flex-col divide-y divide-border" aria-label="Navigation mobile">
             {items.map((item) => (
-              <Link key={item.href} href={item.href} onClick={close} className="px-4 py-3.5 font-display text-[26px] font-bold leading-[1.15] tracking-[-0.03em] text-ink transition-colors hover:text-sale">
+              <Link key={item.href} href={item.href} onClick={close} className="px-4 py-3.5 font-display text-[26px] font-bold leading-[1.15] tracking-[-0.03em] text-ink transition-colors hover:text-red">
                 {item.label}
               </Link>
             ))}
           </nav>
           <div className="mt-auto flex flex-col gap-3 border-t border-border px-4 py-5">
-            <Link href={ROUTES.tracking} onClick={close} className="btn-gradient rounded-full px-4 py-[15px] text-center font-mono text-[11.5px] uppercase tracking-[0.12em]">
+            <Link href={ROUTES.tracking} onClick={close} className="bg-red px-4 py-[15px] text-center font-mono text-[11.5px] uppercase tracking-[0.12em] text-white transition-colors hover:bg-ink">
               Suivre ma réparation
             </Link>
-            <AccountLink onNavigate={close} className="rounded-full border border-border-strong px-4 py-[15px] text-center font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink" />
+            <AccountLink onNavigate={close} className="border border-ink px-4 py-[15px] text-center font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink" />
             {address || brand?.phone || brand?.hours ? (
               <div className="mt-1 flex flex-col gap-1 font-mono text-[12px] leading-[1.5] text-ink-muted">
                 {address ? <span>{address}</span> : null}
@@ -106,5 +107,77 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * La deuxième ligne de l'en-tête : les rayons.
+ *
+ * Découpée en deux, et pour une raison précise. `NavList` ne fait que dessiner ;
+ * `PrimaryNav` lit l'adresse courante pour savoir quel onglet souligner. Comme
+ * `useSearchParams()` force le rendu côté client, l'en-tête étant présent sur
+ * toutes les pages, il empêcherait le pré-rendu statique de `/panier` et de
+ * `/suivi` s'il n'était pas isolé derrière une frontière `<Suspense>`. La
+ * navigation s'affiche donc toujours ; seul le soulignement attend.
+ */
+export function NavList({ items, courant }: { items: { href: string; label: string }[]; courant: string }) {
+  return (
+    <nav className="mx-auto mt-[11px] flex max-w-[1380px] flex-wrap gap-x-[22px] gap-y-1.5 text-[14.5px] font-medium" aria-label="Navigation principale">
+      {items.map((item) => {
+        const actif = item.href === courant;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={actif ? "page" : undefined}
+            className={`whitespace-nowrap border-b-2 pb-[3px] text-ink transition-colors ${actif ? "border-red" : "border-transparent hover:border-border-strong"}`}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/**
+ * L'onglet actif, souligné de 2 px de rouge — l'un des six emplois autorisés de
+ * l'accent. Il se déduit du chemin **et** du paramètre `cat` : sans lui,
+ * « Jeux vidéo » et « Consoles » pointent tous deux sur /boutique et
+ * s'allumeraient ensemble.
+ */
+export function PrimaryNav({ items }: { items: { href: string; label: string }[] }) {
+  const pathname = usePathname();
+  const cat = useSearchParams().get("cat");
+  return <NavList items={items} courant={`${pathname}${cat ? `?cat=${cat}` : ""}`} />;
+}
+
+/**
+ * La recherche, visible dès le premier écran.
+ *
+ * Un `<form>` en GET vers le catalogue : elle fonctionne sans JavaScript, et
+ * elle atterrit sur la vraie page de résultats plutôt que sur une liste
+ * fabriquée à côté. Plafonnée à 420 px pour que le bouton rouge reste à sa
+ * droite sur les largeurs intermédiaires.
+ */
+export function SearchField() {
+  return (
+    <form
+      action={ROUTES.shop}
+      role="search"
+      className="flex min-w-0 max-w-[420px] flex-[1_1_220px] items-center gap-2.5 rounded-[8px] border border-border-strong bg-surface-muted px-3.5 py-2.5"
+    >
+      <span aria-hidden="true" className="font-mono text-[12px] text-ink-muted">
+        ⌕
+      </span>
+      <input
+        type="search"
+        name="q"
+        id="recherche-boutique"
+        placeholder="Rechercher un jeu, une console, une figurine"
+        aria-label="Rechercher dans la boutique"
+        className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-muted sm:text-[14.5px]"
+      />
+    </form>
   );
 }

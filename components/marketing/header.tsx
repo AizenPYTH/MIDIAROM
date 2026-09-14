@@ -1,73 +1,103 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { CATEGORY_SLUGS } from "@/lib/shop/status";
 import { ROUTES } from "@/config/site";
 import type { BrandSettings } from "@/config/brand";
-import { AccountLink, MobileNav } from "@/components/marketing/header-client";
-import { PulseDot } from "@/components/marketing/backdrop";
+import { AccountLink, MobileNav, NavList, PrimaryNav, SearchField } from "@/components/marketing/header-client";
+import { CartLink } from "@/components/shop/cart-widgets";
+import { UTILITY_BAR } from "@/components/marketing/home/content";
 
 /**
- * La navigation d'une boutique.
+ * L'en-tête d'une boutique qui répare aussi des consoles.
  *
- * Elle listait cinq services à égalité — réparation, boutique, reprise, suivi,
- * magasin — et la boutique s'y perdait. Elle mène maintenant d'abord aux trois
- * rayons, puis au service. Reprise, suivi et magasin restent accessibles par le
- * pied de page et la barre d'onglets mobile : ce sont des destinations qu'on
- * cherche, pas des rayons qu'on parcourt.
+ * Deux lignes, et c'est délibéré. La première porte ce qu'on vient faire —
+ * chercher un produit, retrouver son panier, demander un diagnostic. La
+ * seconde porte les rayons. Empiler les deux sur une ligne obligeait à
+ * sacrifier la recherche, qui est le premier geste d'un visiteur de boutique.
+ *
+ * Sous 1100px, Suivi / Compte / Panier passent sur leur propre ligne
+ * (`order-3`) pour que le bouton rouge reste à droite du champ de recherche :
+ * c'est l'action que l'atelier veut voir cliquée, elle ne descend pas.
  */
 const NAV = [
+  { href: ROUTES.home, label: "Accueil" },
   { href: ROUTES.shop, label: "Boutique" },
   { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.GAME}`, label: "Jeux vidéo" },
   { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.CONSOLE}`, label: "Consoles" },
-  { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.COLLECTIBLE}`, label: "Figurines Manga / Anime" },
+  { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.COLLECTIBLE}`, label: "Figurines" },
   { href: ROUTES.repair, label: "Réparation" },
+  { href: ROUTES.contact, label: "Contact" },
 ];
 
 /**
- * Logo typographique de la charte v4 : un point lime qui bat, puis le nom de
- * l'enseigne en capitales. L'arobase vient du nom enregistré dans Réglages
- * (« 207 Médi@roM ») ; seule la mise en capitales est une affaire d'affichage.
+ * Le logo : un carré rouge plein de 12 px, puis le nom en capitales.
+ *
+ * Le carré est l'une des six seules choses auxquelles le rouge a droit. Le nom
+ * vient des réglages — rien n'écrit une enseigne en dur — et seule sa mise en
+ * capitales est une affaire d'affichage.
  */
 export function BrandMark({ name, size = "md" }: { name: string; inverted?: boolean; size?: "md" | "sm" }) {
   return (
-    <span className="flex items-center gap-2.5 whitespace-nowrap">
-      <PulseDot />
-      <span className={`font-display font-extrabold uppercase tracking-[-0.01em] ${size === "sm" ? "text-[15px]" : "text-[17px] sm:text-[18px]"}`}>{name}</span>
+    <span className="flex items-center gap-2 whitespace-nowrap">
+      <span aria-hidden="true" className="block h-3 w-3 shrink-0 bg-red" />
+      <span className={`font-display font-bold uppercase tracking-[-0.02em] ${size === "sm" ? "text-[17px]" : "text-[19px] sm:text-[20px]"}`}>{name}</span>
     </span>
   );
 }
 
-/** En-tête sticky en verre : filet bas, fond translucide, flou d'arrière-plan. */
 export function SiteHeader({ brand }: { brand: BrandSettings }) {
   return (
     <>
+      {/* Bandeau utilitaire. Les séparateurs sont décoratifs : ils disparaissent
+          quand la ligne se replie, plutôt que de flotter en début de ligne. */}
+      <div className="flex flex-wrap justify-center gap-x-[22px] gap-y-1 bg-ink px-[22px] py-[9px] text-center font-mono text-[11.5px] tracking-[0.04em] text-on-dark-2">
+        {UTILITY_BAR.map((texte, i) => (
+          <span key={texte} className="contents">
+            {i > 0 ? (
+              <span aria-hidden="true" className="hidden text-on-dark-3 min-[1000px]:inline">
+                ·
+              </span>
+            ) : null}
+            <span>{texte}</span>
+          </span>
+        ))}
+      </div>
+
       {/* z-40, au-dessus de la barre d'onglets basse (z-30) : le header pose un
           contexte d'empilement, et le panneau plein écran du menu, qui vit à
           l'intérieur, ne peut pas le dépasser — il passerait sous la barre. */}
-      <header className="sticky top-0 z-40 flex items-center gap-x-8 gap-y-3 border-b border-border px-4 py-3 backdrop-blur-[14px] sm:px-8 lg:flex-wrap" style={{ background: "rgba(255,255,255,0.82)" }}>
-        <Link href={ROUTES.home} aria-label={`${brand.name} — accueil`} className="min-w-0 text-ink">
-          <BrandMark name={brand.name} />
-        </Link>
-        <nav className="hidden flex-1 flex-wrap items-center gap-7 whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.12em] lg:flex" aria-label="Navigation principale">
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="text-ink-soft transition-colors hover:text-ink">
-              {item.label}
+      <header className="sticky top-0 z-40 border-b border-border-section bg-bg px-[22px] py-3.5">
+        <div className="mx-auto flex max-w-[1380px] flex-wrap items-center gap-x-[22px] gap-y-2.5">
+          <Link href={ROUTES.home} aria-label={`${brand.name} — accueil`} className="min-w-0 text-ink">
+            <BrandMark name={brand.name} />
+          </Link>
+
+          <SearchField />
+
+          <div className="order-3 flex min-w-0 items-center gap-[18px] whitespace-nowrap min-[1100px]:order-none">
+            <Link href={ROUTES.tracking} className="font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-soft transition-colors hover:text-red">
+              Suivi
             </Link>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-2">
-          <div className="hidden sm:block">
             <AccountLink />
+            <CartLink />
           </div>
-          {/* La pilule claire du handoff : l'action que l'on vient chercher. */}
+
           <Link
             href={ROUTES.repair}
-            className="hidden whitespace-nowrap rounded-full bg-ink px-5 py-2.5 font-mono text-[11.5px] uppercase tracking-[0.12em] text-bg transition-opacity duration-300 hover:opacity-85 sm:inline-block"
-            style={{ boxShadow: "var(--glow-button)" }}
+            className="ml-auto whitespace-nowrap rounded-[8px] bg-red px-[18px] py-3 text-[14.5px] font-semibold text-white transition-colors duration-200 hover:bg-ink"
           >
-            Confier ma console
+            Demander un diagnostic
           </Link>
+
           <MobileNav items={NAV} brand={brand} />
         </div>
+
+        {/* La frontière qui garde les pages statiques statiques : `PrimaryNav`
+            lit l'adresse pour souligner l'onglet actif, et cette lecture
+            bascule toute la page en rendu client si elle n'est pas isolée. */}
+        <Suspense fallback={<NavList items={NAV} courant="" />}>
+          <PrimaryNav items={NAV} />
+        </Suspense>
       </header>
     </>
   );

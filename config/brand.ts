@@ -23,10 +23,10 @@ export interface BrandSettings {
 }
 
 export const BRAND_DEFAULTS: BrandSettings = {
-  name: process.env.NEXT_PUBLIC_BRAND_NAME ?? "Atelier Console",
-  tagline: "Réparation de consoles à distance",
+  name: process.env.NEXT_PUBLIC_BRAND_NAME ?? "207 MÉDI@ROME",
+  tagline: "Réparation de consoles et boutique gaming",
   description:
-    "Atelier spécialisé dans la réparation de consoles de jeux, partout en France.",
+    "Atelier spécialisé dans la réparation de consoles de jeux — consoles uniquement — et boutique gaming : jeux vidéo, consoles, figurines manga et anime.",
   email: "contact@example.com",
   phone: "",
   address_line1: "",

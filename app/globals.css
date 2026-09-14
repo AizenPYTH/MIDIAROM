@@ -25,96 +25,119 @@
    * via les utilitaires Tailwind du bloc `@theme` plus bas.
    */
 
-  /* Fonds : blanc franc, puis deux gris très pâles pour poser les sections. */
+  /* ── Direction 207 MÉDI@ROME ──────────────────────────────────────────────
+     Blanc, noir, gris, un rouge. Pas de seconde teinte, pas de dégradé, pas
+     de néon. Le rouge ne sert qu'au carré du logo, aux intitulés de section,
+     au CTA principal, à l'onglet actif et aux affordances de survol : partout
+     ailleurs, il est de trop.
+     ──────────────────────────────────────────────────────────────────────── */
+
+  /* Fonds */
   --bg: #ffffff;
-  --bg-alt: #f6f5f3;
-  --bg-sunken: #efedea;
+  --bg-alt: #fafafa;
+  --bg-sunken: #f4f4f6;
 
-  /* Encres : un noir chaud plutôt qu'un noir pur, qui fatigue moins. */
-  --text: #14110f;
-  --text-2: #4a443f;
-  --text-3: #78706a;
-  --text-4: #9b938c;
+  /* Encres. Contrastes mesurés sur blanc : 18,4:1 · 8,3:1 · 5,07:1. */
+  --text: #0f0f11;
+  --text-2: #4a4a51;
+  --text-3: #6e6e73;
+  /* Décoratif uniquement — 3,4:1, sous le seuil AA. Jamais un texte utile. */
+  --text-4: #8b8b93;
 
-  /* Accents. Les teintes de la charte, retravaillées pour tenir sur du blanc :
-     le lime et le cyan d'origine y étaient illisibles. */
-  --lime: #4d7c0f;
-  --cyan: #0e7490;
-  --violet: #5b3df5;
-  --rose: #d6336c;
-  --ember: #e8590c;
+  /* L'accent, et lui seul. Au survol il passe à l'encre, jamais à un autre rouge. */
+  --red: #d81f26;
+  --red-ink: #0f0f11;
+  /* Sur fond noir, le rouge de base tombe à 3,3:1 : il s'éclaircit. */
+  --red-on-dark: #ff5a60;
 
-  /* Surfaces et filets */
-  --glass: linear-gradient(160deg, rgba(20, 17, 15, 0.035), rgba(20, 17, 15, 0.012));
+  /* Filets. Quatre valeurs, quatre rôles. */
+  --hairline: #ededf0;
+  --stroke: #e0e0e4;
+  --stroke-section: #e6e6e9;
+  --stroke-strong: #dcdce0;
+
+  /* Sur fond noir */
+  --on-dark: #f2f2f4;
+  --on-dark-2: #b9b9c0;
+  --on-dark-3: #7e7e86;
+
+  /* Une seule ombre dans toute la charte, et seulement au survol d'une carte. */
+  --glow-panel: 0 14px 30px rgba(15, 15, 17, 0.1);
+  --glow-button: none;
+  --glass: #ffffff;
   --glass-flat: #ffffff;
-  --hairline: rgba(20, 17, 15, 0.09);
-  --stroke: rgba(20, 17, 15, 0.12);
-  --stroke-strong: rgba(20, 17, 15, 0.22);
+  --gradient-cta: var(--red);
 
-  /* Ombres : très douces, jamais de halo coloré. Une carte produit se détache
-     par son ombre, pas par une lueur. */
-  --glow-button: 0 10px 30px rgba(91, 61, 245, 0.22);
-  --glow-panel: 0 18px 48px rgba(20, 17, 15, 0.08);
-
-  --gradient-cta: linear-gradient(120deg, #5b3df5, #0e7490);
-
-  /* Anciens noms de palette, repointés sur la charte claire : les pages qui
-     écrivent encore `bg-ink-900` ou `text-paper` restent cohérentes. */
+  /* Anciens noms de palette, repointés : les pages qui écrivent encore
+     `bg-ink-900` ou `text-paper` suivent la direction sans être réécrites. */
   --paper: #ffffff;
-  --paper-alt: #f6f5f3;
-  --paper-strong: #efedea;
-  --ink-900: #14110f;
-  --ink-800: #241f1c;
-  --ink-750: #3a332e;
-  --ink-700: rgba(20, 17, 15, 0.1);
-  --ink-650: rgba(20, 17, 15, 0.14);
-  --ink-600: rgba(20, 17, 15, 0.2);
-  --sale: var(--rose);
-  --repair: var(--cyan);
+  --paper-alt: #fafafa;
+  --paper-strong: #f4f4f6;
+  --ink-900: #0f0f11;
+  --ink-800: #1b1b1f;
+  --ink-750: #33333a;
+  --ink-700: rgba(15, 15, 17, 0.1);
+  --ink-650: rgba(15, 15, 17, 0.14);
+  --ink-600: rgba(15, 15, 17, 0.2);
+  --lime: var(--red);
+  --cyan: var(--text-2);
+  --violet: var(--red);
+  --rose: var(--red);
+  --ember: var(--red);
+  --sale: var(--red);
+  --repair: var(--text);
   --repair-light: var(--text-2);
-  --selection: rgba(91, 61, 245, 0.14);
+  --selection: var(--red);
 
+  /* ── Jetons sémantiques exposés à Tailwind ─────────────────────────────── */
   --color-bg: var(--bg);
   --color-bg-alt: var(--bg-alt);
   --color-surface: #ffffff;
   --color-surface-muted: var(--bg-alt);
   --color-surface-strong: var(--bg-sunken);
   --color-border: var(--stroke);
+  --color-border-hairline: var(--hairline);
+  --color-border-section: var(--stroke-section);
   --color-border-strong: var(--stroke-strong);
   --color-ink: var(--text);
   --color-ink-soft: var(--text-2);
   --color-ink-muted: var(--text-3);
   --color-ink-faint: var(--text-4);
-  --color-primary: var(--violet);
-  --color-primary-hover: #4a2fe0;
+
+  /* Primaire et accent sont le même rouge : la charte n'en a qu'un. */
+  --color-primary: var(--red);
+  --color-primary-hover: var(--red-ink);
   --color-primary-fg: #ffffff;
-  --color-primary-soft: rgba(91, 61, 245, 0.1);
-  --color-accent: var(--cyan);
-  --color-accent-hover: #0b5e75;
-  --color-accent-soft: rgba(14, 116, 144, 0.1);
+  --color-primary-soft: rgba(216, 31, 38, 0.08);
+  --color-accent: var(--red);
+  --color-accent-hover: var(--red-ink);
+  --color-accent-soft: rgba(216, 31, 38, 0.08);
   --color-accent-light: var(--text-2);
-  --color-sale: var(--rose);
-  --color-sale-hover: #b02a57;
+  --color-sale: var(--red);
+  --color-sale-hover: var(--red-ink);
+
+  /* États. Le vert et l'orange ne sont pas des accents : ils disent un état,
+     et n'apparaissent jamais dans une décoration. */
   --color-success: #16794a;
-  --color-success-soft: rgba(22, 121, 74, 0.1);
-  --color-warning: #a15c07;
-  --color-warning-soft: rgba(161, 92, 7, 0.1);
+  --color-success-soft: rgba(22, 121, 74, 0.09);
+  --color-warning: #8a5a00;
+  --color-warning-soft: rgba(138, 90, 0, 0.09);
   --color-danger: #c1262d;
-  --color-danger-soft: rgba(193, 38, 45, 0.09);
-  --color-info: var(--cyan);
-  --color-info-soft: rgba(14, 116, 144, 0.1);
-  --color-field: #ffffff;
+  --color-danger-soft: rgba(193, 38, 45, 0.08);
+  --color-info: var(--text-2);
+  --color-info-soft: rgba(15, 15, 17, 0.05);
+
+  --color-field: var(--bg-alt);
   --color-placeholder-a: var(--bg-alt);
   --color-placeholder-b: var(--bg-sunken);
-  --color-placeholder-fg: var(--text-4);
-
-  /* Sur un aplat d'accent, le texte repasse en blanc : les accents sont
-     désormais assez sombres pour ça, et c'était l'inverse avant. */
+  --color-placeholder-fg: var(--text-3);
   --color-on-accent: #ffffff;
 
-  --font-display: var(--font-bricolage), "Bricolage Grotesque", Helvetica, sans-serif;
-  --font-sans: var(--font-instrument), "Instrument Sans", Helvetica, sans-serif;
-  --font-mono: var(--font-dm-mono), "DM Mono", ui-monospace, monospace;
+  /* Archivo porte les titres comme le corps ; IBM Plex Mono donne le registre
+     atelier — étiquettes, prix, références, HUD. */
+  --font-display: var(--font-archivo), Archivo, Helvetica, sans-serif;
+  --font-sans: var(--font-archivo), Archivo, Helvetica, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
 
   color-scheme: light;
 }
@@ -127,6 +150,8 @@
   --color-surface-strong: var(--color-surface-strong);
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
+  --color-border-hairline: var(--color-border-hairline);
+  --color-border-section: var(--color-border-section);
   --color-ink: var(--color-ink);
   --color-ink-soft: var(--color-ink-soft);
   --color-ink-muted: var(--color-ink-muted);
@@ -160,6 +185,11 @@
   --color-ink-700: var(--ink-700);
   --color-ink-650: var(--ink-650);
   --color-ink-600: var(--ink-600);
+  --color-red: var(--red);
+  --color-red-on-dark: var(--red-on-dark);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-2: var(--on-dark-2);
+  --color-on-dark-3: var(--on-dark-3);
   --color-lime: var(--lime);
   --color-ember: var(--ember);
   --color-cyan: var(--cyan);
@@ -208,8 +238,8 @@ body {
 }
 
 ::selection {
-  background: rgba(216, 255, 62, 0.3);
-  color: var(--text);
+  background: var(--red);
+  color: #ffffff;
 }
 
 /* Étiquette mono : majuscules, interlettrage large. */
@@ -239,29 +269,23 @@ body {
   /* Panneau en verre : dégradé translucide, flou d'arrière-plan, filet clair. */
   /* Sur du blanc, un panneau se pose par une ombre douce et un filet, pas par
      un flou coûteux : le `backdrop-filter` n'apportait plus rien. */
+  /* Aucune ombre au repos : un panneau se pose par son filet et son fond. */
   .glass {
     background: #ffffff;
-    border: 1px solid var(--hairline);
-    box-shadow: var(--glow-panel);
+    border: 1px solid var(--stroke);
   }
 
   /* Bouton principal : dégradé violet → cyan, texte sombre, lueur violette. */
+  /* Le CTA principal : un aplat rouge qui passe à l'encre au survol. Le
+     dégradé et sa lueur appartenaient à la charte précédente. */
   .btn-gradient {
     position: relative;
-    overflow: hidden;
-    background: var(--gradient-cta);
+    background: var(--red);
     color: #ffffff;
-    box-shadow: var(--glow-button);
+    transition: background 0.2s;
   }
-  /* Reflet qui traverse le bouton toutes les 4,5 s. */
-  .btn-gradient::after {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 58px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
-    animation: sweep 4.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-    pointer-events: none;
+  .btn-gradient:hover {
+    background: var(--red-ink);
   }
 
   /* Pastille mono (« Atelier ouvert », filtres, catégories). */
@@ -272,7 +296,7 @@ body {
     gap: 8px;
     min-height: 44px;
     padding: 11px 16px;
-    border-radius: 999px;
+    border-radius: 0;
     font-family: var(--font-mono);
     font-size: 11.5px;
     letter-spacing: 0.12em;
@@ -408,13 +432,12 @@ body {
 }
 @keyframes pulse {
   0%,
-  100% {
+  55% {
     opacity: 1;
-    box-shadow: 0 0 0 0 rgba(216, 255, 62, 0.55);
   }
-  50% {
-    opacity: 0.7;
-    box-shadow: 0 0 0 9px rgba(216, 255, 62, 0);
+  56%,
+  100% {
+    opacity: 0.2;
   }
 }
 @keyframes rise {
@@ -448,7 +471,7 @@ body {
   animation: drift2 34s ease-in-out infinite;
 }
 .anim-pulse {
-  animation: pulse 2.5s ease-in-out infinite;
+  animation: pulse 1.5s steps(1) infinite;
 }
 .anim-marquee {
   animation: marquee 34s linear infinite;
@@ -458,13 +481,10 @@ body {
 }
 
 /* Le mot mis en avant du titre : dégradé animé découpé sur le texte. */
+/* Le mot mis en avant : rouge plein. Le dégradé animé appartenait à la charte
+   précédente, et cette direction n'a qu'une couleur. */
 .shimmer-text {
-  background: linear-gradient(90deg, var(--lime), var(--cyan), var(--violet), var(--rose), var(--lime));
-  background-size: 300% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shimmer 7s linear infinite;
+  color: var(--red);
 }
 
 /**
@@ -591,4 +611,132 @@ body {
 
 @media print {
   .no-print { display: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Direction 207 MÉDI@ROME — mouvement
+   ═══════════════════════════════════════════════════════════════════════════
+   Quatre effets, une courbe, aucune bibliothèque. Trois d'entre eux sont des
+   réponses à une question du visiteur (« est-ce cliquable ? », « qu'y a-t-il
+   derrière ? ») ; le quatrième est l'identité gaming du hero, et il reste
+   enfermé dans le cadre du visuel — jamais sur le titre, jamais sur les CTA.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Le balayage de diagnostic : la lecture d'un banc de test. */
+@keyframes scanSweep {
+  0%, 8% { transform: translateY(-6%); opacity: 0; }
+  16% { opacity: 0.85; }
+  84% { opacity: 0.85; }
+  96%, 100% { transform: translateY(106%); opacity: 0; }
+}
+/* Le point du HUD. `steps(1)` : il s'allume et s'éteint, il ne respire pas. */
+@keyframes hudBlink {
+  0%, 55% { opacity: 1; }
+  56%, 100% { opacity: 0.2; }
+}
+/* La croix directionnelle : une séquence de touches, à l'échelle d'un détail. */
+@keyframes padPress {
+  0%, 74%, 100% { background: #d2d2d7; }
+  78%, 84% { background: var(--red); }
+}
+
+[data-scan] { animation: scanSweep 7.5s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+[data-hud-dot] { animation: hudBlink 1.5s steps(1) infinite; }
+[data-pad] > span { animation: padPress 4.8s ease-in-out infinite; }
+[data-pad] > span:nth-child(2) { animation-delay: 0.5s; }
+[data-pad] > span:nth-child(3) { animation-delay: 1s; }
+[data-pad] > span:nth-child(4) { animation-delay: 1.5s; }
+[data-pad] > span:nth-child(5) { animation-delay: 2.1s; }
+
+/* Arrivée au chargement, décalée de 60 ms par bloc. */
+[data-enter] { animation: riseIn 0.7s cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+[data-enter="1"] { animation-delay: 0.06s; }
+[data-enter="2"] { animation-delay: 0.12s; }
+[data-enter="3"] { animation-delay: 0.18s; }
+[data-enter="4"] { animation-delay: 0.24s; }
+
+/**
+ * Arrivée au défilement.
+ *
+ * `[data-rise]` ne pose sa translucidité que sous `@supports` : le navigateur
+ * qui ignore `animation-timeline` affiche le bloc tel quel, au lieu de le
+ * laisser à `opacity: 0` en attendant un observateur qui n'existe pas.
+ *
+ * Piège vérifié en production : un ancêtre en `overflow: hidden` devient un
+ * conteneur de défilement, `view()` s'y accroche et la révélation se fige à
+ * mi-course. On clippe la photo, jamais la section.
+ */
+@supports (animation-timeline: view()) {
+  [data-rise] {
+    animation: riseIn linear both;
+    animation-timeline: view();
+    animation-range: entry 4% cover 22%;
+  }
+}
+
+/* Survol d'une carte : la seule ombre de la charte, et elle n'existe qu'ici. */
+[data-card] {
+  transition: border-color 0.2s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+[data-zoom] { transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.25, 1); }
+[data-buy] { transition: background 0.2s, border-color 0.2s, color 0.2s; }
+[data-row] { transition: background 0.2s, padding-left 0.25s cubic-bezier(0.2, 0.8, 0.25, 1); }
+[data-arrow] { transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.25, 1), color 0.2s; }
+[data-chip] { transition: border-color 0.2s, color 0.2s; }
+
+/* Au doigt, un état de survol reste collé après le tap : réservé au pointeur. */
+@media (hover: hover) and (pointer: fine) {
+  [data-card]:hover {
+    border-color: var(--text);
+    box-shadow: var(--glow-panel);
+    transform: translateY(-3px);
+  }
+  [data-card]:hover [data-zoom] { transform: scale(1.05); }
+  [data-card]:hover [data-buy] { background: var(--red); border-color: var(--red); color: #ffffff; }
+  [data-row]:hover { background: var(--bg-alt); padding-left: 10px; }
+  [data-row]:hover [data-arrow] { transform: translateX(6px); color: var(--red); }
+  [data-chip]:hover { border-color: var(--red); color: var(--red); }
+}
+
+/**
+ * La bande de confiance.
+ *
+ * Pistes **fixées** — 4, puis 2, puis 1 — et non `auto-fit` : c'est ce qui
+ * évite une cinquième colonne fantôme. Aucune cellule ne porte de bordure ;
+ * c'est la gouttière d'1 px sur fond gris qui dessine les filets, et c'est ce
+ * qui empêche un trait de pendre dans le vide quand la rangée se replie.
+ */
+[data-trust-grid] { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1000px) {
+  [data-trust-grid] { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  [data-trust-grid] { grid-template-columns: 1fr; }
+}
+
+/* Sous 700px, le balayage et la croix disparaissent ; le HUD reste. */
+@media (max-width: 700px) {
+  [data-scan],
+  [data-pad] { display: none; }
+}
+
+/* Sans mouvement : plus rien ne bouge, et rien ne reste caché. */
+@media (prefers-reduced-motion: reduce) {
+  [data-enter],
+  [data-rise] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  [data-scan],
+  [data-hud-dot],
+  [data-pad] > span { animation: none !important; }
+  [data-card]:hover { transform: none; }
+  [data-card]:hover [data-zoom] { transform: none; }
+  [data-row]:hover { padding-left: 0; }
 }
