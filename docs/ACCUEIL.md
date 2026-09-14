@@ -90,12 +90,17 @@ identifiant inventé donne un 404 à la place de la jaquette. Le fichier est
 produit par un script, depuis une liste de titres :
 
 ```bash
-npm run demo:games            # interroge IGDB, écrit lib/shop/demo-games.json
-npm run demo:games -- --clear # retire la vitrine
+npm run demo:games              # interroge IGDB, écrit lib/shop/demo-games.json
+npm run demo:games -- --dry-run # résout tout sans rien écrire
+npm run demo:games -- --debug   # affiche la requête envoyée et la réponse reçue
+npm run demo:games -- --clear   # retire la vitrine
 ```
 
 Il a besoin de `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET` dans
-l'environnement, comme le reste de l'intégration IGDB.
+l'environnement, comme le reste de l'intégration IGDB, et envoie exactement la
+même requête que `npm run check:igdb` (socle commun dans
+`scripts/lib/igdb-cli.mjs`) : si l'une passe, l'autre passe. Voir
+docs/IGDB.md pour le diagnostic.
 
 ## Vidéo de fond
 

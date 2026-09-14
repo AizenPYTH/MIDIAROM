@@ -2,26 +2,33 @@
 /**
  * Remplit la vitrine de démonstration de l'accueil depuis IGDB.
  *
- *   npm run demo:games            # résout les titres et écrit le fichier
- *   npm run demo:games -- --clear # vide la vitrine
+ *   npm run demo:games              # résout les titres et écrit le fichier
+ *   npm run demo:games -- --debug   # + la requête envoyée et la réponse reçue
+ *   npm run demo:games -- --dry-run # ne touche ni la base ni le fichier
+ *   npm run demo:games -- --clear   # vide la vitrine
  *
  * Les identifiants IGDB ne sont jamais écrits à la main : le script cherche
- * chaque titre de `DEMO_GAME_TITLES`, retient la fiche la mieux notée, écrit sa
+ * chaque titre de `DEMO_GAME_TITLES`, retient la meilleure fiche, écrit sa
  * version normalisée dans le cache `igdb_games` et consigne le couple
  * { igdbId, title } dans `lib/shop/demo-games.json`.
+ *
+ * Authentification, requête et champs viennent de `scripts/lib/igdb-cli.mjs`,
+ * partagé avec `npm run check:igdb` : les deux commandes envoient exactement la
+ * même requête. La normalisation vient de `lib/igdb/normalize.ts`, le fichier
+ * qui sert déjà le back-office — rien n'est recopié ici.
  *
  * Demande TWITCH_CLIENT_ID et TWITCH_CLIENT_SECRET (voir docs/IGDB.md) et un
  * accès réseau à api.igdb.com.
  */
 import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { explainAuthFailure, IgdbCliError, igdbGames, loadEnvLocal, searchBody, twitchToken } from "./lib/igdb-cli.mjs";
 
-for (const line of readFileSync(new URL("../.env.local", import.meta.url), "utf8").split("\n")) {
-  const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-  if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
-}
+loadEnvLocal();
 
 const OUT = new URL("../lib/shop/demo-games.json", import.meta.url);
+const debug = process.argv.includes("--debug");
+const dryRun = process.argv.includes("--dry-run");
 
 if (process.argv.includes("--clear")) {
   try {
@@ -33,10 +40,29 @@ if (process.argv.includes("--clear")) {
   process.exit(0);
 }
 
+/**
+ * La normalisation réelle du projet, importée telle quelle.
+ *
+ * `normalize.ts` ne fait que des imports de types, effacés par le décodage TS
+ * de Node : aucun alias `@/` n'est résolu à l'exécution. Disponible par défaut
+ * depuis Node 22.18 ; en dessous, il faut `--experimental-strip-types`.
+ */
+let normalizeGame;
+try {
+  ({ normalizeGame } = await import("../lib/igdb/normalize.ts"));
+} catch (error) {
+  console.error("✗ Impossible de charger lib/igdb/normalize.ts.");
+  console.error(`  Node ${process.versions.node} — il faut Node 22.18 ou plus récent,`);
+  console.error("  ou relancer avec : node --experimental-strip-types scripts/demo-games.mjs");
+  console.error(`  Détail : ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
+}
+
 const id = process.env.TWITCH_CLIENT_ID;
 const secret = process.env.TWITCH_CLIENT_SECRET;
 if (!id || !secret) {
   console.error("✗ TWITCH_CLIENT_ID et TWITCH_CLIENT_SECRET sont requis. Voir docs/IGDB.md.");
+  console.error("  Pour diagnostiquer la connexion : npm run check:igdb -- \"zelda\"");
   process.exit(1);
 }
 
@@ -49,94 +75,97 @@ const titles = [
 
 console.log(`${titles.length} titres à résoudre.`);
 
-const token = await fetch("https://id.twitch.tv/oauth2/token", {
-  method: "POST",
-  body: new URLSearchParams({ client_id: id, client_secret: secret, grant_type: "client_credentials" }),
-}).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`Twitch HTTP ${r.status}`))));
-
-const FIELDS = [
-  "id", "name", "slug", "summary", "storyline", "first_release_date",
-  "total_rating", "total_rating_count",
-  "cover.image_id", "cover.width", "cover.height",
-  "artworks.image_id", "artworks.width", "artworks.height",
-  "screenshots.image_id", "screenshots.width", "screenshots.height",
-  "platforms.name", "platforms.abbreviation", "genres.name",
-  "involved_companies.developer", "involved_companies.publisher", "involved_companies.company.name",
-  "videos.video_id", "videos.name",
-].join(",");
+let token;
+try {
+  token = await twitchToken(id, secret);
+} catch (error) {
+  console.error(`✗ ${error.message}`);
+  if (error instanceof IgdbCliError && error.status) console.error(explainAuthFailure(error.status));
+  process.exit(1);
+}
 
 /** Quota IGDB : 4 requêtes par seconde. */
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function search(term) {
-  const res = await fetch("https://api.igdb.com/v4/games", {
-    method: "POST",
-    headers: { "Client-ID": id, Authorization: `Bearer ${token.access_token}` },
-    body: `search "${term.replace(/"/g, '\\"')}"; fields ${FIELDS}; where version_parent = null & category = 0; limit 8;`,
-  });
-  if (!res.ok) throw new Error(`IGDB HTTP ${res.status}`);
-  return res.json();
+/**
+ * Le meilleur candidat pour un titre.
+ *
+ * La requête ne filtre que les rééditions ; le tri se fait ici, sur les
+ * résultats reçus. Le nom exact d'abord — c'est ce qui distingue « Elden Ring »
+ * de son extension —, puis le plus grand nombre de votes, qui départage une
+ * édition principale d'un portage confidentiel.
+ */
+function bestMatch(found, title) {
+  const wanted = title.toLowerCase();
+  const exact = found.filter((g) => g.name?.toLowerCase() === wanted);
+  return (exact.length ? exact : found).sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0))[0];
 }
-
-const IMG = (imageId, size) => `https://images.igdb.com/igdb/image/upload/t_${size}/${imageId}.jpg`;
-
-/** Même normalisation que lib/igdb/normalize.ts — gardée alignée à la main. */
-function normalize(raw) {
-  const img = (i, size) => (i?.image_id ? { imageId: i.image_id, url: IMG(i.image_id, size), width: i.width ?? null, height: i.height ?? null } : null);
-  const company = (role) => raw.involved_companies?.find((c) => c[role] && c.company?.name)?.company?.name ?? null;
-  const videos = raw.videos ?? [];
-  const trailer = videos.find((v) => /trailer/i.test(v.name ?? "")) ?? videos[0];
-  const rating = (v) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.round(v) : null);
-  return {
-    igdbId: raw.id, name: raw.name, slug: raw.slug,
-    summary: raw.summary?.trim() || null, storyline: raw.storyline?.trim() || null,
-    releaseDate: raw.first_release_date ? new Date(raw.first_release_date * 1000).toISOString().slice(0, 10) : null,
-    platforms: (raw.platforms ?? []).map((p) => p.name).filter(Boolean),
-    genres: (raw.genres ?? []).map((g) => g.name).filter(Boolean),
-    developer: company("developer"), publisher: company("publisher"),
-    rating: rating(raw.total_rating), ratingCount: rating(raw.total_rating_count),
-    cover: img(raw.cover, "cover_big"),
-    artworks: (raw.artworks ?? []).map((a) => img(a, "1080p")).filter(Boolean).slice(0, 6),
-    screenshots: (raw.screenshots ?? []).map((s) => img(s, "screenshot_big")).filter(Boolean).slice(0, 8),
-    trailer: trailer?.video_id
-      ? { provider: "youtube", videoId: trailer.video_id, title: trailer.name ?? null,
-          posterUrl: `https://img.youtube.com/vi/${trailer.video_id}/maxresdefault.jpg`,
-          watchUrl: `https://www.youtube.com/watch?v=${trailer.video_id}` }
-      : null,
-  };
-}
-
-const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
 const entries = [];
 const rows = [];
+/** Comptage des causes d'échec : un diagnostic vaut mieux qu'un total nul. */
+const failures = { vide: 0, sansJaquette: 0, erreur: 0 };
+
 for (const title of titles) {
   try {
-    const found = await search(title);
-    // Le meilleur candidat : le titre le plus proche, puis la meilleure note.
-    const exact = found.filter((g) => g.name?.toLowerCase() === title.toLowerCase());
-    const pick = (exact.length ? exact : found).sort((a, b) => (b.total_rating_count ?? 0) - (a.total_rating_count ?? 0))[0];
-    if (!pick) { console.log(`  ✗ ${title} — introuvable`); continue; }
-    const game = normalize(pick);
-    if (!game.cover) { console.log(`  ✗ ${title} — sans jaquette, écarté`); continue; }
+    const found = await igdbGames({ id, token: token.access_token, body: searchBody(title), debug });
+    const pick = bestMatch(found, title);
+    if (!pick) {
+      failures.vide += 1;
+      console.log(`  ✗ ${title} — aucun résultat IGDB`);
+      continue;
+    }
+    const game = normalizeGame(pick);
+    if (!game.cover) {
+      failures.sansJaquette += 1;
+      console.log(`  ✗ ${title} — sans jaquette, écarté`);
+      continue;
+    }
     rows.push({ igdb_id: game.igdbId, name: game.name, slug: game.slug, data: game, synced_at: new Date().toISOString() });
     entries.push({ igdbId: game.igdbId, title: game.name });
     console.log(`  ✓ ${String(game.igdbId).padStart(7)}  ${game.name}${game.artworks.length ? "" : "  (sans artwork)"}`);
-  } catch (e) {
-    console.log(`  ✗ ${title} — ${e.message}`);
+  } catch (error) {
+    failures.erreur += 1;
+    console.log(`  ✗ ${title} — ${error.message}`);
+    if (error.detail) console.log(`      réponse d'IGDB : ${error.detail}`);
+    // Une panne d'authentification ou de réseau se répète sur les 27 titres
+    // suivants : mieux vaut s'arrêter et le dire.
+    if (error instanceof IgdbCliError && (error.status === 401 || error.status === 403 || error.status === null)) {
+      console.error("\n✗ Arrêt : la connexion à IGDB ne fonctionne pas.");
+      console.error('  Diagnostic : npm run check:igdb -- "zelda"');
+      process.exit(1);
+    }
   }
   await wait(260);
 }
 
 if (!entries.length) {
   console.error("\n✗ Aucun jeu résolu : rien n'est écrit.");
+  console.error(`  sans résultat : ${failures.vide} · sans jaquette : ${failures.sansJaquette} · en erreur : ${failures.erreur}`);
+  if (failures.vide === titles.length) {
+    console.error("  IGDB a répondu, mais n'a rien renvoyé pour aucun titre — c'est la");
+    console.error("  signature d'un filtre `where` trop restrictif dans la requête.");
+    console.error("  Relancez avec --debug pour voir la requête exactement telle qu'elle part.");
+  }
   process.exit(1);
 }
 
+if (dryRun) {
+  console.log(`\n✓ ${entries.length} jeux résolus. --dry-run : ni la base ni le fichier n'ont été touchés.`);
+  process.exit(0);
+}
+
+const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const { error } = await db.from("igdb_games").upsert(rows, { onConflict: "igdb_id" });
-if (error) { console.error(`✗ Écriture du cache : ${error.message}`); process.exit(1); }
+if (error) {
+  console.error(`✗ Écriture du cache : ${error.message}`);
+  process.exit(1);
+}
 
 writeFileSync(OUT, JSON.stringify(entries, null, 2) + "\n");
 console.log(`\n✓ ${entries.length} jeux en cache et dans lib/shop/demo-games.json.`);
+if (failures.vide || failures.sansJaquette || failures.erreur) {
+  console.log(`  Écartés — sans résultat : ${failures.vide} · sans jaquette : ${failures.sansJaquette} · en erreur : ${failures.erreur}`);
+}
 console.log("  Ce sont des jeux de démonstration : ils ne sont pas au catalogue et ne sont pas achetables.");
 console.log("  Pour les retirer : npm run demo:games -- --clear");

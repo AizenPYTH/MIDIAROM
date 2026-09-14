@@ -84,9 +84,34 @@ au démarrage du processus, et non figée à la compilation.
 | `app/api/games/[id]` | Fiche normalisée en cache — publique, lecture seule |
 | `components/admin/game-match.tsx` | Écran d'association |
 | `app/admin/actions/games.ts` | Associer, dissocier, resynchroniser |
+| `scripts/lib/igdb-cli.mjs` | **Socle des scripts** : jeton Twitch, requête, champs. Une seule définition. |
+| `scripts/check-igdb.mjs` | Vérifie la connexion, n'écrit rien |
+| `scripts/demo-games.mjs` | Remplit la vitrine de démonstration de l'accueil |
 
 Aucun composant d'affichage n'importe quoi que ce soit de `lib/igdb/` :
 ils reçoivent un `GameListing` et ignorent d'où il vient.
+
+### Les scripts envoient la même requête que l'application
+
+`check:igdb` et `demo:games` partagent `scripts/lib/igdb-cli.mjs` : même
+authentification, même URL, mêmes champs, **même clause `where`**. La
+normalisation, elle, n'est pas recopiée du tout — `demo-games.mjs` importe
+directement `lib/igdb/normalize.ts` (Node efface les imports de types, l'alias
+`@/` n'est donc jamais résolu à l'exécution ; il faut Node 22.18 ou plus
+récent).
+
+Ce n'est pas de la coquetterie. Les deux scripts portaient chacun leur copie de
+la requête, et elles ont divergé : `demo-games.mjs` avait gagné un filtre
+`& category = 0`. IGDB n'alimente plus ce champ — il a été remplacé par
+`game_type` —, la requête répondait donc **HTTP 200 avec une liste vide**, et
+les 28 titres ressortaient « introuvables » sans la moindre erreur. Un filtre
+mort ne se voit pas : `tests/igdb-cli.test.ts` tient désormais la requête des
+scripts alignée sur celle de `lib/igdb/client.ts`.
+
+**Règle** : on ne filtre que `where version_parent = null`, qui écarte les
+rééditions parasites. Tout autre tri se fait côté client, sur les résultats
+reçus — nom exact d'abord, puis nombre de votes. Ajouter un filtre dans la
+requête, c'est risquer de vider silencieusement le résultat.
 
 ## Associer un jeu à un produit
 
@@ -188,6 +213,29 @@ Deux choses distinctes, volontairement :
 `GameListing.video` vaut `null` quand rien n'est renseigné — la section affiche
 alors `heroUrl`. Un fond vidéo doit être `autoplay muted loop playsinline`,
 avec `poster` renseigné, et ne se charger qu'une fois la section visible.
+
+## Diagnostiquer une recherche qui ne rend rien
+
+Dans l'ordre, du moins cher au plus cher :
+
+```bash
+npm run check:igdb                     # les identifiants sont-ils lus ?
+npm run check:igdb -- "zelda"          # la recherche aboutit-elle ?
+npm run check:igdb -- "zelda" --debug  # quelle requête part exactement ?
+npm run demo:games -- --debug          # idem, titre par titre
+npm run demo:games -- --dry-run        # résout tout sans rien écrire
+```
+
+Les scripts distinguent maintenant trois échecs qui se ressemblaient :
+
+| Message | Ce que ça veut dire |
+| --- | --- |
+| `aucun résultat IGDB` | IGDB a répondu 200 avec une liste vide — regardez la clause `where` |
+| `HTTP 4xx` + `réponse d'IGDB : …` | Requête refusée ; IGDB nomme le champ ou la syntaxe en cause |
+| `sans jaquette, écarté` | Jeu trouvé, mais inutilisable pour une vitrine |
+
+Un refus 401 ou 403 arrête le script tout de suite : inutile de répéter la même
+panne 27 fois.
 
 ## Pannes
 
