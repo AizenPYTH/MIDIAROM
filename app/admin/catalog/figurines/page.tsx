@@ -29,7 +29,7 @@ export default async function FigurinesImportPage() {
 
       <h1 className="mt-3 font-display text-[clamp(24px,3vw,34px)] font-extrabold tracking-[-0.03em] text-ink">Importer une figurine</h1>
       <p className="mt-3 max-w-[70ch] text-[15px] leading-[1.55] text-ink-soft">
-        Cherchez une figurine chez {hljProvider.label}, puis importez-la. Le produit est créé{" "}
+        Cherchez une figurine chez {hljProvider.label} — recherche à la demande, aucun compte ni clé requis. Le produit est créé{" "}
         <strong className="font-semibold text-ink">en brouillon</strong> dans le rayon Figurines Manga / Anime : ni prix, ni stock, ni
         mise en ligne. Vous complétez ensuite la fiche dans le stock.
       </p>

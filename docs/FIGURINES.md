@@ -50,39 +50,67 @@ Pas une colonne par attribut : `specs` existait, il est affiché, il suffit.
 L'index unique `(source, source_ref)` empêche d'importer deux fois la même
 référence.
 
-## Configuration
+## Comment la recherche fonctionne
 
-HobbyLink Japan n'expose pas d'API publique. Plutôt qu'un analyseur HTML maison
-— à réparer chaque fois que la boutique change une classe CSS, pour quelques
-recherches par semaine — l'import passe par un acteur Apify.
+Une requête sur la page de recherche de HobbyLink Japan, à la demande, puis
+lecture de ses **données structurées schema.org**
+(`<script type="application/ld+json">`). Pas de compte, pas de jeton, pas de
+coût, pas de tiers.
+
+Si la page de résultats ne liste que des liens, l'import ouvre les fiches
+détaillées — au plus douze, quatre à la fois. Jamais tout le catalogue.
+
+### Pourquoi schema.org et pas les classes CSS
+
+Une première version passait par l'acteur Apify
+`jungle_synthesizer/hobbylinkjapan-…-catalog-scraper` en lui envoyant un terme
+de recherche. **Cet acteur n'en accepte aucun** : ses entrées sont
+`new_releases_weekly`, `preorder_status`, `category_backfill` et `sku_ids`.
+C'est un outil de synchronisation de catalogue, pas de recherche. Résultat : un
+HTTP 400 au premier essai réel, sur un schéma jamais vérifié.
+
+Lire les classes CSS de la boutique n'aurait pas valu mieux : elles changent
+sans préavis et personne ne s'est engagé sur elles. `application/ld+json` est
+autre chose — un format public et documenté, que les boutiques publient pour
+Google et ont donc intérêt à garder stable. On dépend d'une norme, pas du secret
+d'implémentation d'un tiers. C'est aussi ce qui rend la lecture testable hors
+ligne, sur des exemples conformes à schema.org.
+
+### Réglages, si le défaut ne convient pas
+
+Deux variables, facultatives, qui évitent de redéployer pour un détail :
 
 ```
-APIFY_TOKEN=apify_api_...        # Apify → Settings → Integrations
-HLJ_APIFY_ACTOR=utilisateur~nom-acteur
+HLJ_SEARCH_URL=https://www.hlj.com/search/?Word={q}   # {q} = le terme cherché
+HLJ_USER_AGENT=MediaromCatalogBot/1.0 (+https://…)    # identification auprès de HLJ
 ```
 
-Jamais `NEXT_PUBLIC_*` : ce jeton ne doit pas atteindre le navigateur. Sans
-configuration, l'écran d'import affiche ce qui manque et le reste du site
-fonctionne normalement.
+### Vérifier
 
 ```bash
-npm run check:hlj                    # la configuration est-elle lue ?
-npm run check:hlj -- "luffy gear 5"  # + une vraie recherche
-npm run check:hlj -- "luffy" --raw   # + l'objet brut du premier résultat
+npm run check:hlj -- "luffy gear 5"
+npm run check:hlj -- "luffy gear 5" --raw   # + ce que la page publie vraiment
 ```
 
-### Pourquoi `--raw` existe
+Le script fait **exactement** ce que fait l'écran d'import : même URL, même
+lecture. Il ne peut donc pas passer pendant que l'écran échoue — c'est
+précisément ce qui s'était produit avec la version Apify.
 
-**Un acteur Apify n'est pas un contrat d'API.** Les noms de champs varient d'un
-acteur à l'autre et peuvent changer sans préavis. `lib/catalog/providers/hlj.ts`
-lit donc plusieurs noms possibles par information (`manufacturer`, `maker`,
-`brand`, `company`…), et `toExternalProduct` n'invente rien : une information
-absente reste `null`.
+`--raw` affiche le nombre de blocs JSON-LD, les types rencontrés et le début du
+premier bloc. Deux cas si rien ne sort :
 
-Si une colonne ressort vide au premier essai réel, `--raw` montre comment
-l'acteur la nomme et la correspondance s'ajuste en une fois, dans ce seul
-fichier. C'est la leçon de l'intégration IGDB : un champ mal deviné ne se voit
-pas, il vide simplement le résultat.
+1. **l'URL de recherche a changé** → corriger `HLJ_SEARCH_URL` ;
+2. **HLJ rend ses résultats dans le navigateur** → aucune lecture de HTML ne
+   marchera. Il faudra alors un acteur Apify qui exécute la page, ou une autre
+   source. `--raw` permet de trancher entre les deux.
+
+### Ce qu'il faut savoir avant de s'en servir
+
+La recherche interroge un site tiers. Elle est ponctuelle — quelques requêtes
+par recherche, déclenchées par un clic —, s'identifie par un User-Agent
+explicite, et ne copie rien en masse. Vérifiez tout de même les conditions
+d'utilisation de HobbyLink Japan et son `robots.txt` avant un usage régulier :
+ce point n'a pas pu être contrôlé depuis l'environnement de développement.
 
 ## Ajouter une autre source
 
