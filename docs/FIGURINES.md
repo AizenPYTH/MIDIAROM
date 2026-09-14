@@ -36,6 +36,36 @@ photographier la figurine, ou obtenir l'autorisation, avant de la mettre en
 ligne. Les visuels de la source restent visibles au back-office pour aider à la
 saisie, et gardent l'adresse de leur page d'origine.
 
+## Le tri figurines / dérivés
+
+Une recherche « luffy » chez HLJ rend des figurines, mais aussi des t-shirts,
+des stickers, des mugs et des bonbons. `lib/catalog/figurine-filter.ts` les
+sépare, avec **trois verdicts et non deux** :
+
+| Verdict | Ce que c'est | Où il apparaît |
+| --- | --- | --- |
+| `figurine` | Un mot du métier (*figure*, *Nendoroid*, *figma*, *Pop Up Parade*, *Figuarts*…), le rayon de la source, ou un fabricant de figurines | En tête des résultats |
+| `doute` | Un signal dans chaque sens, une maquette à monter, ou rien pour décider | Dans les résultats, badgé « à vérifier » avec la raison |
+| `ecarte` | Un mot d'exclusion, et rien pour le contredire | Replié sous « N produits écartés », **importable quand même** |
+
+**Rien n'est supprimé.** Un filtre qui se trompe sur un produit rare ne doit pas
+devenir le problème de l'atelier : les écartés restent affichés, avec la raison,
+et leur bouton « Importer » fonctionne.
+
+La frontière nette se trompe sur les cas réels, d'où le verdict intermédiaire :
+une *Mascot Figure* est une figurine, un *Mascot Plush* est une peluche ; un
+*shokugan* est une vraie figurine vendue avec un bonbon. Les listes excluent
+donc `gummy` et `wafer`, pas `candy` ; et ne contiennent ni `mascot` ni `stand`
+seul. Les maquettes (Gunpla, *model kit*) passent en doute plutôt qu'écartées :
+les exclure est une décision commerciale, pas une correction de recherche.
+
+Les trois listes — `FIGURINE`, `FABRICANTS`, `EXCLUS`, `MAQUETTES` — sont en
+haut du fichier. Ajouter un terme est une ligne, et `tests/figurine-filter.test.ts`
+couvre chaque cas ambigu.
+
+Le champ le plus fiable reste `category`, le rayon tel que la source le classe.
+Le titre le complète pour les catalogues qui n'en publient pas.
+
 ## Où vont les informations
 
 | Donnée | Destination |
@@ -44,6 +74,7 @@ saisie, et gardent l'adresse de leur page d'origine.
 | JAN / EAN | `ean` |
 | Description | `description` |
 | Fabricant, licence, personnage, dimensions, date de sortie, référence | `specs` (jsonb, déjà affiché sur la fiche) |
+| Rayon source, disponibilité source, **prix source** (« 12 800 JPY ») | `specs` — le prix y est en texte avec sa devise, et ne touche pas à `price_cents`, qui reste à zéro |
 | Référence et page d'origine | `source`, `source_ref`, `source_url` |
 
 Pas une colonne par attribut : `specs` existait, il est affiché, il suffit.

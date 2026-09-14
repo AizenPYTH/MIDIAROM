@@ -49,7 +49,14 @@ export function draftSku(source: string, ref: string): string {
   return `${source}-${propre || Date.now().toString(36).toUpperCase()}`;
 }
 
-/** Les attributs d'une figurine, dans le jsonb déjà affiché sur la fiche. */
+/**
+ * Les attributs d'une figurine, dans le jsonb déjà affiché sur la fiche.
+ *
+ * Le prix de la source y figure **en texte, avec sa devise** — « 12 800 JPY ».
+ * Il aide l'atelier à fixer le sien et garde la trace de ce qu'annonçait la
+ * source le jour de l'import. Il ne touche pas à `price_cents`, qui reste à
+ * zéro : un prix en yens n'est pas un prix de vente à Marseille.
+ */
 function specsFrom(external: ExternalProduct): Record<string, string> {
   const specs: Record<string, string> = {};
   if (external.manufacturer) specs.Fabricant = external.manufacturer;
@@ -58,7 +65,18 @@ function specsFrom(external: ExternalProduct): Record<string, string> {
   if (external.size) specs.Dimensions = external.size;
   if (external.releaseDate) specs["Date de sortie"] = external.releaseDate;
   if (external.ref) specs["Référence fabricant"] = external.ref;
+  if (external.category) specs["Rayon source"] = external.category;
+  if (external.availability) specs["Disponibilité source"] = external.availability;
+  const prix = sourcePrice(external);
+  if (prix) specs["Prix source"] = prix;
   return specs;
+}
+
+/** « 12 800 JPY », ou null si la source n'annonce pas de prix exploitable. */
+export function sourcePrice(external: ExternalProduct): string | null {
+  if (!external.priceCents || external.priceCents <= 0) return null;
+  const montant = (external.priceCents / 100).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+  return external.currency ? `${montant} ${external.currency}` : montant;
 }
 
 /**

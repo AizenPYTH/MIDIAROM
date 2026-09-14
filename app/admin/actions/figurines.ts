@@ -6,6 +6,7 @@ import { audit } from "@/lib/security/audit";
 import { hljProvider } from "@/lib/catalog/providers/hlj";
 import { SEARCH_LIMIT, type ExternalProduct } from "@/lib/catalog/providers/types";
 import { importExternalProduct } from "@/lib/catalog/import";
+import { sortFigurines, type JudgedProduct } from "@/lib/catalog/figurine-filter";
 
 /**
  * Recherche et import de figurines depuis un catalogue externe.
@@ -17,7 +18,18 @@ import { importExternalProduct } from "@/lib/catalog/import";
 
 export type FigurineSearchState =
   | { status: "idle" }
-  | { status: "results"; term: string; products: ExternalProduct[]; error: string | null }
+  | {
+      status: "results";
+      term: string;
+      /** Ce que l'écran montre : figurines sûres d'abord, douteuses ensuite. */
+      products: JudgedProduct[];
+      /**
+       * Les dérivés — t-shirts, stickers, mugs. Conservés, repliés, et
+       * importables quand même : le filtre ne doit pas devenir un mur.
+       */
+      rejected: JudgedProduct[];
+      error: string | null;
+    }
   | { status: "error"; error: string };
 
 export type FigurineImportState =
@@ -39,7 +51,11 @@ export async function searchFigurinesAction(_prev: unknown, formData: FormData):
 
   const { products, error } = await hljProvider.search(term, SEARCH_LIMIT);
   if (!products.length) return { status: "error", error: error ?? "Aucun résultat." };
-  return { status: "results", term, products, error };
+
+  // Rien n'est jeté : la source rend des dérivés, on les met de côté sans les
+  // perdre. Une recherche qui ne rapporte que des dérivés reste consultable.
+  const { kept, rejected } = sortFigurines(products);
+  return { status: "results", term, products: kept, rejected, error };
 }
 
 /**

@@ -28,6 +28,15 @@ export interface ExternalProduct {
   manufacturer: string | null;
   /** Licence ou gamme : « One Piece », « Figuarts ZERO »… */
   series: string | null;
+  /**
+   * Le rayon tel que la source le classe — « Figures », « Apparel »…
+   *
+   * C'est le classement du vendeur lui-même, donc le signal le plus fiable
+   * pour trier figurines et dérivés : voir lib/catalog/figurine-filter.ts.
+   */
+  category: string | null;
+  /** « In Stock », « Pre-order »… telle que la source l'écrit. */
+  availability: string | null;
   character: string | null;
   /** Code-barres JAN / EAN. */
   ean: string | null;

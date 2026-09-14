@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { importFigurineAction, searchFigurinesAction, type FigurineImportState, type FigurineSearchState } from "@/app/admin/actions/figurines";
 import type { ExternalProduct } from "@/lib/catalog/providers/types";
+import type { JudgedProduct } from "@/lib/catalog/figurine-filter";
 
 /**
  * L'écran d'import : un champ, des résultats, un bouton par fiche.
@@ -23,7 +24,15 @@ function Ligne({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-function Carte({ produit }: { produit: ExternalProduct }) {
+/** « 12 800 JPY » — le prix de la source, jamais présenté comme un prix MÉDI@ROM. */
+function prixSource(produit: ExternalProduct): string | null {
+  if (!produit.priceCents || produit.priceCents <= 0) return null;
+  const montant = (produit.priceCents / 100).toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+  return produit.currency ? `${montant} ${produit.currency}` : montant;
+}
+
+function Carte({ juge }: { juge: JudgedProduct }) {
+  const { product: produit, verdict, reason } = juge;
   const [state, action, pending] = useActionState<FigurineImportState, FormData>(importFigurineAction, { status: "idle" });
   const image = produit.images[0]?.url ?? null;
 
@@ -43,13 +52,21 @@ function Carte({ produit }: { produit: ExternalProduct }) {
 
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <strong className="font-display text-[15.5px] font-bold leading-[1.25] tracking-[-0.01em] text-ink">{produit.name}</strong>
+          {verdict !== "figurine" && reason ? (
+            <span className="w-fit rounded-full bg-warning-soft px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-warning">
+              {verdict === "ecarte" ? "Écarté" : "À vérifier"} · {reason}
+            </span>
+          ) : null}
           <Ligne label="Fabricant" value={produit.manufacturer} />
           <Ligne label="Série" value={produit.series} />
+          <Ligne label="Rayon source" value={produit.category} />
           <Ligne label="Personnage" value={produit.character} />
           <Ligne label="JAN / EAN" value={produit.ean} />
           <Ligne label="Référence" value={produit.ref} />
           <Ligne label="Taille" value={produit.size} />
           <Ligne label="Sortie" value={produit.releaseDate} />
+          <Ligne label="Dispo. source" value={produit.availability} />
+          <Ligne label="Prix source" value={prixSource(produit)} />
           {produit.url ? (
             <a href={produit.url} target="_blank" rel="noreferrer noopener" className="font-mono text-[11px] uppercase tracking-[0.06em] text-accent hover:underline">
               Voir chez la source ↗
@@ -115,13 +132,41 @@ export function FigurineImporter() {
       {state.status === "results" ? (
         <>
           <p className="mt-5 font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-muted">
-            {state.products.length} résultat{state.products.length > 1 ? "s" : ""} pour « {state.term} »
+            {state.products.length} figurine{state.products.length > 1 ? "s" : ""} pour « {state.term} »
+            {state.rejected.length ? ` · ${state.rejected.length} dérivé${state.rejected.length > 1 ? "s" : ""} écarté${state.rejected.length > 1 ? "s" : ""}` : ""}
           </p>
-          <ul className="mt-4 grid list-none gap-4 p-0 lg:grid-cols-2">
-            {state.products.map((produit) => (
-              <Carte key={produit.ref} produit={produit} />
-            ))}
-          </ul>
+
+          {state.products.length ? (
+            <ul className="mt-4 grid list-none gap-4 p-0 lg:grid-cols-2">
+              {state.products.map((juge) => (
+                <Carte key={juge.product.ref} juge={juge} />
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 rounded-xl bg-surface-muted px-4 py-3 text-[13.5px] text-ink-soft">
+              Aucune figurine dans ces résultats. Les produits écartés restent consultables ci-dessous — et importables si
+              le tri s&apos;est trompé.
+            </p>
+          )}
+
+          {/*
+            Les écartés ne sont pas supprimés. Un filtre qui se trompe sur un
+            produit rare ne doit pas empêcher l'atelier de l'importer : deux
+            clics suffisent à le récupérer.
+          */}
+          {state.rejected.length ? (
+            <details className="mt-6 rounded-2xl border border-border bg-surface-muted p-4">
+              <summary className="cursor-pointer font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-muted">
+                {state.rejected.length} produit{state.rejected.length > 1 ? "s" : ""} écarté
+                {state.rejected.length > 1 ? "s" : ""} — t-shirts, stickers, goodies…
+              </summary>
+              <ul className="mt-4 grid list-none gap-4 p-0 lg:grid-cols-2">
+                {state.rejected.map((juge) => (
+                  <Carte key={juge.product.ref} juge={juge} />
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </>
       ) : null}
     </div>

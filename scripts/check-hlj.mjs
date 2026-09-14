@@ -113,6 +113,7 @@ if (!term) {
   // La même limite que l'écran d'import : une seule définition, partagée.
   const { SEARCH_LIMIT } = await import("../lib/catalog/providers/types.ts");
   const { hljProvider } = await import("../lib/catalog/providers/hlj.ts");
+  const { sortFigurines } = await import("../lib/catalog/figurine-filter.ts");
   const probleme = hljProvider.configurationError();
   console.log(`Stratégie : ${hljProvider.strategyLabel()}`);
   if (probleme) {
@@ -126,17 +127,28 @@ if (!term) {
       console.log(`\n✗ ${error ?? "Aucun résultat."}`);
       process.exitCode = 1;
     } else {
-      console.log(`\n✓ ${products.length} fiche(s) :\n`);
-      for (const p of products.slice(0, 8)) {
+      // Le même tri que l'écran d'import, sur les mêmes données.
+      const { kept, rejected } = sortFigurines(products);
+      console.log(`\n✓ ${products.length} fiche(s) — ${kept.length} gardée(s), ${rejected.length} écartée(s).\n`);
+
+      for (const { product: p, verdict, reason } of kept) {
         const vides = ["manufacturer", "series", "ean", "size"].filter((k) => !p[k]);
-        console.log(`  ✓ ${p.name}`);
-        console.log(`     réf ${p.ref} · ${p.manufacturer ?? "fabricant ?"} · ${p.images.length} image(s)`);
+        console.log(`  ${verdict === "figurine" ? "✓" : "?"} ${p.name}`);
+        console.log(`     réf ${p.ref} · ${p.manufacturer ?? "fabricant ?"} · ${p.category ?? "rayon ?"} · ${p.images.length} image(s)`);
+        if (reason) console.log(`     à vérifier : ${reason}`);
         if (vides.length) console.log(`     champs vides : ${vides.join(", ")}`);
       }
-      if (raw) {
-        console.log("\n--- première fiche, telle qu'elle sera importée ---");
-        console.log(JSON.stringify(products[0], null, 2).slice(0, 2000));
+
+      if (rejected.length) {
+        console.log("\n  Écartés — conservés dans les données, consultables et importables :");
+        for (const { product: p, reason } of rejected) console.log(`  ✗ ${p.name}\n     ${reason}`);
       }
+
+      if (raw) {
+        console.log("\n--- première fiche gardée, telle qu'elle sera importée ---");
+        console.log(JSON.stringify(kept[0]?.product ?? products[0], null, 2).slice(0, 2000));
+      }
+      if (!kept.length) process.exitCode = 1;
     }
   }
 }

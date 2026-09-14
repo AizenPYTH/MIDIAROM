@@ -27,6 +27,8 @@ const fiche = (over: Partial<ExternalProduct> = {}): ExternalProduct => ({
   url: "https://example.invalid/p/1",
   manufacturer: "Bandai",
   series: "One Piece",
+  category: "Figures",
+  availability: "In Stock",
   character: "Luffy",
   ean: null,
   size: "30 cm",
