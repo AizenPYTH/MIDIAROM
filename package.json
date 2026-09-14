@@ -20,7 +20,8 @@
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "seeds:build": "node scripts/build-production-seeds.mjs",
     "photos:consoles": "node scripts/import-console-photos.mjs",
-    "check:igdb": "node scripts/check-igdb.mjs"
+    "check:igdb": "node scripts/check-igdb.mjs",
+    "fixtures:homepage": "node scripts/homepage-fixtures.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
