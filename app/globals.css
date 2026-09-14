@@ -12,52 +12,73 @@
    la reprise du back-office.
 --------------------------------------------------------------------------- */
 :root {
-  /* Palette v4 */
-  --bg: #07060a;
-  --text: #f4f2ff;
-  --text-2: #b9b4e8;
-  --text-3: #9a95c4;
-  --text-4: #8f8ab8;
-  --lime: #d8ff3e;
-  --cyan: #33e1ff;
-  --violet: #7c5cff;
-  --rose: #ff5ca8;
+  /**
+   * Charte claire — MÉDI@ROM est d'abord une boutique.
+   *
+   * Le site était sombre : très beau, très éditorial, mais un fond noir met la
+   * mise en scène au premier plan et les produits au second. Une boutique fait
+   * l'inverse. Le blanc laisse les jaquettes, les consoles et les figurines
+   * porter toute la couleur, et les aplats colorés redeviennent ce qu'ils
+   * doivent être — des accents, pas le décor.
+   *
+   * Un seul endroit à changer : tout le site lit ces variables, directement ou
+   * via les utilitaires Tailwind du bloc `@theme` plus bas.
+   */
 
-  /* Surfaces en verre et filets */
-  --glass: linear-gradient(160deg, rgba(244, 242, 255, 0.09), rgba(244, 242, 255, 0.02));
-  --glass-flat: rgba(244, 242, 255, 0.05);
-  --hairline: rgba(244, 242, 255, 0.1);
-  --stroke: rgba(244, 242, 255, 0.12);
-  --stroke-strong: rgba(244, 242, 255, 0.2);
+  /* Fonds : blanc franc, puis deux gris très pâles pour poser les sections. */
+  --bg: #ffffff;
+  --bg-alt: #f6f5f3;
+  --bg-sunken: #efedea;
 
-  /* Lueurs */
-  --glow-button: 0 12px 44px rgba(124, 92, 255, 0.45);
-  --glow-panel: 0 40px 120px rgba(0, 0, 0, 0.55);
+  /* Encres : un noir chaud plutôt qu'un noir pur, qui fatigue moins. */
+  --text: #14110f;
+  --text-2: #4a443f;
+  --text-3: #78706a;
+  --text-4: #9b938c;
 
-  /* Dégradé du bouton principal */
-  --gradient-cta: linear-gradient(120deg, #7c5cff, #33e1ff);
+  /* Accents. Les teintes de la charte, retravaillées pour tenir sur du blanc :
+     le lime et le cyan d'origine y étaient illisibles. */
+  --lime: #4d7c0f;
+  --cyan: #0e7490;
+  --violet: #5b3df5;
+  --rose: #d6336c;
+  --ember: #e8590c;
 
-  /* Anciens noms de palette, repointés sur la charte v4 : les pages qui
+  /* Surfaces et filets */
+  --glass: linear-gradient(160deg, rgba(20, 17, 15, 0.035), rgba(20, 17, 15, 0.012));
+  --glass-flat: #ffffff;
+  --hairline: rgba(20, 17, 15, 0.09);
+  --stroke: rgba(20, 17, 15, 0.12);
+  --stroke-strong: rgba(20, 17, 15, 0.22);
+
+  /* Ombres : très douces, jamais de halo coloré. Une carte produit se détache
+     par son ombre, pas par une lueur. */
+  --glow-button: 0 10px 30px rgba(91, 61, 245, 0.22);
+  --glow-panel: 0 18px 48px rgba(20, 17, 15, 0.08);
+
+  --gradient-cta: linear-gradient(120deg, #5b3df5, #0e7490);
+
+  /* Anciens noms de palette, repointés sur la charte claire : les pages qui
      écrivent encore `bg-ink-900` ou `text-paper` restent cohérentes. */
-  --paper: #f4f2ff;
-  --paper-alt: #eceaff;
-  --paper-strong: #dedcf5;
-  --ink-900: #07060a;
-  --ink-800: #0d0b12;
-  --ink-750: #12101a;
-  --ink-700: rgba(244, 242, 255, 0.1);
-  --ink-650: rgba(244, 242, 255, 0.14);
-  --ink-600: rgba(244, 242, 255, 0.2);
-  --sale: var(--lime);
+  --paper: #ffffff;
+  --paper-alt: #f6f5f3;
+  --paper-strong: #efedea;
+  --ink-900: #14110f;
+  --ink-800: #241f1c;
+  --ink-750: #3a332e;
+  --ink-700: rgba(20, 17, 15, 0.1);
+  --ink-650: rgba(20, 17, 15, 0.14);
+  --ink-600: rgba(20, 17, 15, 0.2);
+  --sale: var(--rose);
   --repair: var(--cyan);
   --repair-light: var(--text-2);
-  --selection: rgba(51, 225, 255, 0.14);
+  --selection: rgba(91, 61, 245, 0.14);
 
   --color-bg: var(--bg);
-  --color-bg-alt: #0d0b12;
-  --color-surface: var(--glass-flat);
-  --color-surface-muted: rgba(244, 242, 255, 0.03);
-  --color-surface-strong: rgba(244, 242, 255, 0.09);
+  --color-bg-alt: var(--bg-alt);
+  --color-surface: #ffffff;
+  --color-surface-muted: var(--bg-alt);
+  --color-surface-strong: var(--bg-sunken);
   --color-border: var(--stroke);
   --color-border-strong: var(--stroke-strong);
   --color-ink: var(--text);
@@ -65,37 +86,37 @@
   --color-ink-muted: var(--text-3);
   --color-ink-faint: var(--text-4);
   --color-primary: var(--violet);
-  --color-primary-hover: var(--cyan);
+  --color-primary-hover: #4a2fe0;
   --color-primary-fg: #ffffff;
-  --color-primary-soft: rgba(124, 92, 255, 0.16);
+  --color-primary-soft: rgba(91, 61, 245, 0.1);
   --color-accent: var(--cyan);
-  --color-accent-hover: var(--text);
-  --color-accent-soft: rgba(51, 225, 255, 0.12);
+  --color-accent-hover: #0b5e75;
+  --color-accent-soft: rgba(14, 116, 144, 0.1);
   --color-accent-light: var(--text-2);
-  --color-sale: var(--lime);
-  --color-sale-hover: var(--text);
-  --color-success: #7ee6a8;
-  --color-success-soft: rgba(126, 230, 168, 0.14);
-  --color-warning: #ffc46b;
-  --color-warning-soft: rgba(255, 196, 107, 0.14);
-  --color-danger: #ff7a9c;
-  --color-danger-soft: rgba(255, 122, 156, 0.14);
+  --color-sale: var(--rose);
+  --color-sale-hover: #b02a57;
+  --color-success: #16794a;
+  --color-success-soft: rgba(22, 121, 74, 0.1);
+  --color-warning: #a15c07;
+  --color-warning-soft: rgba(161, 92, 7, 0.1);
+  --color-danger: #c1262d;
+  --color-danger-soft: rgba(193, 38, 45, 0.09);
   --color-info: var(--cyan);
-  --color-info-soft: rgba(51, 225, 255, 0.12);
-  --color-field: rgba(7, 6, 10, 0.45);
-  --color-placeholder-a: rgba(244, 242, 255, 0.05);
-  --color-placeholder-b: rgba(244, 242, 255, 0.02);
+  --color-info-soft: rgba(14, 116, 144, 0.1);
+  --color-field: #ffffff;
+  --color-placeholder-a: var(--bg-alt);
+  --color-placeholder-b: var(--bg-sunken);
   --color-placeholder-fg: var(--text-4);
 
-  /* Sur un aplat lime ou cyan, le texte repasse en fond : c'est le seul
-     couple lisible, et le piège classique de cette charte. */
-  --color-on-accent: #07060a;
+  /* Sur un aplat d'accent, le texte repasse en blanc : les accents sont
+     désormais assez sombres pour ça, et c'était l'inverse avant. */
+  --color-on-accent: #ffffff;
 
   --font-display: var(--font-bricolage), "Bricolage Grotesque", Helvetica, sans-serif;
   --font-sans: var(--font-instrument), "Instrument Sans", Helvetica, sans-serif;
   --font-mono: var(--font-dm-mono), "DM Mono", ui-monospace, monospace;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -140,6 +161,7 @@
   --color-ink-650: var(--ink-650);
   --color-ink-600: var(--ink-600);
   --color-lime: var(--lime);
+  --color-ember: var(--ember);
   --color-cyan: var(--cyan);
   --color-violet: var(--violet);
   --color-rose: var(--rose);
@@ -215,11 +237,12 @@ body {
 --------------------------------------------------------------------------- */
 @layer components {
   /* Panneau en verre : dégradé translucide, flou d'arrière-plan, filet clair. */
+  /* Sur du blanc, un panneau se pose par une ombre douce et un filet, pas par
+     un flou coûteux : le `backdrop-filter` n'apportait plus rien. */
   .glass {
-    background: var(--glass);
-    border: 1px solid var(--stroke);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: #ffffff;
+    border: 1px solid var(--hairline);
+    box-shadow: var(--glow-panel);
   }
 
   /* Bouton principal : dégradé violet → cyan, texte sombre, lueur violette. */
@@ -227,7 +250,7 @@ body {
     position: relative;
     overflow: hidden;
     background: var(--gradient-cta);
-    color: #07060a;
+    color: #ffffff;
     box-shadow: var(--glow-button);
   }
   /* Reflet qui traverse le bouton toutes les 4,5 s. */
@@ -501,79 +524,50 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Chorégraphie de l'accueil — volontairement réduite.
+   Mouvement — ce qu'il en reste.
    ═══════════════════════════════════════════════════════════════════════════
-   La page portait quatre scènes épinglées totalisant près de 1500svh : récit en
-   quatre temps, rail de jaquettes, jeu vedette, plus une jauge de lecture, un
-   bandeau de mots géants et des parallaxes. C'était une démonstration de
-   savoir-faire, pas un parcours : on scrollait longtemps pour peu de contenu.
+   La page portait quatre scènes épinglées, un récit en quatre temps, une
+   bascule, des parallaxes et une jauge de lecture : près de 1500svh de
+   chorégraphie avant d'atteindre un produit. Une boutique ne fait pas
+   attendre.
 
-   Il ne reste que **deux** moments animés, parce qu'ils disent quelque chose :
-
-     1. le volet avant / après de la réparation — il montre le métier ;
-     2. la bascule atelier → boutique — elle fait changer d'univers.
-
-   Plus une révélation discrète à l'entrée des blocs, et une respiration sur
-   l'artwork du jeu vedette. Rien d'autre. Une seule scène reste `sticky`, et
-   elle tient en 180svh.
-
-   Le choix du CSS plutôt que d'un pin JavaScript est inchangé : `position:
-   sticky` + `animation-timeline` ne dépend d'aucun cycle de vie, il n'y a rien
-   à monter ni à rafraîchir au redimensionnement. Tout état masqué vit dans le
-   `@supports` : sans prise en charge, la page redevient un flux vertical
-   entièrement lisible.
+   Il reste **une** révélation à l'entrée des blocs, et le relief au survol des
+   cartes. Rien qui retarde l'accès au rayon, rien qui capture le défilement.
+   Les zooms d'image au survol vivent dans les composants, en transition
+   Tailwind, et sont coupés plus bas sans mouvement.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-@keyframes rvIn { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
-/* Le volet avant / après : l'état réparé se découvre de gauche à droite. */
-@keyframes wipeIn { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-/* La bascule : un voile circulaire s'ouvre, le texte d'atelier s'efface,
-   celui de la boutique prend sa place. Une seule fois, sur une seule scène. */
-@keyframes veilOpen { from { clip-path: circle(0% at 50% 45%); } to { clip-path: circle(150% at 50% 45%); } }
-@keyframes shiftOut { 0%, 12% { opacity: 1; transform: scale(1); } 64%, 100% { opacity: 0; transform: scale(0.9); } }
-@keyframes shiftIn { 0%, 46% { opacity: 0; transform: scale(1.08); } 92%, 100% { opacity: 1; transform: none; } }
-/* Respiration de l'artwork vedette : une seule, de faible amplitude. */
-@keyframes artIn { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: none; } }
+@keyframes rvIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 
 @supports (animation-timeline: view()) {
-  [data-shift] { view-timeline-name: --shift; }
-
-  [data-reveal] { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 10% cover 26%; }
-  [data-repair-wipe] { animation: wipeIn linear both; animation-timeline: view(); animation-range: entry 30% cover 42%; }
-  [data-feat-art] { animation: artIn linear both; animation-timeline: view(); animation-range: entry 0% cover 34%; }
-
-  [data-shift-veil] { animation: veilOpen linear both; animation-timeline: --shift; animation-range: contain 0% contain 88%; }
-  [data-shift-out] { animation: shiftOut linear both; animation-timeline: --shift; animation-range: contain 0% contain 100%; }
-  [data-shift-in] { animation: shiftIn linear both; animation-timeline: --shift; animation-range: contain 0% contain 100%; }
+  [data-reveal] { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 12% cover 24%; }
 }
 
-/* Seuls les éléments réellement en mouvement continu sont promus en couche de
-   composition. La liste est courte, maintenant, et c'est le but. */
-[data-shift-veil],
-[data-feat-art] {
-  will-change: transform, opacity;
-}
-
-/* Repli explicite : sans chronologie de défilement, rien ne se superpose. */
-@supports not (animation-timeline: view()) {
-  [data-shift] { height: auto; }
-  [data-shift-stage] { position: relative; height: auto; min-height: 70svh; }
-  [data-shift-veil] { clip-path: circle(150% at 50% 45%); }
-  [data-shift-in] { display: none; }
-  [data-repair-wipe] { clip-path: inset(0 0 0 0); }
+/**
+ * Micro-interaction au survol des cartes : elle répond à « est-ce cliquable ? ».
+ * Réservée au vrai pointeur — au doigt, un survol collant n'a aucun sens.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .card-lift {
+    transition:
+      transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .card-lift:hover {
+    transform: translateY(-3px);
+    border-color: var(--stroke-strong);
+  }
 }
 
 /* Sans mouvement : plus rien ne bouge, et rien ne reste caché. */
 @media (prefers-reduced-motion: reduce) {
-  [data-shift] { height: auto !important; }
-  [data-shift-stage] { position: relative !important; height: auto !important; min-height: 70svh !important; }
-  [data-reveal], [data-shift-out], [data-feat-art] {
+  [data-reveal] {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
   }
-  [data-repair-wipe] { animation: none !important; clip-path: inset(0 0 0 0) !important; }
-  [data-shift-in] { display: none !important; }
+  .card-lift:hover { transform: none; }
+  .group:hover .group-hover\:scale-\[1\.03\] { transform: none !important; }
 }
 
 /* Prose for CMS markdown */

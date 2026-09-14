@@ -1,15 +1,25 @@
 import Link from "next/link";
+import { CATEGORY_SLUGS } from "@/lib/shop/status";
 import { ROUTES } from "@/config/site";
 import type { BrandSettings } from "@/config/brand";
 import { AccountLink, MobileNav } from "@/components/marketing/header-client";
 import { PulseDot } from "@/components/marketing/backdrop";
 
+/**
+ * La navigation d'une boutique.
+ *
+ * Elle listait cinq services à égalité — réparation, boutique, reprise, suivi,
+ * magasin — et la boutique s'y perdait. Elle mène maintenant d'abord aux trois
+ * rayons, puis au service. Reprise, suivi et magasin restent accessibles par le
+ * pied de page et la barre d'onglets mobile : ce sont des destinations qu'on
+ * cherche, pas des rayons qu'on parcourt.
+ */
 const NAV = [
-  { href: ROUTES.repair, label: "Réparation" },
   { href: ROUTES.shop, label: "Boutique" },
-  { href: ROUTES.tradeIn, label: "Reprise" },
-  { href: ROUTES.tracking, label: "Suivi" },
-  { href: ROUTES.contact, label: "Le magasin" },
+  { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.GAME}`, label: "Jeux vidéo" },
+  { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.CONSOLE}`, label: "Consoles" },
+  { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.COLLECTIBLE}`, label: "Figurines Manga / Anime" },
+  { href: ROUTES.repair, label: "Réparation" },
 ];
 
 /**
@@ -33,13 +43,13 @@ export function SiteHeader({ brand }: { brand: BrandSettings }) {
       {/* z-40, au-dessus de la barre d'onglets basse (z-30) : le header pose un
           contexte d'empilement, et le panneau plein écran du menu, qui vit à
           l'intérieur, ne peut pas le dépasser — il passerait sous la barre. */}
-      <header className="sticky top-0 z-40 flex items-center gap-x-8 gap-y-3 border-b border-border px-4 py-3 backdrop-blur-[14px] sm:px-8 lg:flex-wrap" style={{ background: "rgba(7,6,10,0.5)" }}>
+      <header className="sticky top-0 z-40 flex items-center gap-x-8 gap-y-3 border-b border-border px-4 py-3 backdrop-blur-[14px] sm:px-8 lg:flex-wrap" style={{ background: "rgba(255,255,255,0.82)" }}>
         <Link href={ROUTES.home} aria-label={`${brand.name} — accueil`} className="min-w-0 text-ink">
           <BrandMark name={brand.name} />
         </Link>
         <nav className="hidden flex-1 flex-wrap items-center gap-7 whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.12em] lg:flex" aria-label="Navigation principale">
           {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="text-ink-muted transition-colors hover:text-sale">
+            <Link key={item.href} href={item.href} className="text-ink-soft transition-colors hover:text-ink">
               {item.label}
             </Link>
           ))}
@@ -51,7 +61,7 @@ export function SiteHeader({ brand }: { brand: BrandSettings }) {
           {/* La pilule claire du handoff : l'action que l'on vient chercher. */}
           <Link
             href={ROUTES.repair}
-            className="hidden whitespace-nowrap rounded-full bg-paper px-5 py-2.5 font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink-900 transition-all duration-300 hover:brightness-95 sm:inline-block"
+            className="hidden whitespace-nowrap rounded-full bg-ink px-5 py-2.5 font-mono text-[11.5px] uppercase tracking-[0.12em] text-bg transition-opacity duration-300 hover:opacity-85 sm:inline-block"
             style={{ boxShadow: "var(--glow-button)" }}
           >
             Confier ma console

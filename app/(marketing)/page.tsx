@@ -1,29 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ROUTES, SITE_URL } from "@/config/site";
-import { HeroRepair, RepairFlow, ShiftScene } from "@/components/marketing/home/scenes";
-import { FeaturedGame } from "@/components/marketing/home/featured-game";
-import { GamesGrid } from "@/components/marketing/home/games-grid";
-import { ProductRail, RepairServices, ShopCategories, SHOP_CATEGORIES } from "@/components/marketing/home/shop-sections";
+import { HeroShop } from "@/components/marketing/home/scenes";
+import { CategoryCards, DemoGamesRail, ProductRail, RepairBand } from "@/components/marketing/home/shop-sections";
 import { getHomepageGames } from "@/lib/shop/games";
-import { toGameScene, toGameScenes } from "@/lib/shop/game-scene";
-import { getProductCategoryCounts, getProducts, productPhotos, type Product } from "@/lib/shop/catalog";
-import { CATEGORY_SLUGS, type ProductCategory } from "@/lib/shop/status";
-import { DEMO_FEATURED_VIDEO } from "@/lib/content/assets";
+import { getProductCategoryCounts, getProducts } from "@/lib/shop/catalog";
+import { CATEGORY_SLUGS } from "@/lib/shop/status";
 import { getSeoPage } from "@/lib/content";
 import { getBrandSettings } from "@/lib/settings";
 
 /**
- * Accueil.
+ * Accueil — une boutique, pas une présentation.
  *
- * Le parcours tient en deux idées, dans cet ordre : **MÉDI@ROM répare vos
- * consoles**, puis **MÉDI@ROM tient une boutique gaming et pop culture**.
- * Hero, atelier, bascule, boutique. Rien d'autre.
+ * L'ordre dit tout : hero court, les trois rayons en cartes, puis les produits.
+ * Un visiteur voit une jaquette avant d'avoir fini de lire le titre de la page,
+ * et l'atelier arrive après, comme le service qu'il est.
  *
- * La page portait quatre scènes épinglées totalisant près de 1500svh. Il en
- * reste **une** — la bascule atelier → boutique, 180svh — plus le volet avant
- * et après de la réparation, animé à l'entrée. Le reste est immobile : c'est
- * un magasin, pas une démonstration technique.
+ * C'est un renversement assumé. La page racontait l'entreprise — quatre scènes
+ * épinglées, un récit en quatre temps, une bascule — et la boutique venait en
+ * fin de parcours. Elle commence maintenant par le rayon : voir, choisir,
+ * ouvrir, ajouter au panier.
  *
  * Rendu à la demande : prix, stock et rayons viennent du catalogue. Un rendu
  * statique figerait l'état du magasin au moment du build.
@@ -47,93 +43,43 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   // Une lecture par rayon, plus les jeux. Aucun appel à IGDB à l'affichage :
   // les fiches viennent du cache.
-  const [{ featured, latest, isDemo }, counts, consoles, figurines] = await Promise.all([
-    getHomepageGames(GAMES_ON_HOME + 1),
+  const [{ latest, isDemo }, counts, games, consoles, figurines] = await Promise.all([
+    getHomepageGames(GAMES_ON_HOME),
     getProductCategoryCounts(),
+    getProducts({ category: CATEGORY_SLUGS.GAME, sort: "recent" }, PER_RAIL),
     getProducts({ category: CATEGORY_SLUGS.CONSOLE, sort: "recent" }, PER_RAIL),
     getProducts({ category: CATEGORY_SLUGS.COLLECTIBLE, sort: "recent" }, PER_RAIL),
   ]);
 
-  // Un produit sans photo propre récupère celle de son modèle de console.
-  // Les jeux ont leur propre bloc (`GamesGrid`), qu'ils soient réels ou de
-  // démonstration : un rail « Jeux vidéo » de plus ferait doublon.
-  const rails: { category: ProductCategory; products: Product[] }[] = [
-    { category: "CONSOLE", products: consoles },
-    { category: "COLLECTIBLE", products: figurines },
-  ];
-  const photos = await productPhotos(rails.flatMap((r) => r.products));
-
-  // Le jeu du moment, puis le reste de la sélection.
-  const featuredScene = featured ? toGameScene(featured, 0, isDemo) : null;
-  const gridGames = toGameScenes(
-    latest.filter((listing) => listing.productId !== featured?.productId).slice(0, GAMES_ON_HOME),
-    isDemo,
-  );
-  // Habillage vidéo du jeu vedette, à défaut d'une vidéo du produit.
-  const ambientVideo = { url: DEMO_FEATURED_VIDEO, posterUrl: featuredScene?.artworkUrl ?? null, ambient: true };
-  const emptyShop = rails.every((r) => r.products.length === 0) && gridGames.length === 0;
+  // Les vrais jeux sont des produits comme les autres. La sélection de
+  // démonstration ne prend le relais que si le rayon est vide.
+  const demoGames = isDemo ? latest.slice(0, GAMES_ON_HOME) : [];
+  const rienEnRayon = !games.length && !demoGames.length && !consoles.length && !figurines.length;
 
   return (
     <>
-      <HeroRepair />
-      <RepairServices />
-      <RepairFlow />
+      <HeroShop />
+      <CategoryCards counts={counts} />
 
-      {/* Le seul moment épinglé de la page. */}
-      <ShiftScene />
+      <ProductRail category="GAME" products={games} />
+      <DemoGamesRail games={demoGames} />
+      <ProductRail category="CONSOLE" products={consoles} />
+      <ProductRail category="COLLECTIBLE" products={figurines} />
 
-      <ShopCategories counts={counts} />
-
-      {featuredScene ? <FeaturedGame game={featuredScene} ambientVideo={ambientVideo} /> : null}
-      <GamesGrid games={gridGames} isDemo={isDemo} />
-
-      {rails.map(({ category, products }) => (
-        <ProductRail
-          key={category}
-          title={SHOP_CATEGORIES.find((c) => c.category === category)?.name ?? ""}
-          category={category}
-          products={products}
-          photos={photos}
-          accent={SHOP_CATEGORIES.find((c) => c.category === category)?.color ?? "rgba(255,244,234,0.14)"}
-        />
-      ))}
-
-      {/* Rien en rayon : on le dit, plutôt que d'afficher des sections vides. */}
-      {emptyShop ? (
-        <section data-warm="1" style={{ background: "#0d0710", padding: "70px 30px 90px" }}>
-          <div style={{ maxWidth: 1420, margin: "0 auto" }}>
-            <p data-reveal="1" style={{ margin: 0, maxWidth: "46ch", fontSize: "clamp(15px,1.5vw,18px)", lineHeight: 1.45, color: "#e4c9bd" }}>
-              Les arrivages ne sont pas encore en ligne. Passez rue de Rome : le rayon, lui, est plein.
-            </p>
-            <Link href={ROUTES.shop} style={{ display: "inline-flex", alignItems: "center", marginTop: 24, minHeight: 44, background: "#fff4ea", color: "#1a0d06", borderRadius: 999, padding: "17px 28px", fontWeight: 600, fontSize: 16.5 }}>
-              Parcourir la boutique
-            </Link>
-          </div>
+      {/* Rien en rayon : on le dit, plutôt que d'empiler des sections vides. */}
+      {rienEnRayon ? (
+        <section className="mx-auto max-w-[1240px] px-5 py-16 sm:px-8">
+          <p data-reveal="1" className="max-w-[46ch] text-[16px] leading-[1.5] text-ink-soft">
+            Les arrivages ne sont pas encore en ligne. Passez rue de Rome : le rayon, lui, est plein.
+          </p>
+          <Link href={ROUTES.shop} className="mt-6 inline-flex min-h-[48px] items-center rounded-full bg-ink px-7 font-semibold text-bg">
+            Parcourir la boutique
+          </Link>
         </section>
       ) : null}
 
-      {/* Retour à la réparation : la page se referme sur ce qui la commence. */}
-      <section id="devis" style={{ position: "relative", background: "#0d0710", padding: "100px 30px 110px" }}>
-        <div style={{ maxWidth: 1420, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px,1fr))", gap: 48, alignItems: "center" }}>
-          <div data-reveal="1" style={{ minWidth: 0 }}>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#9a95c4" }}>Une console en panne ?</span>
-            <h2 style={{ margin: "16px 0 0", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "clamp(32px,5.2vw,74px)", lineHeight: 0.9, letterSpacing: "-0.04em" }}>
-              Le devis prend trois minutes.
-            </h2>
-            <p style={{ margin: "20px 0 0", maxWidth: "38ch", fontSize: "clamp(16px,1.6vw,19px)", lineHeight: 1.45, color: "#b9b4e8" }}>
-              Choisissez l&apos;appareil et la panne, décrivez ce qui se passe. Diagnostic sous 48 heures, devis avant toute intervention.
-            </p>
-          </div>
-          <div data-reveal="1" style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <Link href={ROUTES.repair} className="btn-gradient" style={{ borderRadius: 999, padding: "19px 32px", fontWeight: 600, fontSize: 17, color: "var(--color-on-accent)", minHeight: 52, display: "inline-flex", alignItems: "center" }}>
-              Démarrer mon devis
-            </Link>
-            <Link href={ROUTES.tracking} style={{ borderRadius: 999, padding: "19px 30px", border: "1px solid rgba(244,242,255,0.2)", fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", color: "#f4f2ff", minHeight: 52, display: "inline-flex", alignItems: "center" }}>
-              Suivre ma réparation
-            </Link>
-          </div>
-        </div>
-      </section>
+      <RepairBand />
+
     </>
   );
 }

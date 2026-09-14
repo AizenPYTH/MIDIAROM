@@ -109,10 +109,21 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
  */
 export const DEPRECATED_CATEGORIES: readonly ProductCategory[] = ["MANGA"];
 
-/** Les rayons proposés au public, dans l'ordre d'affichage. */
-export const PUBLIC_CATEGORIES: readonly ProductCategory[] = (
+/**
+ * Les rayons du magasin, dans l'ordre d'affichage.
+ *
+ * Trois, et trois seulement. `ACCESSORY` et `PART` existent en base parce que
+ * l'atelier a besoin de suivre des manettes de remplacement et des pièces
+ * détachées, mais MÉDI@ROM n'est pas une boutique d'informatique : les mettre
+ * en rayon ferait croire qu'on vend des composants. Ils restent gérables au
+ * back-office, invisibles côté public.
+ */
+export const PUBLIC_CATEGORIES: readonly ProductCategory[] = ["GAME", "CONSOLE", "COLLECTIBLE"];
+
+/** Ce que le public ne voit pas : rayons internes et valeurs mortes. */
+export const NON_PUBLIC_CATEGORIES: readonly ProductCategory[] = (
   Object.keys(CATEGORY_LABELS) as ProductCategory[]
-).filter((c) => !DEPRECATED_CATEGORIES.includes(c));
+).filter((c) => !PUBLIC_CATEGORIES.includes(c));
 
 export const CATEGORY_SLUGS: Record<ProductCategory, string> = {
   CONSOLE: "consoles",

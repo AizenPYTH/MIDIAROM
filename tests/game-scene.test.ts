@@ -48,20 +48,30 @@ describe("toGameScene — produit réel", () => {
 
 describe("toGameScene — vitrine de démonstration", () => {
   /**
-   * Le point dur de cette vitrine : un jeu qui n'est pas au catalogue ne doit
-   * jamais se présenter comme achetable. Pas de lien — un lien mort, ou pire,
-   * une promesse commerciale fausse — et pas de prix.
+   * La règle a changé, et c'est délibéré : la vitrine ressemble maintenant à
+   * une boutique — les jeux ont une fiche et un prix indicatif. Ce qui n'a pas
+   * changé, et que ce test protège : **leur fiche n'est jamais une fiche du
+   * catalogue**. Un lien de démonstration qui pointerait vers `/boutique/<slug>`
+   * promettrait un produit qui n'existe pas.
    */
-  it("n'a ni lien produit ni prix", () => {
-    const scene = toGameScene(listing({ productId: "demo:1029", priceCents: 0 }), 0, true);
-    expect(scene.href).toBeNull();
-    expect(scene.price).toBeNull();
+  it("mène à sa propre fiche, jamais à une fiche du catalogue", () => {
+    const scene = toGameScene(listing({ productId: "demo:1029", slug: "elden-ring" }), 0, true);
+    expect(scene.href).toBe("/boutique/jeu/elden-ring");
+    expect(scene.href).not.toBe("/boutique/elden-ring");
     expect(scene.isDemo).toBe(true);
-    expect(scene.cta).toBe("Bientôt en rayon");
   });
 
-  it("ne chiffre pas non plus un jeu de démonstration porteur d'un prix", () => {
-    expect(toGameScene(listing({ priceCents: 4990 }), 0, true).price).toBeNull();
+  it("affiche un prix, pour ressembler à un rayon", () => {
+    expect(toGameScene(listing({ priceCents: 2999 }), 0, true).price).not.toBeNull();
+  });
+
+  it("invite à consulter, pas à acheter", () => {
+    expect(toGameScene(listing(), 0, true).cta).toBe("Voir le jeu");
+  });
+
+  it("n'emprunte pas la description du catalogue", () => {
+    // Les résumés IGDB sont en anglais : ils ne s'affichent pas.
+    expect(toGameScene(listing({ summary: "An English summary." }), 0, true).pitch).toBeNull();
   });
 });
 
@@ -80,7 +90,10 @@ describe("toGameScenes", () => {
   });
 
   it("propage le caractère démonstratif à toute la liste", () => {
-    expect(toGameScenes(many, true).every((s) => s.href === null && s.isDemo)).toBe(true);
+    const scenes = toGameScenes(many, true);
+    expect(scenes.every((s) => s.isDemo)).toBe(true);
+    // Aucune ne doit pointer vers le catalogue réel.
+    expect(scenes.every((s) => s.href?.startsWith("/boutique/jeu/"))).toBe(true);
   });
 });
 

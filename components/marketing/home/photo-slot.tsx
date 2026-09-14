@@ -13,7 +13,7 @@ import type { CSSProperties, ReactNode } from "react";
  */
 export function PhotoSlot({
   label,
-  accent = "rgba(255,244,234,0.5)",
+  accent = "rgba(20,17,15,0.06)",
   radius,
   style,
   children,
@@ -37,7 +37,7 @@ export function PhotoSlot({
         overflow: "hidden",
         display: "grid",
         placeItems: "center",
-        background: `radial-gradient(130% 120% at 62% 26%, ${accent}, transparent 68%), rgba(255,244,234,0.035)`,
+        background: `radial-gradient(130% 120% at 62% 26%, ${accent}, transparent 68%), var(--bg-alt)`,
         ...style,
       }}
     >
@@ -46,7 +46,8 @@ export function PhotoSlot({
         style={{
           position: "absolute",
           inset: 0,
-          background: "repeating-linear-gradient(48deg, rgba(255,244,234,0.055) 0 1px, transparent 1px 11px)",
+          // Sur un fond clair, la trame se dessine en encre, pas en lumière.
+          background: "repeating-linear-gradient(48deg, rgba(20,17,15,0.05) 0 1px, transparent 1px 11px)",
         }}
       />
       <span
@@ -57,7 +58,7 @@ export function PhotoSlot({
           fontSize: "clamp(54px, 26%, 132px)",
           lineHeight: 1,
           letterSpacing: "-0.06em",
-          color: "rgba(255,244,234,0.1)",
+          color: "rgba(20,17,15,0.09)",
         }}
       >
         {initial}

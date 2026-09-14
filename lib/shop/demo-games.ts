@@ -1,5 +1,6 @@
 import "server-only";
 import { getGames } from "@/lib/igdb/service";
+import { demoPriceCents } from "@/lib/shop/demo-price";
 import demoEntries from "@/lib/shop/demo-games.json";
 import type { GameListing } from "@/lib/shop/games";
 
@@ -173,7 +174,8 @@ export async function getDemoGames(limit = 24): Promise<GameListing[]> {
       name: game.name,
       platform: game.platforms[0] ?? null,
       edition: null,
-      priceCents: 0,
+      // Prix indicatif, jamais un prix de vente : voir lib/shop/demo-price.ts.
+      priceCents: demoPriceCents(game.releaseDate, game.rating),
       compareAtPriceCents: null,
       condition: "NEW",
       inStock: false,
@@ -199,4 +201,23 @@ export async function getDemoGames(limit = 24): Promise<GameListing[]> {
 /** Une fiche de démonstration se reconnaît à son identifiant. */
 export function isDemoListing(listing: Pick<GameListing, "productId">): boolean {
   return listing.productId.startsWith("demo:");
+}
+
+/**
+ * Une fiche de démonstration par son slug, pour `/boutique/jeu/[slug]`.
+ *
+ * Le slug vient d'IGDB et n'est donc pas garanti unique dans notre fichier :
+ * on cherche dans la vitrine, jamais dans tout IGDB — une page de jeu ne doit
+ * exister que pour les titres qu'on a choisi de montrer.
+ */
+export async function getDemoGameBySlug(slug: string): Promise<GameListing | null> {
+  const entries = readDemoFile();
+  if (!entries.length) return null;
+  const games = await getDemoGames(entries.length);
+  return games.find((g) => g.slug === slug) ?? null;
+}
+
+/** Tous les slugs de la vitrine, pour la génération statique et les liens. */
+export function demoGameSlugCount(): number {
+  return readDemoFile().length;
 }

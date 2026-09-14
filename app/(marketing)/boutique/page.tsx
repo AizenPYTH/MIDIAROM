@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { Container, Eyebrow } from "@/components/ui/misc";
-import { ProductCard } from "@/components/shop/product-card";
+import { ProductCard, ProductGrid } from "@/components/shop/product-card";
 import { getProductCategoryCounts, getProductPlatforms, getProducts, type ProductFilters } from "@/lib/shop/catalog";
 import { CATEGORY_LABELS, CATEGORY_SLUGS, PUBLIC_CATEGORIES, type ProductCategory } from "@/lib/shop/status";
+import { CategoryCards, DemoGamesRail } from "@/components/marketing/home/shop-sections";
+import { getHomepageGames } from "@/lib/shop/games";
 import { cn } from "@/lib/utils/cn";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +57,13 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     sort,
   };
   const [products, platforms, counts] = await Promise.all([getProducts(filters), getProductPlatforms(), getProductCategoryCounts()]);
+  // Le rayon jeux est vide tant que le stock n'est pas saisi : la sélection de
+  // démonstration le remplit, en s'annonçant comme telle. Elle n'apparaît que
+  // là où elle a du sens — vue d'ensemble, ou rayon « jeux » — et jamais quand
+  // une vraie référence existe.
+  const rayonJeux = !sp.cat || sp.cat === CATEGORY_SLUGS.GAME;
+  const { latest: demoAll, isDemo } = rayonJeux && counts.GAME === 0 ? await getHomepageGames(24) : { latest: [], isDemo: false };
+  const demoGames = isDemo ? demoAll : [];
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
@@ -107,6 +116,14 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       </form>
       ) : null}
 
+      {/* Les trois rayons, en grand, quand on arrive sans filtre : c'est la
+          première chose qu'une boutique doit montrer. */}
+      {!sp.cat && sp.retro !== "1" && !sp.q ? (
+        <div className="-mx-5 mb-8 sm:-mx-8">
+          <CategoryCards counts={counts} />
+        </div>
+      ) : null}
+
       {/* Bande à défilement horizontal au téléphone : les catégories restent sur
           une ligne au lieu d'occuper trois rangées avant le premier produit. */}
       {total > 0 ? (
@@ -132,12 +149,14 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       ) : null}
 
       {products.length ? (
-        <div className="grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
+        <ProductGrid>
           {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <li key={p.id} className="min-w-0">
+              <ProductCard product={p} />
+            </li>
           ))}
-        </div>
-      ) : (
+        </ProductGrid>
+      ) : demoGames.length ? null : (
         <div className="border border-dashed border-border-strong bg-surface-muted px-6 py-8">
           {/* Deux états vides distincts : un catalogue sans aucune référence n'est
               pas un filtre trop étroit, et proposer d'élargir la recherche y
@@ -168,6 +187,12 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         </div>
       )}
       <p className="mt-8 text-[13px] text-ink-faint">Les états d&apos;occasion sont indiqués sur chaque fiche (grade A, B ou C, défauts détaillés). Un article d&apos;occasion n&apos;est jamais présenté comme neuf.</p>
+
+      {demoGames.length ? (
+        <div className="-mx-5 mt-4 sm:-mx-8">
+          <DemoGamesRail games={demoGames} />
+        </div>
+      ) : null}
     </Container>
   );
 }

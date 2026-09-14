@@ -105,18 +105,20 @@ export function toGameScene(listing: GameListing, index: number, demo = false): 
   return {
     productId: listing.productId,
     slug: listing.slug,
-    href: demo ? null : `${ROUTES.shop}/${listing.slug}`,
+    // Les jeux de démonstration ont désormais leur propre fiche, distincte du
+    // catalogue : /boutique/jeu/<slug>. Elle dit ce qu'ils sont.
+    href: demo ? `${ROUTES.shop}/jeu/${listing.slug}` : `${ROUTES.shop}/${listing.slug}`,
     isDemo: demo,
     name: listing.name,
     tag: tagFor(listing),
     pitch: demo ? null : listing.summary,
     platforms: listing.platform ? [platformFr(listing.platform)] : [],
     meta: metaLine(listing),
-    price: demo ? null : formatPrice(listing.priceCents),
+    price: formatPrice(listing.priceCents),
     inStock: listing.inStock,
     // Une fiche de démonstration ne promet pas un achat : elle renvoie vers
     // la bande-annonce, seule action honnête tant que le jeu n'est pas en rayon.
-    cta: demo ? "Bientôt en rayon" : listing.inStock ? "Voir la fiche" : "Bientôt de retour",
+    cta: demo ? "Voir le jeu" : listing.inStock ? "Voir la fiche" : "Bientôt de retour",
     coverUrl: listing.coverUrl,
     artworkUrl: listing.heroUrl,
     screenshotUrls: listing.screenshotUrls.slice(0, 2),
