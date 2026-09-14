@@ -7,7 +7,7 @@ import { GamesScene } from "@/components/marketing/home/games-scene";
 import { ServicesGrid, ShopRows } from "@/components/marketing/home/shop-sections";
 import { getHomepageGames } from "@/lib/shop/games";
 import { toGameScene, toGameScenes } from "@/lib/shop/game-scene";
-import { getProducts } from "@/lib/shop/catalog";
+import { getProducts, productPhotos } from "@/lib/shop/catalog";
 import { getSeoPage } from "@/lib/content";
 import { getBrandSettings } from "@/lib/settings";
 
@@ -46,6 +46,9 @@ export default async function HomePage() {
     getProducts({ category: "accessoires", sort: "recent" }, 4),
   ]);
 
+  // Un produit sans photo propre récupère celle de son modèle de console : le
+  // catalogue en porte treize, il n'y a aucune raison d'afficher un cadre vide.
+  const photos = await productPhotos([...consoles, ...collectibles, ...accessories]);
   const scenes = toGameScenes(latest);
   // Le jeu du moment : celui mis en avant par l'atelier, sinon le premier du
   // rail. Sa lueur suit sa position pour rester cohérente avec la scène.
@@ -84,7 +87,7 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <ShopRows consoles={consoles} collectibles={collectibles} accessories={accessories} />
+      <ShopRows consoles={consoles} collectibles={collectibles} accessories={accessories} photos={photos} />
 
       {/* Retour à la réparation : la page se referme sur ce qui la commence. */}
       <section id="devis" style={{ position: "relative", background: "#0d0710", padding: "100px 30px 110px" }}>

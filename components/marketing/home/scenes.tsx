@@ -1,5 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ROUTES } from "@/config/site";
+import { CONSOLE_PHOTOS, STOREFRONT } from "@/lib/content/assets";
 
 /**
  * Scènes de l'accueil rendues côté serveur.
@@ -62,6 +64,23 @@ export function HeroRepair() {
             ))}
           </div>
         </div>
+
+        {/* Visuel du hero : le détouré de console est sur fond blanc, il lui
+            faut donc son propre cadre clair. C'est la seule photo d'appareil
+            dont on dispose ; une vraie photo d'atelier la remplacera. */}
+        <div data-hero-visual="1" style={{ position: "relative", minWidth: 0 }}>
+          <div data-depth="0.03" style={{ position: "relative", aspectRatio: "4/3", borderRadius: 28, overflow: "hidden", border: "1px solid rgba(244,242,255,0.12)", boxShadow: "0 40px 120px rgba(0,0,0,0.55)", background: "radial-gradient(120% 120% at 50% 35%, #f7f6fb, #cfcbe2)" }}>
+            <Image src={CONSOLE_PHOTOS["ps4"]!} alt="PlayStation 4 prise en charge à l'atelier" fill sizes="(max-width: 900px) 92vw, 620px" priority style={{ objectFit: "contain", padding: 32 }} />
+          </div>
+          <span data-depth="0.16" className="glass" style={{ position: "absolute", left: -12, bottom: 34, display: "flex", flexDirection: "column", gap: 3, borderRadius: 18, padding: "13px 17px" }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "#9a95c4" }}>En cours</span>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 15, letterSpacing: "-0.02em" }}>Reflow port HDMI</span>
+          </span>
+          <span data-depth="0.22" className="glass" style={{ position: "absolute", right: -10, top: 28, display: "flex", flexDirection: "column", gap: 3, borderRadius: 18, padding: "13px 17px" }}>
+            <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 19, letterSpacing: "-0.03em", color: LIME }}>48 h</span>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase", color: "#9a95c4" }}>Devis</span>
+          </span>
+        </div>
       </div>
     </section>
   );
@@ -89,10 +108,14 @@ export function StoryScene() {
         <div style={{ width: "100%", maxWidth: 1420, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px,1fr))", gap: 52, alignItems: "center" }}>
           <div style={{ position: "relative", minWidth: 0, order: 2 }}>
             <div style={{ position: "relative", aspectRatio: "5/4", borderRadius: 28, overflow: "hidden", border: "1px solid rgba(244,242,255,0.12)", boxShadow: "0 40px 120px rgba(0,0,0,0.55)" }}>
-              {/* Les photographies de l'atelier restent à fournir : en attendant,
-                  deux aplats tenus par la charte, jamais un cadre vide. */}
+              {/* Volet « avant / après ». Les deux photos du banc restent à
+                  fournir (voir MISSING_ASSETS) : en attendant, la face
+                  découverte montre la vraie devanture — la console repart
+                  d'ici — et la face initiale garde l'aplat de la charte. */}
               <div style={{ position: "absolute", inset: 0, background: "radial-gradient(120% 100% at 30% 20%, rgba(124,92,255,0.35), #0b0910 70%)" }} />
-              <div data-story-wipe="1" style={{ position: "absolute", inset: 0, clipPath: "inset(0 100% 0 0)", background: "radial-gradient(120% 100% at 70% 30%, rgba(216,255,62,0.28), #0b0910 68%)" }} />
+              <div data-story-wipe="1" style={{ position: "absolute", inset: 0, clipPath: "inset(0 100% 0 0)" }}>
+                <Image src={STOREFRONT} alt="La devanture du 207 rue de Rome, à Marseille" fill sizes="(max-width: 900px) 92vw, 620px" style={{ objectFit: "cover" }} />
+              </div>
               <span data-story-seam="1" style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 2, background: "linear-gradient(180deg,transparent,#d8ff3e,transparent)", boxShadow: "0 0 22px rgba(216,255,62,0.7)" }} />
             </div>
             <div style={{ display: "flex", gap: 6, marginTop: 16 }}>
@@ -194,7 +217,14 @@ export function ShopIntro() {
             Trente ans de rayons. Le neuf, l&apos;occasion testée, le collector qu&apos;on ne trouve nulle part ailleurs.
           </p>
         </div>
-        <div data-reveal="1" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "flex-start" }}>
+        <div data-reveal="1" style={{ position: "relative", minWidth: 0, aspectRatio: "4/5", borderRadius: 28, overflow: "hidden", border: "1px solid rgba(255,244,234,0.16)", boxShadow: "0 40px 120px rgba(0,0,0,0.6)" }}>
+          <Image src={STOREFRONT} alt="La vitrine du 207 Médi@roM : jeux, consoles et figurines" fill sizes="(max-width: 900px) 92vw, 520px" style={{ objectFit: "cover" }} />
+          <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(13,7,16,0) 45%, rgba(13,7,16,0.85) 100%)" }} />
+          <span style={{ position: "absolute", left: 20, bottom: 18, fontFamily: "var(--font-mono)", fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: "#fff4ea" }}>
+            207 rue de Rome · Marseille 6ᵉ
+          </span>
+        </div>
+        <div data-reveal="1" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "flex-start", alignContent: "flex-start" }}>
           {SHOP_TAGS.map((tag) => (
             <Link
               key={tag}

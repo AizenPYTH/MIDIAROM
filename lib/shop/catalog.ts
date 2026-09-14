@@ -87,3 +87,43 @@ export const getProductCategoryCounts = cache(async (): Promise<Record<ProductCa
   for (const p of data ?? []) counts[p.category] += 1;
   return counts;
 });
+
+/**
+ * Photo d'un produit, avec repli sur le modèle de console auquel il est lié.
+ *
+ * Le catalogue porte 13 détourés de consoles (`console_models.image_path`,
+ * importés par `npm run photos:consoles`). Une console mise en vente sans
+ * photo propre n'a donc aucune raison de s'afficher vide : celle du modèle
+ * dit déjà de quel appareil il s'agit.
+ *
+ * Renvoie null plutôt qu'un chemin de remplissage : l'affichage sait poser son
+ * aplat.
+ */
+export async function productPhoto(product: Pick<Product, "images" | "model_id">): Promise<string | null> {
+  const own = (product.images ?? []).find(Boolean);
+  if (own) return own;
+  if (!product.model_id) return null;
+  const { data } = await db().from("console_models").select("image_path").eq("id", product.model_id).maybeSingle();
+  return data?.image_path ?? null;
+}
+
+/** Même repli, pour une liste, en une seule requête. */
+export async function productPhotos(products: Product[]): Promise<Map<string, string | null>> {
+  const out = new Map<string, string | null>();
+  const needModel: string[] = [];
+  for (const p of products) {
+    const own = (p.images ?? []).find(Boolean);
+    if (own) out.set(p.id, own);
+    else if (p.model_id) needModel.push(p.model_id);
+    else out.set(p.id, null);
+  }
+  if (needModel.length) {
+    const { data } = await db().from("console_models").select("id, image_path").in("id", [...new Set(needModel)]);
+    const byModel = new Map((data ?? []).map((m) => [m.id, m.image_path]));
+    for (const p of products) {
+      if (out.has(p.id)) continue;
+      out.set(p.id, (p.model_id ? byModel.get(p.model_id) : null) ?? null);
+    }
+  }
+  return out;
+}

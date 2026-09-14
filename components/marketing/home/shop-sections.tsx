@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SafeImage } from "@/components/marketing/home/safe-image";
+import { SERVICE_PHOTOS } from "@/lib/content/assets";
 import { ROUTES } from "@/config/site";
 import type { Product } from "@/lib/shop/catalog";
 import { CONDITION_LABELS, stockState } from "@/lib/shop/status";
@@ -49,13 +51,23 @@ export function ServicesGrid() {
             href={ROUTES.repair}
             data-reveal="1"
             className="glass"
-            style={{ position: "relative", overflow: "hidden", borderRadius: 26, padding: 22, display: "flex", flexDirection: "column", gap: 9, color: "#f4f2ff", minHeight: 128 }}
+            style={{ position: "relative", overflow: "hidden", borderRadius: 26, padding: 0, display: "flex", flexDirection: "column", color: "#f4f2ff" }}
           >
-            <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14 }}>
-              <strong style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 23, letterSpacing: "-0.03em" }}>{service.name}</strong>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 15, whiteSpace: "nowrap", color: service.color }}>{service.from}</span>
+            {/* Les détourés de consoles sont sur fond blanc : ils vivent dans un
+                cadre clair en `contain`, jamais en fond plein sur le noir. Les
+                prestations sans photo gardent l'aplat de leur accent. */}
+            <span style={{ position: "relative", display: "block", aspectRatio: "16/11", overflow: "hidden", borderBottom: "1px solid rgba(244,242,255,0.1)", background: SERVICE_PHOTOS[service.name] ? "radial-gradient(120% 120% at 50% 40%, #f7f6fb, #d9d6e8)" : `radial-gradient(120% 120% at 60% 30%, ${service.color}33, rgba(244,242,255,0.03))` }}>
+              {SERVICE_PHOTOS[service.name] ? (
+                <Image src={SERVICE_PHOTOS[service.name]!} alt="" fill sizes="(max-width: 900px) 90vw, 320px" style={{ objectFit: "contain", padding: 18 }} />
+              ) : null}
             </span>
-            <span style={{ fontSize: 14.5, lineHeight: 1.45, color: "#9a95c4" }}>{service.note}</span>
+            <span style={{ padding: 22, display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
+              <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14 }}>
+                <strong style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 23, letterSpacing: "-0.03em" }}>{service.name}</strong>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 15, whiteSpace: "nowrap", color: service.color }}>{service.from}</span>
+              </span>
+              <span style={{ fontSize: 14.5, lineHeight: 1.45, color: "#9a95c4" }}>{service.note}</span>
+            </span>
           </Link>
         ))}
       </div>
@@ -71,12 +83,11 @@ function stockLabel(product: Product): string {
   return state === "LOW" ? `Plus que ${product.quantity}` : `${product.quantity} en stock`;
 }
 
-function ProductRow({ product }: { product: Product }) {
-  const photo = (product.images ?? [])[0] ?? null;
+function ProductRow({ product, photo }: { product: Product; photo: string | null }) {
   return (
     <Link href={`${ROUTES.shop}/${product.slug}`} data-reveal="1" data-row="1" style={{ display: "grid", gridTemplateColumns: "minmax(96px, 150px) 1fr", gap: 22, alignItems: "center", padding: "20px 0", borderTop: "1px solid rgba(255,244,234,0.1)" }}>
-      <span style={{ position: "relative", display: "block", aspectRatio: "4/3", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,244,234,0.14)", background: "rgba(255,244,234,0.04)" }}>
-        <SafeImage src={photo} sizes="150px" fallback={<span />} />
+      <span style={{ position: "relative", display: "block", aspectRatio: "4/3", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,244,234,0.14)", background: photo ? "radial-gradient(120% 120% at 50% 40%, #f7f6fb, #d9d6e8)" : "rgba(255,244,234,0.04)" }}>
+        <SafeImage src={photo} sizes="150px" contain fallback={<span />} />
       </span>
       <span style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", color: "#c9a695" }}>
@@ -95,12 +106,11 @@ function ProductRow({ product }: { product: Product }) {
   );
 }
 
-function ProductCard({ product }: { product: Product }) {
-  const photo = (product.images ?? [])[0] ?? null;
+function ProductCard({ product, photo }: { product: Product; photo: string | null }) {
   return (
     <Link href={`${ROUTES.shop}/${product.slug}`} data-reveal="1" data-card="1" style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
-      <span data-card-frame="1" style={{ position: "relative", display: "block", aspectRatio: "3/4", borderRadius: 18, overflow: "hidden", border: "1px solid rgba(255,244,234,0.16)", background: "rgba(255,244,234,0.04)" }}>
-        <SafeImage src={photo} sizes="(max-width: 900px) 45vw, 300px" fallback={<span />} />
+      <span data-card-frame="1" style={{ position: "relative", display: "block", aspectRatio: "3/4", borderRadius: 18, overflow: "hidden", border: "1px solid rgba(255,244,234,0.16)", background: photo ? "radial-gradient(120% 120% at 50% 40%, #f7f6fb, #d9d6e8)" : "rgba(255,244,234,0.04)" }}>
+        <SafeImage src={photo} sizes="(max-width: 900px) 45vw, 300px" contain fallback={<span />} />
       </span>
       <span style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#c9a695" }}>
@@ -144,14 +154,14 @@ function Rayon({ title, eyebrow, href, children }: { title: string; eyebrow?: st
  * Chacun disparaît quand son rayon est vide : le magasin physique est plein,
  * mais la page ne prétend pas avoir en ligne ce qui n'y est pas.
  */
-export function ShopRows({ consoles, collectibles, accessories }: { consoles: Product[]; collectibles: Product[]; accessories: Product[] }) {
+export function ShopRows({ consoles, collectibles, accessories, photos }: { consoles: Product[]; collectibles: Product[]; accessories: Product[]; photos: Map<string, string | null> }) {
   return (
     <>
       {consoles.length ? (
         <Rayon title="Dernières consoles" href={`${ROUTES.shop}?category=consoles`}>
           <div>
             {consoles.map((product) => (
-              <ProductRow key={product.id} product={product} />
+              <ProductRow key={product.id} product={product} photo={photos.get(product.id) ?? null} />
             ))}
           </div>
         </Rayon>
@@ -161,7 +171,7 @@ export function ShopRows({ consoles, collectibles, accessories }: { consoles: Pr
         <Rayon title="Meilleures figurines" eyebrow="Sélection de la vitrine" href={`${ROUTES.shop}?category=collector`}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: 22 }}>
             {collectibles.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} photo={photos.get(product.id) ?? null} />
             ))}
           </div>
         </Rayon>
@@ -171,7 +181,7 @@ export function ShopRows({ consoles, collectibles, accessories }: { consoles: Pr
         <Rayon title="Le moment" eyebrow="En rayon cette semaine" href={`${ROUTES.shop}?category=accessoires`}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: 22 }}>
             {accessories.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} photo={photos.get(product.id) ?? null} />
             ))}
           </div>
         </Rayon>

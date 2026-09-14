@@ -16,12 +16,15 @@ export function SafeImage({
   sizes,
   fallback,
   priority,
+  contain,
 }: {
   src: string | null;
   sizes: string;
   /** Rendu à la place de l'image si elle manque ou échoue. */
   fallback: React.ReactNode;
   priority?: boolean;
+  /** Pour les détourés sur fond blanc, qui ne doivent pas être rognés. */
+  contain?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) return <>{fallback}</>;
@@ -33,7 +36,7 @@ export function SafeImage({
       sizes={sizes}
       priority={priority}
       onError={() => setFailed(true)}
-      style={{ objectFit: "cover" }}
+      style={{ objectFit: contain ? "contain" : "cover", padding: contain ? 14 : 0 }}
       unoptimized
     />
   );

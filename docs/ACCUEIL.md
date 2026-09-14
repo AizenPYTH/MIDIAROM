@@ -81,6 +81,36 @@ en `preload="none"`, ne se charge qu'à l'entrée de la section, reste muette, s
 coupe hors champ et en onglet masqué, et **ne se charge pas** sous
 `prefers-reduced-motion` ni sous 900px — l'affiche prend le relais.
 
+## Assets
+
+Inventaire exhaustif du projet, tenu dans `lib/content/assets.ts` :
+
+| Asset | Nombre | Nature |
+| --- | --- | --- |
+| `public/medias/consoles/*.webp` | 13 | Détourés de consoles **sur fond blanc** |
+| `public/medias/facade-207-mediarom.webp` | 1 | Vraie photo de la devanture |
+
+C'est tout. Aucune photo d'atelier, aucun avant/après, aucune vidéo.
+
+Les détourés sont sur blanc : ils se posent en `object-fit: contain` dans un
+cadre clair, jamais en fond plein écran sur le noir de la charte, qui jurerait.
+
+| Section | Visuel branché |
+| --- | --- |
+| Hero réparation | Détouré PS4 dans un cadre clair, deux pastilles en verre |
+| Récit — face découverte | Photo de la devanture |
+| Ce qui passe sur le banc | PS4 (consoles), Switch (manettes) ; les autres gardent l'aplat de leur accent |
+| Entrée boutique | Photo de la devanture, en grand |
+| Rayons consoles / figurines | `products.images`, à défaut la photo du modèle lié (`console_models.image_path`) |
+| Jeux, jeu vedette | Covers, artworks et captures **d'IGDB**, dès qu'un produit est associé à sa fiche |
+
+`MISSING_ASSETS`, dans le même fichier, liste ce qui manque encore et pour quel
+usage. Une carte sans photo ne montre jamais un cadre vide : elle garde l'aplat
+teinté de son accent, qui est un état prévu par la charte.
+
+**Ne pas illustrer faux.** « Rétro » reste sans photo : mettre une Xbox One à
+cette place serait un mensonge visuel. La règle vaut pour toute section.
+
 ## Replis
 
 | Cas | Comportement |

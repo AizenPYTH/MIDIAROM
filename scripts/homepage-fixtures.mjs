@@ -32,7 +32,17 @@ const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABA
 });
 
 const PREFIX = "DEMO-HP-";
-const IMG = (id, size) => `https://images.igdb.com/igdb/image/upload/t_${size}/${id}.jpg`;
+
+// Les visuels de démonstration sont ceux du projet, pas des identifiants IGDB
+// inventés : un identifiant fabriqué renvoie un 404 et laisse la scène vide,
+// ce qui donne exactement l'impression d'une page sans images. Les vraies
+// covers arrivent d'IGDB dès qu'un produit est associé à sa fiche.
+const LOCAL = {
+  ps4: "/medias/consoles/ps4.webp",
+  switch: "/medias/consoles/switch.webp",
+  xbox: "/medias/consoles/xbox-series-x.webp",
+  facade: "/medias/facade-207-mediarom.webp",
+};
 
 /** Fiche normalisée (modèle Game), écrite telle quelle dans le cache. */
 function fiche({ id, name, slug, platforms, cover, artwork, screenshots = [], trailer = null, year }) {
@@ -44,9 +54,9 @@ function fiche({ id, name, slug, platforms, cover, artwork, screenshots = [], tr
     platforms, genres: ["Action"],
     developer: "Studio de démonstration", publisher: "Éditeur de démonstration",
     rating: 85, ratingCount: 100,
-    cover: cover ? { imageId: cover, url: IMG(cover, "cover_big"), width: 1200, height: 1600 } : null,
-    artworks: artwork ? [{ imageId: artwork, url: IMG(artwork, "1080p"), width: 1920, height: 1080 }] : [],
-    screenshots: screenshots.map((s) => ({ imageId: s, url: IMG(s, "screenshot_big"), width: 1280, height: 720 })),
+    cover: cover ? { imageId: "demo", url: cover, width: 1200, height: 1600 } : null,
+    artworks: artwork ? [{ imageId: "demo", url: artwork, width: 1920, height: 1080 }] : [],
+    screenshots: screenshots.map((url) => ({ imageId: "demo", url, width: 1280, height: 720 })),
     trailer: trailer
       ? { provider: "youtube", videoId: trailer, title: "Bande-annonce", posterUrl: `https://img.youtube.com/vi/${trailer}/maxresdefault.jpg`, watchUrl: `https://www.youtube.com/watch?v=${trailer}` }
       : null,
@@ -54,16 +64,19 @@ function fiche({ id, name, slug, platforms, cover, artwork, screenshots = [], tr
 }
 
 const GAMES = [
-  fiche({ id: 900_001, name: "Démo — jeu vedette avec vidéo", slug: "demo-video", platforms: ["PlayStation 5"], cover: "co1a01", artwork: "ar1a01", screenshots: ["sc1a01", "sc1a02", "sc1a03"], trailer: "dQw4w9WgXcQ", year: 2025 }),
-  fiche({ id: 900_002, name: "Démo — jeu complet sans vidéo", slug: "demo-sans-video", platforms: ["Nintendo Switch"], cover: "co1a02", artwork: "ar1a02", screenshots: ["sc1b01", "sc1b02"], year: 2024 }),
-  fiche({ id: 900_003, name: "Démo — jeu sans artwork", slug: "demo-sans-artwork", platforms: ["Xbox Series X|S"], cover: "co1a03", artwork: null, screenshots: [], year: 2023 }),
+  fiche({ id: 900_001, name: "Démo — jeu vedette avec vidéo", slug: "demo-video", platforms: ["PlayStation 5"], cover: LOCAL.ps4, artwork: LOCAL.facade, screenshots: [LOCAL.ps4, LOCAL.switch], trailer: "dQw4w9WgXcQ", year: 2025 }),
+  fiche({ id: 900_002, name: "Démo — jeu complet sans vidéo", slug: "demo-sans-video", platforms: ["Nintendo Switch"], cover: LOCAL.switch, artwork: LOCAL.facade, screenshots: [LOCAL.switch], year: 2024 }),
+  fiche({ id: 900_003, name: "Démo — jeu sans artwork", slug: "demo-sans-artwork", platforms: ["Xbox Series X|S"], cover: LOCAL.xbox, artwork: null, screenshots: [], year: 2023 }),
 ];
 
 const PRODUCTS = [
   { sku: `${PREFIX}VIDEO`, slug: "demo-hp-video", name: "Démo — jeu vedette avec vidéo", platform: "PlayStation 5", condition: "NEW", price_cents: 6999, compare_at_price_cents: 7999, quantity: 5, igdb_game_id: 900_001, is_featured: true, display_order: 1, hero_video_url: "https://cdn.example.com/demo-hero.mp4", hero_video_poster_path: null },
   { sku: `${PREFIX}NOVIDEO`, slug: "demo-hp-sans-video", name: "Démo — jeu complet sans vidéo", platform: "Nintendo Switch", condition: "NEW", price_cents: 5499, quantity: 3, igdb_game_id: 900_002, display_order: 2 },
   { sku: `${PREFIX}NOART`, slug: "demo-hp-sans-artwork", name: "Démo — jeu sans artwork", platform: "Xbox Series X|S", condition: "USED_A", price_cents: 2999, quantity: 2, igdb_game_id: 900_003, display_order: 3 },
-  { sku: `${PREFIX}NOIGDB`, slug: "demo-hp-sans-fiche", name: "Démo — jeu sans fiche IGDB", platform: "PlayStation 4", condition: "USED_B", price_cents: 1499, quantity: 1, igdb_game_id: null, images: ["/medias/facade-207-mediarom.webp"], display_order: 4 },
+  { sku: `${PREFIX}NOIGDB`, slug: "demo-hp-sans-fiche", name: "Démo — jeu sans fiche IGDB", platform: "PlayStation 4", condition: "USED_B", price_cents: 1499, quantity: 1, igdb_game_id: null, images: [LOCAL.ps4], display_order: 4 },
+  { sku: `${PREFIX}CONSOLE`, slug: "demo-hp-console", name: "Démo — PlayStation 4 révisée", category: "CONSOLE", platform: "PlayStation 4", condition: "REFURBISHED", price_cents: 14900, quantity: 2, images: [LOCAL.ps4], description: "Recapée et testée sur banc, deux manettes d'origine.", display_order: 1 },
+  { sku: `${PREFIX}FIGURINE`, slug: "demo-hp-figurine", name: "Démo — figurine collector", category: "COLLECTIBLE", platform: "Collection", condition: "NEW", price_cents: 18900, quantity: 1, images: [LOCAL.facade], display_order: 1 },
+  { sku: `${PREFIX}ACCESSOIRE`, slug: "demo-hp-accessoire", name: "Démo — manette sans fil", category: "ACCESSORY", platform: "PlayStation 4", condition: "NEW", price_cents: 5900, quantity: 4, images: [LOCAL.switch], display_order: 1 },
   { sku: `${PREFIX}RUPTURE`, slug: "demo-hp-rupture", name: "Démo — jeu en rupture", platform: "PlayStation 5", condition: "NEW", price_cents: 7999, quantity: 0, igdb_game_id: 900_001, display_order: 5 },
 ];
 
