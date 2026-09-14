@@ -3620,7 +3620,7 @@ export type Database = {
       order_status: "DRAFT" | "PENDING_PAYMENT" | "PAID" | "AWAITING_SHIPMENT" | "IN_TRANSIT_TO_WORKSHOP" | "RECEIVED" | "RECEPTION_CHECK" | "DIAGNOSIS" | "WAITING_CUSTOMER_APPROVAL" | "APPROVED" | "REPAIRING" | "QUALITY_CONTROL" | "READY_TO_SHIP" | "SHIPPED" | "DELIVERED" | "COMPLETED" | "CANCELLED" | "REFUSED_QUOTE" | "UNREPAIRABLE" | "RETURN_REQUIRED" | "SAV" | "DISPUTED";
       payment_purpose: "INITIAL" | "QUOTE" | "OTHER" | "SHOP";
       payment_status: "PENDING" | "SUCCEEDED" | "FAILED" | "REFUNDED" | "PARTIALLY_REFUNDED" | "CANCELLED";
-      product_category: "CONSOLE" | "GAME" | "ACCESSORY" | "PART" | "COLLECTIBLE";
+      product_category: "CONSOLE" | "GAME" | "ACCESSORY" | "PART" | "COLLECTIBLE" | "MANGA";
       product_condition: "NEW" | "REFURBISHED" | "USED_A" | "USED_B" | "USED_C";
       quote_decision: "ACCEPTED" | "REFUSED";
       quote_status: "DRAFT" | "SENT" | "ACCEPTED" | "REFUSED" | "EXPIRED" | "CANCELLED";

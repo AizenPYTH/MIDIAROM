@@ -83,7 +83,7 @@ export const getProductPlatforms = cache(async (): Promise<string[]> => {
 
 export const getProductCategoryCounts = cache(async (): Promise<Record<ProductCategory, number>> => {
   const { data } = await db().from("products").select("category").eq("is_active", true);
-  const counts: Record<ProductCategory, number> = { CONSOLE: 0, GAME: 0, ACCESSORY: 0, PART: 0, COLLECTIBLE: 0 };
+  const counts: Record<ProductCategory, number> = { CONSOLE: 0, GAME: 0, ACCESSORY: 0, PART: 0, COLLECTIBLE: 0, MANGA: 0 };
   for (const p of data ?? []) counts[p.category] += 1;
   return counts;
 });

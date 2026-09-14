@@ -1,33 +1,39 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ROUTES, SITE_URL } from "@/config/site";
-import { HeroRepair, ShiftScene, ShopIntro, StoryScene } from "@/components/marketing/home/scenes";
+import { HeroRepair, RepairFlow, ShiftScene } from "@/components/marketing/home/scenes";
 import { FeaturedGame } from "@/components/marketing/home/featured-game";
 import { GamesGrid } from "@/components/marketing/home/games-grid";
-import { GamesScene } from "@/components/marketing/home/games-scene";
-import { ServicesGrid, ShopRows } from "@/components/marketing/home/shop-sections";
+import { ProductRail, RepairServices, ShopCategories, SHOP_CATEGORIES } from "@/components/marketing/home/shop-sections";
 import { getHomepageGames } from "@/lib/shop/games";
-import { toGameGrid, toGameScene, toGameScenes } from "@/lib/shop/game-scene";
-import { getProducts, productPhotos } from "@/lib/shop/catalog";
+import { toGameScene, toGameScenes } from "@/lib/shop/game-scene";
+import { getProductCategoryCounts, getProducts, productPhotos, type Product } from "@/lib/shop/catalog";
+import { CATEGORY_SLUGS, type ProductCategory } from "@/lib/shop/status";
 import { DEMO_FEATURED_VIDEO } from "@/lib/content/assets";
 import { getSeoPage } from "@/lib/content";
 import { getBrandSettings } from "@/lib/settings";
 
 /**
- * Accueil — charte v5.
+ * Accueil.
  *
- * Le récit va de la réparation à la boutique : hero, atelier en quatre temps,
- * ce qui passe sur le banc, bascule, puis le rayon — jeu du moment, derniers
- * jeux, consoles, figurines, manga.
+ * Le parcours tient en deux idées, dans cet ordre : **MÉDI@ROM répare vos
+ * consoles**, puis **MÉDI@ROM tient une boutique gaming et pop culture**.
+ * Hero, atelier, bascule, boutique. Rien d'autre.
  *
- * **La chorégraphie est en CSS** (`position: sticky` + `animation-timeline`,
- * voir app/globals.css). Les seuls composants clients sont ceux qui pilotent
- * une vidéo ou un compteur ; tout le reste est rendu ici, côté serveur.
+ * La page portait quatre scènes épinglées totalisant près de 1500svh. Il en
+ * reste **une** — la bascule atelier → boutique, 180svh — plus le volet avant
+ * et après de la réparation, animé à l'entrée. Le reste est immobile : c'est
+ * un magasin, pas une démonstration technique.
  *
- * Rendu à la demande : les jeux, leurs prix et leur disponibilité viennent du
- * catalogue. Un rendu statique figerait l'état du magasin au moment du build.
+ * Rendu à la demande : prix, stock et rayons viennent du catalogue. Un rendu
+ * statique figerait l'état du magasin au moment du build.
  */
 export const dynamic = "force-dynamic";
+
+/** Ce que la grille de démonstration montre au maximum sur l'accueil. */
+const GAMES_ON_HOME = 30;
+/** Produits réels affichés par rayon. */
+const PER_RAIL = 6;
 
 export async function generateMetadata(): Promise<Metadata> {
   const [seo, brand] = await Promise.all([getSeoPage("/"), getBrandSettings()]);
@@ -39,79 +45,74 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  // Une seule lecture pour la scène jeux ; les autres rayons lisent le même
-  // catalogue, filtré par catégorie. Aucun appel à IGDB : tout vient du cache.
-  const [{ featured, latest, isDemo }, consoles, collectibles, accessories] = await Promise.all([
-    getHomepageGames(24),
-    getProducts({ category: "consoles", availability: "stock", sort: "recent" }, 3),
-    getProducts({ category: "collector", sort: "recent" }, 4),
-    getProducts({ category: "accessoires", sort: "recent" }, 4),
+  // Une lecture par rayon, plus les jeux. Aucun appel à IGDB à l'affichage :
+  // les fiches viennent du cache.
+  const [{ featured, latest, isDemo }, counts, consoles, figurines, manga] = await Promise.all([
+    getHomepageGames(GAMES_ON_HOME + 1),
+    getProductCategoryCounts(),
+    getProducts({ category: CATEGORY_SLUGS.CONSOLE, sort: "recent" }, PER_RAIL),
+    getProducts({ category: CATEGORY_SLUGS.COLLECTIBLE, sort: "recent" }, PER_RAIL),
+    getProducts({ category: CATEGORY_SLUGS.MANGA, sort: "recent" }, PER_RAIL),
   ]);
 
-  // Un produit sans photo propre récupère celle de son modèle de console : le
-  // catalogue en porte treize, il n'y a aucune raison d'afficher un cadre vide.
-  const photos = await productPhotos([...consoles, ...collectibles, ...accessories]);
-  const scenes = toGameScenes(latest, isDemo);
-  // Au-delà des cinq panneaux chorégraphiés, le reste de la sélection passe en
-  // grille : la scène garde ses cinq temps, le rayon garde sa profondeur.
-  const grid = toGameGrid(latest, isDemo);
-  // Le jeu du moment : celui mis en avant par l'atelier, sinon le premier du
-  // rail. Sa lueur suit sa position pour rester cohérente avec la scène.
+  // Un produit sans photo propre récupère celle de son modèle de console.
+  // Les jeux ont leur propre bloc (`GamesGrid`), qu'ils soient réels ou de
+  // démonstration : un rail « Jeux vidéo » de plus ferait doublon.
+  const rails: { category: ProductCategory; products: Product[] }[] = [
+    { category: "CONSOLE", products: consoles },
+    { category: "COLLECTIBLE", products: figurines },
+    { category: "MANGA", products: manga },
+  ];
+  const photos = await productPhotos(rails.flatMap((r) => r.products));
+
+  // Le jeu du moment, puis le reste de la sélection.
   const featuredScene = featured ? toGameScene(featured, 0, isDemo) : null;
-  // Habillage vidéo de la scène vedette, à défaut d'une vidéo du produit. C'est
-  // une boucle fabriquée pour ce projet, pas des images du jeu : l'étiquette
-  // « Habillage » le dit au visiteur, et `hero_video_url` la remplace.
+  const gridGames = toGameScenes(
+    latest.filter((listing) => listing.productId !== featured?.productId).slice(0, GAMES_ON_HOME),
+    isDemo,
+  );
+  // Habillage vidéo du jeu vedette, à défaut d'une vidéo du produit.
   const ambientVideo = { url: DEMO_FEATURED_VIDEO, posterUrl: featuredScene?.artworkUrl ?? null, ambient: true };
+  const emptyShop = rails.every((r) => r.products.length === 0) && gridGames.length === 0;
 
   return (
     <>
-      {/* Jauge de lecture : pilotée par `animation-timeline: scroll(root)`. */}
-      <div data-progress-rail="1" aria-hidden="true" style={{ position: "fixed", top: 0, left: 0, right: 0, height: 2, zIndex: 90, background: "rgba(244,242,255,0.08)" }}>
-        <div data-progress-bar="1" style={{ height: 2, width: "100%", background: "linear-gradient(90deg,#d8ff3e,#33e1ff,#7c5cff,#ff7a3d)", transform: "scaleX(0)", transformOrigin: "left" }} />
-      </div>
-
       <HeroRepair />
-      <StoryScene />
-      <ServicesGrid />
+      <RepairServices />
+      <RepairFlow />
+
+      {/* Le seul moment épinglé de la page. */}
       <ShiftScene />
-      <ShopIntro />
+
+      <ShopCategories counts={counts} />
 
       {featuredScene ? <FeaturedGame game={featuredScene} ambientVideo={ambientVideo} /> : null}
-      <GamesScene games={scenes} />
+      <GamesGrid games={gridGames} isDemo={isDemo} />
 
-      {/* La vitrine de démonstration se présente comme telle : ces jeux ne sont
-          pas au catalogue, et rien ne prétend qu'ils sont achetables. */}
-      {isDemo ? (
-        <section data-warm="1" style={{ background: "#0d0710", padding: "28px 30px 4px" }}>
-          <p
-            data-reveal="1"
-            style={{ margin: "0 auto", maxWidth: 1420, fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.1em", lineHeight: 1.6, textTransform: "uppercase", color: "#a89689" }}
-          >
-            Sélection de démonstration — fiches IGDB, pas encore en rayon. Le stock réel prend leur place dès la première référence saisie.
-          </p>
-        </section>
-      ) : null}
+      {rails.map(({ category, products }) => (
+        <ProductRail
+          key={category}
+          title={SHOP_CATEGORIES.find((c) => c.category === category)?.name ?? ""}
+          category={category}
+          products={products}
+          photos={photos}
+          accent={SHOP_CATEGORIES.find((c) => c.category === category)?.color ?? "rgba(255,244,234,0.14)"}
+        />
+      ))}
 
-      <GamesGrid games={grid} isDemo={isDemo} />
-
-      {/* Aucun jeu au catalogue : on le dit, on n'affiche pas une scène vide. */}
-      {scenes.length === 0 ? (
-        <section data-warm="1" style={{ background: "#0d0710", padding: "90px 30px" }}>
+      {/* Rien en rayon : on le dit, plutôt que d'afficher des sections vides. */}
+      {emptyShop ? (
+        <section data-warm="1" style={{ background: "#0d0710", padding: "70px 30px 90px" }}>
           <div style={{ maxWidth: 1420, margin: "0 auto" }}>
-            <h2 data-reveal="1" style={{ margin: 0, fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "clamp(26px,3.6vw,50px)", letterSpacing: "-0.04em", color: "#fff4ea" }}>
-              Derniers jeux arrivés
-            </h2>
-            <p data-reveal="1" style={{ margin: "18px 0 0", maxWidth: "44ch", fontSize: "clamp(15px,1.5vw,18px)", lineHeight: 1.45, color: "#e4c9bd" }}>
-              Les arrivages de la semaine ne sont pas encore en ligne. Passez rue de Rome : le rayon, lui, est plein.
+            <p data-reveal="1" style={{ margin: 0, maxWidth: "46ch", fontSize: "clamp(15px,1.5vw,18px)", lineHeight: 1.45, color: "#e4c9bd" }}>
+              Les arrivages ne sont pas encore en ligne. Passez rue de Rome : le rayon, lui, est plein.
             </p>
-            <Link href={ROUTES.shop} style={{ display: "inline-flex", alignItems: "center", marginTop: 26, minHeight: 44, background: "#fff4ea", color: "#1a0d06", borderRadius: 999, padding: "17px 28px", fontWeight: 600, fontSize: 16.5 }}>
+            <Link href={ROUTES.shop} style={{ display: "inline-flex", alignItems: "center", marginTop: 24, minHeight: 44, background: "#fff4ea", color: "#1a0d06", borderRadius: 999, padding: "17px 28px", fontWeight: 600, fontSize: 16.5 }}>
               Parcourir la boutique
             </Link>
           </div>
         </section>
       ) : null}
-
-      <ShopRows consoles={consoles} collectibles={collectibles} accessories={accessories} photos={photos} />
 
       {/* Retour à la réparation : la page se referme sur ce qui la commence. */}
       <section id="devis" style={{ position: "relative", background: "#0d0710", padding: "100px 30px 110px" }}>

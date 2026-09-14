@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GAME_SCENE_SLOTS, toGameGrid, toGameScene, toGameScenes, youtubeId } from "@/lib/shop/game-scene";
+import { toGameScene, toGameScenes, youtubeId } from "@/lib/shop/game-scene";
 import type { GameListing } from "@/lib/shop/games";
 
 function listing(over: Partial<GameListing> = {}): GameListing {
@@ -65,23 +65,22 @@ describe("toGameScene — vitrine de démonstration", () => {
   });
 });
 
-describe("répartition scène / grille", () => {
+describe("toGameScenes", () => {
   const many = Array.from({ length: 9 }, (_, i) => listing({ productId: `p${i}`, slug: `jeu-${i}` }));
 
-  it("borne la scène aux segments réellement chorégraphiés", () => {
-    expect(toGameScenes(many)).toHaveLength(GAME_SCENE_SLOTS);
-  });
-
-  it("passe les jeux suivants en grille, sans en perdre ni en dupliquer", () => {
+  /**
+   * Le rayon n'est plus borné à cinq. La scène chorégraphiée qui imposait cette
+   * limite a été remplacée par une grille : tout ce qu'on lui donne s'affiche,
+   * et c'est l'accueil qui décide combien de jaquettes il montre.
+   */
+  it("n'en perd aucun et n'en duplique aucun", () => {
     const scenes = toGameScenes(many);
-    const grid = toGameGrid(many);
-    expect(scenes.length + grid.length).toBe(many.length);
-    const ids = [...scenes, ...grid].map((s) => s.productId);
-    expect(new Set(ids).size).toBe(many.length);
+    expect(scenes).toHaveLength(many.length);
+    expect(new Set(scenes.map((s) => s.productId)).size).toBe(many.length);
   });
 
-  it("propage le caractère démonstratif à la grille", () => {
-    expect(toGameGrid(many, true).every((s) => s.href === null && s.isDemo)).toBe(true);
+  it("propage le caractère démonstratif à toute la liste", () => {
+    expect(toGameScenes(many, true).every((s) => s.href === null && s.isDemo)).toBe(true);
   });
 });
 

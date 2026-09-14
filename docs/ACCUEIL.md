@@ -1,45 +1,101 @@
-# Accueil — charte v5
+# Accueil
 
-Porté depuis `207_MEDIROME_Accueil.dc.html` (référence visuelle de Claude
-Design), avec les tokens et le tableau Motion du handoff v4. **Le `.dc.html`
-n'est pas dans le dépôt** : c'est une maquette qui tourne sur un runtime de
-prototypage (`support.js`, `<sc-for>`, `{{ }}`) qu'il ne faut pas importer.
+## Ce que la page doit faire comprendre
+
+Dans cet ordre, et en quelques secondes :
+
+1. **MÉDI@ROM répare vos consoles.**
+2. **MÉDI@ROM tient une boutique gaming et pop culture** — jeux vidéo,
+   consoles, figurines, manga & anime.
+
+Tout le reste est au service de ces deux phrases.
 
 ## Le point à ne pas défaire
 
-> Le récit de réparation, la bascule et la scène jeux reposent sur
-> `position: sticky` + `animation-timeline: view()` **en CSS**, avec un repli
-> `@supports not`.
+La page portait **quatre scènes épinglées totalisant près de 1500svh** : récit
+en quatre temps relayés, rail de jaquettes à cinq panneaux, jeu vedette avec
+masque et parallaxe, plus une jauge de lecture et un bandeau de mots géants.
+C'était une démonstration de savoir-faire : on scrollait très longtemps pour
+peu de contenu.
 
-C'est délibéré, et ce n'est pas interchangeable avec des épinglages GSAP : la
-chorégraphie ne dépend alors d'**aucun cycle de vie JavaScript**. Rien à
-monter, rien à rafraîchir au redimensionnement, rien à perdre si un script
-tarde ou échoue. Tout état masqué vit dans le `@supports` : sans prise en
-charge des chronologies de défilement, la page redevient un flux vertical
-entièrement visible.
+Il ne reste que **deux moments animés**, parce qu'ils disent quelque chose :
 
-Le JavaScript de l'accueil ne fait que ce que le CSS ne sait pas faire :
+| Moment | Ce qu'il apporte | Coût |
+| --- | --- | --- |
+| Volet avant / après | Il montre le métier | Aucune hauteur ajoutée, animé à l'entrée |
+| Bascule atelier → boutique | Il fait changer d'univers | 180svh, **la seule scène épinglée** |
 
-| Fait par le CSS (`app/globals.css`) | Fait par le JS |
-| --- | --- |
-| Fonds et panneaux de la scène jeux | Compteur « 03 / 05 » |
-| Voile de la bascule, temps du récit | Jaquette active et son centrage |
-| Barres de progression, révélations | Chargement et lecture de la vidéo |
-| Respiration des artworks | Ouverture de la bande-annonce |
+Plus une révélation discrète à l'entrée des blocs (`[data-reveal]`), une pose
+d'artwork sur le jeu vedette, et un `card-lift` au survol des cartes. Rien
+d'autre. La page fait **environ 10 écrans** au lieu d'une vingtaine.
 
-## Les scènes, dans l'ordre
+**La règle, pour la suite** : avant d'ajouter une animation, répondre à « est-ce
+que ça améliore la compréhension ou l'émotion ? ». Si la réponse n'est pas
+évidente, ne pas l'ajouter. Une animation forte vaut mieux que cinq moyennes.
+
+Le choix du CSS plutôt que d'un pin JavaScript est inchangé : `position: sticky`
++ `animation-timeline` ne dépend d'aucun cycle de vie, il n'y a rien à monter ni
+à rafraîchir au redimensionnement. Voir `app/globals.css`.
+
+**Piège vérifié** : un ancêtre en `overflow: hidden` devient un conteneur de
+défilement, et `animation-timeline: view()` s'y accroche au lieu de la page —
+les révélations restent alors figées à mi-course. Le jeu vedette en souffrait ;
+le découpage se fait désormais sur le cadre de l'artwork, pas sur la section.
+
+## Les sections, dans l'ordre
 
 | Section | Fichier | Hauteur |
 | --- | --- | --- |
-| Hero réparation | `components/marketing/home/scenes.tsx` | 100svh |
-| Récit de l'atelier, 4 temps | idem, `StoryScene` | 420svh |
-| Ce qui passe sur le banc | `home/shop-sections.tsx`, `ServicesGrid` | auto |
-| Bascule réparation → boutique | `scenes.tsx`, `ShiftScene` | 250svh |
-| Entrée boutique | `scenes.tsx`, `ShopIntro` | auto |
-| Jeu du moment | `home/featured-game.tsx` | 300svh (plateau épinglé 100svh) |
-| Derniers jeux | `home/games-scene.tsx` | 520svh (420 sous 900px) |
-| Le reste de la sélection | `home/games-grid.tsx` | auto |
-| Consoles / figurines / accessoires | `home/shop-sections.tsx`, `ShopRows` | auto |
+| Hero réparation | `home/scenes.tsx`, `HeroRepair` | 100svh |
+| Ce qui passe sur le banc | `home/shop-sections.tsx`, `RepairServices` | auto |
+| L'atelier en quatre temps + volet avant/après | `home/scenes.tsx`, `RepairFlow` | auto |
+| **Bascule atelier → boutique** | `home/scenes.tsx`, `ShiftScene` | 180svh, épinglée |
+| La boutique : quatre rayons | `home/shop-sections.tsx`, `ShopCategories` | auto |
+| Le jeu du moment | `home/featured-game.tsx` | ≤ 92svh |
+| Jeux vidéo | `home/games-grid.tsx` | auto |
+| Consoles · Figurines · Manga & Anime | `home/shop-sections.tsx`, `ProductRail` | auto |
+| Devis | `app/(marketing)/page.tsx` | auto |
+
+## La boutique
+
+Quatre rayons, et seulement quatre — la boutique est **gaming et pop culture**,
+pas un magasin d'électronique généraliste :
+
+| Rayon | Catégorie | Filtre |
+| --- | --- | --- |
+| Jeux vidéo | `GAME` | `/boutique?cat=jeux` |
+| Consoles | `CONSOLE` | `/boutique?cat=consoles` |
+| Figurines | `COLLECTIBLE` | `/boutique?cat=figurines` |
+| Manga & Anime | `MANGA` | `/boutique?cat=manga` |
+
+`MANGA` a été ajouté à l'énumération `product_category`
+(`supabase/migrations/20260915000001_manga.sql`) : sans elle, le manga se serait
+confondu avec les collectors.
+
+**Pas de PC ni de smartphones en rayon.** L'atelier les répare toujours — le
+parcours de devis les propose — mais ce ne sont pas des catégories
+commerciales, et les mettre en avant brouillerait ce que le magasin vend.
+
+Le rayon « Jeux vidéo » de l'accueil est **`GamesGrid`**, pas un `ProductRail` :
+qu'il montre du vrai stock ou la vitrine de démonstration, il n'y a qu'un seul
+bloc jeux, jamais deux.
+
+## Tout est en français
+
+IGDB ne sert que de l'anglais. `lib/shop/game-fr.ts` traduit ce qui se traduit —
+un vocabulaire fermé, court, vérifiable — et **écarte** ce qu'il ne connaît pas
+plutôt que de laisser passer un mot anglais.
+
+- Les **genres** sont traduits ; un genre inconnu est retiré de la ligne.
+- Les **plateformes** sont raccourcies (`PC (Microsoft Windows)` → `PC`) ; les
+  marques restent intactes.
+- Les **résumés IGDB ne sont jamais affichés** pour une fiche de démonstration.
+  Ils sont en anglais, et on ne va pas inventer une traduction ni un texte
+  promotionnel qu'aucune source n'a écrit. La ligne de métadonnées
+  (genre · année · studio) dit ce qu'il faut savoir, en français.
+- Les **titres de jeux** ne se traduisent pas : ce sont des noms commerciaux.
+
+`tests/game-fr.test.ts` verrouille cette frontière.
 
 ## Données
 
@@ -49,19 +105,15 @@ Tout vient du catalogue, jamais d'IGDB au moment de l'affichage :
 products (category = GAME)
    ↓ getHomepageGames()      lib/shop/games.ts
 GameListing                  visuels déjà choisis selon leur usage
-   ↓ toGameScenes()          lib/shop/game-scene.ts  → les 5 panneaux animés
-   ↓ toGameGrid()            idem                    → le reste, en grille
+   ↓ toGameScenes()          lib/shop/game-scene.ts
 GameScene                    + étiquette, lueur, ligne méta, href de la fiche
    ↓
-FeaturedGame · GamesScene · GamesGrid   ne connaissent ni IGDB ni la base
+FeaturedGame · GamesGrid     ne connaissent ni IGDB ni la base
 ```
 
-`GAME_SCENE_SLOTS` vaut **5** : la chorégraphie CSS découpe la scène en cinq
-segments (`:nth-child(1..5)`). Un sixième panneau n'aurait aucune plage
-d'animation et resterait invisible. Les jeux suivants ne sont pas jetés pour
-autant : `toGameGrid()` les rend sous la scène, en grille (`GamesGrid`), pour
-que la sélection paraisse ce qu'elle est — un rayon — sans toucher à la
-chorégraphie.
+Le rayon n'est plus borné : la scène à cinq panneaux a disparu au profit d'une
+grille, et c'est l'accueil qui décide combien de jaquettes il montre
+(`GAMES_ON_HOME`, trente aujourd'hui).
 
 Chaque produit présenté mène à sa **vraie fiche** (`/boutique/<slug>`) : titre,
 bouton, jaquette, ligne console, carte figurine. Aucun lien mort, aucune ancre
@@ -175,13 +227,14 @@ One sur la carte « Rétro » serait un mensonge visuel ; la règle vaut partout
 
 | Cas | Comportement |
 | --- | --- |
-| Aucun jeu au catalogue | Scène et vedette masquées, message clair, lien vers `/boutique` |
+| Aucun jeu au catalogue | Vitrine de démonstration, ou message clair et lien vers `/boutique` |
 | Image absente ou CDN muet | `SafeImage` bascule sur l'aplat de la charte, jamais d'icône cassée |
 | Pas d'artwork | Aplat teinté de la lueur du jeu |
 | Vidéo absente ou en échec | L'artwork reste, la vidéo garde une opacité nulle |
 | Rayon consoles / figurines vide | La section ne s'affiche pas du tout |
-| `prefers-reduced-motion` | La scène redevient une liste, tout est visible, aucune vidéo |
+| `prefers-reduced-motion` | Plus rien ne bouge, tout est visible, aucune vidéo |
 | Pas de `animation-timeline` | Flux vertical, rien de superposé, rien d'invisible |
+| Rayon consoles / figurines / manga vide | La section ne s'affiche pas du tout |
 | Catalogue vide mais `demo-games.json` présent | Vitrine de démonstration, sans prix ni lien, annoncée comme telle |
 | Catalogue vide et pas de `demo-games.json` | Message clair, lien vers `/boutique` |
 

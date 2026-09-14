@@ -1,6 +1,7 @@
 import type { GameListing } from "@/lib/shop/games";
 import { CONDITION_LABELS } from "@/lib/shop/status";
 import { ROUTES } from "@/config/site";
+import { genresFr, platformFr, yearOf } from "@/lib/shop/game-fr";
 
 /**
  * Adaptation d'un produit de la boutique au panneau de la scène « Derniers
@@ -38,7 +39,14 @@ export interface GameScene {
   name: string;
   /** Étiquette courte du rail de jaquettes (état, ou édition si elle existe). */
   tag: string;
-  /** Résumé IGDB, ou description du produit, ou null. */
+  /**
+   * Résumé du jeu.
+   *
+   * Toujours `null` pour une fiche IGDB : leurs résumés sont en anglais, et le
+   * site est en français de bout en bout. On préfère ne rien dire plutôt que
+   * d'afficher un texte étranger — ou d'en inventer une traduction. Les vrais
+   * produits, eux, ont la description rédigée par le magasin.
+   */
   pitch: string | null;
   /** Plateformes affichées en pastilles. Toujours au moins une si connue. */
   platforms: string[];
@@ -65,13 +73,6 @@ function formatPrice(cents: number): string | null {
   return cents > 0 ? EURO.format(cents / 100) : null;
 }
 
-function formatDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(date);
-}
-
 /** Extrait l'identifiant d'une URL YouTube. Null si ce n'en est pas une. */
 export function youtubeId(url: string | null): string | null {
   if (!url) return null;
@@ -84,7 +85,10 @@ export function youtubeId(url: string | null): string | null {
  * ce qui est renseigné. Une fiche vide ne produit pas « · · ».
  */
 function metaLine(listing: GameListing): string | null {
-  const parts = [formatDate(listing.releaseDate), listing.genres[0] ?? null, listing.developer].filter(Boolean);
+  // Genres traduits, année plutôt que date complète, studio tel quel (c'est un
+  // nom propre). Un genre qu'on ne sait pas traduire est écarté : pas un mot
+  // d'anglais au milieu d'une ligne française.
+  const parts = [...genresFr(listing.genres, 2), yearOf(listing.releaseDate), listing.developer].filter(Boolean);
   return parts.length ? parts.join(" · ") : null;
 }
 
@@ -105,8 +109,8 @@ export function toGameScene(listing: GameListing, index: number, demo = false): 
     isDemo: demo,
     name: listing.name,
     tag: tagFor(listing),
-    pitch: listing.summary,
-    platforms: listing.platform ? [listing.platform] : [],
+    pitch: demo ? null : listing.summary,
+    platforms: listing.platform ? [platformFr(listing.platform)] : [],
     meta: metaLine(listing),
     price: demo ? null : formatPrice(listing.priceCents),
     inStock: listing.inStock,
@@ -123,24 +127,13 @@ export function toGameScene(listing: GameListing, index: number, demo = false): 
 }
 
 /**
- * La scène est chorégraphiée en CSS sur cinq segments (`:nth-child(1..5)` dans
- * app/globals.css). Au-delà, les panneaux surnuméraires n'auraient aucune
- * plage d'animation et resteraient invisibles : on borne ici plutôt que de
- * laisser un jeu muet au milieu du rail.
- */
-export const GAME_SCENE_SLOTS = 5;
-
-export function toGameScenes(listings: GameListing[], demo = false): GameScene[] {
-  return listings.slice(0, GAME_SCENE_SLOTS).map((l, i) => toGameScene(l, i, demo));
-}
-
-/**
- * Le rail complet, au-delà des cinq panneaux chorégraphiés.
+ * Le rayon jeux de l'accueil.
  *
- * La scène anime cinq segments ; la vitrine en compte bien plus. Les jeux
- * suivants sont présentés sous la scène, en grille, pour que la sélection
- * paraisse ce qu'elle est — un vrai rayon — sans casser la chorégraphie.
+ * Il était borné à cinq : la chorégraphie découpait la scène en cinq segments
+ * et un sixième panneau serait resté invisible. La scène a disparu au profit
+ * d'une grille, la borne n'a plus de raison d'être — c'est l'appelant qui
+ * décide combien de jaquettes il affiche.
  */
-export function toGameGrid(listings: GameListing[], demo = false): GameScene[] {
-  return listings.slice(GAME_SCENE_SLOTS).map((l, i) => toGameScene(l, i + GAME_SCENE_SLOTS, demo));
+export function toGameScenes(listings: GameListing[], demo = false): GameScene[] {
+  return listings.map((l, i) => toGameScene(l, i, demo));
 }

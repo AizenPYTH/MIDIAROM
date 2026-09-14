@@ -86,10 +86,11 @@ export const CONDITION_DESCRIPTIONS: Record<ProductCondition, string> = {
 
 export const CATEGORY_LABELS: Record<ProductCategory, string> = {
   CONSOLE: "Consoles",
-  GAME: "Jeux",
+  GAME: "Jeux vidéo",
   ACCESSORY: "Accessoires",
   PART: "Pièces",
-  COLLECTIBLE: "Collector",
+  COLLECTIBLE: "Figurines",
+  MANGA: "Manga & Anime",
 };
 
 export const CATEGORY_SLUGS: Record<ProductCategory, string> = {
@@ -97,7 +98,8 @@ export const CATEGORY_SLUGS: Record<ProductCategory, string> = {
   GAME: "jeux",
   ACCESSORY: "accessoires",
   PART: "pieces",
-  COLLECTIBLE: "collector",
+  COLLECTIBLE: "figurines",
+  MANGA: "manga",
 };
 
 export function categoryFromSlug(slug: string | undefined): ProductCategory | null {
