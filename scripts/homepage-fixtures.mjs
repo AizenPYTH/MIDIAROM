@@ -80,6 +80,28 @@ const PRODUCTS = [
   { sku: `${PREFIX}RUPTURE`, slug: "demo-hp-rupture", name: "Démo — jeu en rupture", platform: "PlayStation 5", condition: "NEW", price_cents: 7999, quantity: 0, igdb_game_id: 900_001, display_order: 5 },
 ];
 
+/**
+ * Jeux surnuméraires : au-delà des cinq panneaux chorégraphiés, l'accueil passe
+ * en grille. Il faut donc pouvoir dépasser cinq jeux pour éprouver ce rendu.
+ *
+ *   node scripts/homepage-fixtures.mjs up --extra 8
+ */
+function extraProducts(n) {
+  const covers = [LOCAL.ps4, LOCAL.switch, LOCAL.xbox];
+  return Array.from({ length: n }, (_, i) => ({
+    sku: `${PREFIX}EXTRA-${i + 1}`,
+    slug: `demo-hp-extra-${i + 1}`,
+    name: `Démo — jeu de rayon ${i + 1}`,
+    platform: ["PlayStation 5", "Nintendo Switch", "Xbox Series X|S", "PlayStation 4"][i % 4],
+    condition: i % 2 ? "USED_A" : "NEW",
+    price_cents: 1999 + i * 500,
+    quantity: 1 + (i % 3),
+    igdb_game_id: null,
+    images: [covers[i % covers.length]],
+    display_order: 10 + i,
+  }));
+}
+
 async function up() {
   const { error: cacheError } = await db.from("igdb_games").upsert(
     GAMES.map((g) => ({ igdb_id: g.igdbId, name: g.name, slug: g.slug, data: g, synced_at: new Date().toISOString() })),
@@ -87,11 +109,15 @@ async function up() {
   );
   if (cacheError) throw new Error(`cache IGDB : ${cacheError.message}`);
 
+  const extraIndex = process.argv.indexOf("--extra");
+  const extra = extraIndex > -1 ? Number(process.argv[extraIndex + 1]) || 0 : 0;
+  const products = [...PRODUCTS, ...extraProducts(extra)];
+
   const { error } = await db.from("products").upsert(
     // Un upsert envoie null pour toute colonne omise : les valeurs par défaut
     // de la table ne s'appliquent pas. Toutes les colonnes NOT NULL doivent
     // donc être fournies explicitement.
-    PRODUCTS.map((p) => ({
+    products.map((p) => ({
       category: "GAME", is_active: true, specs: {}, includes: [], images: [],
       cost_cents: 0, low_stock_threshold: 2, is_retro: false, is_featured: false,
       display_order: 0, ...p,
@@ -99,7 +125,7 @@ async function up() {
     { onConflict: "sku" },
   );
   if (error) throw new Error(`produits : ${error.message}`);
-  console.log(`✓ ${GAMES.length} fiche(s) en cache, ${PRODUCTS.length} produit(s) de démonstration.`);
+  console.log(`✓ ${GAMES.length} fiche(s) en cache, ${products.length} produit(s) de démonstration.`);
   await status();
 }
 

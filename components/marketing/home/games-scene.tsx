@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { GameScene } from "@/lib/shop/game-scene";
+import { GameAction, GameTitle } from "@/components/marketing/home/game-link";
 import { SafeImage } from "@/components/marketing/home/safe-image";
 import { TrailerModal, useTrailer } from "@/components/marketing/home/trailer-modal";
 
@@ -219,10 +219,11 @@ export function GamesScene({ games }: { games: GameScene[] }) {
                 <div data-game-col="1" style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
                   <h3 data-game-el="1" data-game-title="1" style={{ margin: 0, fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "clamp(30px,4.6vw,68px)", lineHeight: 0.9, letterSpacing: "-0.045em", color: "#fff4ea", textShadow: "0 2px 30px rgba(13,7,16,0.8)" }}>
                     {/* Le titre est un lien : il lui faut la même cible tactile
-                        qu'un bouton, qu'il tienne sur une ligne ou sur trois. */}
-                    <Link href={game.href} style={{ color: "inherit", display: "inline-block", minHeight: 44, paddingBlock: 4 }}>
+                        qu'un bouton, qu'il tienne sur une ligne ou sur trois.
+                        Sans fiche au catalogue, il reste du texte. */}
+                    <GameTitle game={game} style={{ color: "inherit", display: "inline-block", minHeight: 44, paddingBlock: 4 }}>
                       {game.name}
-                    </Link>
+                    </GameTitle>
                   </h3>
                   {game.pitch ? (
                     <p data-game-el="1" style={{ margin: 0, fontSize: "clamp(15px,1.5vw,17.5px)", lineHeight: 1.45, maxWidth: "38ch", color: "#f0dcd2", textShadow: "0 1px 16px rgba(13,7,16,0.9)" }}>
@@ -244,10 +245,10 @@ export function GamesScene({ games }: { games: GameScene[] }) {
                     </span>
                   ) : null}
                   <span data-game-el="1" data-game-cta="1" style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-                    <Link href={game.href} style={{ background: "#fff4ea", color: "#1a0d06", borderRadius: 999, padding: "17px 28px", fontWeight: 600, fontSize: 16.5, whiteSpace: "nowrap", minHeight: 44, display: "inline-flex", alignItems: "center" }}>
+                    <GameAction game={game} style={{ background: "#fff4ea", color: "#1a0d06", borderRadius: 999, padding: "17px 28px", fontWeight: 600, fontSize: 16.5, whiteSpace: "nowrap", minHeight: 44, display: "inline-flex", alignItems: "center" }}>
                       {game.cta}
                       {game.price ? ` · ${game.price}` : ""}
-                    </Link>
+                    </GameAction>
                     {game.trailerYoutubeId ? (
                       <button
                         type="button"

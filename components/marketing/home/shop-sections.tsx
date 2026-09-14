@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { PhotoSlot } from "@/components/marketing/home/photo-slot";
 import { SafeImage } from "@/components/marketing/home/safe-image";
 import { SERVICE_PHOTOS } from "@/lib/content/assets";
 import { ROUTES } from "@/config/site";
@@ -59,7 +60,9 @@ export function ServicesGrid() {
             <span style={{ position: "relative", display: "block", aspectRatio: "16/11", overflow: "hidden", borderBottom: "1px solid rgba(244,242,255,0.1)", background: SERVICE_PHOTOS[service.name] ? "radial-gradient(120% 120% at 50% 40%, #f7f6fb, #d9d6e8)" : `radial-gradient(120% 120% at 60% 30%, ${service.color}33, rgba(244,242,255,0.03))` }}>
               {SERVICE_PHOTOS[service.name] ? (
                 <Image src={SERVICE_PHOTOS[service.name]!} alt="" fill sizes="(max-width: 900px) 90vw, 320px" style={{ objectFit: "contain", padding: 18 }} />
-              ) : null}
+              ) : (
+                <PhotoSlot label={service.name} accent={`${service.color}26`} />
+              )}
             </span>
             <span style={{ padding: 22, display: "flex", flexDirection: "column", gap: 9, flex: 1 }}>
               <span style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14 }}>
@@ -87,7 +90,7 @@ function ProductRow({ product, photo }: { product: Product; photo: string | null
   return (
     <Link href={`${ROUTES.shop}/${product.slug}`} data-reveal="1" data-row="1" style={{ display: "grid", gridTemplateColumns: "minmax(96px, 150px) 1fr", gap: 22, alignItems: "center", padding: "20px 0", borderTop: "1px solid rgba(255,244,234,0.1)" }}>
       <span style={{ position: "relative", display: "block", aspectRatio: "4/3", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,244,234,0.14)", background: photo ? "radial-gradient(120% 120% at 50% 40%, #f7f6fb, #d9d6e8)" : "rgba(255,244,234,0.04)" }}>
-        <SafeImage src={photo} sizes="150px" contain fallback={<span />} />
+        <SafeImage src={photo} sizes="150px" contain fallback={<PhotoSlot label={product.name} accent="rgba(255,122,61,0.16)" />} />
       </span>
       <span style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase", color: "#c9a695" }}>
@@ -110,7 +113,7 @@ function ProductCard({ product, photo }: { product: Product; photo: string | nul
   return (
     <Link href={`${ROUTES.shop}/${product.slug}`} data-reveal="1" data-card="1" style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
       <span data-card-frame="1" style={{ position: "relative", display: "block", aspectRatio: "3/4", borderRadius: 18, overflow: "hidden", border: "1px solid rgba(255,244,234,0.16)", background: photo ? "radial-gradient(120% 120% at 50% 40%, #f7f6fb, #d9d6e8)" : "rgba(255,244,234,0.04)" }}>
-        <SafeImage src={photo} sizes="(max-width: 900px) 45vw, 300px" contain fallback={<span />} />
+        <SafeImage src={photo} sizes="(max-width: 900px) 45vw, 300px" contain fallback={<PhotoSlot label={product.name} accent="rgba(124,92,255,0.18)" />} />
       </span>
       <span style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#c9a695" }}>

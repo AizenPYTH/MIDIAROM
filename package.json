@@ -21,7 +21,8 @@
     "seeds:build": "node scripts/build-production-seeds.mjs",
     "photos:consoles": "node scripts/import-console-photos.mjs",
     "check:igdb": "node scripts/check-igdb.mjs",
-    "fixtures:homepage": "node scripts/homepage-fixtures.mjs"
+    "fixtures:homepage": "node scripts/homepage-fixtures.mjs",
+    "demo:games": "node scripts/demo-games.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

@@ -27,8 +27,13 @@ const GLOWS = [
 export interface GameScene {
   productId: string;
   slug: string;
-  /** URL de la fiche produit réelle. Jamais une ancre, jamais un lien mort. */
-  href: string;
+  /**
+   * URL de la fiche produit réelle, ou null pour une fiche de démonstration —
+   * qui n'est pas au catalogue et ne doit donc pas se prétendre achetable.
+   */
+  href: string | null;
+  /** Vrai pour la vitrine de démonstration. L'affichage le dit au visiteur. */
+  isDemo: boolean;
   /** Titre affiché : le nom du jeu. */
   name: string;
   /** Étiquette courte du rail de jaquettes (état, ou édition si elle existe). */
@@ -92,19 +97,22 @@ function tagFor(listing: GameListing): string {
   return listing.edition?.trim() || CONDITION_LABELS[listing.condition] || "Jeu";
 }
 
-export function toGameScene(listing: GameListing, index: number): GameScene {
+export function toGameScene(listing: GameListing, index: number, demo = false): GameScene {
   return {
     productId: listing.productId,
     slug: listing.slug,
-    href: `${ROUTES.shop}/${listing.slug}`,
+    href: demo ? null : `${ROUTES.shop}/${listing.slug}`,
+    isDemo: demo,
     name: listing.name,
     tag: tagFor(listing),
     pitch: listing.summary,
     platforms: listing.platform ? [listing.platform] : [],
     meta: metaLine(listing),
-    price: formatPrice(listing.priceCents),
+    price: demo ? null : formatPrice(listing.priceCents),
     inStock: listing.inStock,
-    cta: listing.inStock ? "Voir la fiche" : "Bientôt de retour",
+    // Une fiche de démonstration ne promet pas un achat : elle renvoie vers
+    // la bande-annonce, seule action honnête tant que le jeu n'est pas en rayon.
+    cta: demo ? "Bientôt en rayon" : listing.inStock ? "Voir la fiche" : "Bientôt de retour",
     coverUrl: listing.coverUrl,
     artworkUrl: listing.heroUrl,
     screenshotUrls: listing.screenshotUrls.slice(0, 2),
@@ -122,6 +130,17 @@ export function toGameScene(listing: GameListing, index: number): GameScene {
  */
 export const GAME_SCENE_SLOTS = 5;
 
-export function toGameScenes(listings: GameListing[]): GameScene[] {
-  return listings.slice(0, GAME_SCENE_SLOTS).map(toGameScene);
+export function toGameScenes(listings: GameListing[], demo = false): GameScene[] {
+  return listings.slice(0, GAME_SCENE_SLOTS).map((l, i) => toGameScene(l, i, demo));
+}
+
+/**
+ * Le rail complet, au-delà des cinq panneaux chorégraphiés.
+ *
+ * La scène anime cinq segments ; la vitrine en compte bien plus. Les jeux
+ * suivants sont présentés sous la scène, en grille, pour que la sélection
+ * paraisse ce qu'elle est — un vrai rayon — sans casser la chorégraphie.
+ */
+export function toGameGrid(listings: GameListing[], demo = false): GameScene[] {
+  return listings.slice(GAME_SCENE_SLOTS).map((l, i) => toGameScene(l, i + GAME_SCENE_SLOTS, demo));
 }

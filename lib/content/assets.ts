@@ -3,75 +3,69 @@ import "server-only";
 /**
  * Les visuels réellement présents dans le projet.
  *
- * Inventaire exhaustif au 14/09/2026 : 13 photos de consoles (détourées sur
- * fond blanc, importées par `npm run photos:consoles`) et une photo de la
- * façade du magasin. Rien d'autre — ni photo d'atelier, ni avant/après, ni
- * vidéo.
+ * **Aucune photo n'est branchée sur l'accueil pour l'instant, et c'est
+ * volontaire.** Le client fournira lui-même les visuels des consoles, des
+ * figurines, du manga et des services ; il ne veut pas d'images choisies à sa
+ * place, même issues du projet.
  *
- * Ce fichier existe pour que ce constat soit vérifiable en un endroit : toute
- * section de l'accueil qui affiche une photo vient piocher ici, et
- * `MISSING_ASSETS` dit noir sur blanc ce qui manque encore. Aucune section ne
- * doit inventer un chemin d'image.
+ * Les emplacements existent donc dans les composants, vides, et attendent
+ * simplement qu'on renseigne une entrée ici : rien d'autre ne sera à changer.
+ * En attendant, chaque emplacement affiche l'aplat teinté de son accent, qui
+ * est un état prévu par la charte et non un trou.
  *
- * Les photos de consoles sont des **détourés sur blanc** : elles se posent en
- * `object-fit: contain` dans un cadre clair, jamais en fond plein écran sur le
- * noir de la charte, qui jurerait.
+ * Ce qui existe par ailleurs dans le dépôt, non branché sur l'accueil :
+ * 13 détourés de consoles sur fond blanc (`public/medias/consoles/`, importés
+ * par `npm run photos:consoles`, utilisés par les fiches de réparation) et une
+ * photo de la devanture (`public/medias/facade-207-mediarom.webp`, publiée
+ * dans la galerie).
  */
-
-/** Photo de la devanture, 207 rue de Rome. Vraie photo du magasin. */
-export const STOREFRONT = "/medias/facade-207-mediarom.webp";
-
-/** Détourés de consoles, par slug de modèle. */
-export const CONSOLE_PHOTOS: Record<string, string> = {
-  ps4: "/medias/consoles/ps4.webp",
-  "ps4-slim": "/medias/consoles/ps4-slim.webp",
-  "ps4-pro": "/medias/consoles/ps4-pro.webp",
-  switch: "/medias/consoles/switch.webp",
-  "switch-oled": "/medias/consoles/switch-oled.webp",
-  "switch-lite": "/medias/consoles/switch-lite.webp",
-  "switch-v2": "/medias/consoles/switch-v2.webp",
-  "switch-2": "/medias/consoles/switch-2.webp",
-  "xbox-series-x": "/medias/consoles/xbox-series-x.webp",
-  "xbox-series-s": "/medias/consoles/xbox-series-s.webp",
-  "xbox-one": "/medias/consoles/xbox-one.webp",
-  "xbox-one-s": "/medias/consoles/xbox-one-s.webp",
-  "xbox-one-x": "/medias/consoles/xbox-one-x.webp",
-};
-
-export function consolePhoto(slug: string | null | undefined): string | null {
-  return slug ? (CONSOLE_PHOTOS[slug] ?? null) : null;
-}
 
 /**
  * Visuel des cartes « Ce qui passe sur le banc ».
  *
- * Seules trois des six prestations trouvent une photo juste dans ce qu'on a.
- * Mettre une PlayStation sur « Smartphones » serait un mensonge visuel : ces
- * trois cartes gardent l'aplat de la charte jusqu'à ce que les photos
- * arrivent (voir MISSING_ASSETS).
+ * Toutes nulles : les photos viendront du client. Renseigner un chemin ici
+ * suffit à faire apparaître l'image, sans toucher au composant.
  */
 export const SERVICE_PHOTOS: Record<string, string | null> = {
-  "Consoles de salon": CONSOLE_PHOTOS["ps4"] ?? null,
-  Manettes: CONSOLE_PHOTOS["switch"] ?? null,
+  "Consoles de salon": null,
+  Manettes: null,
   Smartphones: null,
   iPhone: null,
   "PC et portables": null,
-  // Aucune photo de console rétro au catalogue : une Xbox One à cette
-  // place illustrerait faux. L'aplat est plus honnête.
   Rétro: null,
 };
 
+/** Visuel du hero de réparation. À renseigner par le client. */
+export const HERO_PHOTO: string | null = null;
+
+/** Volet « avant / après » du récit de l'atelier. À renseigner par le client. */
+export const STORY_BEFORE: string | null = null;
+export const STORY_AFTER: string | null = null;
+
+/** Visuel de l'entrée boutique. À renseigner par le client. */
+export const SHOP_PHOTO: string | null = null;
+
 /**
- * Ce qu'il manque, et pour quoi faire. Tenu à jour à la main : c'est la liste
- * à donner au client quand il demande pourquoi une scène reste sur un aplat.
+ * Boucle vidéo de démonstration du jeu vedette.
+ *
+ * Fabriquée pour ce projet : une animation de nuées dessinée sur un canvas puis
+ * enregistrée. Elle n'est empruntée à personne, aucune licence tierce n'est en
+ * jeu. Elle sert à éprouver la scène ; le champ `hero_video_url` d'un produit
+ * la remplace dès qu'une vraie vidéo est disponible.
+ */
+export const DEMO_FEATURED_VIDEO = "/medias/demo/featured-loop.webm";
+
+/**
+ * Ce que le client fournira. Tenu à jour à la main : c'est la liste à lui
+ * donner quand il demande pourquoi une scène reste sur un aplat.
  */
 export const MISSING_ASSETS = [
-  { role: "Récit de l'atelier — avant", need: "Photo d'un appareil en panne, ouvert sur le banc. Format 5/4, 1600 px de large." },
-  { role: "Récit de l'atelier — après", need: "Le même appareil réparé et refermé, cadrage identique. C'est le volet qui se découvre." },
-  { role: "Services — Smartphones", need: "Photo d'un smartphone démonté (écran, nappe, outils). 16/11." },
-  { role: "Services — iPhone", need: "Photo d'un iPhone ouvert ou d'un bloc écran. 16/11." },
-  { role: "Services — PC et portables", need: "Photo d'un portable ouvert, ventirad ou SSD. 16/11." },
-  { role: "Services — Rétro", need: "Photo d'une console rétro (N64, SNES, Mega Drive) ou d'une carte recapée. 16/11." },
-  { role: "Jeu vedette — vidéo de fond", need: "Vidéo courte dont vous disposez légalement (MP4 H.264, muette, 10–20 s), à renseigner dans Stock → hero_video_url." },
-  { role: "Jeux — covers et artworks", need: "Rien à fournir : ils viennent d'IGDB dès qu'un produit « Jeu » est associé à sa fiche dans Stock." },
+  { role: "Hero réparation", need: "Visuel principal : appareil démonté, composants, écran. 4/3, 1600 px." },
+  { role: "Récit — avant", need: "Appareil en panne, ouvert sur le banc. 5/4, 1600 px." },
+  { role: "Récit — après", need: "Le même réparé, cadrage identique : c'est le volet qui se découvre." },
+  { role: "Services — les six cartes", need: "Une photo par prestation (consoles, manettes, smartphones, iPhone, PC, rétro). 16/11." },
+  { role: "Entrée boutique", need: "Photo du magasin ou d'un rayon. 4/5, 1400 px." },
+  { role: "Consoles, figurines, manga", need: "Photos des produits, à déposer dans la fiche produit du back-office." },
+  { role: "Jeu vedette — vidéo", need: "Facultatif : une vidéo dont vous disposez légalement, dans `hero_video_url`. Une boucle de démonstration tient la place." },
+  { role: "Jeux — covers et artworks", need: "Rien à fournir : ils viennent d'IGDB." },
 ] as const;

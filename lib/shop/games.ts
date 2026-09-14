@@ -155,8 +155,22 @@ export const getFeaturedGame = cache(async (): Promise<GameListing | null> => {
   return listings.find((l) => l.heroUrl) ?? listings[0] ?? null;
 });
 
-/** Tout ce dont la section « Derniers jeux » a besoin, en une fois. */
-export const getHomepageGames = cache(async (limit = 12): Promise<{ featured: GameListing | null; latest: GameListing[] }> => {
+/**
+ * Tout ce dont la section « Derniers jeux » a besoin, en une fois.
+ *
+ * Quand le catalogue ne contient encore aucun jeu, la vitrine de démonstration
+ * prend le relais (lib/shop/demo-games.ts) pour que l'accueil se juge sur
+ * pièce. Elle s'efface dès qu'un seul jeu réel est publié : le vrai stock a
+ * toujours la priorité, il n'y a jamais de mélange des deux.
+ */
+export const getHomepageGames = cache(async (limit = 12): Promise<{ featured: GameListing | null; latest: GameListing[]; isDemo: boolean }> => {
   const [featured, latest] = await Promise.all([getFeaturedGame(), getLatestGames(limit)]);
-  return { featured, latest };
+  if (latest.length) return { featured, latest, isDemo: false };
+
+  const { getDemoGames } = await import("@/lib/shop/demo-games");
+  const demo = await getDemoGames(Math.max(limit, 24));
+  if (!demo.length) return { featured: null, latest: [], isDemo: false };
+  // Le jeu du moment est celui qui a le plus beau matériel : un artwork large.
+  const best = demo.find((g) => g.heroUrl) ?? demo[0]!;
+  return { featured: best, latest: demo, isDemo: true };
 });

@@ -3,11 +3,13 @@ import Link from "next/link";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { HeroRepair, ShiftScene, ShopIntro, StoryScene } from "@/components/marketing/home/scenes";
 import { FeaturedGame } from "@/components/marketing/home/featured-game";
+import { GamesGrid } from "@/components/marketing/home/games-grid";
 import { GamesScene } from "@/components/marketing/home/games-scene";
 import { ServicesGrid, ShopRows } from "@/components/marketing/home/shop-sections";
 import { getHomepageGames } from "@/lib/shop/games";
-import { toGameScene, toGameScenes } from "@/lib/shop/game-scene";
+import { toGameGrid, toGameScene, toGameScenes } from "@/lib/shop/game-scene";
 import { getProducts, productPhotos } from "@/lib/shop/catalog";
+import { DEMO_FEATURED_VIDEO } from "@/lib/content/assets";
 import { getSeoPage } from "@/lib/content";
 import { getBrandSettings } from "@/lib/settings";
 
@@ -39,8 +41,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   // Une seule lecture pour la scène jeux ; les autres rayons lisent le même
   // catalogue, filtré par catégorie. Aucun appel à IGDB : tout vient du cache.
-  const [{ featured, latest }, consoles, collectibles, accessories] = await Promise.all([
-    getHomepageGames(12),
+  const [{ featured, latest, isDemo }, consoles, collectibles, accessories] = await Promise.all([
+    getHomepageGames(24),
     getProducts({ category: "consoles", availability: "stock", sort: "recent" }, 3),
     getProducts({ category: "collector", sort: "recent" }, 4),
     getProducts({ category: "accessoires", sort: "recent" }, 4),
@@ -49,10 +51,17 @@ export default async function HomePage() {
   // Un produit sans photo propre récupère celle de son modèle de console : le
   // catalogue en porte treize, il n'y a aucune raison d'afficher un cadre vide.
   const photos = await productPhotos([...consoles, ...collectibles, ...accessories]);
-  const scenes = toGameScenes(latest);
+  const scenes = toGameScenes(latest, isDemo);
+  // Au-delà des cinq panneaux chorégraphiés, le reste de la sélection passe en
+  // grille : la scène garde ses cinq temps, le rayon garde sa profondeur.
+  const grid = toGameGrid(latest, isDemo);
   // Le jeu du moment : celui mis en avant par l'atelier, sinon le premier du
   // rail. Sa lueur suit sa position pour rester cohérente avec la scène.
-  const featuredScene = featured ? toGameScene(featured, 0) : null;
+  const featuredScene = featured ? toGameScene(featured, 0, isDemo) : null;
+  // Habillage vidéo de la scène vedette, à défaut d'une vidéo du produit. C'est
+  // une boucle fabriquée pour ce projet, pas des images du jeu : l'étiquette
+  // « Habillage » le dit au visiteur, et `hero_video_url` la remplace.
+  const ambientVideo = { url: DEMO_FEATURED_VIDEO, posterUrl: featuredScene?.artworkUrl ?? null, ambient: true };
 
   return (
     <>
@@ -67,8 +76,23 @@ export default async function HomePage() {
       <ShiftScene />
       <ShopIntro />
 
-      {featuredScene ? <FeaturedGame game={featuredScene} /> : null}
+      {featuredScene ? <FeaturedGame game={featuredScene} ambientVideo={ambientVideo} /> : null}
       <GamesScene games={scenes} />
+
+      {/* La vitrine de démonstration se présente comme telle : ces jeux ne sont
+          pas au catalogue, et rien ne prétend qu'ils sont achetables. */}
+      {isDemo ? (
+        <section data-warm="1" style={{ background: "#0d0710", padding: "28px 30px 4px" }}>
+          <p
+            data-reveal="1"
+            style={{ margin: "0 auto", maxWidth: 1420, fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.1em", lineHeight: 1.6, textTransform: "uppercase", color: "#a89689" }}
+          >
+            Sélection de démonstration — fiches IGDB, pas encore en rayon. Le stock réel prend leur place dès la première référence saisie.
+          </p>
+        </section>
+      ) : null}
+
+      <GamesGrid games={grid} isDemo={isDemo} />
 
       {/* Aucun jeu au catalogue : on le dit, on n'affiche pas une scène vide. */}
       {scenes.length === 0 ? (
