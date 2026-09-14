@@ -472,6 +472,156 @@ body {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Chorégraphie de l'accueil, pilotée par le défilement — en CSS pur.
+   ═══════════════════════════════════════════════════════════════════════════
+   Trois scènes (récit de réparation, bascule vers la boutique, derniers jeux)
+   reposent sur `position: sticky` + `animation-timeline: view()`.
+
+   C'est délibéré et ce n'est pas interchangeable avec des épinglages GSAP :
+   la chorégraphie ne dépend alors d'aucun cycle de vie JavaScript. Rien à
+   monter, rien à rafraîchir au redimensionnement, rien à perdre si un script
+   tarde ou échoue. Le JavaScript de l'accueil ne s'occupe que de ce que le CSS
+   ne sait pas faire : la jaquette active, le compteur, la vidéo du jeu affiché.
+
+   Tout état masqué vit à l'intérieur du `@supports` : sans prise en charge des
+   chronologies de défilement, la page redevient un simple flux vertical,
+   entièrement visible. Voir le repli explicite plus bas.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes rvIn { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+@keyframes wipeIn { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes seamRun { from { left: 0%; opacity: 1; } 92% { opacity: 1; } to { left: 100%; opacity: 0; } }
+@keyframes beatFirst { 0% { opacity: 1; transform: none; } 74% { opacity: 1; transform: none; } 96%, 100% { opacity: 0; transform: translateY(-26px); } }
+@keyframes beatStep { 0%, 8% { opacity: 0; transform: translateY(26px); } 20%, 74% { opacity: 1; transform: none; } 96%, 100% { opacity: 0; transform: translateY(-26px); } }
+@keyframes beatLast { 0%, 8% { opacity: 0; transform: translateY(26px); } 20%, 100% { opacity: 1; transform: none; } }
+@keyframes growX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes veilOpen { from { clip-path: circle(0% at 50% 45%); } to { clip-path: circle(145% at 50% 45%); } }
+@keyframes shiftOut { 0%, 10% { opacity: 1; transform: scale(1); filter: blur(0); } 70%, 100% { opacity: 0; transform: scale(0.82); filter: blur(6px); } }
+@keyframes shiftIn { 0%, 42% { opacity: 0; transform: scale(1.14) translateY(6%); } 92%, 100% { opacity: 1; transform: none; } }
+@keyframes gameFirst { 0%, 74% { opacity: 1; } 94%, 100% { opacity: 0; } }
+@keyframes gameStep { 0%, 6% { opacity: 0; } 20%, 74% { opacity: 1; } 94%, 100% { opacity: 0; } }
+@keyframes gameLast { 0%, 6% { opacity: 0; } 20%, 100% { opacity: 1; } }
+@keyframes gameInFirst { 0%, 74% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; transform: translateY(-3%); } }
+@keyframes gameInStep { 0%, 8% { opacity: 0; transform: translateY(4%); } 22%, 74% { opacity: 1; transform: none; } 94%, 100% { opacity: 0; transform: translateY(-3%); } }
+@keyframes gameInLast { 0%, 8% { opacity: 0; transform: translateY(4%); } 22%, 100% { opacity: 1; transform: none; } }
+/* Respiration de l'artwork : le handoff la faisait au scrub GSAP, la chronologie
+   de vue donne le même mouvement sans script. */
+@keyframes artBreathe { from { transform: translateY(-3%); } to { transform: translateY(3%); } }
+
+@supports (animation-timeline: view()) {
+  [data-story] { view-timeline-name: --story; }
+  [data-shift] { view-timeline-name: --shift; }
+  [data-games] { view-timeline-name: --games; }
+
+  [data-reveal] { animation: rvIn linear both; animation-timeline: view(); animation-range: entry 6% cover 28%; }
+
+  [data-story-wipe] { animation: wipeIn linear both; animation-timeline: --story; animation-range: contain 0% contain 100%; }
+  [data-story-seam] { animation: seamRun linear both; animation-timeline: --story; animation-range: contain 0% contain 100%; }
+  [data-beat] { animation: beatStep linear both; animation-timeline: --story; }
+  [data-beat]:nth-child(1) { animation-name: beatFirst; animation-range: contain 0% contain 25%; }
+  [data-beat]:nth-child(2) { animation-range: contain 25% contain 50%; }
+  [data-beat]:nth-child(3) { animation-range: contain 50% contain 75%; }
+  [data-beat]:nth-child(4) { animation-name: beatLast; animation-range: contain 75% contain 100%; }
+  [data-beat-fill] { animation: growX linear both; animation-timeline: --story; }
+  [data-beat-rail]:nth-child(1) [data-beat-fill] { animation-range: contain 0% contain 25%; }
+  [data-beat-rail]:nth-child(2) [data-beat-fill] { animation-range: contain 25% contain 50%; }
+  [data-beat-rail]:nth-child(3) [data-beat-fill] { animation-range: contain 50% contain 75%; }
+  [data-beat-rail]:nth-child(4) [data-beat-fill] { animation-range: contain 75% contain 100%; }
+
+  [data-shift-veil] { animation: veilOpen linear both; animation-timeline: --shift; animation-range: contain 0% contain 92%; }
+  [data-shift-out] { animation: shiftOut linear both; animation-timeline: --shift; animation-range: contain 0% contain 100%; }
+  [data-shift-in] { animation: shiftIn linear both; animation-timeline: --shift; animation-range: contain 0% contain 100%; }
+
+  [data-game-bg] { animation: gameStep linear both; animation-timeline: --games; }
+  [data-game-bg]:nth-child(1) { animation-name: gameFirst; animation-range: contain 0% contain 20%; }
+  [data-game-bg]:nth-child(2) { animation-range: contain 20% contain 40%; }
+  [data-game-bg]:nth-child(3) { animation-range: contain 40% contain 60%; }
+  [data-game-bg]:nth-child(4) { animation-range: contain 60% contain 80%; }
+  [data-game-bg]:nth-child(5) { animation-name: gameLast; animation-range: contain 80% contain 100%; }
+  [data-game-panel] { animation: gameInStep linear both; animation-timeline: --games; }
+  [data-game-panel]:nth-child(1) { animation-name: gameInFirst; animation-range: contain 0% contain 20%; }
+  [data-game-panel]:nth-child(2) { animation-range: contain 20% contain 40%; }
+  [data-game-panel]:nth-child(3) { animation-range: contain 40% contain 60%; }
+  [data-game-panel]:nth-child(4) { animation-range: contain 60% contain 80%; }
+  [data-game-panel]:nth-child(5) { animation-name: gameInLast; animation-range: contain 80% contain 100%; }
+  [data-games-progress] { animation: growX linear both; animation-timeline: --games; animation-range: contain 0% contain 100%; }
+
+  [data-game-art], [data-featured-art] { animation: artBreathe linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; }
+
+  [data-progress-bar] { animation: growX linear both; animation-timeline: scroll(root); }
+}
+
+/* Seuls les éléments réellement en mouvement continu sont promus en couche de
+   composition : `will-change` sur des dizaines d'éléments coûte plus qu'il ne
+   rapporte. */
+[data-depth],
+[data-chips-track],
+[data-kinetic-track],
+[data-shift-marquee],
+[data-featured-art],
+[data-game-art],
+[data-game-video],
+[data-featured-video] {
+  will-change: transform, opacity;
+}
+
+/* Repli explicite : sans chronologie de défilement, rien ne se superpose —
+   tout revient en flux vertical, et rien ne reste invisible. */
+@supports not (animation-timeline: view()) {
+  [data-story], [data-shift], [data-games] { height: auto; }
+  [data-story-stage], [data-shift-stage], [data-games-stage] { position: relative; height: auto; min-height: 0; }
+  [data-games-stage] { display: block; }
+  [data-beat-box] { min-height: 0; }
+  [data-beat] { position: relative; inset: auto; margin-bottom: 30px; }
+  [data-beat-fill] { transform: scaleX(1); }
+  [data-story-wipe] { clip-path: inset(0 0 0 0); }
+  [data-story-seam], [data-shift-in] { display: none; }
+  [data-shift-veil] { clip-path: circle(145% at 50% 45%); }
+  [data-game-panel] { position: relative !important; inset: auto !important; overflow: visible !important; margin-bottom: 52px; }
+  [data-game-bg]:not(:nth-child(1)) { display: none; }
+  [data-games-progress], [data-progress-bar] { display: none; }
+}
+
+/* La scène jeux doit tenir dans 100svh : on allège le panneau sur les écrans courts. */
+@media (max-height: 780px) {
+  [data-game-shots] { display: none !important; }
+  [data-game-logo] { height: clamp(38px, 5vh, 52px) !important; }
+  [data-game-title] { font-size: clamp(26px, 3.4vw, 42px) !important; }
+  [data-game-col] { gap: 10px !important; }
+  [data-game-panel] { gap: 22px !important; }
+  [data-chips-viewport] { padding-bottom: 18px !important; }
+}
+@media (max-height: 620px) {
+  [data-game-logo], [data-game-meta] { display: none !important; }
+  [data-game-col] { gap: 8px !important; }
+  [data-game-panel] { gap: 14px !important; }
+}
+
+/* Une seule mise en page pour la scène jeux : le responsive est ici, jamais en JS. */
+@media (max-width: 900px) {
+  [data-games] { height: 420svh; }
+  [data-chips-viewport] { overflow-x: auto; scrollbar-width: none; }
+  [data-chips-viewport]::-webkit-scrollbar { display: none; }
+}
+
+/* Sans mouvement : la scène jeux redevient une liste, et plus rien ne se
+   superpose. Les états au survol sont conservés. */
+@media (prefers-reduced-motion: reduce) {
+  [data-games] { height: auto !important; }
+  [data-games-stage] { position: relative !important; height: auto !important; }
+  [data-game-panel] { position: relative !important; inset: auto !important; overflow: visible !important; }
+  [data-game-bg]:not(:nth-child(1)),
+  [data-game-panel]:not(:nth-child(1)) { display: none !important; }
+  [data-reveal], [data-beat], [data-game-bg], [data-game-panel], [data-shift-out] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  [data-story-wipe] { animation: none !important; clip-path: inset(0 0 0 0) !important; }
+  [data-shift-in], [data-story-seam] { animation: none !important; opacity: 0 !important; }
+}
+
 /* Prose for CMS markdown */
 .prose-cms h1 { font-size: 1.75rem; font-weight: 800; margin: 1.5rem 0 0.75rem; letter-spacing: -0.02em; font-family: var(--font-display); }
 .prose-cms h2 { font-size: 1.375rem; font-weight: 800; margin: 1.5rem 0 0.5rem; letter-spacing: -0.01em; font-family: var(--font-display); }

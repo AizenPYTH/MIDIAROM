@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, DM_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { AnalyticsProvider } from "@/lib/analytics/client";
+import { CartProvider } from "@/components/shop/cart-provider";
 import { CookieBanner } from "@/components/marketing/cookie-banner";
 import { SITE_URL } from "@/config/site";
 import { getBrandSettings } from "@/lib/settings";
@@ -41,8 +42,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`h-full ${bricolage.variable} ${instrument.variable} ${dmMono.variable}`}>
       <body className="flex min-h-full flex-col">
         <AnalyticsProvider gaId={gaId} adsId={adsId}>
-          {children}
-          <CookieBanner enabled={Boolean(gaId || adsId)} />
+          {/* Le panier vit dans le stockage local du visiteur : il doit
+              envelopper tout le site public, pas seulement la boutique. */}
+          <CartProvider>
+            {children}
+            <CookieBanner enabled={Boolean(gaId || adsId)} />
+          </CartProvider>
         </AnalyticsProvider>
       </body>
     </html>

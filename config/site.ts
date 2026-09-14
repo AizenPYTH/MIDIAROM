@@ -20,11 +20,10 @@ export const ROUTES = {
   accountProfile: "/compte/profil",
   accountAddresses: "/compte/adresses",
   checkout: "/commande",
-  // Vestiges de la boutique. Le site ne vend plus rien : les pages publiques
-  // correspondantes ont été supprimées. Ces quatre entrées ne servent plus qu'à
-  // construire des URL dans le module de vente resté en place pour le
-  // back-office (historique des commandes, mouvements de stock) et dans le
-  // retour de paiement. Aucune commande boutique ne peut plus être créée.
+  // La boutique. Les produits présentés sur l'accueil mènent à leur fiche, et
+  // la fiche permet d'acheter : ces routes sont de nouveau servies.
+  shop: "/boutique",
+  cart: "/panier",
   shopCheckout: "/commande-boutique",
   shopConfirmation: "/commande-boutique/confirmation",
   accountShopOrders: "/compte/commandes",
