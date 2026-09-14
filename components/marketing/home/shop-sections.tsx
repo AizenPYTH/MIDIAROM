@@ -23,12 +23,14 @@ import { CATEGORY_SLUGS, type ProductCategory } from "@/lib/shop/status";
 export const SHOP_CATEGORIES: {
   category: ProductCategory;
   name: string;
+  /** Le nom au fil du texte : « Voir les 24 jeux vidéo ». */
+  plural: string;
   note: string;
   accent: string;
 }[] = [
-  { category: "GAME", name: "Jeux vidéo", note: "Neuf et occasion testée, toutes générations.", accent: "rgba(14,116,144,0.20)" },
-  { category: "CONSOLE", name: "Consoles", note: "Révisées en atelier, garanties trois mois.", accent: "rgba(77,124,15,0.20)" },
-  { category: "COLLECTIBLE", name: "Figurines Manga / Anime", note: "One Piece, Naruto, Dragon Ball, Demon Slayer.", accent: "rgba(214,51,108,0.18)" },
+  { category: "GAME", name: "Jeux vidéo", plural: "jeux vidéo", note: "Neuf et occasion testée, toutes générations.", accent: "rgba(14,116,144,0.20)" },
+  { category: "CONSOLE", name: "Consoles", plural: "consoles", note: "Révisées en atelier, garanties trois mois.", accent: "rgba(77,124,15,0.20)" },
+  { category: "COLLECTIBLE", name: "Figurines Manga / Anime", plural: "figurines", note: "One Piece, Naruto, Dragon Ball, Demon Slayer.", accent: "rgba(214,51,108,0.18)" },
 ];
 
 export function categoryHref(category: ProductCategory): string {
@@ -47,7 +49,7 @@ export function CategoryCards({ counts }: { counts: Record<ProductCategory, numb
               <Link
                 href={categoryHref(rayon.category)}
                 data-reveal="1"
-                className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-surface transition-shadow duration-300 hover:shadow-[0_18px_48px_rgba(20,17,15,0.10)]"
+                className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-surface transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(.16,1,.3,1)] hover:-translate-y-[5px] hover:shadow-[0_22px_44px_rgba(24,30,45,0.16)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none"
               >
                 {/* Emplacement du visuel de rayon : le magasin fournira ses
                     propres photos. En attendant, la plaque de la charte. */}
@@ -72,6 +74,28 @@ export function CategoryCards({ counts }: { counts: Record<ProductCategory, numb
   );
 }
 
+/**
+ * « Voir plus », en bas du rayon.
+ *
+ * L'accueil ne montre que cinq articles par rayon : le visiteur doit voir les
+ * trois rayons sans scroller longtemps, pas un seul rayon en entier. Ce bouton
+ * est donc la suite du rayon, et il annonce ce qu'il y a derrière quand on le
+ * sait — « Voir les 24 jeux vidéo » vaut mieux que « Voir plus ».
+ */
+function SeeMore({ href, plural, total, shown }: { href: string; plural: string; total?: number; shown: number }) {
+  const reste = typeof total === "number" && total > shown;
+  return (
+    <div data-reveal="1" className="mt-10 flex justify-center">
+      <Link
+        href={href}
+        className="inline-flex min-h-[52px] items-center rounded-full border border-border-strong px-8 text-[15px] font-semibold text-ink transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:-translate-y-[3px] hover:border-ink hover:shadow-[0_18px_40px_rgba(20,17,15,0.12)]"
+      >
+        {reste ? `Voir les ${total} ${plural}` : `Voir tout le rayon ${plural}`}
+      </Link>
+    </div>
+  );
+}
+
 /** L'en-tête d'un rayon : son titre, et le lien vers la catégorie entière. */
 function RailHeader({ title, href, note }: { title: string; href: string; note?: string | null }) {
   return (
@@ -88,12 +112,13 @@ function RailHeader({ title, href, note }: { title: string; href: string; note?:
 }
 
 /** Un rayon de vrais produits. Ne s'affiche pas s'il est vide. */
-export function ProductRail({ category, products }: { category: ProductCategory; products: Product[] }) {
+export function ProductRail({ category, products, total }: { category: ProductCategory; products: Product[]; total?: number }) {
   if (!products.length) return null;
   const rayon = SHOP_CATEGORIES.find((c) => c.category === category);
+  const href = categoryHref(category);
   return (
     <section aria-label={rayon?.name ?? "Rayon"} className="mx-auto max-w-[1240px] px-5 py-12 sm:px-8">
-      <RailHeader title={rayon?.name ?? "Rayon"} href={categoryHref(category)} />
+      <RailHeader title={rayon?.name ?? "Rayon"} href={href} />
       <ProductGrid>
         {products.map((product) => (
           <li key={product.id} className="min-w-0">
@@ -101,6 +126,7 @@ export function ProductRail({ category, products }: { category: ProductCategory;
           </li>
         ))}
       </ProductGrid>
+      <SeeMore href={href} plural={rayon?.plural ?? "produits"} total={total} shown={products.length} />
     </section>
   );
 }
@@ -117,15 +143,18 @@ export function ProductRail({ category, products }: { category: ProductCategory;
  * à son vrai prix — exactement le mensonge que toute cette séparation cherche à
  * éviter.
  */
-export function DemoGamesRail({ games }: { games: GameListing[] }) {
+export function DemoGamesRail({ games, total }: { games: GameListing[]; total?: number }) {
   if (!games.length) return null;
+  const href = categoryHref("GAME");
   return (
     <section aria-label="Jeux vidéo" className="mx-auto max-w-[1240px] px-5 py-12 sm:px-8">
-      <RailHeader title="Jeux vidéo" href={categoryHref("GAME")} />
-      <p data-reveal="1" className="mb-7 rounded-2xl border border-dashed border-border-strong bg-surface-muted px-4 py-3 text-[13.5px] leading-[1.55] text-ink-soft">
-        <strong className="font-semibold text-ink">Notre sélection du moment.</strong> Ces titres ne sont pas encore en rayon : les
-        fiches viennent d&apos;IGDB et les prix sont indicatifs. Demandez-nous un jeu, on le fait venir.
-      </p>
+      {/* La mention tient dans le sous-titre du rayon. En encadré, elle
+          repoussait les jaquettes d'une hauteur de ligne pour rien. */}
+      <RailHeader
+        title="Jeux vidéo"
+        href={href}
+        note="Notre sélection du moment. Ces titres ne sont pas encore en rayon : prix indicatifs, on les fait venir sur demande."
+      />
       <ProductGrid>
         {games.map((game) => (
           <li key={game.productId} className="min-w-0">
@@ -133,6 +162,7 @@ export function DemoGamesRail({ games }: { games: GameListing[] }) {
           </li>
         ))}
       </ProductGrid>
+      <SeeMore href={href} plural="jeux vidéo" total={total} shown={games.length} />
     </section>
   );
 }

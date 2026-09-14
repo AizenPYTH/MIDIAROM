@@ -42,8 +42,18 @@ function Frame({
   badgeTone?: "ink" | "muted";
 }) {
   return (
-    <Link href={href} className="group relative block overflow-hidden rounded-2xl border border-border bg-surface-muted" style={{ aspectRatio: "3 / 4" }} aria-label={alt}>
-      <span className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.03]">{children}</span>
+    <Link
+      href={href}
+      // Rien au repos : ni ombre, ni contour épais. La hiérarchie vient du
+      // rayon, du fond et de l'espace. Au survol, la tuile se soulève et la
+      // photo respire — deux effets, pas trois.
+      className="group relative block overflow-hidden rounded-2xl border border-border bg-surface-muted transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(.16,1,.3,1)] hover:-translate-y-[5px] hover:shadow-[0_22px_44px_rgba(24,30,45,0.16)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none"
+      style={{ aspectRatio: "3 / 4" }}
+      aria-label={alt}
+    >
+      <span className="absolute inset-0 transition-transform duration-[600ms] ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.05] motion-reduce:transition-none motion-reduce:group-hover:scale-100">
+        {children}
+      </span>
       {badge ? (
         <span
           className={cn(

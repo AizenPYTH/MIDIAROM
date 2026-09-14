@@ -26,10 +26,17 @@ import { getBrandSettings } from "@/lib/settings";
  */
 export const dynamic = "force-dynamic";
 
-/** Ce que la grille de démonstration montre au maximum sur l'accueil. */
-const GAMES_ON_HOME = 30;
-/** Produits réels affichés par rayon. */
-const PER_RAIL = 6;
+/**
+ * Articles montrés par rayon sur l'accueil.
+ *
+ * Cinq, et pas davantage. L'accueil doit donner à voir les **trois** rayons
+ * sans scroller longtemps ; un rayon déroulé en entier repousse les deux
+ * autres hors de l'écran et transforme la page d'accueil en page de catalogue.
+ * Le bouton « Voir plus » en bas de chaque rayon mène au rayon complet.
+ */
+const PER_RAIL = 5;
+/** Combien de jeux lire pour connaître la taille du rayon de démonstration. */
+const DEMO_POOL = 24;
 
 export async function generateMetadata(): Promise<Metadata> {
   const [seo, brand] = await Promise.all([getSeoPage("/"), getBrandSettings()]);
@@ -44,7 +51,7 @@ export default async function HomePage() {
   // Une lecture par rayon, plus les jeux. Aucun appel à IGDB à l'affichage :
   // les fiches viennent du cache.
   const [{ latest, isDemo }, counts, games, consoles, figurines] = await Promise.all([
-    getHomepageGames(GAMES_ON_HOME),
+    getHomepageGames(DEMO_POOL),
     getProductCategoryCounts(),
     getProducts({ category: CATEGORY_SLUGS.GAME, sort: "recent" }, PER_RAIL),
     getProducts({ category: CATEGORY_SLUGS.CONSOLE, sort: "recent" }, PER_RAIL),
@@ -53,7 +60,7 @@ export default async function HomePage() {
 
   // Les vrais jeux sont des produits comme les autres. La sélection de
   // démonstration ne prend le relais que si le rayon est vide.
-  const demoGames = isDemo ? latest.slice(0, GAMES_ON_HOME) : [];
+  const demoGames = isDemo ? latest.slice(0, PER_RAIL) : [];
   const rienEnRayon = !games.length && !demoGames.length && !consoles.length && !figurines.length;
 
   return (
@@ -61,10 +68,13 @@ export default async function HomePage() {
       <HeroShop />
       <CategoryCards counts={counts} />
 
-      <ProductRail category="GAME" products={games} />
-      <DemoGamesRail games={demoGames} />
-      <ProductRail category="CONSOLE" products={consoles} />
-      <ProductRail category="COLLECTIBLE" products={figurines} />
+      {/* Les trois rayons, cinq articles chacun, chacun avec sa suite. Le
+          visiteur voit une jaquette, une console et une figurine avant
+          d'arriver à l'atelier. */}
+      <ProductRail category="GAME" products={games} total={counts.GAME} />
+      <DemoGamesRail games={demoGames} total={isDemo ? latest.length : undefined} />
+      <ProductRail category="CONSOLE" products={consoles} total={counts.CONSOLE} />
+      <ProductRail category="COLLECTIBLE" products={figurines} total={counts.COLLECTIBLE} />
 
       {/* Rien en rayon : on le dit, plutôt que d'empiler des sections vides. */}
       {rienEnRayon ? (
