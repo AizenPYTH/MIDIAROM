@@ -100,6 +100,34 @@ async function accessToken(forceRefresh = false): Promise<string> {
   return inFlightToken;
 }
 
+/**
+ * File d'attente respectant le quota IGDB : 4 requêtes par seconde pour toute
+ * l'application.
+ *
+ * Sans elle, synchroniser un catalogue un peu fourni part en rafale et se fait
+ * refuser dès la cinquième fiche. Les appels sont sérialisés et espacés du
+ * minimum nécessaire ; pour une requête isolée — le cas courant, une recherche
+ * dans le back-office — l'attente est nulle.
+ *
+ * La cadence vaut par processus : sur plusieurs instances elle se multiplie.
+ * Acceptable pour l'usage visé (back-office et tâche nocturne), et un refus 429
+ * reste traité proprement en aval.
+ */
+const MIN_INTERVAL_MS = 1000 / 4;
+let queueTail: Promise<void> = Promise.resolve();
+let lastRequestAt = 0;
+
+function throttle<T>(run: () => Promise<T>): Promise<T> {
+  const slot = queueTail.then(async () => {
+    const wait = lastRequestAt + MIN_INTERVAL_MS - Date.now();
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    lastRequestAt = Date.now();
+  });
+  // La file avance même si l'appel échoue : une panne ne doit pas la bloquer.
+  queueTail = slot.then(() => undefined, () => undefined);
+  return slot.then(run);
+}
+
 async function withTimeout(run: (signal: AbortSignal) => Promise<Response>): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -124,14 +152,16 @@ async function withTimeout(run: (signal: AbortSignal) => Promise<Response>): Pro
 async function query<T>(endpoint: string, apicalypse: string, retryOnUnauthorized = true): Promise<T[]> {
   const { clientId } = credentials();
   const token = await accessToken();
-  const response = await withTimeout((signal) =>
-    fetch(`${API_URL}/${endpoint}`, {
-      method: "POST",
-      headers: { "Client-ID": clientId, Authorization: `Bearer ${token}`, Accept: "application/json" },
-      body: apicalypse,
-      signal,
-      cache: "no-store",
-    }),
+  const response = await throttle(() =>
+    withTimeout((signal) =>
+      fetch(`${API_URL}/${endpoint}`, {
+        method: "POST",
+        headers: { "Client-ID": clientId, Authorization: `Bearer ${token}`, Accept: "application/json" },
+        body: apicalypse,
+        signal,
+        cache: "no-store",
+      }),
+    ),
   );
 
   if (response.status === 401 && retryOnUnauthorized) {

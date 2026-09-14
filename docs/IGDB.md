@@ -49,12 +49,26 @@ le JavaScript envoyé au navigateur. Le jeton d'accès ne quitte pas le serveur,
 et aucun journal n'imprime les identifiants (voir `lib/igdb/client.ts`, qui ne
 journalise que le code HTTP d'un refus d'authentification).
 
-Tester la connexion :
+Tester la connexion, depuis un poste qui a les identifiants :
 
 ```bash
 npm run check:igdb                # authentification seule
 npm run check:igdb -- "zelda"     # + une vraie recherche
 ```
+
+Le script diagnostique les refus au lieu de planter. Un **HTTP 403 ou 400**
+signifie presque toujours que le *Client Type* de l'application Twitch est
+« Public » : il doit être « Confidential », sinon le secret délivré n'est pas
+valable pour le flux client credentials.
+
+### Vérifier le câblage sans identifiants
+
+Le test `tests/env-igdb.test.ts` verrouille la lecture de `process.env` au
+runtime. Pour la vérifier de bout en bout sur une machine sans identifiants, il
+suffit de démarrer le serveur avec des valeurs quelconques : l'avertissement
+« IGDB n'est pas configuré » du back-office disparaît au profit du champ de
+recherche, sans reconstruire le projet. C'est la preuve que la variable est lue
+au démarrage du processus, et non figée à la compilation.
 
 ## Les fichiers
 
@@ -115,6 +129,30 @@ ce que le site lit, et cela évite de retraduire à chaque affichage.
 - Forcer : bouton **Resynchroniser** sur la fiche produit.
 - Vider le cache ne supprime aucun produit : la clé étrangère est
   `on delete set null`, l'association tombe, le produit reste.
+
+## Quota et catalogue important
+
+IGDB autorise **4 requêtes par seconde** pour toute l'application. Une file
+d'attente dans `lib/igdb/client.ts` sérialise et espace les appels : une
+recherche isolée n'attend rien, une synchronisation de masse ne part jamais en
+rafale. La cadence vaut par processus ; sur plusieurs instances elle se
+multiplie, ce qui reste acceptable pour l'usage visé (back-office et tâche
+nocturne), et un refus 429 est de toute façon traité proprement.
+
+Le travail nocturne (`/api/cron/daily`, protégé par `CRON_SECRET`) fait deux
+choses quand IGDB est configuré — et ne fait rien du tout sinon :
+
+| Fonction | Rôle | Borne |
+| --- | --- | --- |
+| `refreshStaleGames()` | Rafraîchit les fiches de plus de 30 jours | 50 / nuit |
+| `matchUnlinkedGames()` | Associe les produits « Jeu » sans fiche | 25 / nuit |
+
+`matchUnlinkedGames` n'associe **que** les correspondances au-dessus du seuil,
+et ne touche jamais à un produit déjà associé : une validation humaine ne doit
+pas être défaite par une passe automatique. Les cas douteux restent dans le
+back-office, ce qui est le but du score. Si IGDB tombe en cours de route, la
+passe s'arrête et reprend la nuit suivante — une fiche périmée reste
+parfaitement affichable entre-temps.
 
 ## Images
 

@@ -192,3 +192,86 @@ export function hintsFromProduct(product: {
     releaseYear: product.release_year,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Entretien d'un catalogue important
+// ---------------------------------------------------------------------------
+
+export interface MaintenanceReport {
+  examined: number;
+  refreshed: number;
+  linked: number;
+  failed: number;
+  /** Premier motif d'échec rencontré, pour le journal du travail nocturne. */
+  error: string | null;
+}
+
+/**
+ * Rafraîchit les fiches périmées, par petits paquets.
+ *
+ * Le quota IGDB (4 req/s) est tenu par la file d'attente du client ; la borne
+ * `limit` évite en plus qu'une nuit de rattrapage s'éternise sur un catalogue
+ * de plusieurs milliers de jeux. Le reste passera la nuit suivante : une fiche
+ * périmée reste parfaitement affichable entre-temps.
+ */
+export async function refreshStaleGames(limit = 50): Promise<MaintenanceReport> {
+  const report: MaintenanceReport = { examined: 0, refreshed: 0, linked: 0, failed: 0, error: null };
+  const cutoff = new Date(Date.now() - FRESHNESS_DAYS * 86_400_000).toISOString();
+  const { data } = await createSupabaseAdminClient()
+    .from("igdb_games")
+    .select("igdb_id")
+    .lt("synced_at", cutoff)
+    .order("synced_at", { ascending: true })
+    .limit(Math.min(Math.max(limit, 1), 500));
+
+  for (const row of data ?? []) {
+    report.examined += 1;
+    const result = await syncGame(Number(row.igdb_id), { force: true });
+    if (result.source === "igdb") report.refreshed += 1;
+    else {
+      report.failed += 1;
+      report.error ??= result.error;
+      // IGDB est en panne ou le quota est épuisé : inutile d'insister sur les
+      // centaines de fiches suivantes, la nuit prochaine reprendra la liste.
+      if (result.source === "unavailable") break;
+    }
+  }
+  return report;
+}
+
+/**
+ * Cherche une correspondance pour les produits « Jeu » qui n'en ont pas.
+ *
+ * N'associe QUE les correspondances sûres (au-dessus du seuil), et ne touche
+ * jamais à un produit déjà associé — une validation humaine ne doit jamais
+ * être défaite par une passe automatique. Les cas douteux restent à traiter
+ * dans le back-office, ce qui est exactement le but du score.
+ */
+export async function matchUnlinkedGames(limit = 25): Promise<MaintenanceReport> {
+  const report: MaintenanceReport = { examined: 0, refreshed: 0, linked: 0, failed: 0, error: null };
+  const { data } = await createSupabaseAdminClient()
+    .from("products")
+    .select("id, name, platform, ean, sku, edition, region, release_year")
+    .eq("category", "GAME")
+    .eq("is_active", true)
+    .is("igdb_game_id", null)
+    .order("created_at", { ascending: false })
+    .limit(Math.min(Math.max(limit, 1), 200));
+
+  for (const product of data ?? []) {
+    report.examined += 1;
+    const { matches, error } = await searchGameMatches(hintsFromProduct(product), 5);
+    if (error) {
+      report.failed += 1;
+      report.error ??= error;
+      break; // IGDB indisponible : on arrête là.
+    }
+    const best = matches[0];
+    if (!best?.isConfident) continue;
+    const source = best.reasons[0]?.startsWith("Code-barres") ? "BARCODE" : "AUTO";
+    const linked = await linkProductToGame(product.id, best.game.igdbId, source, best.confidence);
+    if (linked.ok) report.linked += 1;
+    else report.failed += 1;
+  }
+  return report;
+}
