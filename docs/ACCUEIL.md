@@ -6,7 +6,7 @@ Dans cet ordre, et en quelques secondes :
 
 1. **MÉDI@ROM répare vos consoles.**
 2. **MÉDI@ROM tient une boutique gaming et pop culture** — jeux vidéo,
-   consoles, figurines, manga & anime.
+   consoles, figurines manga / anime.
 
 Tout le reste est au service de ces deux phrases.
 
@@ -53,24 +53,40 @@ le découpage se fait désormais sur le cadre de l'artwork, pas sur la section.
 | La boutique : quatre rayons | `home/shop-sections.tsx`, `ShopCategories` | auto |
 | Le jeu du moment | `home/featured-game.tsx` | ≤ 92svh |
 | Jeux vidéo | `home/games-grid.tsx` | auto |
-| Consoles · Figurines · Manga & Anime | `home/shop-sections.tsx`, `ProductRail` | auto |
+| Consoles · Figurines Manga / Anime | `home/shop-sections.tsx`, `ProductRail` | auto |
 | Devis | `app/(marketing)/page.tsx` | auto |
 
 ## La boutique
 
-Quatre rayons, et seulement quatre — la boutique est **gaming et pop culture**,
+Trois rayons, et seulement trois — la boutique est **gaming et pop culture**,
 pas un magasin d'électronique généraliste :
 
 | Rayon | Catégorie | Filtre |
 | --- | --- | --- |
 | Jeux vidéo | `GAME` | `/boutique?cat=jeux` |
 | Consoles | `CONSOLE` | `/boutique?cat=consoles` |
-| Figurines | `COLLECTIBLE` | `/boutique?cat=figurines` |
-| Manga & Anime | `MANGA` | `/boutique?cat=manga` |
+| Figurines Manga / Anime | `COLLECTIBLE` | `/boutique?cat=figurines` |
 
-`MANGA` a été ajouté à l'énumération `product_category`
-(`supabase/migrations/20260915000001_manga.sql`) : sans elle, le manga se serait
-confondu avec les collectors.
+### « Manga / anime » veut dire figurines, pas livres
+
+Le magasin ne vend **aucun tome papier**. « Manga / anime » désigne des
+figurines de personnages — One Piece, Naruto, Dragon Ball, Demon Slayer,
+Jujutsu Kaisen — qui relèvent exactement de `COLLECTIBLE`.
+
+Une valeur `MANGA` avait été ajoutée à `product_category`
+(`20260915000001_manga.sql`) sur un malentendu. Une migration appliquée ne se
+réécrit pas, et PostgreSQL ne sait pas retirer une valeur d'un type énuméré :
+`20260915000002_figurines_manga.sql` la rend donc **inutilisable** — les lignes
+qui la portaient rejoignent `COLLECTIBLE`, et la contrainte
+`products_category_not_manga` interdit son usage. Côté application,
+`DEPRECATED_CATEGORIES` (lib/shop/status.ts) l'exclut de toute liste publique,
+le formulaire produit ne la propose plus et la validation la refuse.
+
+L'adresse `/boutique?cat=manga` a été publiée : `categoryFromSlug` la renvoie
+vers `COLLECTIBLE` plutôt que de laisser un rayon vide.
+
+Pour vendre un jour de vrais livres : retirer la contrainte, rien d'autre n'est
+verrouillé. `tests/categories.test.ts` tient l'ensemble.
 
 **Pas de PC ni de smartphones en rayon.** L'atelier les répare toujours — le
 parcours de devis les propose — mais ce ne sont pas des catégories
@@ -198,7 +214,7 @@ coupe hors champ et en onglet masqué, et **ne se charge pas** sous
 ## Assets
 
 **Aucune photo n'est choisie à la place du magasin.** Les visuels du hero, du
-récit, des cartes de service, de l'entrée boutique, des consoles, des figurines
+récit, des cartes de service, de l'entrée boutique, des consoles, des figurines manga/anime
 et du manga seront fournis par le client. `lib/content/assets.ts` est donc
 volontairement à `null` partout : les emplacements existent dans les
 composants, et renseigner un chemin dans ce fichier suffit à les remplir, sans
@@ -213,7 +229,7 @@ fiches de réparation) et la photo de la devanture
 | --- | --- |
 | Hero réparation, récit, entrée boutique | Aplats animés de la charte, en attente de `HERO_PHOTO` / `STORY_*` / `SHOP_PHOTO` |
 | Ce qui passe sur le banc | `PhotoSlot` : lueur de l'accent, trame fine, initiale en filigrane |
-| Rayons consoles / figurines | `products.images`, à défaut la photo du modèle lié (`console_models.image_path`), à défaut `PhotoSlot` |
+| Rayons consoles / figurines manga-anime | `products.images`, à défaut la photo du modèle lié (`console_models.image_path`), à défaut `PhotoSlot` |
 | Jeux, jeu vedette | Covers, artworks et captures **d'IGDB** |
 
 `MISSING_ASSETS`, dans le même fichier, liste ce qui manque et pour quel usage :
@@ -231,10 +247,9 @@ One sur la carte « Rétro » serait un mensonge visuel ; la règle vaut partout
 | Image absente ou CDN muet | `SafeImage` bascule sur l'aplat de la charte, jamais d'icône cassée |
 | Pas d'artwork | Aplat teinté de la lueur du jeu |
 | Vidéo absente ou en échec | L'artwork reste, la vidéo garde une opacité nulle |
-| Rayon consoles / figurines vide | La section ne s'affiche pas du tout |
 | `prefers-reduced-motion` | Plus rien ne bouge, tout est visible, aucune vidéo |
 | Pas de `animation-timeline` | Flux vertical, rien de superposé, rien d'invisible |
-| Rayon consoles / figurines / manga vide | La section ne s'affiche pas du tout |
+| Rayon consoles ou figurines vide | La section ne s'affiche pas du tout |
 | Catalogue vide mais `demo-games.json` présent | Vitrine de démonstration, sans prix ni lien, annoncée comme telle |
 | Catalogue vide et pas de `demo-games.json` | Message clair, lien vers `/boutique` |
 

@@ -181,7 +181,7 @@ export function ShiftScene() {
           <p style={{ margin: 0, textAlign: "center", fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "clamp(38px,8vw,132px)", lineHeight: 0.84, letterSpacing: "-0.055em", color: "#fff4ea" }}>
             Jeux, consoles,
             <br />
-            figurines, manga.
+            figurines.
           </p>
         </div>
       </div>

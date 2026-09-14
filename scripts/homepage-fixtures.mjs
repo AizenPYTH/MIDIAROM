@@ -83,8 +83,7 @@ const PRODUCTS = [
   { sku: `${PREFIX}NOIGDB`, slug: "demo-hp-sans-fiche", name: "Démo — jeu sans fiche IGDB", platform: "PlayStation 4", condition: "USED_B", price_cents: 1499, quantity: 1, igdb_game_id: null, images: [LOCAL.ps4], display_order: 4 },
   { sku: `${PREFIX}CONSOLE`, slug: "demo-hp-console", name: "Démo — PlayStation 4 révisée", category: "CONSOLE", platform: "PlayStation 4", condition: "REFURBISHED", price_cents: 14900, quantity: 2, images: [LOCAL.ps4], description: "Recapée et testée sur banc, deux manettes d'origine.", display_order: 1 },
   { sku: `${PREFIX}FIGURINE`, slug: "demo-hp-figurine", name: "Démo — figurine collector", category: "COLLECTIBLE", platform: "Collection", condition: "NEW", price_cents: 18900, quantity: 1, images: [LOCAL.facade], display_order: 1 },
-  { sku: `${PREFIX}MANGA1`, slug: "demo-hp-manga-1", name: "Démo — manga tome 1", category: "MANGA", platform: "Manga", condition: "NEW", price_cents: 790, quantity: 6, images: [LOCAL.facade], display_order: 1 },
-  { sku: `${PREFIX}MANGA2`, slug: "demo-hp-manga-2", name: "Démo — coffret anime", category: "MANGA", platform: "Anime", condition: "NEW", price_cents: 4900, quantity: 2, images: [], display_order: 2 },
+  { sku: `${PREFIX}FIGURINE2`, slug: "demo-hp-figurine-2", name: "Démo — figurine anime", category: "COLLECTIBLE", platform: "Figurine", condition: "NEW", price_cents: 7900, quantity: 3, images: [], display_order: 2 },
   { sku: `${PREFIX}ACCESSOIRE`, slug: "demo-hp-accessoire", name: "Démo — manette sans fil", category: "ACCESSORY", platform: "PlayStation 4", condition: "NEW", price_cents: 5900, quantity: 4, images: [LOCAL.switch], display_order: 1 },
   { sku: `${PREFIX}RUPTURE`, slug: "demo-hp-rupture", name: "Démo — jeu en rupture", platform: "PlayStation 5", condition: "NEW", price_cents: 7999, quantity: 0, igdb_game_id: 900_001, display_order: 5 },
 ];

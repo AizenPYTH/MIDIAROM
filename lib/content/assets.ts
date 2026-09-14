@@ -5,7 +5,7 @@ import "server-only";
  *
  * **Aucune photo n'est branchée sur l'accueil pour l'instant, et c'est
  * volontaire.** Le client fournira lui-même les visuels des consoles, des
- * figurines, du manga et des services ; il ne veut pas d'images choisies à sa
+ * figurines manga/anime et des services ; il ne veut pas d'images choisies à sa
  * place, même issues du projet.
  *
  * Les emplacements existent donc dans les composants, vides, et attendent
@@ -65,7 +65,7 @@ export const MISSING_ASSETS = [
   { role: "Récit — après", need: "Le même réparé, cadrage identique : c'est le volet qui se découvre." },
   { role: "Services — les six cartes", need: "Une photo par prestation (consoles, manettes, smartphones, iPhone, PC, rétro). 16/11." },
   { role: "Entrée boutique", need: "Photo du magasin ou d'un rayon. 4/5, 1400 px." },
-  { role: "Consoles, figurines, manga", need: "Photos des produits, à déposer dans la fiche produit du back-office." },
+  { role: "Consoles, figurines manga/anime", need: "Photos des produits, à déposer dans la fiche produit du back-office." },
   { role: "Jeu vedette — vidéo", need: "Facultatif : une vidéo dont vous disposez légalement, dans `hero_video_url`. Une boucle de démonstration tient la place." },
   { role: "Jeux — covers et artworks", need: "Rien à fournir : ils viennent d'IGDB." },
 ] as const;

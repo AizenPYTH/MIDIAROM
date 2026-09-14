@@ -4,7 +4,7 @@ import { ROUTES, SITE_URL } from "@/config/site";
 import { Container, Eyebrow } from "@/components/ui/misc";
 import { ProductCard } from "@/components/shop/product-card";
 import { getProductCategoryCounts, getProductPlatforms, getProducts, type ProductFilters } from "@/lib/shop/catalog";
-import { CATEGORY_LABELS, CATEGORY_SLUGS, type ProductCategory } from "@/lib/shop/status";
+import { CATEGORY_LABELS, CATEGORY_SLUGS, PUBLIC_CATEGORIES, type ProductCategory } from "@/lib/shop/status";
 import { cn } from "@/lib/utils/cn";
 
 export const dynamic = "force-dynamic";
@@ -116,8 +116,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         </Chip>
         {/* Une catégorie sans aucune référence n'est pas un filtre : c'est une
             promesse vide. On n'affiche que celles qui ont du stock. */}
-        {(Object.keys(CATEGORY_LABELS) as ProductCategory[])
-          .filter((c) => counts[c] > 0)
+        {PUBLIC_CATEGORIES.filter((c) => counts[c] > 0)
           .map((c) => (
             <Chip key={c} href={buildHref(sp, { cat: CATEGORY_SLUGS[c], retro: undefined })} active={sp.cat === CATEGORY_SLUGS[c]}>
               {CATEGORY_LABELS[c]} · {counts[c]}

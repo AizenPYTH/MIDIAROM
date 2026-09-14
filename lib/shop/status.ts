@@ -89,9 +89,30 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
   GAME: "Jeux vidéo",
   ACCESSORY: "Accessoires",
   PART: "Pièces",
-  COLLECTIBLE: "Figurines",
-  MANGA: "Manga & Anime",
+  // Les figurines de personnages — One Piece, Naruto, Dragon Ball… — et les
+  // collectors de jeu vidéo partagent ce rayon. Le magasin ne vend pas de
+  // tomes papier : voir MANGA ci-dessous.
+  COLLECTIBLE: "Figurines Manga / Anime",
+  MANGA: "Figurines Manga / Anime",
 };
+
+/**
+ * `MANGA` est une valeur morte.
+ *
+ * Elle a été ajoutée en croyant que le magasin vendrait des livres manga ; il
+ * ne vend que des **figurines** de personnages, qui sont des `COLLECTIBLE`.
+ * PostgreSQL ne sait pas retirer une valeur d'un type énuméré, et la base
+ * interdit désormais son usage (contrainte `products_category_not_manga`,
+ * migration 20260915000002). Elle reste donc dans le type, invisible partout.
+ *
+ * Toute liste de rayons montrée au public doit filtrer sur cette liste.
+ */
+export const DEPRECATED_CATEGORIES: readonly ProductCategory[] = ["MANGA"];
+
+/** Les rayons proposés au public, dans l'ordre d'affichage. */
+export const PUBLIC_CATEGORIES: readonly ProductCategory[] = (
+  Object.keys(CATEGORY_LABELS) as ProductCategory[]
+).filter((c) => !DEPRECATED_CATEGORIES.includes(c));
 
 export const CATEGORY_SLUGS: Record<ProductCategory, string> = {
   CONSOLE: "consoles",
@@ -99,11 +120,28 @@ export const CATEGORY_SLUGS: Record<ProductCategory, string> = {
   ACCESSORY: "accessoires",
   PART: "pieces",
   COLLECTIBLE: "figurines",
+  // Jamais produit dans un lien : `categoryFromSlug` renvoie le slug « manga »
+  // vers COLLECTIBLE, pour que les anciennes adresses tombent sur le bon rayon.
   MANGA: "manga",
 };
 
+/**
+ * Anciens slugs qui doivent continuer à mener quelque part.
+ *
+ * `/boutique?cat=manga` a été publié : le laisser pointer vers une catégorie
+ * interdite donnerait un rayon vide. Il mène au rayon qui a repris son contenu.
+ */
+const SLUG_ALIASES: Record<string, ProductCategory> = {
+  manga: "COLLECTIBLE",
+};
+
 export function categoryFromSlug(slug: string | undefined): ProductCategory | null {
-  const entry = (Object.entries(CATEGORY_SLUGS) as [ProductCategory, string][]).find(([, s]) => s === slug);
+  if (!slug) return null;
+  const alias = SLUG_ALIASES[slug];
+  if (alias) return alias;
+  const entry = (Object.entries(CATEGORY_SLUGS) as [ProductCategory, string][])
+    .filter(([category]) => !DEPRECATED_CATEGORIES.includes(category))
+    .find(([, s]) => s === slug);
   return entry ? entry[0] : null;
 }
 

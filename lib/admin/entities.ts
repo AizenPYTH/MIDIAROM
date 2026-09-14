@@ -409,7 +409,7 @@ ENTITIES.products = {
     { name: "sku", label: "SKU / référence", type: "text", required: true, width: "half" },
     { name: "slug", label: "Slug (URL /boutique/[slug])", type: "slug", required: true, width: "half" },
     { name: "name", label: "Nom", type: "text", required: true },
-    { name: "category", label: "Catégorie", type: "select", required: true, width: "half", options: [{ value: "CONSOLE", label: "Console" }, { value: "GAME", label: "Jeu" }, { value: "ACCESSORY", label: "Accessoire" }, { value: "PART", label: "Pièce" }, { value: "COLLECTIBLE", label: "Figurine" }, { value: "MANGA", label: "Manga & Anime" }] },
+    { name: "category", label: "Catégorie", type: "select", required: true, width: "half", options: [{ value: "CONSOLE", label: "Console" }, { value: "GAME", label: "Jeu" }, { value: "ACCESSORY", label: "Accessoire" }, { value: "PART", label: "Pièce" }, { value: "COLLECTIBLE", label: "Figurine manga / anime" }] },
     { name: "platform", label: "Plateforme (libellé affiché)", type: "text", required: true, width: "half" },
     { name: "model_id", label: "Modèle de console lié (fiche console, compatibilité)", type: "select", options: "models", width: "half" },
     { name: "condition", label: "État", type: "select", required: true, width: "half", options: [{ value: "NEW", label: "Neuf" }, { value: "REFURBISHED", label: "Révisé en atelier" }, { value: "USED_A", label: "Occasion — grade A" }, { value: "USED_B", label: "Occasion — grade B" }, { value: "USED_C", label: "Occasion — grade C" }] },
@@ -443,7 +443,9 @@ ENTITIES.products = {
     sku: text(40).min(2),
     slug,
     name: text(140).min(2),
-    category: z.enum(["CONSOLE", "GAME", "ACCESSORY", "PART", "COLLECTIBLE", "MANGA"]),
+    // MANGA est une valeur morte, interdite en base : le formulaire ne doit pas
+    // pouvoir la produire. Voir DEPRECATED_CATEGORIES dans lib/shop/status.ts.
+    category: z.enum(["CONSOLE", "GAME", "ACCESSORY", "PART", "COLLECTIBLE"]),
     platform: text(60).min(1),
     model_id: nullableUuid,
     condition: z.enum(["NEW", "REFURBISHED", "USED_A", "USED_B", "USED_C"]),

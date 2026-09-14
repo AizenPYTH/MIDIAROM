@@ -12,7 +12,8 @@ import { formatPrice } from "@/lib/utils/format";
  * Les deux blocs de la boutique : ce que l'atelier répare, puis ce qu'il vend.
  *
  * La boutique est orientée **gaming et pop culture** : jeux vidéo, consoles,
- * figurines, manga & anime. Rien d'autre. L'atelier répare aussi des
+ * figurines manga / anime. Rien d'autre — et surtout pas de tomes papier : le
+ * magasin vend des figurines de personnages, pas des livres. L'atelier répare aussi des
  * smartphones et des PC — le parcours de devis les propose toujours — mais ce
  * ne sont pas des rayons du magasin, et les mettre en avant ici brouillerait
  * ce que MÉDI@ROM vend.
@@ -84,8 +85,7 @@ export function RepairServices() {
 export const SHOP_CATEGORIES: { category: ProductCategory; name: string; note: string; color: string }[] = [
   { category: "GAME", name: "Jeux vidéo", note: "Neuf et occasion testée, toutes générations.", color: CYAN },
   { category: "CONSOLE", name: "Consoles", note: "Révisées en atelier, garanties trois mois.", color: LIME },
-  { category: "COLLECTIBLE", name: "Figurines", note: "Collectors, éditions limitées, pièces uniques.", color: ROSE },
-  { category: "MANGA", name: "Manga & Anime", note: "Séries, tomes uniques, éditions collector.", color: EMBER },
+  { category: "COLLECTIBLE", name: "Figurines Manga / Anime", note: "One Piece, Naruto, Dragon Ball, Demon Slayer, Jujutsu Kaisen.", color: ROSE },
 ];
 
 /**

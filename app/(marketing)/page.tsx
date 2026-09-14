@@ -47,12 +47,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   // Une lecture par rayon, plus les jeux. Aucun appel à IGDB à l'affichage :
   // les fiches viennent du cache.
-  const [{ featured, latest, isDemo }, counts, consoles, figurines, manga] = await Promise.all([
+  const [{ featured, latest, isDemo }, counts, consoles, figurines] = await Promise.all([
     getHomepageGames(GAMES_ON_HOME + 1),
     getProductCategoryCounts(),
     getProducts({ category: CATEGORY_SLUGS.CONSOLE, sort: "recent" }, PER_RAIL),
     getProducts({ category: CATEGORY_SLUGS.COLLECTIBLE, sort: "recent" }, PER_RAIL),
-    getProducts({ category: CATEGORY_SLUGS.MANGA, sort: "recent" }, PER_RAIL),
   ]);
 
   // Un produit sans photo propre récupère celle de son modèle de console.
@@ -61,7 +60,6 @@ export default async function HomePage() {
   const rails: { category: ProductCategory; products: Product[] }[] = [
     { category: "CONSOLE", products: consoles },
     { category: "COLLECTIBLE", products: figurines },
-    { category: "MANGA", products: manga },
   ];
   const photos = await productPhotos(rails.flatMap((r) => r.products));
 
