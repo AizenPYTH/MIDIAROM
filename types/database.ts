@@ -521,6 +521,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      igdb_games: {
+        Row: {
+          igdb_id: number;
+          name: string;
+          slug: string;
+          data: Json;
+          synced_at: string;
+          created_at: string;
+        };
+        Insert: {
+          igdb_id: number;
+          name: string;
+          slug: string;
+          data: Json;
+          synced_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          igdb_id?: number;
+          name?: string;
+          slug?: string;
+          data?: Json;
+          synced_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       invoices: {
         Row: {
           id: string;
@@ -1243,6 +1270,16 @@ export type Database = {
           display_order: number;
           created_at: string;
           updated_at: string;
+          ean: string | null;
+          edition: string | null;
+          region: string | null;
+          release_year: number | null;
+          igdb_game_id: number | null;
+          igdb_synced_at: string | null;
+          igdb_match_source: Database["public"]["Enums"]["igdb_match_source"] | null;
+          igdb_match_confidence: number | null;
+          hero_video_url: string | null;
+          hero_video_poster_path: string | null;
         };
         Insert: {
           id?: string;
@@ -1270,6 +1307,16 @@ export type Database = {
           display_order?: number;
           created_at?: string;
           updated_at?: string;
+          ean?: string | null;
+          edition?: string | null;
+          region?: string | null;
+          release_year?: number | null;
+          igdb_game_id?: number | null;
+          igdb_synced_at?: string | null;
+          igdb_match_source?: Database["public"]["Enums"]["igdb_match_source"] | null;
+          igdb_match_confidence?: number | null;
+          hero_video_url?: string | null;
+          hero_video_poster_path?: string | null;
         };
         Update: {
           id?: string;
@@ -1297,8 +1344,25 @@ export type Database = {
           display_order?: number;
           created_at?: string;
           updated_at?: string;
+          ean?: string | null;
+          edition?: string | null;
+          region?: string | null;
+          release_year?: number | null;
+          igdb_game_id?: number | null;
+          igdb_synced_at?: string | null;
+          igdb_match_source?: Database["public"]["Enums"]["igdb_match_source"] | null;
+          igdb_match_confidence?: number | null;
+          hero_video_url?: string | null;
+          hero_video_poster_path?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "products_igdb_game_id_fkey";
+            columns: ["igdb_game_id"];
+            isOneToOne: false;
+            referencedRelation: "igdb_games";
+            referencedColumns: ["igdb_id"];
+          },
           {
             foreignKeyName: "products_model_id_fkey";
             columns: ["model_id"];
@@ -3545,6 +3609,7 @@ export type Database = {
     Enums: {
       compatibility_mode: "INCLUDE" | "EXCLUDE";
       diagnostic_outcome: "REPAIRABLE" | "UNREPAIRABLE" | "NOT_ECONOMICAL" | "NO_FAULT_FOUND" | "FURTHER_DIAGNOSIS_NEEDED";
+      igdb_match_source: "AUTO" | "MANUAL" | "BARCODE";
       invoice_status: "DRAFT" | "ISSUED" | "PAID" | "VOID";
       invoice_type: "INITIAL" | "SUPPLEMENTARY" | "CREDIT_NOTE" | "SHOP";
       media_kind: "RECEPTION" | "DIAGNOSTIC" | "REPAIR" | "SHIPPING" | "FINAL" | "DOCUMENT" | "SAV" | "QUOTE" | "CUSTOMER";

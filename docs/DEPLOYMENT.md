@@ -105,6 +105,7 @@ Variables d'environnement (voir `.env.example`) :
 | `SHIPPING_PROVIDER`, `SHIPPING_PROVIDER_API_KEY` | Transport (mock interdit en production) |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_GOOGLE_ADS_ID` | Optionnel |
 | `CRON_SECRET` | Protège `/api/cron/daily` |
+| `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` | IGDB — fiches de jeux vidéo (facultatif, voir `docs/IGDB.md`) |
 
 > **Sans configuration de paiement, aucune commande n'aboutit.** `PAYMENT_PROVIDER`
 > vaut `mock` par défaut, et le simulateur est refusé en production — il ferait

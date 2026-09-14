@@ -414,6 +414,12 @@ ENTITIES.products = {
     { name: "model_id", label: "Modèle de console lié (fiche console, compatibilité)", type: "select", options: "models", width: "half" },
     { name: "condition", label: "État", type: "select", required: true, width: "half", options: [{ value: "NEW", label: "Neuf" }, { value: "REFURBISHED", label: "Révisé en atelier" }, { value: "USED_A", label: "Occasion — grade A" }, { value: "USED_B", label: "Occasion — grade B" }, { value: "USED_C", label: "Occasion — grade C" }] },
     { name: "condition_notes", label: "Défauts / précisions sur l'état (affichés au client)", type: "textarea" },
+    // Identification d'un jeu. L'EAN est la piste la plus sûre pour ne pas
+    // confondre les versions PS4 / PS5 / Switch d'un même titre.
+    { name: "ean", label: "Code-barres EAN", type: "text", width: "half", hint: "Jeux : permet à IGDB d'identifier l'édition exacte" },
+    { name: "edition", label: "Édition", type: "text", width: "half", hint: "Deluxe, Remastered, Game of the Year…" },
+    { name: "region", label: "Région", type: "text", width: "half", hint: "PAL, NTSC-U, NTSC-J…" },
+    { name: "release_year", label: "Année de sortie", type: "number", width: "half" },
     { name: "description", label: "Description", type: "textarea" },
     { name: "specs", label: "Caractéristiques (JSON {\"Stockage\":\"1 To\"})", type: "json" },
     { name: "includes", label: "Contenu / accessoires fournis (un par ligne)", type: "list" },
@@ -424,6 +430,10 @@ ENTITIES.products = {
     { name: "low_stock_threshold", label: "Seuil de stock faible", type: "number", width: "half" },
     { name: "weight_grams", label: "Poids (g)", type: "number", width: "half" },
     { name: "images", label: "Photos (chemins content-media, une par ligne)", type: "list", hint: "Téléversez via Contenu → Médias publics puis collez le chemin" },
+    // Vidéo de la section mise en avant. Saisie à la main : rien n'est
+    // téléchargé depuis une plateforme tierce, aucune restriction contournée.
+    { name: "hero_video_url", label: "Vidéo de mise en avant (URL)", type: "text", hint: "Fichier dont vous disposez légalement. Laissez vide pour une image fixe." },
+    { name: "hero_video_poster_path", label: "Affiche de la vidéo (chemin ou URL)", type: "text", hint: "Image affichée avant lecture et sur mobile" },
     { name: "is_retro", label: "Rétro", type: "checkbox", width: "half" },
     { name: "is_featured", label: "Mis en avant (accueil)", type: "checkbox", width: "half" },
     { name: "is_active", label: "En vente", type: "checkbox", width: "half" },
@@ -438,6 +448,12 @@ ENTITIES.products = {
     model_id: nullableUuid,
     condition: z.enum(["NEW", "REFURBISHED", "USED_A", "USED_B", "USED_C"]),
     condition_notes: optText(1000),
+    ean: optText(14),
+    edition: optText(60),
+    region: optText(20),
+    release_year: nullableInt,
+    hero_video_url: optText(500),
+    hero_video_poster_path: optText(300),
     description: optText(4000),
     specs: z.record(z.string(), z.string()).default({}),
     includes: list,
