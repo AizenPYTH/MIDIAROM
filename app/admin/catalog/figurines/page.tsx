@@ -29,9 +29,9 @@ export default async function FigurinesImportPage() {
 
       <h1 className="mt-3 font-display text-[clamp(24px,3vw,34px)] font-extrabold tracking-[-0.03em] text-ink">Importer une figurine</h1>
       <p className="mt-3 max-w-[70ch] text-[15px] leading-[1.55] text-ink-soft">
-        Cherchez une figurine chez {hljProvider.label} — recherche à la demande, aucun compte ni clé requis. Le produit est créé{" "}
-        <strong className="font-semibold text-ink">en brouillon</strong> dans le rayon Figurines Manga / Anime : ni prix, ni stock, ni
-        mise en ligne. Vous complétez ensuite la fiche dans le stock.
+        Cherchez une figurine chez {hljProvider.label} — recherche à la demande, rien n&apos;est aspiré à l&apos;avance. Le produit est
+        créé <strong className="font-semibold text-ink">en brouillon</strong> dans le rayon Figurines Manga / Anime : ni prix, ni stock,
+        ni mise en ligne. Vous complétez ensuite la fiche dans le stock.
       </p>
 
       <div className="mt-5 rounded-2xl border border-border bg-surface-muted p-4 text-[13.5px] leading-[1.55] text-ink-soft">
@@ -39,6 +39,10 @@ export default async function FigurinesImportPage() {
         avec leur source et leur adresse d&apos;origine, et ne s&apos;affichent jamais sur la boutique. Avant de publier, ajoutez au moins
         une photo dont MÉDI@ROM détient les droits : c&apos;est elle que le rayon montrera.
       </div>
+
+      <p className="mt-3 font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-muted">
+        Source : {hljProvider.strategyLabel()}
+      </p>
 
       {configError ? (
         <div className="mt-6 rounded-2xl bg-warning-soft px-4 py-3 text-[13.5px] text-warning">

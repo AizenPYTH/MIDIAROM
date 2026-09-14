@@ -1,124 +1,141 @@
 #!/usr/bin/env node
 /**
- * Éprouve la recherche de figurines, sans rien écrire en base.
+ * Éprouve la recherche de figurines, et aide à trouver la bonne source.
  *
  *   npm run check:hlj -- "luffy gear 5"
- *   npm run check:hlj -- "luffy gear 5" --raw   # + ce que la page contient
+ *   npm run check:hlj -- "luffy gear 5" --raw        # + la fiche brute
+ *   npm run check:hlj -- "luffy gear 5" --discover   # HLJ appelle-t-il une API ?
  *
- * Ce script fait **exactement** ce que fait l'écran d'import : une requête sur
- * la recherche de HobbyLink Japan, puis la lecture de ses données structurées
- * schema.org. Il ne peut donc pas passer pendant que l'écran échoue — c'est
- * précisément ce qui s'était produit avec la version Apify, qui envoyait un
- * champ que l'acteur n'accepte pas.
+ * Sans option, ce script fait **exactement** ce que fait l'écran
+ * Admin → Catalogue → Importer une figurine : même provider, même requête,
+ * même lecture, même limite. Il ne peut donc pas passer pendant que l'écran
+ * échoue, ni l'inverse.
  *
- * `--raw` montre ce que la page publie réellement : nombre de blocs JSON-LD,
- * types rencontrés, début du premier bloc. Si HLJ change de format ou rend ses
- * résultats côté navigateur, cette sortie le dit en une fois.
+ * La recherche passe par l'acteur Apify dédié à HobbyLink Japan, parce que la
+ * page de résultats de HLJ est rendue par le navigateur — 200, 218 000
+ * caractères, aucune donnée structurée — et que HLJ ne publie pas d'API de
+ * recherche. Il suffit donc de APIFY_TOKEN dans .env.local.
  *
- * Sortie propre : aucun `process.exit()` pendant qu'une requête est en vol —
- * c'est ce qui provoquait l'assertion libuv
- * « !(handle->flags & UV_HANDLE_CLOSING) » en fin de script.
- */
-import { loadEnvLocal } from "./lib/igdb-cli.mjs";
+ * `--discover` reste utile pour une seule question : la page appelle-t-elle un
+ * endpoint JSON qu'on pourrait interroger directement, sans acteur ni coût ?
+ * Il lit la page, suit ses bundles JavaScript et rapporte les endpoints,
+ * moteurs de recherche et clés publiques qu'il y trouve. On regarde avant
+ * d'écrire du code, au lieu de deviner une troisième fois.
+ *
+ * Sortie propre : aucun `process.exit()` pendant qu'une requête est en vol.
+ */import { loadEnvLocal } from "./lib/igdb-cli.mjs";
+import { apiKeyHints, endpointsFrom, enginesIn, scriptUrls, searchForm, stateBlobs } from "./lib/hlj-discover.mjs";
 
 loadEnvLocal();
 
-const BASE = "https://www.hlj.com";
-const DEFAUT = `${BASE}/search/?Word={q}`;
-
 const args = process.argv.slice(2);
 const term = args.find((a) => !a.startsWith("--"));
+const discover = args.includes("--discover");
 const raw = args.includes("--raw");
 
-/** Termine proprement : on pose le code, on laisse Node fermer ses poignées. */
-function stop(code) {
-  process.exitCode = code;
+const UA = process.env.HLJ_USER_AGENT?.trim() || "MediaromCatalogBot/1.0 (+https://207mediarom.fr)";
+const PAGE = process.env.HLJ_SEARCH_URL?.trim() || "https://www.hlj.com/search/?Word={q}";
+
+async function get(url) {
+  try {
+    const r = await fetch(url, { headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml,*/*" }, redirect: "follow" });
+    return { status: r.status, body: await r.text(), url: r.url || url };
+  } catch (error) {
+    return { status: 0, body: "", url, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
-const modele = process.env.HLJ_SEARCH_URL?.trim() || DEFAUT;
-console.log(`Recherche HLJ   : ${modele}${process.env.HLJ_SEARCH_URL ? "" : "  (défaut)"}`);
-console.log(`User-Agent      : ${process.env.HLJ_USER_AGENT?.trim() || "MediaromCatalogBot/1.0  (défaut)"}`);
-
 if (!term) {
-  console.log('\n  Ajoutez un terme : npm run check:hlj -- "luffy gear 5"');
-  stop(0);
-} else {
-  const url = modele.includes("{q}")
-    ? modele.replace("{q}", encodeURIComponent(term))
-    : `${modele}${modele.includes("?") ? "&" : "?"}Word=${encodeURIComponent(term)}`;
+  console.log('Ajoutez un terme : npm run check:hlj -- "luffy gear 5"');
+  process.exitCode = 0;
+} else if (discover) {
+  // ─────────────────────────── mode découverte ───────────────────────────
+  const url = PAGE.includes("{q}") ? PAGE.replace("{q}", encodeURIComponent(term)) : `${PAGE}?Word=${encodeURIComponent(term)}`;
+  console.log(`→ GET ${url}`);
+  const page = await get(url);
+  console.log(`← HTTP ${page.status}${page.error ? ` (${page.error})` : ""} · ${page.body.length} caractères\n`);
 
-  console.log(`\n→ GET ${url}`);
-  let html = null;
-  let finalUrl = url;
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": process.env.HLJ_USER_AGENT?.trim() || "MediaromCatalogBot/1.0 (+https://207mediarom.fr)",
-        Accept: "text/html,application/xhtml+xml",
-      },
-      redirect: "follow",
-    });
-    console.log(`← HTTP ${response.status}`);
-    if (!response.ok) {
-      console.log("\n✗ HobbyLink Japan a refusé la requête.");
-      if (response.status === 403) console.log("  Accès refusé : essayez un autre User-Agent via HLJ_USER_AGENT.");
-      if (response.status === 404) console.log("  Page introuvable : l'URL de recherche a changé. Corrigez HLJ_SEARCH_URL.");
-      stop(1);
-    } else {
-      html = await response.text();
-      finalUrl = response.url || url;
+  if (!page.body) {
+    console.log("✗ Page vide : impossible d'analyser.");
+    process.exitCode = 1;
+  } else {
+    const form = searchForm(page.body);
+    console.log("FORMULAIRE DE RECHERCHE");
+    console.log(form ? `  action=${form.action ?? "—"} · champs: ${form.champs.join(", ") || "—"}` : "  non trouvé");
+
+    console.log("\nÉTAT LAISSÉ DANS LA PAGE");
+    const blobs = stateBlobs(page.body);
+    console.log(blobs.length ? `  ${blobs.join(", ")}` : "  aucun (ni Next, ni Nuxt, ni Apollo)");
+
+    console.log("\nMOTEUR DE RECHERCHE REPÉRÉ DANS LA PAGE");
+    const moteursPage = enginesIn(page.body);
+    console.log(moteursPage.length ? `  ${moteursPage.join(", ")}` : "  aucun");
+
+    const endpointsPage = endpointsFrom(page.body, page.url);
+    console.log("\nENDPOINTS DANS LA PAGE");
+    console.log(endpointsPage.length ? endpointsPage.slice(0, 15).map((e) => `  · ${e}`).join("\n") : "  aucun");
+
+    // Les bundles : c'est presque toujours là que l'appel est écrit.
+    const scripts = scriptUrls(page.body, page.url).filter((s) => /\.js(\?|$)/i.test(s)).slice(0, 8);
+    console.log(`\nBUNDLES JAVASCRIPT (${scripts.length} analysés)`);
+    const moteursBundle = new Set();
+    const endpointsBundle = new Set();
+    const cles = new Set();
+    for (const src of scripts) {
+      const js = await get(src);
+      if (!js.body) {
+        console.log(`  ✗ ${src.split("/").pop()} — HTTP ${js.status}`);
+        continue;
+      }
+      enginesIn(js.body).forEach((m) => moteursBundle.add(m));
+      endpointsFrom(js.body, page.url).forEach((e) => endpointsBundle.add(e));
+      apiKeyHints(js.body).forEach((k) => cles.add(k));
+      console.log(`  ✓ ${src.split("/").pop()} — ${Math.round(js.body.length / 1024)} Ko`);
     }
-  } catch (error) {
-    console.log(`\n✗ HobbyLink Japan est injoignable : ${error instanceof Error ? error.message : String(error)}`);
-    stop(1);
+
+    console.log("\nMOTEUR REPÉRÉ DANS LES BUNDLES");
+    console.log(moteursBundle.size ? `  ${[...moteursBundle].join(", ")}` : "  aucun");
+    console.log("\nCLÉS PUBLIQUES VISIBLES (masquées)");
+    console.log(cles.size ? [...cles].map((k) => `  · ${k}`).join("\n") : "  aucune");
+    console.log("\nENDPOINTS DANS LES BUNDLES");
+    const tous = [...endpointsBundle].filter((e) => !endpointsPage.includes(e));
+    console.log(tous.length ? tous.slice(0, 25).map((e) => `  · ${e}`).join("\n") : "  aucun");
+
+    console.log("\n─────────────────────────────────────────────");
+    console.log("Si une URL ci-dessus ressemble à une recherche produit, elle éviterait");
+    console.log("l'acteur Apify. Posez-la dans .env.local, le terme à la place de {q} :");
+    console.log("  HLJ_SEARCH_API=https://…/search?q={q}&limit={limit}");
+    console.log("Sinon, il n'y a rien à faire : la recherche passe déjà par l'acteur.");
+    console.log('Relancez sans option : npm run check:hlj -- "' + term + '"');
   }
-
-  if (html) {
-    const { extractJsonLd, productNodes, productFromSchema, productUrls } = await import("../lib/catalog/providers/jsonld.ts");
-    const nodes = extractJsonLd(html);
-    const produits = productNodes(nodes);
-    const liens = productUrls(nodes, finalUrl);
-
-    console.log(`\n  page de ${html.length} caractères`);
-    console.log(`  blocs JSON-LD : ${nodes.length}`);
-    console.log(`  types         : ${[...new Set(nodes.map((n) => JSON.stringify(n["@type"]) ?? "?"))].join(", ") || "aucun"}`);
-    console.log(`  produits      : ${produits.length}`);
-    console.log(`  liens listés  : ${liens.length}`);
-
-    if (produits.length) {
-      console.log("\n✓ Lecture des fiches :\n");
-      for (const node of produits.slice(0, 5)) {
-        const p = productFromSchema(node, "HLJ", finalUrl);
-        if (!p) {
-          console.log("  ✗ fiche sans nom exploitable");
-          continue;
-        }
+} else {
+  // ───────────────────── mode réel : le provider lui-même ─────────────────────
+  // La même limite que l'écran d'import : une seule définition, partagée.
+  const { SEARCH_LIMIT } = await import("../lib/catalog/providers/types.ts");
+  const { hljProvider } = await import("../lib/catalog/providers/hlj.ts");
+  const probleme = hljProvider.configurationError();
+  console.log(`Stratégie : ${hljProvider.strategyLabel()}`);
+  if (probleme) {
+    console.log(`\n✗ ${probleme}`);
+    process.exitCode = 1;
+  } else {
+    console.log(`\n→ recherche « ${term} », ${SEARCH_LIMIT} résultats au plus…`);
+    const { products, error, debug } = await hljProvider.search(term, SEARCH_LIMIT);
+    if (debug) console.log(`   ${debug}`);
+    if (!products.length) {
+      console.log(`\n✗ ${error ?? "Aucun résultat."}`);
+      process.exitCode = 1;
+    } else {
+      console.log(`\n✓ ${products.length} fiche(s) :\n`);
+      for (const p of products.slice(0, 8)) {
         const vides = ["manufacturer", "series", "ean", "size"].filter((k) => !p[k]);
         console.log(`  ✓ ${p.name}`);
         console.log(`     réf ${p.ref} · ${p.manufacturer ?? "fabricant ?"} · ${p.images.length} image(s)`);
-        if (vides.length) console.log(`     champs vides : ${vides.join(", ")} (l'import ouvrira la fiche détaillée)`);
+        if (vides.length) console.log(`     champs vides : ${vides.join(", ")}`);
       }
-    } else if (liens.length) {
-      console.log("\n✓ La page ne liste que des liens : l'import ouvrira les fiches détaillées.");
-      liens.slice(0, 5).forEach((l) => console.log(`  · ${l}`));
-    } else {
-      console.log("\n✗ Aucune donnée structurée exploitable sur cette page.");
-      console.log("  Deux causes possibles, dans cet ordre :");
-      console.log("   1. l'URL de recherche a changé — corrigez HLJ_SEARCH_URL (le terme va à la place de {q}) ;");
-      console.log("   2. HLJ rend ses résultats dans le navigateur — il faudra alors un acteur Apify");
-      console.log("      qui exécute la page, ou une autre source. Relancez avec --raw pour trancher.");
-      stop(1);
-    }
-
-    if (raw) {
-      console.log("\n--- ce que la page contient ---");
-      console.log(`title : ${html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? "—"}`);
-      if (nodes.length) {
-        console.log("premier bloc JSON-LD :");
-        console.log(JSON.stringify(nodes[0], null, 2).slice(0, 2500));
-      } else {
-        console.log("aucun bloc JSON-LD. Extrait du corps :");
-        console.log(html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/\s+/g, " ").slice(0, 1200));
+      if (raw) {
+        console.log("\n--- première fiche, telle qu'elle sera importée ---");
+        console.log(JSON.stringify(products[0], null, 2).slice(0, 2000));
       }
     }
   }

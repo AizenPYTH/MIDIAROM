@@ -45,6 +45,8 @@ export interface ProviderSearchResult {
   products: ExternalProduct[];
   /** Message lisible si la recherche n'a pas pu aboutir. */
   error: string | null;
+  /** Ce qui s'est passé, pour le script de vérification. Jamais affiché au client. */
+  debug?: string;
 }
 
 export interface CatalogProvider {
@@ -53,5 +55,16 @@ export interface CatalogProvider {
   readonly label: string;
   /** Null si le fournisseur est utilisable, sinon ce qui manque. */
   configurationError(): string | null;
+  /** Par quel chemin il interroge la source, en une ligne. */
+  strategyLabel(): string;
   search(term: string, limit: number): Promise<ProviderSearchResult>;
 }
+
+/**
+ * Le nombre de fiches qu'une recherche rapporte.
+ *
+ * Une seule définition, partagée par l'écran d'import et par
+ * `npm run check:hlj` : le script de vérification doit poser exactement la même
+ * question que l'admin, sinon il ne vérifie pas l'admin.
+ */
+export const SEARCH_LIMIT = 12;

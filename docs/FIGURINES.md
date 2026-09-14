@@ -52,65 +52,122 @@ référence.
 
 ## Comment la recherche fonctionne
 
-Une requête sur la page de recherche de HobbyLink Japan, à la demande, puis
-lecture de ses **données structurées schema.org**
-(`<script type="application/ld+json">`). Pas de compte, pas de jeton, pas de
-coût, pas de tiers.
+Un appel à **`lulzasaur/hlj-scraper`**, un acteur Apify dédié à la recherche
+HobbyLink Japan. On lui envoie les mots-clés (`searchQueries`), il exécute la
+page dans un navigateur et rend nom, prix (JPY et USD), fabricant, catégorie,
+disponibilité, date de sortie, GTIN, image et URL.
 
-Si la page de résultats ne liste que des liens, l'import ouvre les fiches
-détaillées — au plus douze, quatre à la fois. Jamais tout le catalogue.
-
-### Pourquoi schema.org et pas les classes CSS
-
-Une première version passait par l'acteur Apify
-`jungle_synthesizer/hobbylinkjapan-…-catalog-scraper` en lui envoyant un terme
-de recherche. **Cet acteur n'en accepte aucun** : ses entrées sont
-`new_releases_weekly`, `preorder_status`, `category_backfill` et `sku_ids`.
-C'est un outil de synchronisation de catalogue, pas de recherche. Résultat : un
-HTTP 400 au premier essai réel, sur un schéma jamais vérifié.
-
-Lire les classes CSS de la boutique n'aurait pas valu mieux : elles changent
-sans préavis et personne ne s'est engagé sur elles. `application/ld+json` est
-autre chose — un format public et documenté, que les boutiques publient pour
-Google et ont donc intérêt à garder stable. On dépend d'une norme, pas du secret
-d'implémentation d'un tiers. C'est aussi ce qui rend la lecture testable hors
-ligne, sur des exemples conformes à schema.org.
-
-### Réglages, si le défaut ne convient pas
-
-Deux variables, facultatives, qui évitent de redéployer pour un détail :
+Une seule variable est nécessaire :
 
 ```
-HLJ_SEARCH_URL=https://www.hlj.com/search/?Word={q}   # {q} = le terme cherché
-HLJ_USER_AGENT=MediaromCatalogBot/1.0 (+https://…)    # identification auprès de HLJ
+APIFY_TOKEN=apify_api_…    # apify.com → Settings → API & Integrations
 ```
+
+À poser dans `.env.local` **et** dans les variables d'environnement Vercel.
+Sans elle, l'écran d'import affiche quoi faire au lieu d'échouer.
+
+### Pourquoi un acteur, et pas nous-mêmes
+
+Trois constats, dans l'ordre où ils sont tombés.
+
+1. **L'acteur `jungle_synthesizer/hobbylinkjapan-…-catalog-scraper` n'accepte
+   aucun terme de recherche.** Ses entrées sont `new_releases_weekly`,
+   `preorder_status`, `category_backfill` et `sku_ids` : c'est un
+   synchroniseur de catalogue. HTTP 400 au premier essai réel, sur un schéma
+   jamais vérifié.
+2. **La page de recherche de HLJ ne publie pas ses résultats.** Essai réel :
+   HTTP 200, 218 000 caractères, **zéro** bloc `application/ld+json`, zéro
+   lien produit. Les résultats sont rendus par le navigateur. Aucune lecture
+   de HTML — schema.org ou classes CSS — ne peut donc les atteindre.
+3. **HLJ ne publie pas d'API de recherche.** Le seul point d'entrée public
+   connu, `/search/livePrice/?item_codes=…`, rend des prix pour des références
+   qu'on lui donne : il ne cherche pas.
+
+Il faut donc exécuter la page. Le faire chez nous supposerait un navigateur
+sans interface dans le serveur — lourd en local, hors budget mémoire sur
+Vercel, et un scraper CSS maison à réparer chaque fois que HLJ change son
+HTML. Un acteur dédié existe déjà et c'est son auteur qui le maintient : c'est
+la solution la moins chère à garder en état, ce qui est le critère ici.
+
+Coût indicatif : de l'ordre de 0,02 $ par mot-clé cherché, facturé par Apify.
+La recherche restant à la demande, cela se compte en recherches réellement
+faites par l'atelier.
+
+### Changer de source sans toucher au code
+
+L'acteur par défaut n'est pas écrit en dur. Deux variables le remplacent :
+
+```
+HLJ_APIFY_ACTOR=jpmarketdata/hlj-hobby-market-checker
+HLJ_APIFY_INPUT={"keyword":"{q}","maxItems":{limit}}
+```
+
+`HLJ_APIFY_INPUT` est l'entrée JSON **telle que la documentation de l'acteur la
+décrit**, avec trois marques remplacées à l'appel : `{q}` le terme (échappé
+pour du JSON), `{limit}` le nombre de résultats, `{url}` la page de recherche
+HLJ. C'est la leçon du HTTP 400 : l'entrée d'un acteur appartient à sa
+documentation, pas à nos suppositions.
+
+Si un jour un endpoint JSON est constaté, il passe devant l'acteur — une
+requête vaut mieux qu'un navigateur :
+
+```
+HLJ_SEARCH_API=https://…/search?q={q}&limit={limit}
+```
+
+Réglages accessoires :
+
+```
+HLJ_USER_AGENT=MediaromCatalogBot/1.0 (+https://…)   # identification
+HLJ_ENRICH_DETAILS=1                                 # ouvrir les fiches détaillées
+HLJ_SEARCH_URL=https://www.hlj.com/search/?Word={q}  # page lue par --discover
+```
+
+`HLJ_ENRICH_DETAILS` est **désactivé par défaut**, et volontairement : l'acteur
+rend déjà fabricant et GTIN, et rien ne prouve que les fiches produit de HLJ
+publient des données structurées — la page de recherche n'en publie aucune.
+Activé, l'import ouvre au plus douze fiches, quatre à la fois, et complète ce
+qui manque. Jamais tout le catalogue.
 
 ### Vérifier
 
 ```bash
 npm run check:hlj -- "luffy gear 5"
-npm run check:hlj -- "luffy gear 5" --raw   # + ce que la page publie vraiment
+npm run check:hlj -- "luffy gear 5" --raw        # + la fiche telle qu'elle sera importée
+npm run check:hlj -- "luffy gear 5" --discover   # HLJ appelle-t-il une API ?
 ```
 
-Le script fait **exactement** ce que fait l'écran d'import : même URL, même
-lecture. Il ne peut donc pas passer pendant que l'écran échoue — c'est
-précisément ce qui s'était produit avec la version Apify.
+Sans option, le script fait **exactement** ce que fait l'écran d'import : même
+provider, même requête, même limite (`SEARCH_LIMIT`, défini une seule fois dans
+`lib/catalog/providers/types.ts`), même lecture. Il ne peut donc pas passer
+pendant que l'écran échoue — c'est précisément ce qui s'était produit avec la
+première version.
 
-`--raw` affiche le nombre de blocs JSON-LD, les types rencontrés et le début du
-premier bloc. Deux cas si rien ne sort :
+Ce qu'il répond, et ce que ça veut dire :
 
-1. **l'URL de recherche a changé** → corriger `HLJ_SEARCH_URL` ;
-2. **HLJ rend ses résultats dans le navigateur** → aucune lecture de HTML ne
-   marchera. Il faudra alors un acteur Apify qui exécute la page, ou une autre
-   source. `--raw` permet de trancher entre les deux.
+| Sortie | Cause | Correction |
+| --- | --- | --- |
+| `a besoin de APIFY_TOKEN` | Pas de jeton | Le poser dans `.env.local` |
+| `HTTP 401` / `HTTP 403` | Jeton refusé | Vérifier le jeton sur apify.com |
+| `HTTP 404` | Acteur introuvable | Vérifier `HLJ_APIFY_ACTOR` |
+| `HTTP 400` | Entrée refusée | Comparer `HLJ_APIFY_INPUT` à la doc de l'acteur |
+| `0 élément(s) reçus` | L'acteur n'a rien trouvé | Essayer un terme plus court |
+| `n élément(s), 0 lisible(s)` | Champs inattendus | Lancer avec `--raw` et ajuster |
+
+`--discover` répond à une seule question : la page de HLJ appelle-t-elle un
+endpoint JSON qu'on pourrait interroger directement, sans acteur ni coût ? Il
+lit la page, suit ses bundles JavaScript et rapporte les endpoints, moteurs de
+recherche et clés publiques qu'il y trouve. Si oui, `HLJ_SEARCH_API` évite
+l'acteur. Sinon, il n'y a rien à faire : c'est déjà le bon chemin.
 
 ### Ce qu'il faut savoir avant de s'en servir
 
-La recherche interroge un site tiers. Elle est ponctuelle — quelques requêtes
-par recherche, déclenchées par un clic —, s'identifie par un User-Agent
-explicite, et ne copie rien en masse. Vérifiez tout de même les conditions
-d'utilisation de HobbyLink Japan et son `robots.txt` avant un usage régulier :
-ce point n'a pas pu être contrôlé depuis l'environnement de développement.
+La recherche interroge un site tiers, par l'intermédiaire d'Apify. Elle est
+ponctuelle — un appel par recherche, déclenché par un clic —, et ne copie rien
+en masse. Vérifiez tout de même les conditions d'utilisation de HobbyLink Japan
+et son `robots.txt` avant un usage régulier : ce point n'a pas pu être contrôlé
+depuis l'environnement de développement, qui n'atteint ni `hlj.com` ni
+`apify.com`.
 
 ## Ajouter une autre source
 

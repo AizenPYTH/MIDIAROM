@@ -1,16 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { extractJsonLd, productFromSchema, productNodes, productUrls } from "@/lib/catalog/providers/jsonld";
-import { readSearchPage } from "@/lib/catalog/providers/hlj";
+import { fillInput, fillUrl, itemsFromJson, toExternalProduct } from "@/lib/catalog/providers/hlj";
 import { draftSku, slugify } from "@/lib/catalog/import";
 
 /**
  * La lecture d'une fiche externe.
  *
- * C'était le point fragile de l'import, et il a lâché : la première version
- * envoyait un terme de recherche à un acteur Apify qui n'en accepte pas — un
- * schéma deviné, un HTTP 400 au premier essai réel. La lecture repose désormais
- * sur schema.org, un format public et documenté, ce qui la rend testable hors
- * ligne sur des exemples conformes à la norme plutôt que sur des suppositions.
+ * Deux chemins, deux séries de tests. La **recherche** passe par un acteur
+ * Apify dédié à HLJ : ce qui revient est du JSON dont les noms de champs ne
+ * sont pas garantis, d'où un lecteur tolérant qu'on éprouve sur plusieurs
+ * conventions d'écriture. Les **fiches détaillées**, elles, sont lues en
+ * schema.org — un format public et documenté, testable hors ligne.
+ *
+ * Aucun test ne touche le réseau : c'est justement parce que les contrats
+ * distants avaient été supposés que l'import a échoué deux fois.
  */
 
 const PAGE = "https://www.hlj.com/search/?Word=luffy";
@@ -102,21 +105,77 @@ describe("Product schema.org → fiche à importer", () => {
   });
 });
 
-describe("lecture d'une page de recherche", () => {
-  it("rend les produits trouvés", () => {
-    const { products } = readSearchPage(page({ "@type": "ItemList", itemListElement: [{ item: PRODUIT }] }), PAGE);
-    expect(products).toHaveLength(1);
-    expect(products[0]!.name).toBe("One Piece Luffy Gear 5");
+describe("lecture d'un résultat de recherche", () => {
+  /** Tel que l'acteur HLJ le décrit : nom, prix JPY et USD, fabricant, GTIN. */
+  const ITEM = {
+    name: "One Piece Luffy Gear 5",
+    url: "/p/BAN12345",
+    itemCode: "BAN12345",
+    maker: "Bandai",
+    category: "One Piece",
+    gtin: "4573102639615",
+    priceJpy: "12,800",
+    priceUsd: "88.50",
+    releaseDate: "2026-03",
+    imageUrl: "https://www.hlj.com/a.jpg",
+  };
+
+  it("lit une fiche quelle que soit la convention de nommage", () => {
+    const p = toExternalProduct(ITEM)!;
+    expect(p.ref).toBe("BAN12345");
+    expect(p.name).toBe("One Piece Luffy Gear 5");
+    expect(p.manufacturer).toBe("Bandai");
+    expect(p.ean).toBe("4573102639615");
+    expect(p.series).toBe("One Piece");
+    expect(p.url).toBe("https://www.hlj.com/p/BAN12345");
+    expect(p.images.map((i) => i.url)).toEqual(["https://www.hlj.com/a.jpg"]);
+    expect(p.images[0]!.source).toBe("HLJ");
   });
 
-  it("rend les liens à ouvrir quand la page ne liste que des URL", () => {
-    const { products, urls } = readSearchPage(page({ "@type": "ItemList", itemListElement: [{ url: "/p/1" }] }), PAGE);
-    expect(products).toEqual([]);
-    expect(urls).toEqual(["https://www.hlj.com/p/1"]);
+  it("garde le prix avec sa devise, sans le faire passer pour des euros", () => {
+    const p = toExternalProduct(ITEM)!;
+    expect(p.priceCents).toBe(1280000);
+    expect(p.currency).toBe("JPY");
+    const dollars = toExternalProduct({ name: "X", sku: "Z", priceUsd: "88.50" })!;
+    expect(dollars.priceCents).toBe(8850);
+    expect(dollars.currency).toBe("USD");
   });
 
-  it("ne rend rien, et ne jette pas, sur une page sans données structurées", () => {
-    expect(readSearchPage("<html><body>rien</body></html>", PAGE)).toEqual({ products: [], urls: [] });
+  it("laisse vide ce que l'acteur ne rend pas", () => {
+    const p = toExternalProduct({ name: "Figurine", sku: "Z" })!;
+    expect(p.manufacturer).toBeNull();
+    expect(p.ean).toBeNull();
+    expect(p.priceCents).toBeNull();
+    expect(p.images).toEqual([]);
+  });
+
+  it("écarte un élément sans nom, et un sans référence ni URL", () => {
+    expect(toExternalProduct({ sku: "Z" })).toBeNull();
+    expect(toExternalProduct({ name: "Sans référence" })).toBeNull();
+  });
+
+  it("trouve les éléments où que la réponse les range", () => {
+    expect(itemsFromJson([ITEM])).toHaveLength(1);
+    expect(itemsFromJson({ items: [ITEM] })).toHaveLength(1);
+    expect(itemsFromJson({ data: { results: [ITEM] } })).toHaveLength(1);
+    expect(itemsFromJson({ payload: { autreNom: [ITEM] } })).toHaveLength(1);
+    expect(itemsFromJson({ total: 0 })).toEqual([]);
+    expect(itemsFromJson(null)).toEqual([]);
+  });
+});
+
+describe("insertion du terme dans un gabarit", () => {
+  it("encode pour une URL", () => {
+    expect(fillUrl("https://x/s?q={q}&n={limit}", "luffy gear 5", 12)).toBe("https://x/s?q=luffy%20gear%205&n=12");
+  });
+
+  it("échappe pour un corps JSON — pas d'encodage URL dans l'entrée d'un acteur", () => {
+    const entree = fillInput('{"searchQueries":["{q}"],"maxItems":{limit}}', 'luffy "gear" 5', 12);
+    expect(JSON.parse(entree)).toEqual({ searchQueries: ['luffy "gear" 5'], maxItems: 12 });
+  });
+
+  it("remplit {url} avec la page de recherche réelle", () => {
+    expect(fillInput("{url}", "luffy gear 5", 12)).toBe("https://www.hlj.com/search/?Word=luffy%20gear%205");
   });
 });
 

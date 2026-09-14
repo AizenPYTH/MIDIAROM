@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/security/auth";
 import { audit } from "@/lib/security/audit";
 import { hljProvider } from "@/lib/catalog/providers/hlj";
-import type { ExternalProduct } from "@/lib/catalog/providers/types";
+import { SEARCH_LIMIT, type ExternalProduct } from "@/lib/catalog/providers/types";
 import { importExternalProduct } from "@/lib/catalog/import";
 
 /**
@@ -14,8 +14,6 @@ import { importExternalProduct } from "@/lib/catalog/import";
  * que l'atelier n'a pas cliqué sur « Importer ». L'import crée un brouillon,
  * jamais un produit en vente — voir lib/catalog/import.ts.
  */
-
-const MAX_RESULTS = 12;
 
 export type FigurineSearchState =
   | { status: "idle" }
@@ -39,7 +37,7 @@ export async function searchFigurinesAction(_prev: unknown, formData: FormData):
   const mauvaiseConfig = hljProvider.configurationError();
   if (mauvaiseConfig) return { status: "error", error: mauvaiseConfig };
 
-  const { products, error } = await hljProvider.search(term, MAX_RESULTS);
+  const { products, error } = await hljProvider.search(term, SEARCH_LIMIT);
   if (!products.length) return { status: "error", error: error ?? "Aucun résultat." };
   return { status: "results", term, products, error };
 }
