@@ -8,6 +8,7 @@ import { signMedia } from "@/lib/media/service";
 import { canRoleTransition, ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/orders/status";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
+import { paymentConfigurationError } from "@/lib/stripe";
 
 /**
  * Espace réparateur — un seul écran, une seule tâche.
@@ -74,6 +75,7 @@ function StatusPill({ status }: { status: OrderStatus }) {
 
 export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ q?: string; f?: string; sel?: string; error?: string }> }) {
   const [{ q, f, sel, error }, user] = await Promise.all([searchParams, requireStaffOrRedirect()]);
+  const paymentError = paymentConfigurationError();
   const db = createSupabaseAdminClient();
   const filter = FILTERS.find((x) => x.key === f) ?? FILTERS[0]!;
   const statuses = STEPS.find((s) => s.key === filter.key)?.statuses ?? OPEN;
@@ -154,6 +156,16 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
       </div>
 
       {error ? <p className="rounded-[20px] border border-danger bg-danger-soft px-4 py-3 text-[13px] text-danger">{error}</p> : null}
+      {/* Une configuration de paiement absente bloque TOUTES les commandes, et
+          le client ne voit qu'un message d'échec. L'atelier doit l'apprendre
+          ici, pas par un appel téléphonique. */}
+      {paymentError ? (
+        <p className="rounded-[20px] border border-danger bg-danger-soft px-4 py-3 text-[13px] text-danger">
+          <strong className="font-semibold">Le paiement en ligne est hors service : aucune commande ne peut aboutir.</strong>{" "}
+          {paymentError} Les variables se posent chez l&apos;hébergeur, puis le site doit être redéployé.
+        </p>
+      ) : null}
+
 
       <div className="grid items-start gap-[18px] [grid-template-columns:minmax(0,1fr)] xl:[grid-template-columns:minmax(330px,1fr)_minmax(380px,1.1fr)]">
         {/* ---------------------------------------------------------------

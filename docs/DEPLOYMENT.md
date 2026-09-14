@@ -106,6 +106,16 @@ Variables d'environnement (voir `.env.example`) :
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_GOOGLE_ADS_ID` | Optionnel |
 | `CRON_SECRET` | Protège `/api/cron/daily` |
 
+> **Sans configuration de paiement, aucune commande n'aboutit.** `PAYMENT_PROVIDER`
+> vaut `mock` par défaut, et le simulateur est refusé en production — il ferait
+> passer des dossiers pour payés. Le client voit alors, au moment d'envoyer sa
+> demande : « Le paiement en ligne n'est pas disponible pour le moment… », et
+> l'atelier voit un bandeau rouge en haut de `/admin`. Le journal serveur porte
+> `[checkout] paiement non configuré`. Pour ouvrir les commandes, poser chez
+> l'hébergeur `PAYMENT_PROVIDER=stripe`, `STRIPE_SECRET_KEY`,
+> `STRIPE_WEBHOOK_SECRET` et `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, **puis
+> redéployer** : les variables ne sont lues qu'au démarrage.
+
 ### Déployer sur Vercel
 
 ```bash

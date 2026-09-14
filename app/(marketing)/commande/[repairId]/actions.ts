@@ -5,6 +5,7 @@ import { getRepairById, getRepairOffer } from "@/lib/repair/catalog";
 import { priceSelection } from "@/lib/pricing/service";
 import { PricingError, type PricingResult } from "@/lib/pricing/engine";
 import { createOrderAndCheckout, CreateOrderError } from "@/lib/orders/create-order";
+import { PaymentConfigurationError } from "@/lib/stripe";
 import { createOrderSchema, selectionSchema, type CreateOrderInput } from "@/lib/orders/schemas";
 import { getCurrentUser } from "@/lib/security/auth";
 import { rateLimit } from "@/lib/security/rate-limit";
@@ -56,6 +57,13 @@ export async function createOrderAction(input: unknown): Promise<CreateOrderStat
       return { ok: false, error: error.message, fieldErrors: error.field ? { [error.field]: error.message } : undefined };
     }
     if (error instanceof z.ZodError) return { ok: false, error: "Données invalides" };
+    // Le paiement n'est pas configuré : aucun essai ne passera. Inviter le
+    // client à réessayer lui ferait perdre son temps et masquerait la panne —
+    // on le dit, et on le renvoie vers l'atelier.
+    if (error instanceof PaymentConfigurationError) {
+      console.error("[checkout] paiement non configuré —", error.message);
+      return { ok: false, error: "Le paiement en ligne n'est pas disponible pour le moment : votre demande n'a pas été enregistrée. Merci de contacter l'atelier, qui prendra votre réparation directement." };
+    }
     console.error("[checkout] createOrder failed", error);
     return { ok: false, error: "Une erreur est survenue. Merci de réessayer." };
   }

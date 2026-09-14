@@ -6,7 +6,7 @@ import { Breadcrumbs, Container, Eyebrow } from "@/components/ui/misc";
 import { RepairForm } from "@/components/repair/repair-form";
 import { getActiveModels, getModelBySlug, getRepairsForModel } from "@/lib/repair/catalog";
 import { getRepairFormBase, toFormRepair } from "@/lib/repair/form-data";
-import { formatPrice } from "@/lib/utils/format";
+import { formatRepairPrice } from "@/lib/utils/format";
 import { getBrandSettings } from "@/lib/settings";
 
 export const revalidate = 600;
@@ -43,7 +43,11 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
     provider: { "@type": "LocalBusiness", name: brand.name },
     areaServed: "FR",
     serviceType: "Réparation de console de jeux",
-    offers: repairs.map((r) => ({ "@type": "Offer", name: r.name, price: (r.price_cents / 100).toFixed(2), priceCurrency: "EUR", url: `${SITE_URL}${ROUTES.repair}/${model.slug}/${r.fault.slug}` })),
+    // Une prestation « sur devis » n'a pas de prix : publier 0,00 € annoncerait
+    // une réparation gratuite dans les résultats de recherche.
+    offers: repairs
+      .filter((r) => !r.price_is_provisional && r.price_cents > 0)
+      .map((r) => ({ "@type": "Offer", name: r.name, price: (r.price_cents / 100).toFixed(2), priceCurrency: "EUR", url: `${SITE_URL}${ROUTES.repair}/${model.slug}/${r.fault.slug}` })),
   };
 
   return (
@@ -70,7 +74,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
                         {r.fault.name}
                         {r.summary ? <span className="block text-[13px] text-[#a39c8c]">{r.summary}</span> : null}
                       </Link>
-                      <span className="whitespace-nowrap font-mono text-[#e4dccb]">{r.is_diagnostic_only ? `Diagnostic ${formatPrice(r.price_cents)}` : formatPrice(r.price_cents)}</span>
+                      <span className="whitespace-nowrap font-mono text-ink">{r.is_diagnostic_only ? `Diagnostic ${formatRepairPrice(r.price_cents, r.price_is_provisional)}` : formatRepairPrice(r.price_cents, r.price_is_provisional)}</span>
                     </li>
                   ))}
                 </ul>

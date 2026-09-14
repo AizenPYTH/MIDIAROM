@@ -12,7 +12,7 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { getRepairBySlugs, getRepairOffer, getSeoPublishedRepairs } from "@/lib/repair/catalog";
 import { blockData, getContentBlock, getContentBlocks, getFaqItems } from "@/lib/content";
 import { getBrandSettings, getSetting } from "@/lib/settings";
-import { formatPrice, formatPriceDelta } from "@/lib/utils/format";
+import { formatPriceDelta, formatRepairPrice } from "@/lib/utils/format";
 import { renderMarkdown } from "@/lib/utils/markdown";
 
 export const revalidate = 600;
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ model: st
   if (!repair) return { title: "Réparation introuvable" };
   const url = `${SITE_URL}${ROUTES.repair}/${repair.model.slug}/${repair.fault.slug}`;
   return {
-    title: repair.seo_title ?? `${repair.name} — ${formatPrice(repair.price_cents)}`,
+    title: repair.seo_title ?? `${repair.name} — ${formatRepairPrice(repair.price_cents, repair.price_is_provisional)}`,
     description: repair.seo_description ?? repair.summary ?? `${repair.name} en atelier, envoi depuis toute la France et suivi en ligne.`,
     alternates: { canonical: url },
     robots: repair.is_seo_published ? { index: true, follow: true } : { index: false, follow: true },
@@ -85,7 +85,11 @@ export default async function RepairPage({ params }: { params: Promise<{ model: 
       provider: { "@type": "LocalBusiness", name: brand.name, url: SITE_URL },
       areaServed: "FR",
       url,
-      offers: { "@type": "Offer", price: (repair.price_cents / 100).toFixed(2), priceCurrency: "EUR", availability: "https://schema.org/InStock", url },
+      // Pas d'offre tant que la prestation est « sur devis » : annoncer
+      // 0,00 € à Google reviendrait à promettre une réparation gratuite.
+      ...(repair.price_is_provisional || repair.price_cents <= 0
+        ? {}
+        : { offers: { "@type": "Offer", price: (repair.price_cents / 100).toFixed(2), priceCurrency: "EUR", availability: "https://schema.org/InStock", url } }),
     },
     {
       "@context": "https://schema.org",
@@ -130,7 +134,7 @@ export default async function RepairPage({ params }: { params: Promise<{ model: 
             <span className="font-mono text-[12px] uppercase tracking-[0.08em]">Prestation</span>
             <p className="mt-2 text-[22px] font-extrabold tracking-[-0.01em]">{repair.name}</p>
             <div className="mt-3">
-              <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} />
+              <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} provisional={repair.price_is_provisional} />
             </div>
             {repair.is_diagnostic_only ? <p className="mt-2 text-[13px] text-ink-faint">Diagnostic puis devis. Le montant du diagnostic est traité selon les conditions affichées avant paiement.</p> : null}
             <div className="mt-4">
@@ -213,7 +217,7 @@ export default async function RepairPage({ params }: { params: Promise<{ model: 
               <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-muted">{repair.model.name}</span>
               <p className="mt-1 text-[16px] font-semibold text-ink">{repair.name}</p>
               <div className="mt-3">
-                <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} size="md" />
+                <PriceTag cents={repair.price_cents} compareAt={repair.compare_at_price_cents} provisional={repair.price_is_provisional} size="md" />
               </div>
               <Link href={checkoutHref} className="mt-4 block bg-accent px-4 py-3 text-center font-mono text-[12px] uppercase tracking-[0.06em] text-white hover:bg-ink-900">
                 {cta}
@@ -222,7 +226,7 @@ export default async function RepairPage({ params }: { params: Promise<{ model: 
           </aside>
         </div>
       </Container>
-      <StickyCta label={repair.name} priceCents={repair.price_cents} href={checkoutHref} cta="Commander" />
+      <StickyCta label={repair.name} priceCents={repair.price_cents} provisional={repair.price_is_provisional} href={checkoutHref} cta="Commander" />
     </>
   );
 }

@@ -9,6 +9,19 @@ export function formatPrice(cents: number): string {
   return priceFormatter.format(cents / 100);
 }
 
+/**
+ * Prix d'une prestation du catalogue, « Sur devis » tant qu'aucun tarif n'a
+ * été saisi.
+ *
+ * Le catalogue arrive entièrement non chiffré (`price_is_provisional`) : passer
+ * ces lignes à `formatPrice` afficherait « 0,00 € », c'est-à-dire une
+ * réparation gratuite, sur les pages publiques comme dans les données
+ * structurées envoyées à Google.
+ */
+export function formatRepairPrice(cents: number, provisional: boolean): string {
+  return provisional || cents <= 0 ? "Sur devis" : formatPrice(cents);
+}
+
 /** "+34,90 €" for add-ons. */
 export function formatPriceDelta(cents: number): string {
   if (cents === 0) return "Inclus";
