@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/site";
 import { PhotoSlot } from "@/components/marketing/home/photo-slot";
+import { HomeVisual } from "@/components/marketing/home/visual";
+import { HOME_VISUAL_ALTS, HOME_VISUAL_FOCUS, HOME_VISUALS, PLATFORM_VISUALS } from "@/lib/content/assets";
 import { WorkshopVideo } from "@/components/marketing/home/workshop-video";
 import { GameCard, ProductCard, ProductGrid } from "@/components/shop/product-card";
 import { CATEGORIES, HERO_TRUST, PLATFORMS, SAVOIR_FAIRE, SHOP_FILTERS, STEPS, TRUST, type Platform } from "@/components/marketing/home/content";
@@ -21,7 +23,7 @@ import type { BrandSettings } from "@/config/brand";
  * c'est du noir, du blanc et du gris.
  */
 
-const WRAP = "mx-auto w-full max-w-[1380px] px-[22px]";
+const WRAP = "page-wrap px-[22px]";
 
 /** L'intitulé rouge qui ouvre chaque section. */
 function Eyebrow({ children, onDark = false }: { children: React.ReactNode; onDark?: boolean }) {
@@ -90,7 +92,15 @@ export function Hero() {
             un ancêtre qui clippe devient un conteneur de défilement et fige les
             révélations `view()` à mi-course. */}
         <div data-enter="2" className="relative min-w-0 overflow-hidden border border-border-section bg-surface-strong" style={{ aspectRatio: "5 / 4", maxHeight: 460 }}>
-          <PhotoSlot label="Atelier" />
+          <HomeVisual
+            src={HOME_VISUALS.hero}
+            alt={HOME_VISUAL_ALTS.hero}
+            label="Atelier"
+            position={HOME_VISUAL_FOCUS.hero.position}
+            positionMobile={HOME_VISUAL_FOCUS.hero.mobile}
+            priority
+            sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 640px"
+          />
 
           {/* Le balayage de diagnostic : la lecture d'un banc de test. */}
           <span
@@ -169,11 +179,21 @@ export function Repairs({ models = [] }: { models?: { slug: string }[] }) {
       <ul className="grid list-none gap-[18px] p-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))" }}>
         {PLATFORMS.map((p) => {
           const href = modelHref(p, models);
+          // Switch n'a pas encore sa photo : la plaque tient la place plutôt
+          // que la console d'une autre marque.
+          const visuel = PLATFORM_VISUALS[p.key];
           return (
           <li key={p.key} data-rise="1" data-card="1" className="flex min-w-0 flex-col border border-border bg-surface">
             <span className="relative block overflow-hidden border-b border-border" style={{ aspectRatio: "16 / 10" }}>
               <span data-zoom="1" className="absolute inset-0">
-                <PhotoSlot label={p.name} />
+                <HomeVisual
+                  src={visuel?.src ?? null}
+                  alt={visuel?.alt ?? ""}
+                  label={p.name}
+                  position={visuel?.position}
+                  positionMobile={visuel?.mobile}
+                  sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 380px"
+                />
               </span>
             </span>
             <div className="flex flex-1 flex-col gap-[13px] p-5">
@@ -321,7 +341,14 @@ export function Workshop({ video }: { video?: { src: string; poster?: string } }
 
         <div className="flex min-w-0 flex-col gap-2.5">
           <WorkshopVideo src={video?.src} poster={video?.poster}>
-            <PhotoSlot label="Atelier" />
+            <HomeVisual
+              src={HOME_VISUALS.atelier}
+              alt={HOME_VISUAL_ALTS.atelier}
+              label="Atelier"
+              position={HOME_VISUAL_FOCUS.atelier.position}
+              positionMobile={HOME_VISUAL_FOCUS.atelier.mobile}
+              sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 700px"
+            />
           </WorkshopVideo>
           <span className="font-mono text-[10.5px] tracking-[0.05em] text-ink-muted">
             Muette, en boucle, 20 à 40 secondes. Elle se met en pause dès qu&apos;elle quitte l&apos;écran.
@@ -362,7 +389,14 @@ export function ShopCategories() {
               style={{ aspectRatio: "4 / 3" }}
             >
               <span data-zoom="1" className="absolute inset-0">
-                <PhotoSlot label={c.name} />
+                <HomeVisual
+                  src={HOME_VISUALS[c.visual]}
+                  alt={HOME_VISUAL_ALTS[c.visual]}
+                  label={c.name}
+                  position={HOME_VISUAL_FOCUS[c.visual].position}
+                  positionMobile={HOME_VISUAL_FOCUS[c.visual].mobile}
+                  sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 440px"
+                />
               </span>
               {/* Le voile : c'est lui qui garantit la lisibilité du texte blanc
                   sur la photo que le magasin déposera. Il reste utile sur la

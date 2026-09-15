@@ -157,6 +157,7 @@ export const SAVOIR_FAIRE = [
 export const CATEGORIES = [
   {
     key: "GAME" as const,
+    visual: "jeux" as const,
     name: "Jeux vidéo",
     note: "Neuf, occasion testée, import et collector.",
     photo: "Rayon jeux vidéo",
@@ -164,6 +165,7 @@ export const CATEGORIES = [
   },
   {
     key: "CONSOLE" as const,
+    visual: "consoles" as const,
     name: "Consoles",
     note: "Récentes et rétro, révisées en atelier, avec manettes et accessoires.",
     photo: "Rayon consoles",
@@ -171,6 +173,7 @@ export const CATEGORIES = [
   },
   {
     key: "COLLECTIBLE" as const,
+    visual: "figurines" as const,
     name: "Figurines manga / anime",
     note: "One Piece, Naruto, Dragon Ball, Demon Slayer, Jujutsu Kaisen.",
     photo: "Vitrine figurines de personnages",

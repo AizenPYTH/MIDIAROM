@@ -21,7 +21,7 @@ export default async function NewListingPage({ searchParams }: { searchParams: P
   const initial = demande && PUBLIC_CATEGORIES.includes(demande) ? demande : "CONSOLE";
 
   return (
-    <div className="mx-auto w-full max-w-[1420px] px-4 py-7 sm:px-[30px]">
+    <div className="w-full page-wrap px-4 py-7 sm:px-[30px]">
       <Link href="/admin" className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted transition-colors hover:text-red">
         ← Back-office
       </Link>

@@ -792,3 +792,58 @@ body {
     color: #ffffff;
   }
 }
+
+/**
+ * Point focal des visuels de l'accueil.
+ *
+ * `object-position` ne s'écrit pas en `clamp()` ni en requête de conteneur :
+ * une variable posée par le composant et rebasculée ici est la seule façon de
+ * donner deux cadrages à la même image sans la charger deux fois.
+ */
+[data-visual] {
+  object-position: var(--pos, center);
+}
+@media (max-width: 700px) {
+  [data-visual] {
+    object-position: var(--pos-sm, var(--pos, center));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Mise à l'échelle sur grand écran
+   ═══════════════════════════════════════════════════════════════════════════
+   Le contenu plafonnait à 1380 px à partir de 1440 px de fenêtre : un écran de
+   2560 px affichait donc exactement la même colonne, perdue au milieu de
+   590 px de vide de chaque côté.
+   Il ne s'agit pas d'agrandir le contenu avec l'écran — la typographie et les
+   grilles gardent leurs bornes, et rien ne bouge en dessous de 1700 px, donc
+   le rendu sur un 13 pouces est inchangé au pixel près. La colonne gagne
+   seulement deux paliers, assez pour que la page occupe son écran sans que les
+   lignes de texte deviennent illisibles.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --page-max: 1380px;
+}
+@media (min-width: 1700px) {
+  :root {
+    --page-max: 1500px;
+  }
+}
+@media (min-width: 2200px) {
+  :root {
+    --page-max: 1600px;
+  }
+}
+
+/**
+ * Le conteneur central de toutes les pages publiques et du back-office.
+ *
+ * Une classe plutôt qu'une valeur répétée dans neuf fichiers : c'était la
+ * raison pour laquelle l'en-tête, le pied de page et les sections pouvaient
+ * diverger d'un palier à l'autre.
+ */
+.page-wrap {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+}

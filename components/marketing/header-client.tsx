@@ -122,7 +122,7 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
  */
 export function NavList({ items, courant }: { items: { href: string; label: string }[]; courant: string }) {
   return (
-    <nav className="mx-auto mt-[11px] flex max-w-[1380px] flex-wrap gap-x-[22px] gap-y-1.5 text-[14.5px] font-medium" aria-label="Navigation principale">
+    <nav className="page-wrap mt-[11px] flex flex-wrap gap-x-[22px] gap-y-1.5 text-[14.5px] font-medium" aria-label="Navigation principale">
       {items.map((item) => {
         const actif = item.href === courant;
         return (

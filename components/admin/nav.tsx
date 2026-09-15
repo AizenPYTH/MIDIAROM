@@ -61,7 +61,7 @@ export function AdminNav({ tabs, groups }: { tabs: AdminTab[]; groups: AdminMenu
   }, []);
 
   return (
-    <nav className="mx-auto flex w-full max-w-[1420px] items-stretch gap-2 px-4 pt-3 sm:px-[30px]" aria-label="Back-office">
+    <nav className="flex page-wrap items-stretch gap-2 px-4 pt-3 sm:px-[30px]" aria-label="Back-office">
       {/* Sans onglet de premier niveau, pas de colonne vide : le menu « Plus »
           se range à gauche avec le reste du contenu. */}
       <div className={cn("flex min-w-0 gap-2 overflow-x-auto", tabs.length && "flex-1")}>

@@ -67,7 +67,7 @@ export function SiteHeader({ brand }: { brand: BrandSettings }) {
           contexte d'empilement, et le panneau plein écran du menu, qui vit à
           l'intérieur, ne peut pas le dépasser — il passerait sous la barre. */}
       <header className="sticky top-0 z-40 border-b border-border-section bg-bg px-[22px] py-3.5">
-        <div className="mx-auto flex max-w-[1380px] flex-wrap items-center gap-x-[22px] gap-y-2.5">
+        <div className="page-wrap flex flex-wrap items-center gap-x-[22px] gap-y-2.5">
           <Link href={ROUTES.home} aria-label={`${brand.name} — accueil`} className="min-w-0 text-ink">
             <BrandMark name={brand.name} />
           </Link>

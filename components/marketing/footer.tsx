@@ -65,7 +65,7 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
 
   return (
     <footer className="mt-auto bg-ink px-[22px] pb-[26px] pt-[46px] text-on-dark-2">
-      <div className="mx-auto grid max-w-[1380px] gap-8" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(208px, 1fr))" }}>
+      <div className="page-wrap grid gap-8" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(208px, 1fr))" }}>
         <div className="flex flex-col gap-[11px]">
           <span className="text-on-dark">
             <BrandMark name={brand.name} size="sm" />
@@ -95,7 +95,7 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
       </div>
 
       <div
-        className="mx-auto mt-[30px] flex max-w-[1380px] flex-wrap justify-between gap-[18px] pt-[18px] font-mono text-[11px] uppercase tracking-[0.06em] text-on-dark-3"
+        className="page-wrap mt-[30px] flex flex-wrap justify-between gap-[18px] pt-[18px] font-mono text-[11px] uppercase tracking-[0.06em] text-on-dark-3"
         style={{ borderTop: "1px solid rgba(242,242,244,0.16)" }}
       >
         <span>

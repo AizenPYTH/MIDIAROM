@@ -150,7 +150,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const aFaire = [...relances, ...colis, ...diagnostics];
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] px-[22px] pb-14 pt-[26px]">
+    <div className="w-full page-wrap px-[22px] pb-14 pt-[26px]">
       {/* ── Ligne d'état : quatre nombres, rien de plus ──────────────────── */}
       <div className="mb-[26px] grid gap-px border border-border bg-border" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
         {ORDRE.map((r) => {

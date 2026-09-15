@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils/cn";
  * de chaque côté font la différence entre deux colonnes de produits et une.
  */
 export function Container({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mx-auto w-full max-w-[1340px] px-4 sm:px-8", className)} {...props} />;
+  // Même conteneur que l'accueil : boutique, réparation et pages secondaires
+  // suivaient une largeur propre, et divergeaient donc sur grand écran.
+  return <div className={cn("page-wrap px-4 sm:px-8", className)} {...props} />;
 }
 
 /** Étiquette mono colorée au-dessus des titres (« 01 — Vente », « Atelier »…). */

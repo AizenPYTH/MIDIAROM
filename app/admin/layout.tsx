@@ -123,7 +123,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </span>
       </header>
       <AdminNav tabs={tabs.filter((t) => admin || !t.admin)} groups={groups} />
-      <main className="mx-auto min-w-0 w-full max-w-[1420px] flex-1 px-4 pb-[70px] pt-[34px] sm:px-[30px]">{children}</main>
+      <main className="page-wrap min-w-0 flex-1 px-4 pb-[70px] pt-[34px] sm:px-[30px]">{children}</main>
     </div>
   );
 }
