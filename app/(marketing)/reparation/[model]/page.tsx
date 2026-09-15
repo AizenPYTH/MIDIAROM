@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { Breadcrumbs, Container, Eyebrow } from "@/components/ui/misc";
 import { RepairForm } from "@/components/repair/repair-form";
+import { ConsolePhoto } from "@/components/repair/console-photo";
+import { publicMediaUrl } from "@/components/marketing/gallery";
 import { getActiveModels, getModelBySlug, getRepairsForModel } from "@/lib/repair/catalog";
 import { getRepairFormBase, toFormRepair } from "@/lib/repair/form-data";
 import { formatRepairPrice } from "@/lib/utils/format";
@@ -59,6 +61,21 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
             <div className="text-[#a39c8c]">
               <Breadcrumbs items={[{ label: "Accueil", href: ROUTES.home }, { label: "Réparation", href: ROUTES.repair }, { label: model.name }]} />
             </div>
+            {/* Le détouré du modèle choisi, en repère.
+                Petit, et sur une plaque claire : les fichiers sont détourés sur
+                fond transparent, et une PS4 noire posée directement sur ce
+                bandeau sombre disparaîtrait. La plaque fait le contraste, et
+                donne à toutes les consoles la même place quel que soit le
+                rapport de leur fichier. */}
+            <span className="relative block w-[132px] shrink-0 overflow-hidden border border-ink-650 bg-paper-strong" style={{ aspectRatio: "5 / 4" }}>
+              <ConsolePhoto
+                src={model.image_path ? publicMediaUrl(model.image_path) : null}
+                alt={`Console ${model.name}`}
+                label={model.name}
+                sizes="132px"
+                className="p-[11%]"
+              />
+            </span>
             <div>
               <Eyebrow tone="repair">{model.brand.name}</Eyebrow>
               <h1 className="mt-2 text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em]">Réparation {model.name} : quelle est la panne ?</h1>

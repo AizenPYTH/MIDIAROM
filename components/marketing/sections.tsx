@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ROUTES } from "@/config/site";
 import { Container, Eyebrow } from "@/components/ui/misc";
 import { publicMediaUrl } from "@/components/marketing/gallery";
+import { ConsolePhoto } from "@/components/repair/console-photo";
 import type { BrandSettings } from "@/config/brand";
 import type { Brand, ConsoleModel } from "@/lib/repair/catalog";
 import type { Tables, Views } from "@/types/database";
@@ -142,7 +143,20 @@ export function HowToList({ steps, className }: { steps: { title: string; text: 
   );
 }
 
-/** Grille des consoles par marque (pages catalogue). */
+/**
+ * Les consoles prises en charge, marque par marque.
+ *
+ * Chaque carte porte le détouré du modèle (`console_models.image_path`, les
+ * fichiers de `public/medias/consoles/`) : on reconnaît sa console d'un coup
+ * d'œil, avant même de lire son nom. La vignette reste petite — c'est un
+ * repère, pas une vitrine — et se charge en différé, la grille étant sous la
+ * ligne de flottaison.
+ *
+ * `h-full` et `mt-auto` : les modèles dont le nom tient sur deux lignes
+ * (« PlayStation 5 Slim Digital Edition ») ne décalent plus la rangée. Toutes
+ * les cartes d'une ligne ont la même hauteur, et l'année est toujours au même
+ * niveau.
+ */
 export function ConsoleGrid({ brands, models }: { brands: Brand[]; models: ConsoleModel[] }) {
   return (
     <div className="space-y-10">
@@ -152,12 +166,39 @@ export function ConsoleGrid({ brands, models }: { brands: Brand[]; models: Conso
         return (
           <div key={brand.id}>
             <h3 className="mb-4 font-mono text-[11.5px] uppercase tracking-[0.14em] text-ink-muted">{brand.name}</h3>
-            <ul className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(190px,1fr))]">
+            {/* `clamp` : deux colonnes au téléphone, comme au rayon. Le plancher
+                fixe à 190 px n'en laissait qu'une sous 424 px, et dix-huit
+                vignettes pleine largeur faisaient de la grille un couloir. */}
+            <ul className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(clamp(150px, 20vw, 190px), 1fr))" }}>
               {brandModels.map((model) => (
-                <li key={model.id}>
-                  <Link href={`${ROUTES.repair}/${model.slug}`} className="glass flex flex-col gap-1.5 rounded-[2px] p-[18px] transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)] hover:-translate-y-1.5 hover:border-cyan">
-                    <span className="font-display text-[18px] font-bold tracking-[-0.02em] text-ink">{model.name}</span>
-                    <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-ink-muted">{model.release_year ? `depuis ${model.release_year}` : brand.name}</span>
+                <li key={model.id} className="min-w-0">
+                  <Link
+                    href={`${ROUTES.repair}/${model.slug}`}
+                    data-card="1"
+                    className="glass flex h-full flex-col overflow-hidden rounded-[2px] transition-all duration-300 ease-[cubic-bezier(.16,1,.3,1)]"
+                  >
+                    {/* Le cadre donne la géométrie, l'image s'y adapte : les
+                        détourés vont du carré au 1,6/1, et une grille ne peut
+                        pas suivre le rapport de chaque fichier. */}
+                    <span className="relative block w-full overflow-hidden border-b border-border bg-paper-strong" style={{ aspectRatio: "4 / 3" }}>
+                      <span data-zoom="1" className="absolute inset-0">
+                        <ConsolePhoto
+                          src={model.image_path ? publicMediaUrl(model.image_path) : null}
+                          alt={`Console ${model.name}`}
+                          label={model.name}
+                          // Les paliers suivent le nombre réel de colonnes :
+                          // deux au téléphone, trois sur tablette, six au-delà.
+                          // Un `sizes` trop optimiste sert une image trop
+                          // petite, et la vignette sort floue sur écran dense.
+                          sizes="(max-width: 660px) 50vw, (max-width: 900px) 33vw, 240px"
+                          className="p-[12%]"
+                        />
+                      </span>
+                    </span>
+                    <span className="flex flex-1 flex-col gap-1.5 p-[18px]">
+                      <span className="font-display text-[18px] font-bold tracking-[-0.02em] text-ink">{model.name}</span>
+                      <span className="mt-auto font-mono text-[11px] uppercase tracking-[0.12em] text-ink-muted">{model.release_year ? `depuis ${model.release_year}` : brand.name}</span>
+                    </span>
                   </Link>
                 </li>
               ))}
