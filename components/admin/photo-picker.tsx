@@ -16,15 +16,21 @@ import { publicMediaUrl } from "@/components/marketing/gallery";
  * reste. Aucun copier-coller.
  *
  * La première photo est celle que la boutique montre en vignette : elle est
- * marquée, et n'importe quelle autre peut prendre sa place.
+ * marquée, et n'importe quelle autre peut prendre sa place — soit d'un coup
+ * avec « Mettre devant », soit cran par cran avec les deux flèches, quand
+ * l'ordre de la galerie compte.
+ *
+ * `initial` sert à l'édition : la fiche d'un article rouvre avec ses photos
+ * déjà là, modifiables comme les autres. Sans lui, enregistrer une fiche
+ * existante aurait effacé ses visuels.
  */
 
 const TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 const MAX = 10 * 1024 * 1024;
 
-export function PhotoPicker({ name = "images", folder = "produits" }: { name?: string; folder?: string }) {
+export function PhotoPicker({ name = "images", folder = "produits", initial = [] }: { name?: string; folder?: string; initial?: string[] }) {
   const input = useRef<HTMLInputElement>(null);
-  const [paths, setPaths] = useState<string[]>([]);
+  const [paths, setPaths] = useState<string[]>(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +65,14 @@ export function PhotoPicker({ name = "images", folder = "produits" }: { name?: s
 
   const retirer = (chemin: string) => setPaths((p) => p.filter((x) => x !== chemin));
   const mettreEnPremier = (chemin: string) => setPaths((p) => [chemin, ...p.filter((x) => x !== chemin)]);
+  const deplacer = (i: number, pas: -1 | 1) =>
+    setPaths((p) => {
+      const j = i + pas;
+      if (j < 0 || j >= p.length) return p;
+      const copie = [...p];
+      [copie[i], copie[j]] = [copie[j]!, copie[i]!];
+      return copie;
+    });
 
   return (
     <div className="flex flex-col gap-3">
@@ -86,7 +100,7 @@ export function PhotoPicker({ name = "images", folder = "produits" }: { name?: s
                     exigerait de déclarer l'hôte de stockage, et on ne gagne
                     rien à optimiser une image qu'on regarde deux secondes. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={publicMediaUrl(p)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                <img src={publicMediaUrl(p)} alt="" className="absolute inset-0 h-full w-full object-contain p-1.5" />
               </span>
               {i === 0 ? (
                 <span className="absolute left-1.5 top-1.5 bg-ink px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.07em] text-white">
@@ -104,11 +118,35 @@ export function PhotoPicker({ name = "images", folder = "produits" }: { name?: s
               <button
                 type="button"
                 onClick={() => retirer(p)}
-                aria-label="Retirer cette photo"
+                aria-label={`Retirer la photo ${i + 1}`}
                 className="absolute right-1.5 top-1.5 flex h-6 w-6 cursor-pointer items-center justify-center border border-border-strong bg-bg/90 text-[15px] leading-none text-ink hover:border-red hover:text-red"
               >
                 ×
               </button>
+              {/* Réordonner cran par cran : « Mettre devant » règle la vignette,
+                  ces deux-là règlent la suite de la galerie. */}
+              {paths.length > 1 ? (
+                <span className="absolute inset-x-1.5 bottom-1.5 flex justify-between">
+                  <button
+                    type="button"
+                    onClick={() => deplacer(i, -1)}
+                    disabled={i === 0}
+                    aria-label={`Déplacer la photo ${i + 1} vers la gauche`}
+                    className="flex h-6 w-6 cursor-pointer items-center justify-center border border-border-strong bg-bg/90 text-[13px] leading-none text-ink hover:border-ink disabled:cursor-default disabled:opacity-35"
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deplacer(i, 1)}
+                    disabled={i === paths.length - 1}
+                    aria-label={`Déplacer la photo ${i + 1} vers la droite`}
+                    className="flex h-6 w-6 cursor-pointer items-center justify-center border border-border-strong bg-bg/90 text-[13px] leading-none text-ink hover:border-ink disabled:cursor-default disabled:opacity-35"
+                  >
+                    →
+                  </button>
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>

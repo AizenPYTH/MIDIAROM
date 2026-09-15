@@ -28,6 +28,7 @@ export function HomeVisual({
   label,
   position = "center",
   positionMobile,
+  fit = "cover",
 }: {
   src: string | null;
   alt: string;
@@ -42,6 +43,14 @@ export function HomeVisual({
    * Sans lui, un recadrage centré coupe le sujet principal en deux.
    */
   positionMobile?: string;
+  /**
+   * `cover` remplit le cadre en recadrant, `contain` montre la photo entière.
+   *
+   * Le premier va aux visuels composés pour leur emplacement ; le second à une
+   * photo qu'on doit voir en entier — la devanture, dont le portrait ne rentre
+   * pas dans une bande sans qu'on en perde la moitié.
+   */
+  fit?: "cover" | "contain";
 }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) return <PhotoSlot label={label} />;
@@ -52,12 +61,14 @@ export function HomeVisual({
       fill
       sizes={sizes}
       // Le hero est au-dessus de la ligne de flottaison : il se charge en
-      // priorité. Les quatre autres attendent d'approcher de l'écran.
+      // priorité. Les autres attendent d'approcher de l'écran, ce que
+      // `next/image` fait déjà par défaut — passer `loading` en plus posait
+      // `eager` côté serveur et `undefined` côté client, donc un avertissement
+      // d'hydratation à chaque chargement de l'accueil.
       priority={priority}
-      loading={priority ? undefined : "lazy"}
       onError={() => setFailed(true)}
       data-visual="1"
-      className="object-cover"
+      className={fit === "contain" ? "object-contain" : "object-cover"}
       style={{ "--pos": position, "--pos-sm": positionMobile ?? position } as React.CSSProperties}
     />
   );

@@ -111,13 +111,12 @@ export const PLATFORM_VISUALS: Record<string, { src: string; alt: string; positi
  * Où regarder quand le cadre est plus étroit que l'image.
  *
  * Ne concerne plus que le hero et l'atelier : les trois affiches de rayon sont
- * montrées à leur rapport d'origine, donc rien n'y est recadré et il n'y a
- * aucun point focal à choisir.
+ * montrées à leur rapport d'origine et la devanture en entier, donc rien n'y
+ * est recadré et il n'y a aucun point focal à choisir.
  */
 export const HOME_VISUAL_FOCUS = {
   hero: { position: "50% 50%", mobile: "50% 45%" },
   atelier: { position: "50% 50%", mobile: "55% 50%" },
-  magasin: { position: "50% 38%", mobile: "50% 34%" },
 } as const;
 
 /**

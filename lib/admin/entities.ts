@@ -6,7 +6,7 @@ import { SLUG_REGEX } from "@/lib/utils/slug";
  * Each entity maps form fields to a zod schema; the server action validates,
  * writes with the admin client after `requireAdmin()`, audits and revalidates.
  */
-export type FieldType = "text" | "textarea" | "markdown" | "number" | "cents" | "checkbox" | "select" | "slug" | "list" | "json";
+export type FieldType = "text" | "textarea" | "markdown" | "number" | "cents" | "checkbox" | "select" | "slug" | "list" | "json" | "photos" | "spec";
 
 export interface FieldDef {
   name: string;
@@ -16,6 +16,32 @@ export interface FieldDef {
   hint?: string;
   options?: { value: string; label: string }[] | "brands" | "models" | "faults" | "option_categories";
   width?: "full" | "half";
+
+  // ── Ce qui suit ne sert qu'au formulaire : rien n'atteint la base ──────────
+
+  /** Section du formulaire. Sans section, le champ ouvre la première. */
+  section?: string;
+  /**
+   * Rayons pour lesquels le champ a un sens. Absent : tous.
+   *
+   * Un champ écarté n'est pas supprimé du formulaire — il est posté en champ
+   * caché avec sa valeur du moment. Sans cela, enregistrer une figurine
+   * effacerait sa région, ses caractéristiques et son contenu, simplement
+   * parce que ces champs n'étaient pas à l'écran.
+   */
+  categories?: string[];
+  /** Libellé qui change avec le rayon : « Plateforme » devient « Licence ». */
+  labelByCategory?: Record<string, string>;
+  hintByCategory?: Record<string, string>;
+  /** Champ replié sous « Options avancées » : rarement touché. */
+  advanced?: boolean;
+  /** Clé de `specs` pour un champ de type `spec`. */
+  specKey?: string;
+  /**
+   * Valeur fabriquée depuis le nom tant que personne n'y touche, à la création
+   * seulement. Le SKU et l'adresse d'une fiche existante ne bougent jamais.
+   */
+  derive?: "sku" | "slug";
 }
 
 export interface EntityDef {
@@ -46,6 +72,10 @@ export interface EntityDef {
   revalidate: string[];
   /** Columns shown in the list view. */
   listColumns: string[];
+  /** Sections du formulaire, dans l'ordre. Absent : un seul bloc. */
+  sections?: string[];
+  /** Champ qui décide des champs à montrer (le rayon, pour un article). */
+  categoryField?: string;
 }
 
 const text = (max = 200) => z.string().trim().max(max);
@@ -399,45 +429,83 @@ export const ENTITIES: Record<string, EntityDef> = {
   },
 };
 
+/**
+ * La fiche d'un article.
+ *
+ * Les champs sont **contextuels** : un rayon n'a pas les mêmes questions qu'un
+ * autre. Une figurine n'a ni région, ni modèle de console lié, ni contenu de
+ * boîte — les lui demander allongeait la page de vingt champs vides et faisait
+ * de la création d'un article une corvée.
+ *
+ * Trois mécanismes, et aucun ne touche à la base :
+ *
+ *   • `categories` masque un champ hors de son rayon. Il reste posté en champ
+ *     caché avec sa valeur, donc rien n'est jamais effacé par omission ;
+ *   • `labelByCategory` renomme sans dupliquer la colonne : `platform` porte la
+ *     plateforme d'un jeu **et** la licence d'une figurine, c'est la même
+ *     donnée et c'est ce que la boutique affiche au-dessus du nom ;
+ *   • `spec` expose une clé de `specs` comme un champ normal — « Personnage »,
+ *     « Fabricant », « Stockage » — au lieu d'un bloc JSON à écrire à la main.
+ *
+ * Le SKU et l'adresse de la fiche se fabriquent depuis le nom (`derive`) et
+ * descendent sous « Options avancées » : personne ne devrait avoir à les saisir,
+ * et ceux qui existent ne bougent pas.
+ */
 ENTITIES.products = {
   table: "products",
   label: "Article",
   labelPlural: "Stock",
   basePath: "/admin/stock",
   listColumns: ["sku", "name", "platform", "condition", "price_cents", "quantity", "is_active"],
+  sections: ["Informations", "Prix", "Stock", "Photos", "Visibilité"],
+  categoryField: "category",
   fields: [
-    { name: "sku", label: "SKU / référence", type: "text", required: true, width: "half" },
-    { name: "slug", label: "Slug (URL /boutique/[slug])", type: "slug", required: true, width: "half" },
-    { name: "name", label: "Nom", type: "text", required: true },
-    { name: "category", label: "Catégorie", type: "select", required: true, width: "half", options: [{ value: "CONSOLE", label: "Console" }, { value: "GAME", label: "Jeu" }, { value: "ACCESSORY", label: "Accessoire" }, { value: "PART", label: "Pièce" }, { value: "COLLECTIBLE", label: "Figurine manga / anime" }] },
-    { name: "platform", label: "Plateforme (libellé affiché)", type: "text", required: true, width: "half" },
-    { name: "model_id", label: "Modèle de console lié (fiche console, compatibilité)", type: "select", options: "models", width: "half" },
-    { name: "condition", label: "État", type: "select", required: true, width: "half", options: [{ value: "NEW", label: "Neuf" }, { value: "REFURBISHED", label: "Révisé en atelier" }, { value: "USED_A", label: "Occasion — grade A" }, { value: "USED_B", label: "Occasion — grade B" }, { value: "USED_C", label: "Occasion — grade C" }] },
-    { name: "condition_notes", label: "Défauts / précisions sur l'état (affichés au client)", type: "textarea" },
-    // Identification d'un jeu. L'EAN est la piste la plus sûre pour ne pas
-    // confondre les versions PS4 / PS5 / Switch d'un même titre.
-    { name: "ean", label: "Code-barres EAN", type: "text", width: "half", hint: "Facultatif : le code-barres imprimé sur la boîte" },
-    { name: "edition", label: "Édition", type: "text", width: "half", hint: "Deluxe, Remastered, Game of the Year…" },
-    { name: "region", label: "Région", type: "text", width: "half", hint: "PAL, NTSC-U, NTSC-J…" },
-    { name: "release_year", label: "Année de sortie", type: "number", width: "half" },
-    { name: "description", label: "Description", type: "textarea" },
-    { name: "specs", label: "Caractéristiques (JSON {\"Stockage\":\"1 To\"})", type: "json" },
-    { name: "includes", label: "Contenu / accessoires fournis (un par ligne)", type: "list" },
-    { name: "price_cents", label: "Prix TTC (€)", type: "cents", required: true, width: "half" },
-    { name: "compare_at_price_cents", label: "Prix barré (€, facultatif)", type: "cents", width: "half" },
-    { name: "cost_cents", label: "Prix d'achat (€)", type: "cents", width: "half" },
-    { name: "quantity", label: "Quantité en stock", type: "number", required: true, width: "half" },
-    { name: "low_stock_threshold", label: "Seuil de stock faible", type: "number", width: "half" },
-    { name: "weight_grams", label: "Poids (g)", type: "number", width: "half" },
-    { name: "images", label: "Photos (chemins content-media, une par ligne)", type: "list", hint: "Téléversez via Contenu → Médias publics puis collez le chemin" },
-    // Vidéo de la section mise en avant. Saisie à la main : rien n'est
-    // téléchargé depuis une plateforme tierce, aucune restriction contournée.
-    { name: "hero_video_url", label: "Vidéo de mise en avant (URL)", type: "text", hint: "Fichier dont vous disposez légalement. Laissez vide pour une image fixe." },
-    { name: "hero_video_poster_path", label: "Affiche de la vidéo (chemin ou URL)", type: "text", hint: "Image affichée avant lecture et sur mobile" },
-    { name: "is_retro", label: "Rétro", type: "checkbox", width: "half" },
-    { name: "is_featured", label: "Mis en avant (accueil)", type: "checkbox", width: "half" },
-    { name: "is_active", label: "En vente", type: "checkbox", width: "half" },
-    { name: "display_order", label: "Ordre", type: "number", width: "half" },
+    // ── Informations ────────────────────────────────────────────────────────
+    { name: "name", label: "Nom", type: "text", required: true, section: "Informations" },
+    { name: "category", label: "Catégorie", type: "select", required: true, width: "half", section: "Informations", options: [{ value: "CONSOLE", label: "Console" }, { value: "GAME", label: "Jeu" }, { value: "ACCESSORY", label: "Accessoire" }, { value: "PART", label: "Pièce" }, { value: "COLLECTIBLE", label: "Figurine manga / anime" }] },
+    { name: "condition", label: "État", type: "select", required: true, width: "half", section: "Informations", options: [{ value: "NEW", label: "Neuf" }, { value: "REFURBISHED", label: "Révisé en atelier" }, { value: "USED_A", label: "Occasion — grade A" }, { value: "USED_B", label: "Occasion — grade B" }, { value: "USED_C", label: "Occasion — grade C" }] },
+    // Une seule colonne pour deux réalités : la plateforme d'un jeu, la licence
+    // d'une figurine. C'est la ligne que la boutique affiche au-dessus du nom.
+    { name: "platform", label: "Plateforme", type: "text", required: true, width: "half", section: "Informations",
+      labelByCategory: { COLLECTIBLE: "Licence / série" },
+      hintByCategory: { COLLECTIBLE: "One Piece, Naruto, Dragon Ball… affiché au-dessus du nom", GAME: "PlayStation 5, Nintendo Switch…", CONSOLE: "PlayStation 5, Xbox Series X…" } },
+    { name: "spec:Personnage", label: "Personnage", type: "spec", specKey: "Personnage", width: "half", section: "Informations", categories: ["COLLECTIBLE"], hint: "Luffy, Son Goku, Tanjiro…" },
+    { name: "spec:Fabricant", label: "Fabricant / marque", type: "spec", specKey: "Fabricant", width: "half", section: "Informations", categories: ["COLLECTIBLE"] },
+    { name: "spec:Stockage", label: "Stockage", type: "spec", specKey: "Stockage", width: "half", section: "Informations", categories: ["CONSOLE"], hint: "1 To, 512 Go…" },
+    { name: "model_id", label: "Modèle de console lié", type: "select", options: "models", width: "half", section: "Informations", categories: ["CONSOLE", "GAME", "ACCESSORY", "PART"], hint: "Relie l'article à une fiche console (compatibilité, réparation)" },
+    { name: "edition", label: "Édition", type: "text", width: "half", section: "Informations", hint: "Deluxe, Remastered, Game of the Year…" },
+    { name: "region", label: "Région", type: "text", width: "half", section: "Informations", categories: ["GAME", "CONSOLE"], hint: "PAL, NTSC-U, NTSC-J…" },
+    { name: "release_year", label: "Année de sortie", type: "number", width: "half", section: "Informations", categories: ["GAME", "CONSOLE"] },
+    { name: "ean", label: "Code-barres EAN", type: "text", width: "half", section: "Informations", hint: "Facultatif : le code-barres imprimé sur la boîte" },
+    { name: "condition_notes", label: "Défauts / précisions sur l'état", type: "textarea", section: "Informations", hint: "Affiché au client sur la fiche" },
+    { name: "description", label: "Description", type: "textarea", section: "Informations" },
+    { name: "includes", label: "Contenu / accessoires fournis (un par ligne)", type: "list", section: "Informations", categories: ["CONSOLE", "GAME", "ACCESSORY", "PART"] },
+
+    // ── Prix ────────────────────────────────────────────────────────────────
+    { name: "price_cents", label: "Prix TTC (€)", type: "cents", required: true, width: "half", section: "Prix" },
+    { name: "compare_at_price_cents", label: "Prix barré (€)", type: "cents", width: "half", section: "Prix", hint: "Facultatif : affiché barré à côté du prix" },
+    { name: "cost_cents", label: "Prix d'achat (€)", type: "cents", width: "half", section: "Prix", hint: "Interne : ne sort jamais du back-office" },
+
+    // ── Stock ───────────────────────────────────────────────────────────────
+    { name: "quantity", label: "Quantité en stock", type: "number", required: true, width: "half", section: "Stock" },
+    { name: "low_stock_threshold", label: "Seuil de stock faible", type: "number", width: "half", section: "Stock", hint: "En dessous, la fiche affiche « plus que N »" },
+    { name: "weight_grams", label: "Poids (g)", type: "number", width: "half", section: "Stock", hint: "Sert au calcul du colis" },
+
+    // ── Photos ──────────────────────────────────────────────────────────────
+    { name: "images", label: "Photos", type: "photos", section: "Photos", hint: "La première photo est la vignette du rayon. Glissez-en plusieurs : les suivantes forment la galerie de la fiche." },
+
+    // ── Visibilité ──────────────────────────────────────────────────────────
+    { name: "is_active", label: "En vente", type: "checkbox", width: "half", section: "Visibilité" },
+    { name: "is_featured", label: "Mis en avant (accueil)", type: "checkbox", width: "half", section: "Visibilité" },
+    { name: "is_retro", label: "Rétro", type: "checkbox", width: "half", section: "Visibilité", categories: ["CONSOLE", "GAME", "ACCESSORY", "PART"] },
+    { name: "display_order", label: "Ordre d'affichage", type: "number", width: "half", section: "Visibilité" },
+
+    // ── Options avancées ────────────────────────────────────────────────────
+    { name: "sku", label: "SKU / référence", type: "text", required: true, width: "half", advanced: true, derive: "sku", hint: "Fabriqué depuis le nom. Ne le changez que si votre inventaire l'impose." },
+    { name: "slug", label: "Adresse de la fiche (/boutique/…)", type: "slug", required: true, width: "half", advanced: true, derive: "slug", hint: "Fabriquée depuis le nom. La changer casse les liens déjà partagés." },
+    { name: "specs", label: "Caractéristiques libres (JSON)", type: "json", advanced: true, hint: "Les champs nommés plus haut écrivent ici. À n'ouvrir que pour une clé qu'ils ne couvrent pas." },
+    { name: "hero_video_url", label: "Vidéo de mise en avant (URL)", type: "text", advanced: true, categories: ["CONSOLE", "GAME"], hint: "Fichier dont vous disposez légalement. Laissez vide pour une image fixe." },
+    { name: "hero_video_poster_path", label: "Affiche de la vidéo (chemin ou URL)", type: "text", advanced: true, categories: ["CONSOLE", "GAME"], hint: "Image affichée avant lecture et sur mobile" },
   ],
   schema: z.object({
     sku: text(40).min(2),
@@ -509,9 +577,39 @@ export function formDataToObject(entity: EntityDef, formData: FormData): Record<
           out[field.name] = Number.NaN; // forces a validation error
         }
         break;
+      // Le sélecteur de photos poste un champ caché par chemin, dans l'ordre
+      // d'affichage : c'est lui qui fixe la vignette du rayon, pas l'action.
+      case "photos":
+        out[field.name] = formData.getAll(field.name).filter((v): v is string => typeof v === "string" && v.trim() !== "");
+        break;
+      // Traité après la boucle : il faut que `specs` soit déjà là pour s'y
+      // fondre, et l'ordre des champs ne le garantit pas.
+      case "spec":
+        break;
       default:
         out[field.name] = value;
     }
+  }
+
+  /**
+   * Les champs nommés se fondent dans `specs`.
+   *
+   * « Personnage », « Fabricant », « Stockage » sont des clés de `specs`
+   * montrées comme des champs normaux. Elles viennent par-dessus le JSON brut :
+   * qui a rempli le champ nommé a voulu cette valeur-là. Une clé vidée est
+   * retirée, pour ne pas laisser une entrée blanche sur la fiche publique.
+   */
+  const specFields = entity.fields.filter((f) => f.type === "spec" && f.specKey);
+  if (specFields.length) {
+    const specs: Record<string, string> = { ...((out.specs as Record<string, string> | undefined) ?? {}) };
+    for (const f of specFields) {
+      const raw = formData.get(f.name);
+      if (raw === null) continue; // champ absent du formulaire : on n'y touche pas
+      const v = typeof raw === "string" ? raw.trim() : "";
+      if (v) specs[f.specKey!] = v;
+      else delete specs[f.specKey!];
+    }
+    out.specs = specs;
   }
   return out;
 }

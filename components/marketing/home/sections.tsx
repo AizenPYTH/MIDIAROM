@@ -562,19 +562,23 @@ export function Store({ brand }: { brand: BrandSettings }) {
             </Link>
           </div>
         </div>
-        {/* La devanture est un portrait (3/4) posé dans une bande paysage : le
-            recadrage est voulu — c'est une image d'ambiance, pas un produit —
-            mais il doit rester généreux. 360 px de haut laissent voir
-            l'enseigne et la vitrine, pas une tranche de trottoir. */}
-        <div className="relative min-h-[300px] overflow-hidden border-l border-border bg-surface-strong sm:min-h-[360px] lg:min-h-[420px]">
-          <HomeVisual
-            src={HOME_VISUALS.magasin}
-            alt={HOME_VISUAL_ALTS.magasin}
-            label="Magasin"
-            position={HOME_VISUAL_FOCUS.magasin.position}
-            positionMobile={HOME_VISUAL_FOCUS.magasin.mobile}
-            sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 700px"
-          />
+        {/* La devanture est un portrait (3/4). Étalée en bande paysage et
+            recadrée, elle perdait l'enseigne ou le trottoir selon la largeur, et
+            la section devenait une haute bannière où l'on ne voyait jamais la
+            boutique entière.
+            Elle est donc montrée **en entier**, à sa taille, centrée sur le
+            blanc de la carte : on voit l'enseigne, la vitrine et la porte, et la
+            section n'est pas plus haute que sa colonne de texte. */}
+        <div className="flex items-center justify-center border-l border-border bg-surface px-5 py-6">
+          <span className="relative block w-full max-w-[208px] sm:max-w-[236px]" style={{ aspectRatio: "765 / 1020" }}>
+            <HomeVisual
+              src={HOME_VISUALS.magasin}
+              alt={HOME_VISUAL_ALTS.magasin}
+              label="Magasin"
+              fit="contain"
+              sizes="(max-width: 640px) 208px, 236px"
+            />
+          </span>
         </div>
       </div>
     </section>

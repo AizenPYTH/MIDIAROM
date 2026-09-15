@@ -131,7 +131,7 @@ export async function EntityEditPage({
         <PageHeader className="mt-1" title={label} actions={row ? <DeleteEntityButton entityKey={entityKey} id={String(row[idField])} label={label} /> : undefined} />
       </div>
       <div className="rounded-lg border border-border bg-surface p-5">
-        <EntityForm entityKey={entityKey} entity={{ fields: entity.fields, idField: entity.idField ?? "id" }} row={row} defaults={prefill} selectOptions={options} />
+        <EntityForm entityKey={entityKey} entity={{ fields: entity.fields, sections: entity.sections, categoryField: entity.categoryField, idField: entity.idField ?? "id" }} row={row} defaults={prefill} selectOptions={options} />
       </div>
       {row && children ? await children(row) : null}
     </div>
