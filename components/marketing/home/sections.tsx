@@ -179,8 +179,9 @@ export function Repairs({ models = [], diagnostic }: { models?: { slug: string }
       <ul className="grid list-none gap-[18px] p-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))" }}>
         {PLATFORMS.map((p) => {
           const href = modelHref(p, models);
-          // Switch n'a pas encore sa photo : la plaque tient la place plutôt
-          // que la console d'une autre marque.
+          // Une plateforme sans visuel déclaré — ou dont le fichier manque
+          // encore — tient sa place avec la plaque d'attente, jamais avec la
+          // console d'une autre marque.
           const visuel = PLATFORM_VISUALS[p.key];
           return (
           <li key={p.key} data-rise="1" data-card="1" className="flex min-w-0 flex-col border border-border bg-surface">
