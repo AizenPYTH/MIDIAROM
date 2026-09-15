@@ -129,8 +129,9 @@ le prochain pas utile.
 
 Le catalogue de vente se saisit à la main, une annonce à la fois. Pour ne pas
 partir d'une page blanche, `supabase/seed-boutique.sql` pose un rayon de départ
-— 10 jeux vidéo, 10 consoles, 10 figurines — avec des prix qui sont des ordres
-de grandeur du marché, pas les prix du magasin.
+— 10 jeux vidéo, 9 consoles, 10 figurines — avec des prix qui sont des ordres
+de grandeur du marché, pas les prix du magasin, et la photo de chaque article
+(`public/images/produit/`).
 
 ```bash
 psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/seed-boutique.sql
@@ -141,6 +142,11 @@ ligne est identifiée par son `slug`, une seconde exécution met la fiche à jou
 au lieu de la dupliquer, et les photos déjà déposées ne sont pas écrasées.
 
 **À relire avant de vendre** : les prix, les quantités et l'état de chaque
-exemplaire, dans `/admin/stock`. Les photos sont volontairement absentes — une
-photo empruntée ailleurs ne serait pas celle de l'article vendu — et se
-déposent depuis la fiche produit.
+exemplaire, dans `/admin/stock`.
+
+**Un article sans photo ne va pas en rayon.** Le fichier supprime en fin
+d'exécution la Nintendo Switch modèle 2019, seule référence du lot sans visuel
+correspondant : une carte sur plaque d'attente au milieu de vingt-neuf photos
+donne un rayon en panne. La suppression est sûre — les mouvements de stock
+suivent en cascade, et les lignes de commande déjà passées gardent leur libellé
+et leur prix.

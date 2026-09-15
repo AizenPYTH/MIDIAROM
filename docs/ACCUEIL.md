@@ -113,14 +113,22 @@ de droite : les quatre étapes la remplacent, et la section se lit entière au
 lieu de réserver la moitié de sa surface à une plaque. Le jour où la photo — ou
 la vidéo — est renseignée, la mise en page à deux colonnes revient d'elle-même.
 
-Les photos de produits — jaquettes de jeux comprises — sont celles saisies dans
-le back-office au moment de créer l'annonce. Aucune ne vient d'un catalogue
-tiers. Tant qu'un article n'en a pas, sa carte affiche une **vignette
+Les photos de produits — jaquettes de jeux comprises — sont celles fournies par
+le magasin, dans `public/images/produit/`, ou déposées depuis la fiche produit
+au back-office. Aucune ne vient d'un catalogue tiers.
+
+**Elles se posent sur le blanc, sans cadre.** Le cadre d'une carte de rayon est
+blanc comme la carte, et la photo y tient en `object-contain` : une photo
+détourée sur blanc ne montre donc pas son rectangle, et l'objet a l'air posé
+dans la page. C'est pour cela que les fichiers sont recadrés sur leur contenu —
+sans quoi un produit entouré de blanc paraîtrait minuscule à côté d'une jaquette
+qui remplit son fichier.
+
+Tant qu'un article n'a pas de photo, sa carte affiche une **vignette
 typographique** (`components/shop/product-tile.tsx`) : rayon, titre et
-plateforme dans la typographie de la maison, sur fond noir. Alignée huit fois
-dans une grille, la plaque d'attente grise donnait un catalogue en panne ; la
-vignette se lit, se différencie d'une carte à l'autre, et disparaît dès qu'une
-photo est déposée.
+plateforme dans la typographie de la maison. Elle ne devrait plus se voir en
+rayon — le catalogue n'accepte pas d'article sans visuel — mais elle reste le
+repli d'une fiche créée à la volée.
 
 ## Le mur de produits
 

@@ -42,6 +42,11 @@ import { cn } from "@/lib/utils/cn";
  * marge égale de chaque côté, plutôt que recadrée. Rien n'est jamais déformé,
  * rien n'est coupé, et deux produits aux photos de rapports différents pèsent
  * pareil dans la grille.
+ *
+ * **Fond blanc, comme la carte.** Les photos du magasin sont détourées sur
+ * blanc ; sur l'aplat gris d'avant, chacune montrait son rectangle de fichier.
+ * Sur le blanc de la carte, la limite du fichier disparaît et l'objet a l'air
+ * posé dans la page. Les photos à fond transparent y gagnent aussi.
  */
 function Frame({
   href,
@@ -57,7 +62,7 @@ function Frame({
   badgeTone?: "ink" | "red" | "outline";
 }) {
   return (
-    <Link href={href} className="relative block overflow-hidden bg-surface-strong" style={{ aspectRatio: "1 / 1" }} aria-label={alt}>
+    <Link href={href} className="relative block overflow-hidden bg-surface" style={{ aspectRatio: "1 / 1" }} aria-label={alt}>
       <span data-zoom="1" className="absolute inset-0">
         {children}
       </span>

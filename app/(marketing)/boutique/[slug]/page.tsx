@@ -58,7 +58,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <Breadcrumbs items={[{ label: "Boutique", href: ROUTES.shop }, { label: CATEGORY_LABELS[product.category], href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS[product.category]}` }, { label: product.name }]} />
       <div className="mt-6 grid gap-10 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
         <div className="flex flex-col gap-2">
-          <div className="relative aspect-square overflow-hidden border border-border bg-surface-strong">
+          {/* Ni filet ni aplat : la photo est détourée sur blanc, elle doit se poser
+              sur la page sans que son rectangle se voie. */}
+          <div className="relative aspect-square overflow-hidden bg-surface">
             {/* `object-contain` comme sur les cartes du rayon : sur une fiche
                 produit, recadrer, c'est cacher une partie de ce qu'on vend. */}
             {product.images[0] ? <Image src={publicMediaUrl(product.images[0])} alt={product.name} fill sizes="(min-width: 640px) 50vw, 100vw" className="object-contain p-[7%]" priority /> : <ProductTile name={product.name} platform={product.platform} category={product.category} />}
@@ -67,7 +69,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {product.images.length > 1 ? (
             <div className="grid grid-cols-4 gap-2">
               {product.images.slice(1, 5).map((img) => (
-                <div key={img} className="relative aspect-square border border-border bg-surface-strong">
+                <div key={img} className="relative aspect-square overflow-hidden bg-surface">
                   <Image src={publicMediaUrl(img)} alt="" fill sizes="(min-width: 640px) 160px, 25vw" className="object-contain p-[7%]" />
                 </div>
               ))}
