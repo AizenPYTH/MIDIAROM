@@ -95,10 +95,9 @@ export const PLATFORM_VISUALS: Record<string, { src: string; alt: string; positi
     mobile: "52% 50%",
   },
   /**
-   * ⚠︎ Chemin posé d'avance, fichier à déposer.
-   *
    * La console est au centre du cadre et le sujet remplit la largeur : le
-   * recadrage reste centré, y compris au téléphone où le cadre se resserre.
+   * recadrage 16/10 reste centré, y compris au téléphone où le cadre se
+   * resserre.
    */
   switch: {
     src: "/images/home/switch.png",
@@ -163,7 +162,7 @@ export const WORKSHOP_VIDEO: { src: string; poster?: string } | undefined = unde
  */
 export const MISSING_ASSETS = [
   { role: "Hero", need: "Composition à plat : console ouverte, manette, composants, tournevis. Fond clair, cadrage net. 5/4, 1600 px." },
-  { role: "Plateformes — quatre cartes", need: "Trois livrées. Manque la Nintendo Switch : à déposer sous `public/images/home/switch.png`, 16/10, 1200 px — le chemin est déjà branché." },
+  { role: "Plateformes — quatre cartes", need: "Livrées. PlayStation · Nintendo Switch · Xbox · consoles rétro, sur l'établi." },
   { role: "Atelier — image d'attente", need: "Plan d'atelier, sert de poster à la vidéo. 16/9, 1920 px. ⚠︎ Le fichier « dasn l'atelier.png » livré est un doublon de l'affiche « jeux video.png » : l'emplacement attend toujours sa vraie photo." },
   { role: "Atelier — vidéo", need: "MP4 + WebM, 1920×1080, 20 à 40 s, moins de 6 Mo, sans son. À renseigner dans WORKSHOP_VIDEO." },
   { role: "Rayons — trois affiches", need: "Livrées. Rayon jeux vidéo · rayon consoles · vitrine de figurines. 3/2, 1536 px." },
