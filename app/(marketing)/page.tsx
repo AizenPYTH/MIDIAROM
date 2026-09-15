@@ -6,7 +6,8 @@ import { getProductCategoryCounts, getProducts } from "@/lib/shop/catalog";
 import { getModelsWithActiveRepairs } from "@/lib/repair/catalog";
 import { PUBLIC_CATEGORIES } from "@/lib/shop/status";
 import { getSeoPage } from "@/lib/content";
-import { getBrandSettings } from "@/lib/settings";
+import { getBrandSettings, getBusinessRules } from "@/lib/settings";
+import { formatPrice } from "@/lib/utils/format";
 import { WORKSHOP_VIDEO } from "@/lib/content/assets";
 
 /**
@@ -36,8 +37,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [brand, counts, products, models] = await Promise.all([
+  const [brand, rules, counts, products, models] = await Promise.all([
     getBrandSettings(),
+    // Le tarif de diagnostic affiché doit être celui que la caisse applique.
+    getBusinessRules(),
     getProductCategoryCounts(),
     getProducts({ sort: "recent" }, WALL),
     // Les consoles réellement réparables : elles décident où mènent les cartes
@@ -56,11 +59,15 @@ export default async function HomePage() {
   // publics : accessoires et pièces détachées ne sont pas des rayons ici.
   const total = PUBLIC_CATEGORIES.reduce((n, c) => n + (counts[c] ?? 0), 0);
 
+  // Zéro veut dire « pas de diagnostic facturé » : on n'annonce alors rien,
+  // plutôt que d'afficher « 0 € », qui se lirait comme une promesse.
+  const diagnostic = rules.diagnostic_fee_cents > 0 ? formatPrice(rules.diagnostic_fee_cents) : null;
+
   return (
     <>
       <Hero />
-      <Repairs models={models} />
-      <Journey />
+      <Repairs models={models} diagnostic={diagnostic} />
+      <Journey diagnostic={diagnostic} />
       <TrustBand />
       <Workshop video={WORKSHOP_VIDEO} />
       <ShopCategories />

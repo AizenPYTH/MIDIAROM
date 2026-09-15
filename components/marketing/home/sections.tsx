@@ -5,7 +5,7 @@ import { HomeVisual } from "@/components/marketing/home/visual";
 import { HOME_VISUAL_ALTS, HOME_VISUAL_FOCUS, HOME_VISUALS, PLATFORM_VISUALS } from "@/lib/content/assets";
 import { WorkshopVideo } from "@/components/marketing/home/workshop-video";
 import { GameCard, ProductCard, ProductGrid } from "@/components/shop/product-card";
-import { CATEGORIES, HERO_TRUST, PLATFORMS, SAVOIR_FAIRE, SHOP_FILTERS, STEPS, TRUST, type Platform } from "@/components/marketing/home/content";
+import { CATEGORIES, HERO_TRUST, PLATFORMS, SAVOIR_FAIRE, SHOP_FILTERS, stepsAvecTarif, TRUST, type Platform } from "@/components/marketing/home/content";
 import type { Product } from "@/lib/shop/catalog";
 import type { GameListing } from "@/lib/shop/games";
 import type { BrandSettings } from "@/config/brand";
@@ -165,7 +165,7 @@ export function modelHref(platform: Platform, models: { slug: string }[]): strin
   return correspond[0] ? `${ROUTES.repair}/${correspond[0].slug}` : ROUTES.repair;
 }
 
-export function Repairs({ models = [] }: { models?: { slug: string }[] }) {
+export function Repairs({ models = [], diagnostic }: { models?: { slug: string }[]; diagnostic?: string | null }) {
   return (
     <section id="reparation" className={`${WRAP} pt-14`}>
       <div data-rise="1" className="mb-[26px] flex flex-wrap items-end justify-between gap-5">
@@ -173,7 +173,9 @@ export function Repairs({ models = [] }: { models?: { slug: string }[] }) {
           <Eyebrow>Réparations</Eyebrow>
           <H2>Votre panne est probablement prise en charge</H2>
         </div>
-        <span className="font-mono text-[11.5px] tracking-[0.04em] text-ink-muted">Prix indicatifs, hors pièces · diagnostic 20 €</span>
+        <span className="font-mono text-[11.5px] tracking-[0.04em] text-ink-muted">
+          Prix indicatifs, hors pièces{diagnostic ? ` · diagnostic ${diagnostic}` : ""}
+        </span>
       </div>
 
       <ul className="grid list-none gap-[18px] p-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))" }}>
@@ -254,7 +256,7 @@ export function Repairs({ models = [] }: { models?: { slug: string }[] }) {
 // ─────────────────────────────── 3 · parcours ────────────────────────────────
 
 /** De la panne au retour de la console. Fond noir : c'est la promesse du site. */
-export function Journey() {
+export function Journey({ diagnostic }: { diagnostic?: string | null }) {
   return (
     <section id="diagnostic" className="mt-14 bg-ink text-on-dark">
       <div className={`${WRAP} py-[52px]`}>
@@ -272,7 +274,7 @@ export function Journey() {
         </div>
 
         <ol className="grid list-none gap-[26px] p-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(224px, 1fr))" }}>
-          {STEPS.map((s) => (
+          {stepsAvecTarif(diagnostic ?? null).map((s) => (
             <li key={s.n} data-rise="1" className="flex flex-col gap-2.5 pt-4" style={{ borderTop: "1px solid rgba(242,242,244,0.26)" }}>
               <span className="font-mono text-[12px] tracking-[0.06em] text-red-on-dark">{s.n}</span>
               <strong className="text-[18px] font-semibold tracking-[-0.02em]">{s.title}</strong>

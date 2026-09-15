@@ -131,7 +131,8 @@ export const PLATFORMS: Platform[] = [
 /** De la panne au retour de la console. */
 export const STEPS = [
   { n: "01", title: "Vous décrivez la panne", body: "Console, modèle, symptôme, photos si vous voulez. Deux minutes, sans créer de compte." },
-  { n: "02", title: "Diagnostic en atelier", body: "Banc de test et mesures. Le diagnostic est facturé 20 € et offert si vous acceptez la réparation." },
+  // Le montant est injecté depuis les réglages : voir `stepsAvecTarif`.
+  { n: "02", title: "Diagnostic en atelier", body: "Banc de test et mesures. Le diagnostic est facturé {tarif} et offert si vous acceptez la réparation." },
   { n: "03", title: "Devis avant intervention", body: "Détaillé pièce par pièce, prix et délai fermes. Rien n'est entrepris sans votre accord." },
   { n: "04", title: "Réparation et tests", body: "Intervention puis deux heures de test sous charge avant fermeture du boîtier." },
   { n: "05", title: "Retour suivi", body: "Colis suivi, ou retrait au comptoir. Garantie trois mois sur la main d'œuvre et la pièce." },
@@ -197,3 +198,27 @@ export const SHOP_FILTERS = [
   { label: "Occasion", href: `${ROUTES.shop}?etat=occasion` },
   { label: "Moins de 50 €", href: `${ROUTES.shop}?max=50` },
 ];
+
+/**
+ * Les étapes, avec le vrai tarif de diagnostic.
+ *
+ * Il était écrit « 20 € » en dur dans la page, alors que le moteur de devis
+ * facture `business_rules.diagnostic_fee_cents` — semé à 29 € dans le
+ * catalogue de production. Le site promettait donc un prix, et la caisse en
+ * demandait un autre. Le montant vient désormais des réglages, et le magasin
+ * n'a qu'un endroit à corriger.
+ *
+ * Tarif à zéro : la phrase ne promet rien plutôt que d'annoncer « 0 € ».
+ */
+export function stepsAvecTarif(tarif: string | null): typeof STEPS {
+  return STEPS.map((s) =>
+    s.body.includes("{tarif}")
+      ? {
+          ...s,
+          body: tarif
+            ? s.body.replace("{tarif}", tarif)
+            : "Banc de test et mesures. Le diagnostic est offert si vous acceptez la réparation.",
+        }
+      : s,
+  );
+}

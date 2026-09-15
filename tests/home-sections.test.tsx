@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Hero, modelHref, ProductWall, Repairs, Store, TrustBand } from "@/components/marketing/home/sections";
+import { Hero, Journey, modelHref, ProductWall, Repairs, Store, TrustBand } from "@/components/marketing/home/sections";
 import { CartProvider } from "@/components/shop/cart-provider";
 import { PLATFORMS, TRUST } from "@/components/marketing/home/content";
 import { BRAND_DEFAULTS } from "@/config/brand";
@@ -200,5 +200,36 @@ describe("cadrage des visuels", () => {
   it("garde le carré pour le reste du rayon", () => {
     const html = rendu(<ProductWall products={[produit(1)]} demoGames={[]} total={9} />);
     expect(html).toContain("aspect-ratio:1 / 1");
+  });
+});
+
+describe("tarif du diagnostic", () => {
+  it("affiche le tarif réellement appliqué, pas un montant écrit en dur", () => {
+    // Le site annonçait « 20 € » alors que les règles métier semées facturent
+    // 29 € : un client aurait payé 45 % de plus qu'annoncé.
+    const html = rendu(<Repairs models={[]} diagnostic="29,00 €" />);
+    expect(html).toContain("diagnostic 29,00 €");
+    expect(html).not.toContain("20 €");
+  });
+
+  it("le reprend aussi dans le parcours", () => {
+    const html = rendu(<Journey diagnostic="29,00 €" />);
+    expect(html).toContain("facturé 29,00 €");
+    expect(html).not.toContain("{tarif}");
+  });
+
+  it("ne promet rien quand aucun diagnostic n'est facturé", () => {
+    // « 0 € » se lirait comme une promesse commerciale ; l'absence de mention
+    // est plus honnête qu'un zéro affiché.
+    const repairs = rendu(<Repairs models={[]} diagnostic={null} />);
+    expect(repairs).toContain("Prix indicatifs, hors pièces");
+    // Le mot « diagnostic » reste présent ailleurs — boutons, encadré. C'est
+    // la mention du *tarif* qui doit disparaître.
+    expect(repairs).not.toContain("· diagnostic");
+
+    const journey = rendu(<Journey diagnostic={null} />);
+    expect(journey).toContain("offert si vous acceptez la réparation");
+    expect(journey).not.toContain("facturé");
+    expect(journey).not.toContain("{tarif}");
   });
 });
