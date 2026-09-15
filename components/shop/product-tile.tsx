@@ -17,6 +17,11 @@ import { CATEGORY_SHORT, type ProductCategory } from "@/lib/shop/status";
  * empruntée à un éditeur ou à un fabricant. C'est un carton d'attente, et il
  * en a l'air.
  *
+ * **Sur le même fond clair qu'une photo de produit.** Une vignette noire à
+ * côté d'une photo détourée sur blanc attirait l'œil sur l'article qui n'a
+ * justement rien à montrer, et la grille se lisait en damier. Le rayon se
+ * remplira photo par photo : les deux états doivent peser pareil.
+ *
  * **Une seule vignette pour deux tailles.** Elle sert la carte de 150 px du
  * rayon et le carré de 640 px de la fiche produit. Plutôt que deux variantes à
  * tenir d'accord, la typographie se mesure en `cqw` — un pourcentage de la
@@ -30,19 +35,19 @@ export function ProductTile({ name, platform, category }: { name: string; platfo
   return (
     <span
       aria-hidden="true"
-      className="absolute inset-0 flex flex-col justify-end overflow-hidden bg-ink-900 text-on-dark"
+      className="absolute inset-0 flex flex-col justify-end overflow-hidden bg-surface-strong text-ink"
       style={{ containerType: "inline-size", padding: "clamp(12px, 4cqw, 28px)" }}
     >
-      {/* La même trame que la plaque d'attente de l'accueil, en négatif : elle
-          donne une matière au carton sans figurer quoi que ce soit. */}
+      {/* La même trame que la plaque d'attente de l'accueil : elle donne une
+          matière au carton sans figurer quoi que ce soit. */}
       <span
         className="pointer-events-none absolute inset-0"
-        style={{ background: "repeating-linear-gradient(48deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 13px)" }}
+        style={{ background: "repeating-linear-gradient(48deg, rgba(15,15,17,0.05) 0 1px, transparent 1px 11px)" }}
       />
       {/* Le rayon, discret, en haut à droite : le coin en haut à gauche porte
           déjà le badge d'état. */}
       <span
-        className="absolute font-mono uppercase text-on-dark-3"
+        className="absolute font-mono uppercase text-ink-faint"
         style={{
           top: "clamp(12px, 4cqw, 28px)",
           right: "clamp(12px, 4cqw, 28px)",
@@ -60,7 +65,7 @@ export function ProductTile({ name, platform, category }: { name: string; platfo
         >
           {name}
         </span>
-        <span className="font-mono uppercase text-on-dark-3" style={{ fontSize: "clamp(9.5px, 2cqw, 13px)", letterSpacing: "0.1em" }}>
+        <span className="font-mono uppercase text-ink-muted" style={{ fontSize: "clamp(9.5px, 2cqw, 13px)", letterSpacing: "0.1em" }}>
           {platform}
         </span>
       </span>

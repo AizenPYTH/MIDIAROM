@@ -530,7 +530,11 @@ export function Store({ brand }: { brand: BrandSettings }) {
   const adresse = [brand.address_line1, [brand.postal_code, brand.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   return (
     <section aria-label="Le magasin" className={`${WRAP} py-14`}>
-      <div className="grid border border-border" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+      {/* Colonnes inégales, et la géométrie vit dans la feuille de style : un
+          style en ligne l'emporterait sur la requête de média. La colonne de
+          droite est plus étroite que la gauche parce qu'elle porte un portrait
+          — moins elle est large, moins la bande en coupe. */}
+      <div data-store-grid="1" className="grid border border-border">
         <div data-rise="1" className="flex flex-col justify-center gap-3 p-[34px]">
           <Eyebrow>Le magasin</Eyebrow>
           {adresse ? (
@@ -557,7 +561,11 @@ export function Store({ brand }: { brand: BrandSettings }) {
             </Link>
           </div>
         </div>
-        <div className="relative min-h-[280px] overflow-hidden border-l border-border bg-surface-strong">
+        {/* La devanture est un portrait (3/4) posé dans une bande paysage : le
+            recadrage est voulu — c'est une image d'ambiance, pas un produit —
+            mais il doit rester généreux. 360 px de haut laissent voir
+            l'enseigne et la vitrine, pas une tranche de trottoir. */}
+        <div className="relative min-h-[300px] overflow-hidden border-l border-border bg-surface-strong sm:min-h-[360px] lg:min-h-[420px]">
           <HomeVisual
             src={HOME_VISUALS.magasin}
             alt={HOME_VISUAL_ALTS.magasin}

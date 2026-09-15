@@ -29,13 +29,19 @@ import { cn } from "@/lib/utils/cn";
  */
 
 /**
- * Le cadre visuel commun : zoom au survol, badge.
+ * Le cadre visuel : un carré, pour tout le rayon.
  *
- * Le rapport se choisit, et ce n'est pas un détail. Une jaquette de jeu est en
- * 3/4 ; enfermée dans un carré avec `object-cover`, elle perd un quart de sa
- * hauteur — le titre et le logo de la plateforme passent hors champ, et la
- * vignette a l'air zoomée. Les jeux gardent donc leur rapport d'origine, le
- * reste du rayon garde le carré.
+ * Il a d'abord suivi le rapport du produit — 3/4 pour un jeu, carré pour le
+ * reste — afin de ne pas recadrer une jaquette. C'était juste pour une carte
+ * seule, et faux pour une grille : les rayons se mélangent, deux cartes
+ * voisines n'avaient donc pas la même hauteur d'image, et la ligne entière
+ * partait de travers.
+ *
+ * Le cadre est désormais **le même partout**, et c'est la photo qui s'y adapte
+ * en `object-contain` : une jaquette 3/4 se montre entière, centrée, avec une
+ * marge égale de chaque côté, plutôt que recadrée. Rien n'est jamais déformé,
+ * rien n'est coupé, et deux produits aux photos de rapports différents pèsent
+ * pareil dans la grille.
  */
 function Frame({
   href,
@@ -43,24 +49,22 @@ function Frame({
   children,
   badge,
   badgeTone = "ink",
-  ratio = "1 / 1",
 }: {
   href: string;
   alt: string;
   children: React.ReactNode;
   badge?: string | null;
   badgeTone?: "ink" | "red" | "outline";
-  ratio?: string;
 }) {
   return (
-    <Link href={href} className="relative block overflow-hidden bg-surface-strong" style={{ aspectRatio: ratio }} aria-label={alt}>
+    <Link href={href} className="relative block overflow-hidden bg-surface-strong" style={{ aspectRatio: "1 / 1" }} aria-label={alt}>
       <span data-zoom="1" className="absolute inset-0">
         {children}
       </span>
       {badge ? (
         <span
           className={cn(
-            "absolute left-[11px] top-[11px] px-[9px] py-[5px] font-mono text-[10px] uppercase tracking-[0.07em]",
+            "absolute left-[11px] top-[11px] z-10 px-[9px] py-[5px] font-mono text-[10px] uppercase tracking-[0.07em]",
             badgeTone === "red" ? "bg-red text-white" : badgeTone === "outline" ? "bg-bg/92 text-ink ring-1 ring-border" : "bg-ink text-white",
           )}
         >
@@ -78,44 +82,58 @@ export function ProductCard({ product }: { product: Product }) {
   const href = `${ROUTES.shop}/${product.slug}`;
   // Une remise est la seule information de la carte qui mérite le rouge.
   const enPromo = Boolean(product.compare_at_price_cents && product.compare_at_price_cents > product.price_cents);
-  // Un jeu a une jaquette, et une jaquette est en 3/4. Le carré la recadre.
-  const ratio = product.category === "GAME" ? "3 / 4" : "1 / 1";
   return (
-    <article data-card="1" className="flex min-w-0 flex-col border border-border bg-surface">
-      <Frame href={href} alt={product.name} badge={CONDITION_SHORT[product.condition]} badgeTone={enPromo ? "red" : "ink"} ratio={ratio}>
+    // `h-full` : sans lui la carte garde sa hauteur naturelle au lieu de
+    // remplir sa cellule, et un titre de trois lignes décale toute la rangée.
+    <article data-card="1" className="flex h-full min-w-0 flex-col border border-border bg-surface">
+      <Frame href={href} alt={product.name} badge={CONDITION_SHORT[product.condition]} badgeTone={enPromo ? "red" : "ink"}>
         {image ? (
-          <Image src={publicMediaUrl(image)} alt="" fill sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 232px" className="object-cover" />
+          // `object-contain` : on vend l'objet, pas un cadrage. Une jaquette en
+          // 3/4 et une console en 4/3 tiennent dans le même carré sans que
+          // l'une soit rognée. Le léger retrait évite que la photo touche le
+          // filet de la carte.
+          <Image
+            src={publicMediaUrl(image)}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 232px"
+            className="object-contain p-[9%]"
+          />
         ) : (
           <ProductTile name={product.name} platform={product.platform} category={product.category} />
         )}
       </Frame>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-2 p-4">
+      <div className="flex min-w-0 flex-1 flex-col p-4">
         <span className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-muted">{product.platform}</span>
-        <h3 className="flex-1 text-[15.5px] font-semibold leading-[1.32] tracking-[-0.014em] text-ink">
+        {/* Deux lignes réservées : un titre court et un titre long donnent la
+            même hauteur de carte, sans creuser le vide d'une zone de trois
+            lignes toujours vide. Un nom qui déborde prend sa troisième ligne. */}
+        <h3 className="mt-2 min-h-[2lh] text-[15.5px] font-semibold leading-[1.32] tracking-[-0.014em] text-ink">
           <Link href={href} className="transition-colors hover:text-red">
             {product.name}
           </Link>
         </h3>
-        {/* `flex-wrap` : l'étiquette de stock ne se coupe pas (« Plus que 2 »).
-            Sur une colonne étroite — 768 et 1024 px, là où la grille tient six
-            cartes — elle poussait la page hors de l'écran. Elle passe désormais
-            sous le prix plutôt que de déborder. */}
-        <span className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-1">
-          <span className="flex items-baseline gap-2">
-            <span className="text-[19px] font-bold tracking-[-0.028em] text-ink">{formatPrice(product.price_cents)}</span>
-            {enPromo ? <span className="font-mono text-[11.5px] text-ink-muted line-through">{formatPrice(product.compare_at_price_cents!)}</span> : null}
+        {/* `mt-auto` : le prix, le stock et le bouton sont collés au bas de la
+            carte. Un titre d'une ligne et un titre de trois lignes donnent donc
+            le même alignement d'un bout à l'autre de la rangée. */}
+        <div className="mt-auto flex flex-col gap-2 pt-3">
+          <span data-price-row="1">
+            <span className="flex items-baseline gap-2">
+              <span className="text-[19px] font-bold tracking-[-0.028em] text-ink">{formatPrice(product.price_cents)}</span>
+              {enPromo ? <span className="font-mono text-[11.5px] text-ink-muted line-through">{formatPrice(product.compare_at_price_cents!)}</span> : null}
+            </span>
+            <span
+              className={cn(
+                "whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.05em]",
+                state === "OUT" ? "text-red" : state === "LOW" ? "text-warning" : "text-ink-muted",
+              )}
+            >
+              {stockLabel(product.quantity, product.low_stock_threshold, product.condition)}
+            </span>
           </span>
-          <span
-            className={cn(
-              "whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.05em]",
-              state === "OUT" ? "text-red" : state === "LOW" ? "text-warning" : "text-ink-muted",
-            )}
-          >
-            {stockLabel(product.quantity, product.low_stock_threshold, product.condition)}
-          </span>
-        </span>
-        <AddToCartButton productId={product.id} available={product.quantity} className="mt-0.5 w-full" />
+          <AddToCartButton productId={product.id} available={product.quantity} className="w-full" />
+        </div>
       </div>
     </article>
   );
@@ -124,6 +142,9 @@ export function ProductCard({ product }: { product: Product }) {
 /** La grille du rayon. Deux colonnes au doigt, jusqu'à six sur grand écran. */
 export function ProductGrid({ children }: { children: React.ReactNode }) {
   return (
+    // `items-stretch` (défaut de la grille) + `h-full` sur la carte : toutes
+    // les cartes d'une même rangée font la hauteur de la plus haute, sans
+    // hauteur fixe qui creuserait du vide sous les plus courtes.
     <ul className="grid list-none gap-[18px] p-0" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(clamp(150px, 17vw, 232px), 1fr))" }}>
       {children}
     </ul>

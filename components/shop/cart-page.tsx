@@ -50,7 +50,7 @@ export function CartPage() {
         {state.lines.map((line) => (
           <div key={line.productId} className="flex gap-4 border border-border bg-surface p-4">
             <Link href={`${ROUTES.shop}/${line.slug}`} className="relative block h-20 w-20 shrink-0">
-              {line.image ? <Image src={publicMediaUrl(line.image)} alt={line.label} fill sizes="80px" className="object-cover" /> : <div className="photo-placeholder h-full w-full text-[9px]">photo</div>}
+              {line.image ? <Image src={publicMediaUrl(line.image)} alt={line.label} fill sizes="80px" className="object-contain p-1" /> : <div className="photo-placeholder h-full w-full text-[9px]">photo</div>}
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">

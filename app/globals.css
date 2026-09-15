@@ -679,6 +679,39 @@ body {
   }
 }
 
+/**
+ * Le bloc « Le magasin » de l'accueil.
+ *
+ * Une colonne de texte large, une colonne d'image plus étroite. La devanture
+ * est un portrait posé dans une bande : plus la bande est large, plus elle en
+ * coupe. Ramener la colonne à 44 % au lieu de 50 % suffit à rendre la
+ * photo lisible sans toucher au reste de la mise en page.
+ */
+[data-store-grid] { grid-template-columns: 1fr; }
+@media (min-width: 760px) {
+  [data-store-grid] { grid-template-columns: 1.28fr 0.72fr; }
+}
+
+/**
+ * Carte produit — le bloc prix / stock.
+ *
+ * **Toujours empilés**, à toutes les largeurs. Les mettre côte à côte tenait
+ * sur une carte large et débordait sur une carte étroite : « 44,99 € 59,99 €
+ * En stock · 3 » ne rentre pas dans 156 px, et l'étiquette de stock, qui ne se
+ * coupe pas, poussait la page hors de l'écran. Une bascule selon la largeur
+ * réglait le débordement mais en créait un autre : deux cartes voisines, l'une
+ * en promotion et l'autre non, n'auraient pas eu leur prix à la même hauteur.
+ *
+ * Une seule disposition vaut donc mieux : le prix est toujours à la même
+ * hauteur d'une carte à l'autre, et rien ne déborde jamais.
+ */
+[data-price-row] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
 /* Survol d'une carte : la seule ombre de la charte, et elle n'existe qu'ici. */
 [data-card] {
   transition: border-color 0.2s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.2, 0.8, 0.25, 1);
