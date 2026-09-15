@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/site";
-import { PhotoSlot } from "@/components/marketing/home/photo-slot";
 import { HomeVisual } from "@/components/marketing/home/visual";
 import { HOME_VISUAL_ALTS, HOME_VISUAL_FOCUS, HOME_VISUALS, PLATFORM_VISUALS } from "@/lib/content/assets";
 import { WorkshopVideo } from "@/components/marketing/home/workshop-video";
@@ -312,8 +311,31 @@ export function TrustBand() {
 
 // ───────────────────────────── 5 · savoir-faire ──────────────────────────────
 
-/** La transition atelier → savoir-faire → boutique. */
+/**
+ * La transition atelier → savoir-faire → boutique.
+ *
+ * La colonne de droite n'existe que s'il y a quelque chose à y montrer : une
+ * vidéo d'atelier, ou au moins une photo. Tant qu'il n'y a ni l'une ni l'autre,
+ * y laisser une plaque d'attente reviendrait à réserver la moitié de la section
+ * à un trou. Les quatre étapes prennent alors sa place, et la section se lit
+ * entière. Le jour où le fichier arrive, la mise en page revient d'elle-même.
+ */
 export function Workshop({ video }: { video?: { src: string; poster?: string } }) {
+  const visuel = HOME_VISUALS.atelier;
+  const media = Boolean(video?.src || visuel);
+
+  const etapes = (
+    <ul className="mt-1 flex list-none flex-col p-0">
+      {SAVOIR_FAIRE.map((s) => (
+        <li key={s} className="flex items-baseline gap-[11px] border-t border-border-hairline py-[11px]">
+          <span aria-hidden="true" className="mt-[7px] block h-1.5 w-1.5 shrink-0 bg-red" />
+          <span className="text-[14.5px] leading-[1.45]">{s}</span>
+        </li>
+      ))}
+      <li className="border-t border-border-hairline" />
+    </ul>
+  );
+
   return (
     <section id="savoir-faire" className={`${WRAP} pt-14`}>
       <div className="grid items-stretch gap-[26px]" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
@@ -323,15 +345,7 @@ export function Workshop({ video }: { video?: { src: string; poster?: string } }
           <p className="max-w-[42ch] text-[15.5px] leading-[1.55] text-ink-soft">
             Ce qui se passe entre le moment où votre console arrive et celui où elle repart.
           </p>
-          <ul className="mt-1 flex list-none flex-col p-0">
-            {SAVOIR_FAIRE.map((s) => (
-              <li key={s} className="flex items-baseline gap-[11px] border-t border-border-hairline py-[11px]">
-                <span aria-hidden="true" className="mt-[7px] block h-1.5 w-1.5 shrink-0 bg-red" />
-                <span className="text-[14.5px] leading-[1.45]">{s}</span>
-              </li>
-            ))}
-            <li className="border-t border-border-hairline" />
-          </ul>
+          {media ? etapes : null}
           <Link
             href={ROUTES.repair}
             className="mt-2.5 self-start border border-ink px-6 py-3.5 text-[15.5px] font-semibold text-ink transition-colors duration-200 hover:bg-ink hover:text-white"
@@ -340,21 +354,28 @@ export function Workshop({ video }: { video?: { src: string; poster?: string } }
           </Link>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-2.5">
-          <WorkshopVideo src={video?.src} poster={video?.poster}>
-            <HomeVisual
-              src={HOME_VISUALS.atelier}
-              alt={HOME_VISUAL_ALTS.atelier}
-              label="Atelier"
-              position={HOME_VISUAL_FOCUS.atelier.position}
-              positionMobile={HOME_VISUAL_FOCUS.atelier.mobile}
-              sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 700px"
-            />
-          </WorkshopVideo>
-          <span className="font-mono text-[10.5px] tracking-[0.05em] text-ink-muted">
-            Muette, en boucle, 20 à 40 secondes. Elle se met en pause dès qu&apos;elle quitte l&apos;écran.
-          </span>
-        </div>
+        {media ? (
+          <div className="flex min-w-0 flex-col gap-2.5">
+            <WorkshopVideo src={video?.src} poster={video?.poster}>
+              <HomeVisual
+                src={visuel}
+                alt={HOME_VISUAL_ALTS.atelier}
+                label="Atelier"
+                position={HOME_VISUAL_FOCUS.atelier.position}
+                positionMobile={HOME_VISUAL_FOCUS.atelier.mobile}
+                sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 700px"
+              />
+            </WorkshopVideo>
+            {/* La légende décrit une vidéo : elle n'a rien à dire sous une photo fixe. */}
+            {video?.src ? (
+              <span className="font-mono text-[10.5px] tracking-[0.05em] text-ink-muted">
+                Muette, en boucle, 20 à 40 secondes. Elle se met en pause dès qu&apos;elle quitte l&apos;écran.
+              </span>
+            ) : null}
+          </div>
+        ) : (
+          <div data-rise="1" className="flex min-w-0 flex-col justify-center">{etapes}</div>
+        )}
       </div>
     </section>
   );
@@ -362,22 +383,40 @@ export function Workshop({ video }: { video?: { src: string; poster?: string } }
 
 // ──────────────────────────────── 6 · boutique ───────────────────────────────
 
-/** Les trois rayons, en cartes pleine image. Pas un de plus. */
-export function ShopCategories() {
+/**
+ * Les trois rayons.
+ *
+ * Les visuels fournis par le magasin ne sont pas des photos brutes : ce sont
+ * des affiches, composées en 3/2, qui portent déjà le nom du rayon et sa
+ * phrase. Les enfermer en 4/3 sous un voile, puis réécrire par-dessus le titre
+ * qu'elles contiennent déjà, faisait deux dégâts d'un coup — le texte de
+ * l'affiche sortait du cadre, et celui du site le doublait.
+ *
+ * On montre donc l'affiche entière, à son rapport d'origine, sans voile et
+ * sans rien écrire dessus. Sous elle, une réglette en mono dit où mène la
+ * carte. Le nom complet et la phrase du rayon restent portés par `aria-label`,
+ * pour qui ne voit pas l'image.
+ */
+export function ShopCategories({ heading = true }: { heading?: boolean } = {}) {
   return (
-    <section id="boutique" className={`${WRAP} pt-14`}>
-      <div data-rise="1" className="mb-6 flex flex-wrap items-end justify-between gap-5">
-        <div className="min-w-0">
-          <Eyebrow>Boutique</Eyebrow>
-          <H2>Jeux vidéo, consoles et figurines</H2>
+    <section id="boutique" className={`${WRAP} ${heading ? "pt-14" : ""}`}>
+      {/* Sur le catalogue, la page porte déjà son titre et le lien « tout le
+          catalogue » mènerait là où l'on est : les trois affiches y servent de
+          rayonnage, pas d'annonce. */}
+      {heading ? (
+        <div data-rise="1" className="mb-6 flex flex-wrap items-end justify-between gap-5">
+          <div className="min-w-0">
+            <Eyebrow>Boutique</Eyebrow>
+            <H2>Jeux vidéo, consoles et figurines</H2>
+          </div>
+          <Link
+            href={ROUTES.shop}
+            className="whitespace-nowrap border-b-2 border-red pb-[3px] font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink"
+          >
+            Tout le catalogue
+          </Link>
         </div>
-        <Link
-          href={ROUTES.shop}
-          className="whitespace-nowrap border-b-2 border-red pb-[3px] font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink"
-        >
-          Tout le catalogue
-        </Link>
-      </div>
+      ) : null}
 
       <ul className="grid list-none gap-[18px] p-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(268px, 1fr))" }}>
         {CATEGORIES.map((c) => (
@@ -386,30 +425,26 @@ export function ShopCategories() {
               href={c.href}
               data-card="1"
               data-rise="1"
-              className="relative block overflow-hidden border border-border bg-surface-strong text-white"
-              style={{ aspectRatio: "4 / 3" }}
+              aria-label={`${c.name} — ${c.note}`}
+              className="flex flex-col overflow-hidden border border-border bg-surface"
             >
-              <span data-zoom="1" className="absolute inset-0">
-                <HomeVisual
-                  src={HOME_VISUALS[c.visual]}
-                  alt={HOME_VISUAL_ALTS[c.visual]}
-                  label={c.name}
-                  position={HOME_VISUAL_FOCUS[c.visual].position}
-                  positionMobile={HOME_VISUAL_FOCUS[c.visual].mobile}
-                  sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 440px"
-                />
+              {/* 3/2 : exactement le rapport des fichiers fournis. Rien n'est
+                  recadré, donc rien de ce qui est composé dedans ne sort. */}
+              <span className="relative block w-full overflow-hidden bg-surface-strong" style={{ aspectRatio: "3 / 2" }}>
+                <span data-zoom="1" className="absolute inset-0">
+                  <HomeVisual
+                    src={HOME_VISUALS[c.visual]}
+                    alt={HOME_VISUAL_ALTS[c.visual]}
+                    label={c.name}
+                    sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 460px"
+                  />
+                </span>
               </span>
-              {/* Le voile : c'est lui qui garantit la lisibilité du texte blanc
-                  sur la photo que le magasin déposera. Il reste utile sur la
-                  plaque d'attente, qui est claire. */}
-              <span
-                aria-hidden="true"
-                className="absolute inset-0"
-                style={{ background: "linear-gradient(180deg, rgba(15,15,17,0.04) 0%, rgba(15,15,17,0.32) 46%, rgba(15,15,17,0.9) 100%)" }}
-              />
-              <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-5">
-                <strong className="text-[21px] font-bold tracking-[-0.026em]">{c.name}</strong>
-                <span className="text-[14px] leading-[1.4] text-[#eaeaee]">{c.note}</span>
+              <span className="flex items-center justify-between gap-3 border-t border-border px-4 py-[13px]">
+                <span className="truncate font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink">{c.name}</span>
+                <span data-arrow="1" className="whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">
+                  Voir le rayon <span aria-hidden="true">→</span>
+                </span>
               </span>
             </Link>
           </li>
@@ -522,8 +557,15 @@ export function Store({ brand }: { brand: BrandSettings }) {
             </Link>
           </div>
         </div>
-        <div className="relative min-h-[280px] overflow-hidden border-l border-border">
-          <PhotoSlot label="Magasin" />
+        <div className="relative min-h-[280px] overflow-hidden border-l border-border bg-surface-strong">
+          <HomeVisual
+            src={HOME_VISUALS.magasin}
+            alt={HOME_VISUAL_ALTS.magasin}
+            label="Magasin"
+            position={HOME_VISUAL_FOCUS.magasin.position}
+            positionMobile={HOME_VISUAL_FOCUS.magasin.mobile}
+            sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 700px"
+          />
         </div>
       </div>
     </section>

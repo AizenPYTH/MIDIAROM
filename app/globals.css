@@ -700,6 +700,9 @@ body {
   [data-card]:hover [data-buy] { background: var(--red); border-color: var(--red); color: #ffffff; }
   [data-row]:hover { background: var(--bg-alt); padding-left: 10px; }
   [data-row]:hover [data-arrow] { transform: translateX(6px); color: var(--red); }
+  /* Même geste sur une carte de rayon : la réglette du bas répond au survol
+     de la carte entière, pas seulement du lien qu'elle contient. */
+  [data-card]:hover [data-arrow] { transform: translateX(6px); color: var(--red); }
   [data-chip]:hover { border-color: var(--red); color: var(--red); }
 }
 
@@ -738,6 +741,7 @@ body {
   [data-pad] > span { animation: none !important; }
   [data-card]:hover { transform: none; }
   [data-card]:hover [data-zoom] { transform: none; }
+  [data-card]:hover [data-arrow] { transform: none; }
   [data-row]:hover { padding-left: 0; }
 }
 

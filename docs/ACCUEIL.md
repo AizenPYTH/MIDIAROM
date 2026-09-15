@@ -99,9 +99,28 @@ prévu et non un trou ; ce qui reste à fournir est listé dans `MISSING_ASSETS`
 
 **Les figurines exigent des visuels de personnages** de manga et d'anime.
 
+**Les trois affiches de rayon sont composées, pas brutes.** Elles arrivent en
+3/2 et portent déjà le nom du rayon et sa phrase. `ShopCategories` les montre
+donc entières, à ce rapport exact, sans voile et sans rien écrire dessus : les
+enfermer en 4/3 sortait leur propre titre du cadre, et le titre du site le
+doublait. Sous l'affiche, une réglette en mono dit où mène la carte ; le nom
+complet et la phrase restent portés par `aria-label`.
+
+**L'atelier n'a pas encore sa photo.** Le fichier livré sous le nom
+« dasn l'atelier.png » est le doublon exact de l'affiche jeux vidéo (même md5).
+`HOME_VISUALS.atelier` vaut donc `null`, et `Workshop` supprime alors sa colonne
+de droite : les quatre étapes la remplacent, et la section se lit entière au
+lieu de réserver la moitié de sa surface à une plaque. Le jour où la photo — ou
+la vidéo — est renseignée, la mise en page à deux colonnes revient d'elle-même.
+
 Les photos de produits — jaquettes de jeux comprises — sont celles saisies dans
 le back-office au moment de créer l'annonce. Aucune ne vient d'un catalogue
-tiers.
+tiers. Tant qu'un article n'en a pas, sa carte affiche une **vignette
+typographique** (`components/shop/product-tile.tsx`) : rayon, titre et
+plateforme dans la typographie de la maison, sur fond noir. Alignée huit fois
+dans une grille, la plaque d'attente grise donnait un catalogue en panne ; la
+vignette se lit, se différencie d'une carte à l'autre, et disparaît dès qu'une
+photo est déposée.
 
 ## Le mur de produits
 

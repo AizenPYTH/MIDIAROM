@@ -109,10 +109,12 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       ) : null}
 
       {/* Les trois rayons, en grand, quand on arrive sans filtre : c'est la
-          première chose qu'une boutique doit montrer. */}
+          première chose qu'une boutique doit montrer. Sans son titre : la page
+          en porte déjà un, et le sien annoncerait la boutique à quelqu'un qui y
+          est déjà. */}
       {!sp.cat && sp.retro !== "1" && !sp.q ? (
-        <div className="-mx-5 mb-8 sm:-mx-8">
-          <ShopCategories />
+        <div className="-mx-4 mb-8 sm:-mx-8">
+          <ShopCategories heading={false} />
         </div>
       ) : null}
 

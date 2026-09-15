@@ -3,14 +3,12 @@ import "server-only";
 /**
  * Les visuels de l'accueil.
  *
- * **Aucune photo n'est branchée, et c'est volontaire.** Le magasin fournira ses
- * propres visuels — consoles, figurines de personnages, atelier, façade — et ne
- * veut pas d'images choisies à sa place, même issues du projet.
+ * Ce sont ceux du magasin, déposés dans `public/images/home/`. On ne va en
+ * chercher aucun ailleurs : le rayon montré doit être le rayon vendu.
  *
- * Les emplacements existent donc dans les composants, vides, et attendent
- * qu'on renseigne une entrée ici : rien d'autre ne sera à changer. En
- * attendant, chaque emplacement affiche la plaque d'attente de la charte, qui
- * est un état prévu et non un trou.
+ * Un emplacement dont l'entrée vaut `null` affiche la plaque d'attente de la
+ * charte — un état prévu, et non un trou. Brancher une photo se fait ici et
+ * nulle part ailleurs.
  *
  * Ce qui existe par ailleurs dans le dépôt, non branché sur l'accueil :
  * 13 détourés de consoles sur fond blanc (`public/medias/consoles/`, importés
@@ -20,39 +18,47 @@ import "server-only";
  */
 
 /**
- * Les cinq visuels de l'accueil.
+ * Les visuels branchés, emplacement par emplacement.
  *
  * Ils forment une campagne : même noir, même blanc, même rouge `#d81f26`,
- * même lumière d'atelier. Les brancher se fait ici et nulle part ailleurs —
- * `HomeVisual` s'occupe du reste (recadrage sans déformation, chargement
- * différé sauf pour le hero, texte alternatif).
+ * même lumière d'atelier. `HomeVisual` s'occupe du reste — cadrage sans
+ * déformation, chargement différé sauf pour le hero, texte alternatif, repli
+ * sur la plaque d'attente si un fichier manque.
  *
- * **Tant qu'une entrée vaut `null`, son emplacement affiche la plaque
- * d'attente de la charte.** C'est voulu : un chemin qui pointe vers un fichier
- * absent donne une image cassée en production, ce qui est pire qu'une plaque.
- *
- * Pour les activer : déposer les cinq fichiers dans `public/medias/accueil/`
- * sous exactement ces noms, puis remplacer `null` par le chemin commenté.
- * Format conseillé : WebP, largeur 1600 px, moins de 400 Ko.
+ * Les trois affiches de rayon sont livrées en **3/2** et composées : elles
+ * portent déjà le nom du rayon et sa phrase. Leur carte est donc dessinée au
+ * même rapport, et n'écrit rien par-dessus (`ShopCategories`).
  */
-export const HOME_VISUALS = {
+type HomeVisualKey = "hero" | "atelier" | "jeux" | "consoles" | "figurines" | "magasin";
+
+export const HOME_VISUALS: Record<HomeVisualKey, string | null> = {
   /** Cadre 5/4 du hero. PS5, Xbox Series X et Switch sur fond blanc. */
   hero: "/images/home/réparation des consoles.png",
   /**
    * Cadre 16/9 de « Dans l'atelier ». Sert aussi d'affiche à la vidéo.
    *
-   * ⚠︎ Le fichier livré est **le même octet pour octet** que celui du rayon
-   * jeux vidéo (md5 identique) : la section montre donc une photo de boutique
-   * là où elle promet l'atelier. Le chemin est bon — déposer la vraie photo
-   * sous ce nom suffit, sans toucher au code.
+   * ⚠︎ **En attente de la vraie photo.** Le fichier livré sous le nom
+   * « dasn l'atelier.png » est le même octet pour octet que l'affiche du rayon
+   * jeux vidéo (md5 identique) : l'afficher ici montrerait une boutique là où
+   * la section promet un atelier. On garde donc la plaque d'attente, qui est
+   * un état prévu. Il suffira de remettre un chemin ici quand la photo — ou la
+   * vidéo, voir `WORKSHOP_VIDEO` — arrivera.
    */
-  atelier: "/images/home/dasn l'atelier.png",
-  /** Carte de rayon 4/3 — jeux vidéo. */
+  atelier: null,
+  /** Affiche de rayon 3/2 — jeux vidéo. */
   jeux: "/images/home/jeux video.png",
-  /** Carte de rayon 4/3 — consoles. */
+  /** Affiche de rayon 3/2 — consoles. */
   consoles: "/images/home/consoles.png",
-  /** Carte de rayon 4/3 — figurines manga / anime. */
+  /** Affiche de rayon 3/2 — figurines manga / anime. */
   figurines: "/images/home/figurines.png",
+  /**
+   * La devanture, bloc « Le magasin ».
+   *
+   * Vraie photo du 207 rue de Rome, déjà dans le dépôt et publiée dans la
+   * galerie. Elle est en 3/4 : le cadre du bloc étant plus large, le point
+   * focal remonte sur l'enseigne plutôt que sur le trottoir.
+   */
+  magasin: "/medias/facade-207-mediarom.webp",
 };
 
 /**
@@ -88,17 +94,14 @@ export const PLATFORM_VISUALS: Record<string, { src: string; alt: string; positi
 /**
  * Où regarder quand le cadre est plus étroit que l'image.
  *
- * Les cinq visuels sont construits en paysage, avec leur sujet à droite du
- * tiers gauche. Sur un cadre de carte en 4/3, et plus encore sur un téléphone,
- * un recadrage centré coupe donc les consoles ou les figurines en deux. Ces
- * points focaux sont ce qui les garde entières.
+ * Ne concerne plus que le hero et l'atelier : les trois affiches de rayon sont
+ * montrées à leur rapport d'origine, donc rien n'y est recadré et il n'y a
+ * aucun point focal à choisir.
  */
 export const HOME_VISUAL_FOCUS = {
   hero: { position: "50% 50%", mobile: "50% 45%" },
   atelier: { position: "50% 50%", mobile: "55% 50%" },
-  jeux: { position: "62% 50%", mobile: "68% 55%" },
-  consoles: { position: "58% 55%", mobile: "62% 58%" },
-  figurines: { position: "58% 50%", mobile: "60% 52%" },
+  magasin: { position: "50% 38%", mobile: "50% 34%" },
 } as const;
 
 /**
@@ -115,6 +118,7 @@ export const HOME_VISUAL_ALTS = {
   jeux: "Boîtiers de jeux PS5 et Nintendo Switch empilés devant une PlayStation 5 et une Switch",
   consoles: "Xbox Series X, PlayStation 5, Nintendo Switch et Steam Deck alignées sur l'établi",
   figurines: "Figurines de Luffy, Son Goku et Tanjiro devant une vitrine de figurines manga",
+  magasin: "La devanture du magasin 207 MÉDI@ROM, rue de Rome à Marseille, vitrine de consoles et de jeux",
 } as const;
 
 /**
@@ -143,10 +147,10 @@ export const WORKSHOP_VIDEO: { src: string; poster?: string } | undefined = unde
 export const MISSING_ASSETS = [
   { role: "Hero", need: "Composition à plat : console ouverte, manette, composants, tournevis. Fond clair, cadrage net. 5/4, 1600 px." },
   { role: "Plateformes — quatre cartes", need: "PlayStation sur l'établi · Nintendo Switch démontée · Xbox ouverte · consoles rétro en vitrine. 16/10, 1200 px." },
-  { role: "Atelier — image d'attente", need: "Plan d'atelier, sert de poster à la vidéo. 16/9, 1920 px." },
+  { role: "Atelier — image d'attente", need: "Plan d'atelier, sert de poster à la vidéo. 16/9, 1920 px. ⚠︎ Le fichier « dasn l'atelier.png » livré est un doublon de l'affiche « jeux video.png » : l'emplacement attend toujours sa vraie photo." },
   { role: "Atelier — vidéo", need: "MP4 + WebM, 1920×1080, 20 à 40 s, moins de 6 Mo, sans son. À renseigner dans WORKSHOP_VIDEO." },
-  { role: "Rayons — trois cartes", need: "Rayon jeux vidéo · rayon consoles · vitrine de figurines de personnages de manga et d'anime. 4/3, 1200 px." },
-  { role: "Magasin", need: "Façade ou intérieur, 207 rue de Rome. 4/3, 1600 px." },
+  { role: "Rayons — trois affiches", need: "Livrées. Rayon jeux vidéo · rayon consoles · vitrine de figurines. 3/2, 1536 px." },
+  { role: "Magasin", need: "Livrée : la devanture, `public/medias/facade-207-mediarom.webp`. Une vue de l'intérieur en 4/3, 1600 px, serait un plus." },
   { role: "Produits", need: "Photos à déposer dans la fiche produit du back-office — ce sont elles que la boutique affiche." },
   { role: "Jeux — jaquettes", need: "Une photo par jeu, ajoutée depuis le back-office au moment de créer l'annonce." },
 ] as const;

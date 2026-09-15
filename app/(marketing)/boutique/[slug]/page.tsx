@@ -7,6 +7,7 @@ import { Breadcrumbs, Container, Eyebrow } from "@/components/ui/misc";
 import { publicMediaUrl } from "@/components/marketing/gallery";
 import { AddToCartButton } from "@/components/shop/cart-widgets";
 import { ProductCard } from "@/components/shop/product-card";
+import { ProductTile } from "@/components/shop/product-tile";
 import { getProductBySlug, getProducts } from "@/lib/shop/catalog";
 import { CATEGORY_LABELS, CATEGORY_SLUGS, CONDITION_DESCRIPTIONS, CONDITION_LABELS, stockLabel, stockState } from "@/lib/shop/status";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -58,7 +59,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <div className="mt-6 grid gap-10 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
         <div className="flex flex-col gap-2">
           <div className="relative aspect-square border border-border">
-            {product.images[0] ? <Image src={publicMediaUrl(product.images[0])} alt={product.name} fill sizes="(min-width: 640px) 50vw, 100vw" className="object-cover" priority /> : <div className="photo-placeholder h-full w-full text-[11.5px]">photo produit</div>}
+            {product.images[0] ? <Image src={publicMediaUrl(product.images[0])} alt={product.name} fill sizes="(min-width: 640px) 50vw, 100vw" className="object-cover" priority /> : <ProductTile name={product.name} platform={product.platform} category={product.category} />}
             <span className={cn("absolute left-3 top-3 px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.06em]", product.condition === "NEW" ? "bg-ink-900 text-paper" : "bg-sale text-white")}>{CONDITION_LABELS[product.condition]}</span>
           </div>
           {product.images.length > 1 ? (

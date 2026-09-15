@@ -97,6 +97,22 @@ export const CATEGORY_LABELS: Record<ProductCategory, string> = {
 };
 
 /**
+ * Le même rayon, au singulier et sans détour.
+ *
+ * `CATEGORY_LABELS` nomme une section — « Figurines Manga / Anime » tient sur
+ * un chip de filtre, pas dans le coin d'une vignette de 150 px. Ce second jeu
+ * d'étiquettes sert partout où l'on qualifie **un** article.
+ */
+export const CATEGORY_SHORT: Record<ProductCategory, string> = {
+  CONSOLE: "Console",
+  GAME: "Jeu",
+  ACCESSORY: "Accessoire",
+  PART: "Pièce",
+  COLLECTIBLE: "Figurine",
+  MANGA: "Figurine",
+};
+
+/**
  * `MANGA` est une valeur morte.
  *
  * Elle a été ajoutée en croyant que le magasin vendrait des livres manga ; il

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ROUTES } from "@/config/site";
 import { publicMediaUrl } from "@/components/marketing/gallery";
-import { PhotoSlot } from "@/components/marketing/home/photo-slot";
+import { ProductTile } from "@/components/shop/product-tile";
 import { AddToCartButton } from "@/components/shop/cart-widgets";
 import { CONDITION_SHORT, stockLabel, stockState } from "@/lib/shop/status";
 import { formatPrice } from "@/lib/utils/format";
@@ -86,7 +86,7 @@ export function ProductCard({ product }: { product: Product }) {
         {image ? (
           <Image src={publicMediaUrl(image)} alt="" fill sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 232px" className="object-cover" />
         ) : (
-          <PhotoSlot label={product.name} />
+          <ProductTile name={product.name} platform={product.platform} category={product.category} />
         )}
       </Frame>
 
@@ -97,7 +97,11 @@ export function ProductCard({ product }: { product: Product }) {
             {product.name}
           </Link>
         </h3>
-        <span className="flex items-baseline justify-between gap-2.5">
+        {/* `flex-wrap` : l'étiquette de stock ne se coupe pas (« Plus que 2 »).
+            Sur une colonne étroite — 768 et 1024 px, là où la grille tient six
+            cartes — elle poussait la page hors de l'écran. Elle passe désormais
+            sous le prix plutôt que de déborder. */}
+        <span className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-1">
           <span className="flex items-baseline gap-2">
             <span className="text-[19px] font-bold tracking-[-0.028em] text-ink">{formatPrice(product.price_cents)}</span>
             {enPromo ? <span className="font-mono text-[11.5px] text-ink-muted line-through">{formatPrice(product.compare_at_price_cents!)}</span> : null}

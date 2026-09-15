@@ -124,3 +124,23 @@ Le formulaire long (`/admin/stock/[id]`) est encore une liste plate de
 vingt-sept champs. Il est le bon outil pour ajuster une fiche, pas pour en créer
 une — c'est ce que le formulaire court corrige. Le regrouper en sections serait
 le prochain pas utile.
+
+## Remplir le rayon la première fois
+
+Le catalogue de vente se saisit à la main, une annonce à la fois. Pour ne pas
+partir d'une page blanche, `supabase/seed-boutique.sql` pose un rayon de départ
+— 10 jeux vidéo, 10 consoles, 10 figurines — avec des prix qui sont des ordres
+de grandeur du marché, pas les prix du magasin.
+
+```bash
+psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/seed-boutique.sql
+```
+
+ou le même contenu collé dans le SQL Editor de Supabase. Rejouable : chaque
+ligne est identifiée par son `slug`, une seconde exécution met la fiche à jour
+au lieu de la dupliquer, et les photos déjà déposées ne sont pas écrasées.
+
+**À relire avant de vendre** : les prix, les quantités et l'état de chaque
+exemplaire, dans `/admin/stock`. Les photos sont volontairement absentes — une
+photo empruntée ailleurs ne serait pas celle de l'article vendu — et se
+déposent depuis la fiche produit.

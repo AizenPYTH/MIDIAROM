@@ -65,7 +65,10 @@ export function Breadcrumbs({ items }: { items: { label: string; href?: string }
       <ol className="flex flex-wrap items-center gap-2">
         {items.map((item, i) => (
           <li key={`${item.label}-${i}`} className="flex items-center gap-2">
-            {i > 0 ? <span aria-hidden="true">/</span> : null}
+            {/* « › » et non « / » : un rayon peut porter une barre oblique dans
+                son nom — « Figurines Manga / Anime » — et le fil se lisait alors
+                comme deux échelons au lieu d'un. */}
+            {i > 0 ? <span aria-hidden="true">›</span> : null}
             {item.href ? (
               <Link href={item.href} className="hover:text-ink">
                 {item.label}
