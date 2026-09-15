@@ -32,22 +32,32 @@ import { cn } from "@/lib/utils/cn";
  * l'autre.
  */
 
-/** Le cadre visuel commun : carré, zoom au survol, badge. */
+/**
+ * Le cadre visuel commun : zoom au survol, badge.
+ *
+ * Le rapport se choisit, et ce n'est pas un détail. Une jaquette de jeu est en
+ * 3/4 ; enfermée dans un carré avec `object-cover`, elle perd un quart de sa
+ * hauteur — le titre et le logo de la plateforme passent hors champ, et la
+ * vignette a l'air zoomée. Les jeux gardent donc leur rapport d'origine, le
+ * reste du rayon garde le carré.
+ */
 function Frame({
   href,
   alt,
   children,
   badge,
   badgeTone = "ink",
+  ratio = "1 / 1",
 }: {
   href: string;
   alt: string;
   children: React.ReactNode;
   badge?: string | null;
   badgeTone?: "ink" | "red" | "outline";
+  ratio?: string;
 }) {
   return (
-    <Link href={href} className="relative block aspect-square overflow-hidden bg-surface-strong" aria-label={alt}>
+    <Link href={href} className="relative block overflow-hidden bg-surface-strong" style={{ aspectRatio: ratio }} aria-label={alt}>
       <span data-zoom="1" className="absolute inset-0">
         {children}
       </span>
@@ -72,9 +82,11 @@ export function ProductCard({ product }: { product: Product }) {
   const href = `${ROUTES.shop}/${product.slug}`;
   // Une remise est la seule information de la carte qui mérite le rouge.
   const enPromo = Boolean(product.compare_at_price_cents && product.compare_at_price_cents > product.price_cents);
+  // Un jeu a une jaquette, et une jaquette est en 3/4. Le carré la recadre.
+  const ratio = product.category === "GAME" ? "3 / 4" : "1 / 1";
   return (
     <article data-card="1" className="flex min-w-0 flex-col border border-border bg-surface">
-      <Frame href={href} alt={product.name} badge={CONDITION_SHORT[product.condition]} badgeTone={enPromo ? "red" : "ink"}>
+      <Frame href={href} alt={product.name} badge={CONDITION_SHORT[product.condition]} badgeTone={enPromo ? "red" : "ink"} ratio={ratio}>
         {image ? (
           <Image src={publicMediaUrl(image)} alt="" fill sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 232px" className="object-cover" />
         ) : (
@@ -124,7 +136,7 @@ export function GameCard({ game }: { game: GameListing }) {
     .join(" · ");
   return (
     <article data-card="1" className="flex min-w-0 flex-col border border-border bg-surface">
-      <Frame href={href} alt={game.name} badge="Démo" badgeTone="outline">
+      <Frame href={href} alt={game.name} badge="Démo" badgeTone="outline" ratio="3 / 4">
         <SafeImage src={game.coverUrl} sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 232px" fallback={<PhotoSlot label={game.name} />} />
       </Frame>
 

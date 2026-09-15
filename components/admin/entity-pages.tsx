@@ -88,7 +88,28 @@ export async function EntityListPage({ entityKey, title, description, extra }: {
   );
 }
 
-export async function EntityEditPage({ entityKey, id, children }: { entityKey: string; id: string; children?: (row: Record<string, unknown>) => Promise<React.ReactNode> | React.ReactNode }) {
+export async function EntityEditPage({
+  entityKey,
+  id,
+  defaults,
+  children,
+}: {
+  entityKey: string;
+  id: string;
+  /**
+   * Valeurs pré-remplies à la création.
+   *
+   * L'accueil du back-office propose « Publier un jeu vidéo » et « Publier une
+   * console » : ces deux boutons doivent ouvrir un formulaire dont la catégorie
+   * est déjà la bonne. Sans cela, ils mènent au même écran vide et le choix
+   * proposé sur l'accueil n'était qu'un décor.
+   *
+   * Ignoré à l'édition : une valeur d'URL ne doit pas pouvoir réécrire une
+   * ligne existante.
+   */
+  defaults?: Record<string, unknown>;
+  children?: (row: Record<string, unknown>) => Promise<React.ReactNode> | React.ReactNode;
+}) {
   await requireAdminOrRedirect();
   const entity = getEntity(entityKey);
   if (!entity) notFound();
@@ -101,6 +122,7 @@ export async function EntityEditPage({ entityKey, id, children }: { entityKey: s
     row = data as Record<string, unknown>;
   }
   const options = await loadSelectOptions();
+  const prefill = isNew && defaults && Object.keys(defaults).length ? defaults : null;
   const label = row ? String(row.name ?? row.title ?? row.question ?? row[idField]) : `Nouveau : ${entity.label}`;
   return (
     <div className="space-y-6">
@@ -109,7 +131,7 @@ export async function EntityEditPage({ entityKey, id, children }: { entityKey: s
         <PageHeader className="mt-1" title={label} actions={row ? <DeleteEntityButton entityKey={entityKey} id={String(row[idField])} label={label} /> : undefined} />
       </div>
       <div className="rounded-lg border border-border bg-surface p-5">
-        <EntityForm entityKey={entityKey} entity={{ fields: entity.fields, idField: entity.idField ?? "id" }} row={row} selectOptions={options} />
+        <EntityForm entityKey={entityKey} entity={{ fields: entity.fields, idField: entity.idField ?? "id" }} row={row} defaults={prefill} selectOptions={options} />
       </div>
       {row && children ? await children(row) : null}
     </div>

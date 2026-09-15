@@ -3,6 +3,7 @@ import { SITE_URL } from "@/config/site";
 import { Hero, Journey, ProductWall, Repairs, ShopCategories, Store, TrustBand, Workshop } from "@/components/marketing/home/sections";
 import { getHomepageGames } from "@/lib/shop/games";
 import { getProductCategoryCounts, getProducts } from "@/lib/shop/catalog";
+import { getModelsWithActiveRepairs } from "@/lib/repair/catalog";
 import { PUBLIC_CATEGORIES } from "@/lib/shop/status";
 import { getSeoPage } from "@/lib/content";
 import { getBrandSettings } from "@/lib/settings";
@@ -35,10 +36,14 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [brand, counts, products] = await Promise.all([
+  const [brand, counts, products, models] = await Promise.all([
     getBrandSettings(),
     getProductCategoryCounts(),
     getProducts({ sort: "recent" }, WALL),
+    // Les consoles réellement réparables : elles décident où mènent les cartes
+    // de plateforme. Sans elles, « Diagnostic PlayStation » rouvrirait le
+    // choix de la marque.
+    getModelsWithActiveRepairs().catch(() => []),
   ]);
 
   // La sélection IGDB ne prend le relais que si le catalogue est vide : un vrai
@@ -54,7 +59,7 @@ export default async function HomePage() {
   return (
     <>
       <Hero />
-      <Repairs />
+      <Repairs models={models} />
       <Journey />
       <TrustBand />
       <Workshop video={WORKSHOP_VIDEO} />

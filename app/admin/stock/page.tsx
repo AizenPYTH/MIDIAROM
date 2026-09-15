@@ -54,7 +54,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
         <form method="get" action="/admin/stock" className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="f" value={filter} />
           <input name="q" defaultValue={q ?? ""} placeholder="Rechercher une référence, un nom, une plateforme" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[14px]" />
-          <Link href="/admin/stock/new" className="whitespace-nowrap bg-sale px-3.5 py-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-white hover:bg-paper hover:text-ink-900">
+          <Link href="/admin/annonces/nouvelle" className="whitespace-nowrap bg-sale px-3.5 py-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-white hover:bg-paper hover:text-ink-900">
             + Nouvel article
           </Link>
         </form>

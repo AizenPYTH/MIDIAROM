@@ -4,7 +4,7 @@ import { requireStaffOrRedirect } from "@/lib/security/auth";
 import { isAdminRole } from "@/lib/orders/status";
 import { getBrandSettings } from "@/lib/settings";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { AdminNav, type AdminMenuGroup } from "@/components/admin/nav";
+import { AdminNav, type AdminMenuGroup, type AdminTab } from "@/components/admin/nav";
 import { Backdrop, PulseDot } from "@/components/marketing/backdrop";
 import { logoutAction } from "@/app/(auth)/actions";
 
@@ -38,47 +38,61 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     count(db.from("trade_in_requests").select("id", { count: "exact", head: true }).eq("status", "NEW")),
   ]);
 
+  const initials = `${user.profile.first_name?.[0] ?? ""}${user.profile.last_name?.[0] ?? ""}`.toUpperCase() || "··";
+
+  /**
+   * Cinq onglets de premier niveau, toujours visibles.
+   *
+   * La barre n'en portait **aucun** : tout vivait dans le menu « Plus », qui,
+   * sans onglet à sa gauche, se plaçait au bord gauche de l'écran et ouvrait
+   * son panneau de 560 px vers la gauche — c'est-à-dire dans le vide. On
+   * pouvait tenir le site sans jamais trouver l'import de figurines.
+   */
+  const tabs: AdminTab[] = [
+    { href: "/admin", label: "Accueil", admin: false, exact: true },
+    { href: "/admin/atelier", label: "Atelier", admin: false, count: expected },
+    { href: "/admin/shop-orders", label: "Commandes", admin: false },
+    { href: "/admin/stock", label: "Articles", admin: true },
+    { href: "/admin/catalog", label: "Tarifs", admin: true },
+  ];
+
   const groups: AdminMenuGroup[] = [
+    {
+      label: "Boutique",
+      items: [
+        { href: "/admin/catalog/figurines", label: "Importer une figurine", admin: true },
+        { href: "/admin/trade-ins", label: "Reprises", admin: false, count: newTradeIns },
+        { href: "/admin/customers", label: "Clients", admin: true },
+        { href: "/admin/reviews", label: "Avis", admin: true },
+      ],
+    },
     {
       label: "Atelier",
       items: [
         { href: "/admin/reception", label: "Réception", admin: false, count: expected },
         { href: "/admin/sav", label: "SAV", admin: false, count: openSav },
         { href: "/admin/orders", label: "Tous les dossiers", admin: false },
-      ],
-    },
-    {
-      label: "Gestion",
-      items: [
-        { href: "/admin/catalog", label: "Catalogue et tarifs", admin: true },
-        { href: "/admin/customers", label: "Clients", admin: true },
-        { href: "/admin/trade-ins", label: "Reprises", admin: false, count: newTradeIns },
         { href: "/admin/technicians", label: "Techniciens", admin: true },
-        { href: "/admin/content", label: "Contenu", admin: true },
-        { href: "/admin/reviews", label: "Avis", admin: true },
       ],
     },
     {
-      label: "Configuration",
+      label: "Le site",
       items: [
+        { href: "/admin/content", label: "Textes et pages", admin: true },
+        { href: "/admin/settings", label: "Réglages", admin: true },
         { href: "/admin/options", label: "Options", admin: true },
         { href: "/admin/packs", label: "Packs", admin: true },
-        { href: "/admin/shipping", label: "Transport", admin: true },
-        { href: "/admin/settings", label: "Paramètres", admin: true },
       ],
     },
     {
       label: "Administration",
       items: [
+        { href: "/admin/shipping", label: "Transport", admin: true },
         { href: "/admin/analytics", label: "Statistiques", admin: true },
         { href: "/admin/audit", label: "Audit", admin: true },
       ],
     },
-  ]
-    .map((g) => ({ ...g, items: g.items.filter((i) => admin || !i.admin) }))
-    .filter((g) => g.items.length);
-
-  const initials = `${user.profile.first_name?.[0] ?? ""}${user.profile.last_name?.[0] ?? ""}`.toUpperCase() || "··";
+  ];
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -108,7 +122,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </form>
         </span>
       </header>
-      <AdminNav tabs={[]} groups={groups} />
+      <AdminNav tabs={tabs.filter((t) => admin || !t.admin)} groups={groups} />
       <main className="mx-auto min-w-0 w-full max-w-[1420px] flex-1 px-4 pb-[70px] pt-[34px] sm:px-[30px]">{children}</main>
     </div>
   );

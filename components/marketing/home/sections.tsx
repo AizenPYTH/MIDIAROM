@@ -3,7 +3,7 @@ import { ROUTES } from "@/config/site";
 import { PhotoSlot } from "@/components/marketing/home/photo-slot";
 import { WorkshopVideo } from "@/components/marketing/home/workshop-video";
 import { GameCard, ProductCard, ProductGrid } from "@/components/shop/product-card";
-import { CATEGORIES, HERO_TRUST, PLATFORMS, SAVOIR_FAIRE, SHOP_FILTERS, STEPS, TRUST } from "@/components/marketing/home/content";
+import { CATEGORIES, HERO_TRUST, PLATFORMS, SAVOIR_FAIRE, SHOP_FILTERS, STEPS, TRUST, type Platform } from "@/components/marketing/home/content";
 import type { Product } from "@/lib/shop/catalog";
 import type { GameListing } from "@/lib/shop/games";
 import type { BrandSettings } from "@/config/brand";
@@ -134,7 +134,28 @@ export function Hero() {
  * devis réel, qui recalcule le prix ferme depuis la base après diagnostic —
  * les montants affichés ici sont des repères de vitrine.
  */
-export function Repairs() {
+/**
+ * Où mène une carte de plateforme.
+ *
+ * Vers la page de la console la plus récente de la famille — `/reparation/ps5`
+ * — et non vers `/reparation`, qui rouvre le choix de la marque. Cliquer sur
+ * « Diagnostic PlayStation » pour retomber sur « choisissez votre marque » n'a
+ * aucun sens, et c'est ce que faisait la première version.
+ *
+ * Le rattachement se fait sur le début du slug, parce que c'est ce que la base
+ * garantit (`ps5`, `ps5-slim`, `switch-oled`, `xbox-series-x`). Le rétro prend
+ * ce qui reste. Sans modèle publié pour une famille, on retombe sur le
+ * parcours général : un lien vers une page inexistante serait pire.
+ */
+export function modelHref(platform: Platform, models: { slug: string }[]): string {
+  const pris = PLATFORMS.flatMap((p) => p.slugPrefixes);
+  const correspond = platform.slugPrefixes.length
+    ? models.filter((m) => platform.slugPrefixes.some((p) => m.slug.startsWith(p)))
+    : models.filter((m) => !pris.some((p) => m.slug.startsWith(p)));
+  return correspond[0] ? `${ROUTES.repair}/${correspond[0].slug}` : ROUTES.repair;
+}
+
+export function Repairs({ models = [] }: { models?: { slug: string }[] }) {
   return (
     <section id="reparation" className={`${WRAP} pt-14`}>
       <div data-rise="1" className="mb-[26px] flex flex-wrap items-end justify-between gap-5">
@@ -146,7 +167,9 @@ export function Repairs() {
       </div>
 
       <ul className="grid list-none gap-[18px] p-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))" }}>
-        {PLATFORMS.map((p) => (
+        {PLATFORMS.map((p) => {
+          const href = modelHref(p, models);
+          return (
           <li key={p.key} data-rise="1" data-card="1" className="flex min-w-0 flex-col border border-border bg-surface">
             <span className="relative block overflow-hidden border-b border-border" style={{ aspectRatio: "16 / 10" }}>
               <span data-zoom="1" className="absolute inset-0">
@@ -164,7 +187,7 @@ export function Repairs() {
                 {p.faults.map((f) => (
                   <Link
                     key={f.label}
-                    href={ROUTES.repair}
+                    href={href}
                     data-row="1"
                     className="flex items-center justify-between gap-3 border-t border-border-hairline py-[11px] text-ink"
                   >
@@ -180,14 +203,15 @@ export function Repairs() {
               </div>
 
               <Link
-                href={ROUTES.repair}
+                href={href}
                 className="mt-auto border border-ink p-[13px] text-center text-[14.5px] font-semibold text-ink transition-colors duration-200 hover:bg-ink hover:text-white"
               >
                 Diagnostic {p.name}
               </Link>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
 
       <div data-rise="1" className="mt-[18px] flex flex-wrap items-center justify-between gap-[18px] border border-border bg-surface-muted px-[22px] py-[18px]">

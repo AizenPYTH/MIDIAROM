@@ -45,6 +45,17 @@ export interface Platform {
   from: string;
   /** La légende de la photo attendue du magasin. */
   photo: string;
+  /**
+   * Par quoi commencent les slugs des modèles de cette famille dans la base
+   * (`ps5`, `switch-oled`, `xbox-series-x`…).
+   *
+   * Sert à envoyer « Diagnostic PlayStation » sur la page de la PS5 plutôt que
+   * sur l'écran où l'on choisit sa marque — arriver sur un choix de marque
+   * après avoir cliqué sur une marque n'a aucun sens.
+   *
+   * Vide pour le rétro : il ramasse tout ce que les autres n'ont pas pris.
+   */
+  slugPrefixes: string[];
   faults: Fault[];
 }
 
@@ -57,6 +68,7 @@ export interface Platform {
 export const PLATFORMS: Platform[] = [
   {
     key: "playstation",
+    slugPrefixes: ["ps"],
     name: "PlayStation",
     models: "PS5, PS5 Slim, PS4, PS4 Pro, PS3, PS2",
     from: "dès 49 €",
@@ -71,6 +83,7 @@ export const PLATFORMS: Platform[] = [
   },
   {
     key: "switch",
+    slugPrefixes: ["switch"],
     name: "Nintendo Switch",
     models: "Switch, Switch 2, Lite, OLED",
     from: "dès 45 €",
@@ -85,6 +98,7 @@ export const PLATFORMS: Platform[] = [
   },
   {
     key: "xbox",
+    slugPrefixes: ["xbox"],
     name: "Xbox",
     models: "Series X, Series S, One, One S, One X, 360",
     from: "dès 49 €",
@@ -99,6 +113,7 @@ export const PLATFORMS: Platform[] = [
   },
   {
     key: "retro",
+    slugPrefixes: [],
     name: "Rétro",
     models: "N64, SNES, Mega Drive, Game Boy, PS1",
     from: "dès 39 €",

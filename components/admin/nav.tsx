@@ -18,10 +18,10 @@ export interface AdminMenuGroup {
   items: AdminTab[];
 }
 
-const TAB_CLASS = "flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 font-mono text-[11.5px] uppercase tracking-[0.12em] transition-colors";
+const TAB_CLASS = "flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-[2px] px-4 py-2.5 font-mono text-[11.5px] uppercase tracking-[0.12em] transition-colors";
 
 function Count({ value }: { value: number }) {
-  return <span className="rounded-full bg-surface-strong px-2 py-0.5 font-mono text-[10.5px] text-ink-soft">{value}</span>;
+  return <span className="rounded-[2px] bg-surface-strong px-2 py-0.5 font-mono text-[10.5px] text-ink-soft">{value}</span>;
 }
 
 /**
@@ -32,6 +32,8 @@ function Count({ value }: { value: number }) {
  */
 export function AdminNav({ tabs, groups }: { tabs: AdminTab[]; groups: AdminMenuGroup[] }) {
   const pathname = usePathname();
+  // Sans onglets, le bouton reste à gauche : le panneau doit s'ouvrir vers la droite.
+  const alignRight = tabs.length > 0;
   const menuRef = useRef<HTMLDetailsElement>(null);
 
   const isActive = (item: AdminTab) => (item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`));
@@ -86,7 +88,20 @@ export function AdminNav({ tabs, groups }: { tabs: AdminTab[]; groups: AdminMenu
               ▾
             </span>
           </summary>
-          <div className="glass absolute right-0 top-full z-30 mt-2 grid w-[min(560px,calc(100vw-2rem))] gap-x-6 gap-y-4 rounded-[24px] p-6 sm:grid-cols-2">
+          {/*
+            Le panneau s'ancre au bord droit du bouton et s'étend vers la
+            gauche. Tant que le bouton était seul dans la barre — c'est-à-dire
+            collé à gauche —, ses 560 px partaient hors de l'écran et le menu
+            était invisible. Deux garde-fous plutôt qu'un :
+            `right-0` seulement quand des onglets le poussent à droite, et une
+            largeur qui ne dépasse jamais la fenêtre.
+          */}
+          <div
+            className={cn(
+              "glass absolute top-full z-30 mt-2 grid w-[min(560px,calc(100vw-2rem))] gap-x-6 gap-y-4 rounded-[2px] p-6 sm:grid-cols-2",
+              alignRight ? "right-0" : "left-0",
+            )}
+          >
             {groups.map((group) => (
               <div key={group.label} className="min-w-0">
                 <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-muted">{group.label}</p>

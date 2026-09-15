@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Hero, ProductWall, Repairs, Store, TrustBand } from "@/components/marketing/home/sections";
+import { Hero, modelHref, ProductWall, Repairs, Store, TrustBand } from "@/components/marketing/home/sections";
 import { CartProvider } from "@/components/shop/cart-provider";
 import { PLATFORMS, TRUST } from "@/components/marketing/home/content";
 import { BRAND_DEFAULTS } from "@/config/brand";
@@ -160,5 +160,45 @@ describe("magasin", () => {
     expect(html).toContain("207 rue de Rome, 13006 Marseille");
     expect(html).toContain("9h30");
     expect(html).toContain("tel:0491482748");
+  });
+});
+
+describe("où mènent les cartes de plateforme", () => {
+  const models = [{ slug: "ps5" }, { slug: "ps4" }, { slug: "switch-oled" }, { slug: "xbox-series-x" }, { slug: "n64" }];
+
+  it("envoie sur la console, pas sur le choix de la marque", () => {
+    const par = Object.fromEntries(PLATFORMS.map((p) => [p.key, modelHref(p, models)]));
+    expect(par.playstation).toBe("/reparation/ps5");
+    expect(par.switch).toBe("/reparation/switch-oled");
+    expect(par.xbox).toBe("/reparation/xbox-series-x");
+    // Le rétro ramasse ce que les autres n'ont pas pris.
+    expect(par.retro).toBe("/reparation/n64");
+  });
+
+  it("retombe sur le parcours général plutôt que sur une page qui n'existe pas", () => {
+    for (const p of PLATFORMS) expect(modelHref(p, []), p.key).toBe("/reparation");
+  });
+
+  it("place ces liens dans le rendu, sur le bouton comme sur chaque ligne de panne", () => {
+    const html = rendu(<Repairs models={models} />);
+    expect(html).toContain('href="/reparation/ps5"');
+    expect(html).toContain('href="/reparation/switch-oled"');
+    // Cinq pannes + le bouton, pour chacune des quatre familles.
+    expect((html.match(/href="\/reparation\/ps5"/g) ?? []).length).toBe(6);
+  });
+});
+
+describe("cadrage des visuels", () => {
+  it("laisse une jaquette de jeu dans son 3/4 plutôt que de la recadrer en carré", () => {
+    // Le carré rognait un quart de la hauteur : titre et logo de plateforme
+    // passaient hors champ, et la vignette avait l'air zoomée.
+    const html = rendu(<ProductWall products={[]} demoGames={[jeu(1)]} total={0} />);
+    expect(html).toContain("aspect-ratio:3 / 4");
+    expect(html).not.toContain("aspect-square");
+  });
+
+  it("garde le carré pour le reste du rayon", () => {
+    const html = rendu(<ProductWall products={[produit(1)]} demoGames={[]} total={9} />);
+    expect(html).toContain("aspect-ratio:1 / 1");
   });
 });

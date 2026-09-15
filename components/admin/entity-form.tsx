@@ -17,10 +17,31 @@ function defaultValue(field: FieldDef, row: Record<string, unknown> | null): str
   return String(v);
 }
 
-export function EntityForm({ entityKey, entity, row, selectOptions }: { entityKey: string; entity: Pick<EntityDef, "fields"> & { idField: string }; row: Record<string, unknown> | null; selectOptions: SelectOptions }) {
+export function EntityForm({
+  entityKey,
+  entity,
+  row,
+  defaults,
+  selectOptions,
+}: {
+  entityKey: string;
+  entity: Pick<EntityDef, "fields"> & { idField: string };
+  row: Record<string, unknown> | null;
+  /**
+   * Valeurs pré-remplies à la création, et rien d'autre.
+   *
+   * Séparées de `row` à dessein : `row` signifie « on édite une ligne qui
+   * existe », ce qui décide de l'identifiant envoyé et du libellé du bouton.
+   * Les confondre ferait dire « Enregistrer » à un formulaire de création et
+   * lui ferait poster un identifiant `undefined`.
+   */
+  defaults?: Record<string, unknown> | null;
+  selectOptions: SelectOptions;
+}) {
   const bound = saveEntityAction.bind(null, entityKey);
   const [state, action, pending] = useActionState<EntityActionResult | null, FormData>(bound, null);
   const id = row ? String(row[entity.idField]) : "new";
+  const valeurs = row ?? defaults ?? null;
   const errors = state && !state.ok ? (state.fieldErrors ?? {}) : {};
   return (
     <form action={action} className="grid gap-4 sm:grid-cols-2">
@@ -28,13 +49,13 @@ export function EntityForm({ entityKey, entity, row, selectOptions }: { entityKe
       {entity.fields.map((field) => {
         const full = field.width !== "half";
         const cls = full ? "sm:col-span-2" : "";
-        const value = defaultValue(field, row);
+        const value = defaultValue(field, valeurs);
         const error = errors[field.name];
         const htmlId = `f_${field.name}`;
         if (field.type === "checkbox") {
           return (
             <label key={field.name} className={`flex items-center gap-2 pt-6 text-sm text-ink ${cls}`}>
-              <Checkbox name={field.name} defaultChecked={row ? Boolean(row[field.name]) : field.name.startsWith("is_") && field.name !== "is_seo_published" && field.name !== "is_diagnostic_only" && field.name !== "is_recommended" && field.name !== "is_current"} /> {field.label}
+              <Checkbox name={field.name} defaultChecked={valeurs ? Boolean(valeurs[field.name]) : field.name.startsWith("is_") && field.name !== "is_seo_published" && field.name !== "is_diagnostic_only" && field.name !== "is_recommended" && field.name !== "is_current"} /> {field.label}
             </label>
           );
         }

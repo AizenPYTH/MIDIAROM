@@ -7,13 +7,24 @@ import { getGame } from "@/lib/igdb/service";
 import { PublicMediaUploader } from "@/components/admin/public-media-uploader";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatDateTime } from "@/lib/utils/format";
+import { categoryFromSlug } from "@/lib/shop/status";
 
 const REASONS: Record<string, string> = { ORDER_PAID: "Commande payée", ORDER_CANCELLED: "Commande annulée", RECEIVED: "Réception / arrivage", ADJUSTMENT: "Inventaire", DAMAGED: "Casse / perte", COUNTER_SALE: "Vente au comptoir", TRADE_IN: "Reprise entrée en stock" };
 
-export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function ProductPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ cat?: string }>;
+}) {
+  const [{ id }, { cat }] = await Promise.all([params, searchParams]);
+  // « Publier un jeu vidéo » et « Publier une console », sur l'accueil du
+  // back-office, ouvrent ce formulaire avec le bon rayon déjà choisi. Un slug
+  // inconnu ne pré-remplit rien plutôt que d'imposer une catégorie au hasard.
+  const category = categoryFromSlug(cat);
   return (
-    <EntityEditPage entityKey="products" id={id}>
+    <EntityEditPage entityKey="products" id={id} defaults={category ? { category } : undefined}>
       {async (row) => {
         const { data: movements } = await createSupabaseAdminClient().from("stock_movements").select("*, actor:profiles(first_name, last_name)").eq("product_id", String(row.id)).order("created_at", { ascending: false }).limit(50);
         return (
