@@ -150,3 +150,21 @@ correspondant : une carte sur plaque d'attente au milieu de vingt-neuf photos
 donne un rayon en panne. La suppression est sûre — les mouvements de stock
 suivent en cascade, et les lignes de commande déjà passées gardent leur libellé
 et leur prix.
+
+### Sur une base déjà remplie : `photos-boutique.sql`
+
+`seed-boutique.sql` pose le rayon **entier** : le rejouer réécrit les prix et
+les quantités avec ceux du fichier, et efface donc ce que le magasin a corrigé
+depuis dans `/admin/stock`.
+
+Quand la base contient déjà les articles et qu'il ne manque que les photos,
+utilisez `supabase/photos-boutique.sql`. Il ne fait que deux choses — renseigner
+`images` là où c'est vide, retirer l'article sans visuel — et ne touche ni aux
+prix, ni aux quantités, ni aux états, ni aux descriptions. Il n'écrase pas non
+plus une photo déjà déposée au back-office, et se rejoue sans effet.
+
+```bash
+psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/photos-boutique.sql
+```
+
+Il finit par un compte de contrôle : **29 articles, 0 sans photo**.
