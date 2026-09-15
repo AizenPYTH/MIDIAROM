@@ -6,8 +6,6 @@ import { ProductCard, ProductGrid } from "@/components/shop/product-card";
 import { getProductCategoryCounts, getProductPlatforms, getProducts, type ProductFilters } from "@/lib/shop/catalog";
 import { CATEGORY_LABELS, CATEGORY_SLUGS, PUBLIC_CATEGORIES, type ProductCategory } from "@/lib/shop/status";
 import { ShopCategories } from "@/components/marketing/home/sections";
-import { GameCard } from "@/components/shop/product-card";
-import { getHomepageGames } from "@/lib/shop/games";
 import { cn } from "@/lib/utils/cn";
 
 export const dynamic = "force-dynamic";
@@ -58,13 +56,6 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     sort,
   };
   const [products, platforms, counts] = await Promise.all([getProducts(filters), getProductPlatforms(), getProductCategoryCounts()]);
-  // Le rayon jeux est vide tant que le stock n'est pas saisi : la sélection de
-  // démonstration le remplit, en s'annonçant comme telle. Elle n'apparaît que
-  // là où elle a du sens — vue d'ensemble, ou rayon « jeux » — et jamais quand
-  // une vraie référence existe.
-  const rayonJeux = !sp.cat || sp.cat === CATEGORY_SLUGS.GAME;
-  const { latest: demoAll, isDemo } = rayonJeux && counts.GAME === 0 ? await getHomepageGames(24) : { latest: [], isDemo: false };
-  const demoGames = isDemo ? demoAll : [];
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
@@ -157,7 +148,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
             </li>
           ))}
         </ProductGrid>
-      ) : demoGames.length ? null : (
+      ) : (
         <div className="border border-dashed border-border-strong bg-surface-muted px-6 py-8">
           {/* Deux états vides distincts : un catalogue sans aucune référence n'est
               pas un filtre trop étroit, et proposer d'élargir la recherche y
@@ -188,24 +179,6 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         </div>
       )}
       <p className="mt-8 text-[13px] text-ink-faint">Les états d&apos;occasion sont indiqués sur chaque fiche (grade A, B ou C, défauts détaillés). Un article d&apos;occasion n&apos;est jamais présenté comme neuf.</p>
-
-      {/* La sélection IGDB, quand le rayon jeux est encore vide. Mêmes cartes
-          que le catalogue, mais badgées « Démo » et sans bouton d'achat : ces
-          titres ne sont pas en stock, on peut seulement les faire venir. */}
-      {demoGames.length ? (
-        <section aria-label="Jeux vidéo — notre sélection" className="mt-10">
-          <p className="mb-5 font-mono text-[11.5px] tracking-[0.04em] text-ink-muted">
-            Notre sélection du moment — ces titres ne sont pas encore en rayon, les prix sont indicatifs.
-          </p>
-          <ProductGrid>
-            {demoGames.map((g) => (
-              <li key={g.productId} className="min-w-0">
-                <GameCard game={g} />
-              </li>
-            ))}
-          </ProductGrid>
-        </section>
-      ) : null}
     </Container>
   );
 }

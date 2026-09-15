@@ -1,9 +1,6 @@
 import { EntityEditPage } from "@/components/admin/entity-pages";
 import { Section } from "@/components/admin/ui";
 import { StockAdjustForm } from "@/components/admin/shop-forms";
-import { GameMatchPanel } from "@/components/admin/game-match";
-import { igdbConfigurationError } from "@/lib/igdb/client";
-import { getGame } from "@/lib/igdb/service";
 import { PublicMediaUploader } from "@/components/admin/public-media-uploader";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { formatDateTime } from "@/lib/utils/format";
@@ -32,23 +29,6 @@ export default async function ProductPage({
             <Section title="Ajuster le stock" description={`Quantité actuelle : ${String(row.quantity)} · seuil de stock faible : ${String(row.low_stock_threshold)}`}>
               <StockAdjustForm productId={String(row.id)} />
             </Section>
-            {row.category === "GAME" ? (
-              <Section
-                title="Fiche du jeu (IGDB)"
-                description="Associez le produit à sa fiche IGDB pour récupérer jaquette, visuels et informations. L'association reste modifiable à tout moment."
-                className="lg:col-span-2"
-              >
-                <GameMatchPanel
-                  productId={String(row.id)}
-                  productName={String(row.name)}
-                  platform={row.platform ? String(row.platform) : null}
-                  linked={row.igdb_game_id ? await getGame(Number(row.igdb_game_id)) : null}
-                  syncedAt={row.igdb_synced_at ? String(row.igdb_synced_at) : null}
-                  matchSource={row.igdb_match_source ? String(row.igdb_match_source) : null}
-                  configurationError={igdbConfigurationError()}
-                />
-              </Section>
-            ) : null}
             <Section title="Photos du produit" description="Téléversez les images puis collez leur chemin dans le champ « Photos » ci-dessus. La première photo sert de visuel principal ; les suivantes forment la galerie. Sans photo, la fiche affiche un aperçu rayé explicitement identifié.">
               <PublicMediaUploader folder="produits" />
             </Section>

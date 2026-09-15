@@ -7,8 +7,8 @@ import { categoryFromSlug, PUBLIC_CATEGORIES } from "@/lib/shop/status";
  * Nouvelle annonce.
  *
  * Le raccourci que le back-office n'avait pas : six champs, et l'article
- * existe. La fiche complète — photos, caractéristiques, fiche IGDB, mouvements
- * de stock — s'ouvre juste après, quand il y a quelque chose à y mettre.
+ * existe. La fiche complète — photos, caractéristiques, mouvements de stock —
+ * s'ouvre juste après, quand il y a quelque chose à y mettre.
  */
 export const dynamic = "force-dynamic";
 

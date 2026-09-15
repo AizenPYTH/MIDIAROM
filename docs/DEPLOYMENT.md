@@ -94,9 +94,11 @@
 ### Ajouter une migration à un projet déjà migré
 
 Le cas courant après coup : la base tourne, une seule migration manque (par
-exemple `igdb_games`, dont l'absence donne `PGRST205 — Could not find the table
-'public.igdb_games'`). `scripts/apply-migrations.sh` ne convient pas ici : il est
-prévu pour une base vierge et refuse de s'exécuter si le schéma est déjà là.
+exemple `repair_categories`, dont l'absence donne `PGRST205 — Could not find the
+table 'public.repair_categories'` ; une migration qui n'ajoute que des colonnes
+donne plutôt `PGRST204 — Could not find the '<colonne>' column`).
+`scripts/apply-migrations.sh` ne convient pas ici : il est prévu pour une base
+vierge et refuse de s'exécuter si le schéma est déjà là.
 
 **La référence du projet est dans la chaîne de connexion** (`postgres.<ref>@…`) :
 c'est elle, et rien d'autre, qui désigne la base. Il n'y a aucun lien implicite à
@@ -134,19 +136,20 @@ La colonne `Remote` dit ce que la base connaît déjà. Deux cas :
 
   ```bash
   psql "$DB_URL" -v ON_ERROR_STOP=1 --single-transaction \
-    -f supabase/migrations/20260914000001_igdb.sql
+    -f supabase/migrations/20260916000001_product_source.sql
 
   psql "$DB_URL" -v ON_ERROR_STOP=1 -c "
     create schema if not exists supabase_migrations;
     create table if not exists supabase_migrations.schema_migrations
       (version text primary key, statements text[], name text);
     insert into supabase_migrations.schema_migrations (version, name)
-    values ('20260914000001', 'igdb') on conflict (version) do nothing;"
+    values ('20260916000001', 'product_source') on conflict (version) do nothing;"
   ```
 
-  La migration IGDB est écrite pour supporter ce traitement : chacune de ses
-  instructions est gardée par `if not exists` ou un bloc `do $$ … end $$`. La
-  rejouer ne casse rien.
+  Vérifiez d'abord que le fichier choisi supporte ce traitement : chacune de ses
+  instructions doit être gardée par `if not exists` ou un bloc `do $$ … end $$`,
+  faute de quoi le rejeu échoue. C'est le cas de `20260916000001_product_source`,
+  pas de toutes les migrations du dépôt.
 
 Dans les deux cas, terminez en rechargeant le cache de schéma de PostgREST —
 sans quoi l'API continue de répondre `PGRST205` sur une table qui existe :
@@ -158,7 +161,7 @@ psql "$DB_URL" -c "notify pgrst, 'reload schema';"
 Puis vérifiez que la table est visible par l'API :
 
 ```bash
-psql "$DB_URL" -Atc "select to_regclass('public.igdb_games');"   # → igdb_games
+psql "$DB_URL" -Atc "select to_regclass('public.repair_categories');"   # → repair_categories
 ```
 
 
@@ -176,7 +179,6 @@ Variables d'environnement (voir `.env.example`) :
 | `SHIPPING_PROVIDER`, `SHIPPING_PROVIDER_API_KEY` | Transport (mock interdit en production) |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_GOOGLE_ADS_ID` | Optionnel |
 | `CRON_SECRET` | Protège `/api/cron/daily` |
-| `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET` | IGDB — fiches de jeux vidéo (facultatif, voir `docs/IGDB.md`) |
 
 > **Sans configuration de paiement, aucune commande n'aboutit.** `PAYMENT_PROVIDER`
 > vaut `mock` par défaut, et le simulateur est refusé en production — il ferait

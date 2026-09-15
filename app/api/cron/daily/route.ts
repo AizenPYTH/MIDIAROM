@@ -5,8 +5,6 @@ import { getBusinessRules } from "@/lib/settings";
 import { notifyOrderEvent } from "@/lib/notifications";
 import { addOrderEvent, getOrderById, SYSTEM_ACTOR, transitionOrder } from "@/lib/orders/service";
 import { purgeStaleDrafts } from "@/lib/media/drafts";
-import { igdbConfigurationError } from "@/lib/igdb/client";
-import { matchUnlinkedGames, refreshStaleGames } from "@/lib/igdb/service";
 
 /**
  * Daily maintenance job (call with `Authorization: Bearer CRON_SECRET`, e.g.
@@ -15,8 +13,7 @@ import { matchUnlinkedGames, refreshStaleGames } from "@/lib/igdb/service";
  *  - expires supplementary quotes past their validity,
  *  - marks delivered orders as completed after the review delay + 14 days,
  *  - cancels unpaid orders older than 48 h,
- *  - purges customer photo drafts (customer-media/drafts) never attached to a request,
- *  - rafraîchit les fiches IGDB périmées et rattrape les jeux non associés.
+ *  - purges customer photo drafts (customer-media/drafts) never attached to a request.
  */
 export async function GET(request: Request) {
   const env = getServerEnv();
@@ -27,7 +24,7 @@ export async function GET(request: Request) {
   const db = createSupabaseAdminClient();
   const rules = await getBusinessRules();
   const now = Date.now();
-  const report = { reviewRequests: 0, expiredQuotes: 0, completed: 0, cancelledUnpaid: 0, purgedDrafts: 0, igdbRefreshed: 0, igdbLinked: 0 };
+  const report = { reviewRequests: 0, expiredQuotes: 0, completed: 0, cancelledUnpaid: 0, purgedDrafts: 0 };
 
   // 1. Review requests
   const reviewCutoff = new Date(now - rules.review_request_delay_days * 86_400_000).toISOString();
@@ -78,22 +75,6 @@ export async function GET(request: Request) {
     report.purgedDrafts = await purgeStaleDrafts(24);
   } catch (error) {
     console.error("[cron] purge drafts failed", error);
-  }
-
-  // 6. IGDB : entretien du cache et rattrapage des associations sûres.
-  //    Passé sous silence si IGDB n'est pas configuré — l'intégration est
-  //    facultative et ne doit pas faire échouer l'entretien nocturne.
-  if (!igdbConfigurationError()) {
-    try {
-      const refreshed = await refreshStaleGames(50);
-      const linked = await matchUnlinkedGames(25);
-      report.igdbRefreshed = refreshed.refreshed;
-      report.igdbLinked = linked.linked;
-      const reason = refreshed.error ?? linked.error;
-      if (reason) console.warn("[cron] IGDB partiellement traité —", reason);
-    } catch (error) {
-      console.error("[cron] igdb maintenance failed", error);
-    }
   }
 
   return NextResponse.json({ ok: true, ...report });

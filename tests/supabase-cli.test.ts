@@ -96,35 +96,35 @@ describe("describeDbError", () => {
   const config = { origin: "https://abcd.supabase.co", host: "abcd.supabase.co" };
 
   it("nomme toujours l'endpoint réellement appelé", () => {
-    const t = describeDbError({ message: "boom" }, { config, table: "igdb_games" });
-    expect(t).toContain("https://abcd.supabase.co/rest/v1/igdb_games");
+    const t = describeDbError({ message: "boom" }, { config, table: "products" });
+    expect(t).toContain("https://abcd.supabase.co/rest/v1/products");
   });
 
   it("explique « Invalid path » par le chemin en trop", () => {
-    const t = describeDbError({ message: "Invalid path specified in request URL" }, { config, table: "igdb_games" });
+    const t = describeDbError({ message: "Invalid path specified in request URL" }, { config, table: "products" });
     expect(t).toContain("passerelle Supabase");
     expect(t).toContain("NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co");
   });
 
   it("explique une table absente par des migrations non appliquées", () => {
-    const t = describeDbError({ message: "no table", code: "PGRST205" }, { config, table: "igdb_games" });
+    const t = describeDbError({ message: "no table", code: "PGRST205" }, { config, table: "products" });
     expect(t).toContain("db:push");
   });
 
   it("explique un refus RLS par une mauvaise clé", () => {
-    const t = describeDbError({ message: "denied", code: "42501" }, { config, table: "igdb_games" });
+    const t = describeDbError({ message: "denied", code: "42501" }, { config, table: "products" });
     expect(t).toContain("service_role");
   });
 
   it("remonte code, détail et piste de PostgREST", () => {
-    const t = describeDbError({ message: "m", code: "C1", details: "D1", hint: "H1" }, { config, table: "igdb_games" });
+    const t = describeDbError({ message: "m", code: "C1", details: "D1", hint: "H1" }, { config, table: "products" });
     expect(t).toContain("C1");
     expect(t).toContain("D1");
     expect(t).toContain("H1");
   });
 
   it("dit quelque chose d'utile même sans message", () => {
-    const t = describeDbError({ message: "" }, { config, table: "igdb_games" });
+    const t = describeDbError({ message: "" }, { config, table: "products" });
     expect(t).toContain("sans message");
     expect(t).toContain("passerelle Supabase");
   });

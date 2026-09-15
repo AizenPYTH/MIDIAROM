@@ -5,8 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/security/auth";
 import { audit } from "@/lib/security/audit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { slugify } from "@/lib/catalog/import";
-import { buildSku, priceToCents } from "@/lib/catalog/listing";
+import { buildSku, priceToCents, slugify } from "@/lib/catalog/listing";
 import { PUBLIC_CATEGORIES, type ProductCategory } from "@/lib/shop/status";
 
 /**
@@ -112,6 +111,6 @@ export async function createListingAction(_prev: unknown, formData: FormData): P
   });
 
   revalidatePath("/admin/stock");
-  // La fiche complète prend le relais : photos, caractéristiques, fiche IGDB.
+  // La fiche complète prend le relais : photos, caractéristiques, stock.
   redirect(`/admin/stock/${data.id}?cree=1`);
 }

@@ -46,7 +46,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
    * La barre n'en portait **aucun** : tout vivait dans le menu « Plus », qui,
    * sans onglet à sa gauche, se plaçait au bord gauche de l'écran et ouvrait
    * son panneau de 560 px vers la gauche — c'est-à-dire dans le vide. On
-   * pouvait tenir le site sans jamais trouver l'import de figurines.
+   * pouvait tenir le site sans jamais trouver où ajouter un article.
    */
   const tabs: AdminTab[] = [
     { href: "/admin", label: "Accueil", admin: false, exact: true },
@@ -60,7 +60,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     {
       label: "Boutique",
       items: [
-        { href: "/admin/catalog/figurines", label: "Importer une figurine", admin: true },
+        { href: "/admin/annonces/nouvelle", label: "Ajouter un article", admin: true },
         { href: "/admin/trade-ins", label: "Reprises", admin: false, count: newTradeIns },
         { href: "/admin/customers", label: "Clients", admin: true },
         { href: "/admin/reviews", label: "Avis", admin: true },

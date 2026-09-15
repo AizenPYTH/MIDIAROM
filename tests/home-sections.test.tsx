@@ -5,7 +5,6 @@ import { CartProvider } from "@/components/shop/cart-provider";
 import { PLATFORMS, TRUST } from "@/components/marketing/home/content";
 import { BRAND_DEFAULTS } from "@/config/brand";
 import type { Product } from "@/lib/shop/catalog";
-import type { GameListing } from "@/lib/shop/games";
 
 /**
  * L'accueil, sur des données maîtrisées.
@@ -32,32 +31,6 @@ const produit = (i: number): Product =>
     low_stock_threshold: 2,
     images: [],
   }) as unknown as Product;
-
-const jeu = (i: number): GameListing =>
-  ({
-    productId: `g${i}`,
-    slug: `jeu-${i}`,
-    name: `Jeu ${i}`,
-    platform: "PlayStation 5",
-    edition: null,
-    priceCents: 4999,
-    compareAtPriceCents: null,
-    condition: "NEW",
-    inStock: false,
-    igdbId: 1,
-    summary: null,
-    releaseDate: null,
-    genres: [],
-    developer: null,
-    publisher: null,
-    rating: null,
-    ratingCount: null,
-    coverUrl: null,
-    heroUrl: null,
-    screenshotUrls: [],
-    video: null,
-    trailerUrl: null,
-  }) as unknown as GameListing;
 
 describe("hero", () => {
   const html = rendu(<Hero />);
@@ -102,7 +75,7 @@ describe("réparations", () => {
 
 describe("mur de produits", () => {
   it("montre les vrais produits et annonce le reste du catalogue", () => {
-    const html = rendu(<ProductWall products={[1, 2].map(produit)} demoGames={[]} total={240} />);
+    const html = rendu(<ProductWall products={[1, 2].map(produit)} total={240} />);
     expect(html).toContain("Console 1");
     expect(html).toContain("/boutique/produit-1");
     expect(html).toContain("Voir les 240 références");
@@ -110,26 +83,20 @@ describe("mur de produits", () => {
   });
 
   it("ne promet pas un nombre qu'il dépasse déjà", () => {
-    const html = rendu(<ProductWall products={[1, 2].map(produit)} demoGames={[]} total={2} />);
+    const html = rendu(<ProductWall products={[1, 2].map(produit)} total={2} />);
     expect(html).toContain("Voir tout le catalogue");
     expect(html).not.toMatch(/Voir les \d/);
   });
 
-  it("n'offre jamais d'ajouter au panier un jeu de démonstration", () => {
-    const html = rendu(<ProductWall products={[]} demoGames={[1, 2].map(jeu)} total={0} />);
-    expect(html).toContain("Jeu 1");
-    expect(html).toContain("prix sont indicatifs");
-    expect(html).not.toContain("Ajouter au panier");
-  });
 
   it("le dit, plutôt que d'afficher une grille de cadres vides", () => {
-    const html = rendu(<ProductWall products={[]} demoGames={[]} total={0} />);
+    const html = rendu(<ProductWall products={[]} total={0} />);
     expect(html).toContain("ne sont pas encore en ligne");
     expect(html).not.toContain("<article");
   });
 
   it("garde des filtres qui filtrent vraiment", () => {
-    const html = rendu(<ProductWall products={[produit(1)]} demoGames={[]} total={9} />);
+    const html = rendu(<ProductWall products={[produit(1)]} total={9} />);
     for (const q of ["/boutique?cat=jeux", "/boutique?cat=consoles", "/boutique?cat=figurines", "/boutique?etat=neuf", "/boutique?max=50"]) {
       expect(html, q).toContain(q.replace(/&/g, "&amp;"));
     }
@@ -189,16 +156,9 @@ describe("où mènent les cartes de plateforme", () => {
 });
 
 describe("cadrage des visuels", () => {
-  it("laisse une jaquette de jeu dans son 3/4 plutôt que de la recadrer en carré", () => {
-    // Le carré rognait un quart de la hauteur : titre et logo de plateforme
-    // passaient hors champ, et la vignette avait l'air zoomée.
-    const html = rendu(<ProductWall products={[]} demoGames={[jeu(1)]} total={0} />);
-    expect(html).toContain("aspect-ratio:3 / 4");
-    expect(html).not.toContain("aspect-square");
-  });
 
   it("garde le carré pour le reste du rayon", () => {
-    const html = rendu(<ProductWall products={[produit(1)]} demoGames={[]} total={9} />);
+    const html = rendu(<ProductWall products={[produit(1)]} total={9} />);
     expect(html).toContain("aspect-ratio:1 / 1");
   });
 });

@@ -3,12 +3,8 @@ import Image from "next/image";
 import { ROUTES } from "@/config/site";
 import { publicMediaUrl } from "@/components/marketing/gallery";
 import { PhotoSlot } from "@/components/marketing/home/photo-slot";
-import { SafeImage } from "@/components/marketing/home/safe-image";
 import { AddToCartButton } from "@/components/shop/cart-widgets";
 import { CONDITION_SHORT, stockLabel, stockState } from "@/lib/shop/status";
-import { DEMO_PRICE_NOTE } from "@/lib/shop/demo-price";
-import type { GameListing } from "@/lib/shop/games";
-import { genresFr, platformFr, yearOf } from "@/lib/shop/game-fr";
 import { formatPrice } from "@/lib/utils/format";
 import type { Product } from "@/lib/shop/catalog";
 import { cn } from "@/lib/utils/cn";
@@ -26,10 +22,10 @@ import { cn } from "@/lib/utils/cn";
  * passe à 1.05, et le bouton d'achat vire au rouge. Le rouge n'apparaît que
  * là, sur la carte visée, jamais sur les huit à la fois.
  *
- * `ProductCard` porte un vrai produit : il s'ajoute au panier.
- * `GameCard` porte un jeu de la vitrine de démonstration : il mène à sa fiche,
- * et son prix est annoncé comme indicatif. Aucune ne se fait passer pour
- * l'autre.
+ * Le catalogue est entièrement saisi au back-office : une carte porte donc
+ * toujours un vrai produit, avec son vrai prix et son vrai stock. Il n'y a plus
+ * de variante « démonstration » — elle venait d'un catalogue externe qui
+ * n'existe plus.
  */
 
 /**
@@ -116,48 +112,6 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         </span>
         <AddToCartButton productId={product.id} available={product.quantity} className="mt-0.5 w-full" />
-      </div>
-    </article>
-  );
-}
-
-/**
- * Une carte de la vitrine de démonstration.
- *
- * Même allure qu'un produit — c'est le but : la boutique doit avoir l'air d'une
- * boutique. Mais pas de bouton « Ajouter » : ce jeu n'est pas au catalogue, et
- * un panier qu'on ne peut pas honorer serait un mensonge. Le prix porte sa
- * mention, le badge dit « Démo ».
- */
-export function GameCard({ game }: { game: GameListing }) {
-  const href = `${ROUTES.shop}/jeu/${game.slug}`;
-  const meta = [game.platform ? platformFr(game.platform) : null, genresFr(game.genres, 1)[0] ?? null, yearOf(game.releaseDate)]
-    .filter(Boolean)
-    .join(" · ");
-  return (
-    <article data-card="1" className="flex min-w-0 flex-col border border-border bg-surface">
-      <Frame href={href} alt={game.name} badge="Démo" badgeTone="outline" ratio="3 / 4">
-        <SafeImage src={game.coverUrl} sizes="(max-width: 640px) 46vw, (max-width: 1100px) 30vw, 232px" fallback={<PhotoSlot label={game.name} />} />
-      </Frame>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-2 p-4">
-        {meta ? <span className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-muted">{meta}</span> : null}
-        <h3 className="flex-1 text-[15.5px] font-semibold leading-[1.32] tracking-[-0.014em] text-ink">
-          <Link href={href} className="transition-colors hover:text-red">
-            {game.name}
-          </Link>
-        </h3>
-        <span className="flex items-baseline justify-between gap-2.5">
-          <span className="text-[19px] font-bold tracking-[-0.028em] text-ink">{formatPrice(game.priceCents)}</span>
-          <span className="whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-muted">{DEMO_PRICE_NOTE}</span>
-        </span>
-        <Link
-          href={href}
-          data-buy="1"
-          className="mt-0.5 inline-flex min-h-[44px] w-full items-center justify-center border border-ink px-3 text-[14px] font-semibold text-ink"
-        >
-          Voir le jeu
-        </Link>
       </div>
     </article>
   );

@@ -101,8 +101,8 @@ immédiatement : c'est le magasin qui décide.
 | `/admin/orders/[id]` | La fiche complète d'une réparation |
 | `/admin/shop-orders` | Commandes boutique |
 | `/admin/stock` | Tous les articles : prix, stock, photos, mise en ligne |
+| `/admin/annonces/nouvelle` | Créer un article à la main — jeu, console, figurine, accessoire, pièce |
 | `/admin/catalog/*` | Tarifs de réparation : marques, consoles, pannes, prestations |
-| `/admin/catalog/figurines` | Import HobbyLink Japan — voir `docs/FIGURINES.md` |
 | `/admin/settings` | Nom, adresse, horaires, garantie, livraison |
 
 ## Tokens

@@ -19,11 +19,7 @@
     "check": "npm run lint && npm run typecheck && npm run test && npm run build",
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "seeds:build": "node scripts/build-production-seeds.mjs",
-    "photos:consoles": "node scripts/import-console-photos.mjs",
-    "check:igdb": "node scripts/check-igdb.mjs",
-    "fixtures:homepage": "node scripts/homepage-fixtures.mjs",
-    "demo:games": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/demo-games.mjs",
-    "check:hlj": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --conditions=react-server --import ./scripts/lib/alias.mjs scripts/check-hlj.mjs"
+    "photos:consoles": "node scripts/import-console-photos.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

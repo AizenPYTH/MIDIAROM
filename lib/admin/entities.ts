@@ -416,7 +416,7 @@ ENTITIES.products = {
     { name: "condition_notes", label: "Défauts / précisions sur l'état (affichés au client)", type: "textarea" },
     // Identification d'un jeu. L'EAN est la piste la plus sûre pour ne pas
     // confondre les versions PS4 / PS5 / Switch d'un même titre.
-    { name: "ean", label: "Code-barres EAN", type: "text", width: "half", hint: "Jeux : permet à IGDB d'identifier l'édition exacte" },
+    { name: "ean", label: "Code-barres EAN", type: "text", width: "half", hint: "Facultatif : le code-barres imprimé sur la boîte" },
     { name: "edition", label: "Édition", type: "text", width: "half", hint: "Deluxe, Remastered, Game of the Year…" },
     { name: "region", label: "Région", type: "text", width: "half", hint: "PAL, NTSC-U, NTSC-J…" },
     { name: "release_year", label: "Année de sortie", type: "number", width: "half" },

@@ -92,14 +92,16 @@ HDMI à l'écran, fermeture du boîtier.
 
 ## Les photos
 
-Aucune n'est branchée, et c'est volontaire : le magasin fournira les siennes.
-Chaque emplacement affiche la plaque d'attente de la charte (`PhotoSlot`), qui
-est un état prévu et non un trou. La liste de ce qui est attendu, avec cadrage
-et format, est dans `MISSING_ASSETS` (`lib/content/assets.ts`).
+Les visuels de l'accueil sont ceux du magasin, dans `public/images/home/` et
+déclarés par `HOME_VISUALS` (`lib/content/assets.ts`). Un emplacement non encore
+fourni affiche la plaque d'attente de la charte (`PhotoSlot`), qui est un état
+prévu et non un trou ; ce qui reste à fournir est listé dans `MISSING_ASSETS`.
 
 **Les figurines exigent des visuels de personnages** de manga et d'anime.
 
-Seule exception : les jaquettes de jeux, qui viennent du cache IGDB.
+Les photos de produits — jaquettes de jeux comprises — sont celles saisies dans
+le back-office au moment de créer l'annonce. Aucune ne vient d'un catalogue
+tiers.
 
 ## Le mur de produits
 
@@ -107,13 +109,12 @@ Huit produits réels, tous rayons confondus, triés par arrivée. Les filtres
 mènent au catalogue réel avec leur requête (`?cat=`, `?etat=`, `?max=`) : un
 filtre qui ne filtre rien serait pire qu'absent.
 
-Si le catalogue est vide, la sélection IGDB prend le relais — mêmes cartes,
-badgées « Démo », prix annoncé indicatif, **aucun bouton d'ajout au panier**.
-Un vrai produit et une fiche de démonstration ne se mélangent jamais dans la
-même grille : le visiteur doit toujours savoir lequel il peut acheter.
+Le mur ne montre que du stock réel. Il n'existe aucune sélection de
+démonstration : un visiteur ne peut donc pas tomber sur une fiche qu'il ne
+pourrait pas acheter.
 
-Rien en rayon et rien en démonstration : la page le dit en une phrase, plutôt
-que d'afficher une grille de cadres vides.
+Rien en rayon : la page le dit en une phrase, plutôt que d'afficher une grille
+de cadres vides.
 
 ## Les réglages qui font disparaître un bloc
 
@@ -128,9 +129,8 @@ npm test                     # dont tests/home-sections.test.tsx
 npm run dev                  # puis http://localhost:3000
 ```
 
-Les cas qui méritent un coup d'œil : catalogue plein · catalogue vide (la
-sélection IGDB prend le relais) · base injoignable (tout retombe sur les états
-vides) · `WORKSHOP_VIDEO` renseignée et non renseignée · réglages `brand` vides ·
-`prefers-reduced-motion` actif.
+Les cas qui méritent un coup d'œil : catalogue plein · catalogue vide · base
+injoignable (tout retombe sur les états vides) · `WORKSHOP_VIDEO` renseignée et
+non renseignée · réglages `brand` vides · `prefers-reduced-motion` actif.
 
 Largeurs vérifiées sans débordement horizontal : **390, 760, 924, 1100, 1380 px**.

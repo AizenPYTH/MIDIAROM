@@ -25,10 +25,6 @@ const serverSchema = z.object({
   EMAIL_FROM: z.string().default("Atelier <no-reply@example.com>"),
   SHIPPING_PROVIDER: z.enum(["mock"]).default("mock"),
   SHIPPING_PROVIDER_API_KEY: z.string().optional(),
-  // IGDB (jeux vidéo) s'authentifie par Twitch OAuth. Le secret ne sort jamais
-  // du serveur : il n'existe volontairement aucune variante NEXT_PUBLIC_*.
-  TWITCH_CLIENT_ID: z.string().optional(),
-  TWITCH_CLIENT_SECRET: z.string().optional(),
   CRON_SECRET: z.string().optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });

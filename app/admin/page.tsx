@@ -63,7 +63,7 @@ const PANNEAU = "border border-border bg-surface p-5";
 const AJOUTS = [
   { label: "Un jeu vidéo", href: `/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.GAME}` },
   { label: "Une console", href: `/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.CONSOLE}` },
-  { label: "Une figurine", href: "/admin/catalog/figurines" },
+  { label: "Une figurine", href: `/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.COLLECTIBLE}` },
   { label: "Une prestation", href: "/admin/catalog/repairs/new" },
 ];
 

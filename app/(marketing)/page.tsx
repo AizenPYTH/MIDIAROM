@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_URL } from "@/config/site";
 import { Hero, Journey, ProductWall, Repairs, ShopCategories, Store, TrustBand, Workshop } from "@/components/marketing/home/sections";
-import { getHomepageGames } from "@/lib/shop/games";
 import { getProductCategoryCounts, getProducts } from "@/lib/shop/catalog";
 import { getModelsWithActiveRepairs } from "@/lib/repair/catalog";
 import { PUBLIC_CATEGORIES } from "@/lib/shop/status";
@@ -49,11 +48,6 @@ export default async function HomePage() {
     getModelsWithActiveRepairs().catch(() => []),
   ]);
 
-  // La sélection IGDB ne prend le relais que si le catalogue est vide : un vrai
-  // produit et une fiche de démonstration ne se mélangent jamais dans la même
-  // grille, sinon le visiteur ne sait plus lequel il peut acheter.
-  const { latest, isDemo } = products.length ? { latest: [], isDemo: false } : await getHomepageGames(WALL);
-  const demoGames = isDemo ? latest.slice(0, WALL) : [];
 
   // Le total affiché sur « Voir les N références » ne compte que les rayons
   // publics : accessoires et pièces détachées ne sont pas des rayons ici.
@@ -71,7 +65,7 @@ export default async function HomePage() {
       <TrustBand />
       <Workshop video={WORKSHOP_VIDEO} />
       <ShopCategories />
-      <ProductWall products={products} demoGames={demoGames} total={total} />
+      <ProductWall products={products} total={total} />
       <Store brand={brand} />
     </>
   );

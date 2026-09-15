@@ -4,10 +4,9 @@ import { PhotoSlot } from "@/components/marketing/home/photo-slot";
 import { HomeVisual } from "@/components/marketing/home/visual";
 import { HOME_VISUAL_ALTS, HOME_VISUAL_FOCUS, HOME_VISUALS, PLATFORM_VISUALS } from "@/lib/content/assets";
 import { WorkshopVideo } from "@/components/marketing/home/workshop-video";
-import { GameCard, ProductCard, ProductGrid } from "@/components/shop/product-card";
+import { ProductCard, ProductGrid } from "@/components/shop/product-card";
 import { CATEGORIES, HERO_TRUST, PLATFORMS, SAVOIR_FAIRE, SHOP_FILTERS, stepsAvecTarif, TRUST, type Platform } from "@/components/marketing/home/content";
 import type { Product } from "@/lib/shop/catalog";
-import type { GameListing } from "@/lib/shop/games";
 import type { BrandSettings } from "@/config/brand";
 
 /**
@@ -426,12 +425,12 @@ export function ShopCategories() {
  * Les filtres ne décorent pas : chacun mène au catalogue réel avec sa requête.
  * Un filtre qui ne filtre rien serait pire qu'absent.
  *
- * Si le catalogue est vide, la sélection IGDB prend le relais — mêmes cartes,
- * mais badgées « Démo », prix annoncé indicatif et aucun bouton d'ajout au
- * panier. Ce sont des titres qu'on peut faire venir, pas du stock.
+ * Tout vient du catalogue saisi au back-office : il n'y a plus de sélection de
+ * démonstration à afficher quand le rayon est vide, et c'est voulu — un rayon
+ * vide le dit, plutôt que de montrer des titres qu'on ne vend pas.
  */
-export function ProductWall({ products, demoGames, total }: { products: Product[]; demoGames: GameListing[]; total: number }) {
-  const rien = !products.length && !demoGames.length;
+export function ProductWall({ products, total }: { products: Product[]; total: number }) {
+  const rien = !products.length;
 
   return (
     <section aria-label="En rayon" className={`${WRAP} pt-10`}>
@@ -464,20 +463,10 @@ export function ProductWall({ products, demoGames, total }: { products: Product[
         </p>
       ) : (
         <>
-          {demoGames.length ? (
-            <p data-rise="1" className="mb-5 font-mono text-[11.5px] tracking-[0.04em] text-ink-muted">
-              Notre sélection du moment — ces titres ne sont pas encore en rayon, les prix sont indicatifs.
-            </p>
-          ) : null}
           <ProductGrid>
             {products.map((p) => (
               <li key={p.id} className="min-w-0">
                 <ProductCard product={p} />
-              </li>
-            ))}
-            {demoGames.map((g) => (
-              <li key={g.productId} className="min-w-0">
-                <GameCard game={g} />
               </li>
             ))}
           </ProductGrid>

@@ -133,16 +133,6 @@ export const HOME_VISUAL_ALTS = {
 export const WORKSHOP_VIDEO: { src: string; poster?: string } | undefined = undefined;
 
 /**
- * Boucle vidéo de démonstration du jeu vedette.
- *
- * Fabriquée pour ce projet : une animation dessinée sur un canvas puis
- * enregistrée. Elle n'est empruntée à personne, aucune licence tierce n'est en
- * jeu. Le champ `hero_video_url` d'un produit la remplace dès qu'une vraie
- * vidéo est disponible.
- */
-export const DEMO_FEATURED_VIDEO = "/medias/demo/featured-loop.webm";
-
-/**
  * Ce que le magasin fournira. Tenu à jour à la main : c'est la liste à lui
  * donner quand il demande pourquoi un emplacement reste sur une plaque.
  *
@@ -158,5 +148,5 @@ export const MISSING_ASSETS = [
   { role: "Rayons — trois cartes", need: "Rayon jeux vidéo · rayon consoles · vitrine de figurines de personnages de manga et d'anime. 4/3, 1200 px." },
   { role: "Magasin", need: "Façade ou intérieur, 207 rue de Rome. 4/3, 1600 px." },
   { role: "Produits", need: "Photos à déposer dans la fiche produit du back-office — ce sont elles que la boutique affiche." },
-  { role: "Jeux — jaquettes", need: "Rien à fournir : elles viennent d'IGDB." },
+  { role: "Jeux — jaquettes", need: "Une photo par jeu, ajoutée depuis le back-office au moment de créer l'annonce." },
 ] as const;

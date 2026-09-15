@@ -3,20 +3,15 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Les visuels du catalogue sont hébergés par le magasin : Supabase Storage
+  // et /public. Aucun CDN tiers n'est autorisé.
   images: {
     remotePatterns: [
       // Supabase Storage (public content bucket + signed URLs)
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/**" },
       // Local Supabase (supabase start)
       { protocol: "http", hostname: "127.0.0.1", port: "54321", pathname: "/storage/v1/**" },
-      { protocol: "http", hostname: "localhost", port: "54321", pathname: "/storage/v1/**" },
-      // CDN d'images IGDB. Les visuels sont servis par IGDB, pas recopiés :
-      // c'est ce que permettent leurs conditions, et cela évite de constituer
-      // une réplique autonome de leur base.
-      { protocol: "https", hostname: "images.igdb.com", pathname: "/igdb/image/upload/**" },
-      // Vignettes officielles des bandes-annonces YouTube.
-      { protocol: "https", hostname: "img.youtube.com", pathname: "/vi/**" },
-    ],
+      { protocol: "http", hostname: "localhost", port: "54321", pathname: "/storage/v1/**" },    ],
   },
   async headers() {
     return [

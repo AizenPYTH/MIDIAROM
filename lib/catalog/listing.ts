@@ -1,5 +1,23 @@
-import { slugify } from "@/lib/catalog/import";
 import type { ProductCategory } from "@/lib/shop/status";
+
+/**
+ * Slug lisible et stable, dérivé du nom. C'est l'adresse publique de la fiche.
+ *
+ * Il vivait dans l'import externe, supprimé depuis : le catalogue est
+ * entièrement saisi au back-office, et cette fonction est tout ce qu'il
+ * fallait en garder.
+ */
+export function slugify(value: string): string {
+  return (
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 70) || "article"
+  );
+}
 
 /**
  * Ce que le formulaire court fabrique à la place de l'utilisateur.
