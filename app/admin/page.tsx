@@ -2,203 +2,329 @@ import Link from "next/link";
 import { requireStaffOrRedirect } from "@/lib/security/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { CATEGORY_SLUGS } from "@/lib/shop/status";
+import { depuis, EN_COURS, joursDepuis, ORDRE, REGISTRES, registreOf, type Registre } from "@/lib/admin/workbench";
+import { formatPrice } from "@/lib/utils/format";
+import { cn } from "@/lib/utils/cn";
 
 /**
- * L'accueil du back-office.
+ * Le back-office : ce qui attend une action.
  *
- * Il n'existait pas : `/admin` ouvrait directement la file de l'atelier, et
- * tout le reste — mettre une console en vente, importer une figurine, changer
- * un tarif — vivait dans un menu « Plus » qui, faute d'onglets à sa gauche,
- * s'ouvrait hors de l'écran. On pouvait tenir le site sans jamais trouver
- * l'import de figurines.
+ * L'écran répond à une seule question, et la liste des réparations **est** la
+ * page. Le réparateur l'ouvre vingt fois par jour pour suivre des dossiers, pas
+ * pour publier un article : l'ajout au catalogue tient donc en quatre boutons
+ * en bas de la colonne de droite.
  *
- * Cette page répond donc à une seule question : **qu'est-ce que vous voulez
- * faire ?** Quatre façons de publier une annonce en haut, parce que c'est le
- * geste le plus fréquent et le plus mal desservi ; ce qui attend en dessous ;
- * et l'index complet en bas, visible, sans rien de replié.
+ * **Le rouge ne signale qu'une chose : ce qui dépend du client.** Le compteur
+ * des devis en attente, l'état « Devis envoyé », les puces de relance en
+ * retard, les commandes à expédier. Nulle part ailleurs — sinon il ne signale
+ * plus rien.
  *
- * Aucun chiffre n'est calculé ici sans être lu en base : un compteur qui ment
- * est pire qu'un compteur absent.
+ * Aucun indicateur n'est inventé : chaque nombre est compté en base, et un
+ * bloc sans donnée le dit plutôt que d'afficher un tiret.
  */
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Back-office" };
 
-/** Une grande carte d'action. Le geste d'abord, l'explication ensuite. */
-function Action({ href, title, note, tone = "ink" }: { href: string; title: string; note: string; tone?: "ink" | "red" }) {
+/** Ce que porte une ligne de réparation, une fois le statut traduit. */
+interface Ligne {
+  id: string;
+  ref: string;
+  client: string;
+  console: string;
+  panne: string;
+  prix: string;
+  registre: Registre;
+  /** Depuis combien de jours le devis attend. Null hors registre « attente ». */
+  attendDepuis: number | null;
+}
+
+/** Le traitement visuel d'un état. Trois registres, trois lectures. */
+const PASTILLE: Record<Registre, string> = {
+  // La balle est chez le client : le seul rouge de la liste.
+  attente: "border-[#f3c9cb] bg-[#fdecec] text-[#a8161c]",
+  atelier: "border-ink bg-ink text-white",
+  diag: "border-border-strong bg-surface text-ink",
+  prete: "border-border bg-surface-strong text-ink-muted",
+};
+
+function Pastille({ registre }: { registre: Registre }) {
   return (
-    <Link
-      href={href}
-      data-card="1"
-      className="flex min-w-0 flex-col gap-2 border border-border bg-surface p-5 transition-colors hover:border-ink"
-    >
-      <span className={`font-mono text-[10.5px] uppercase tracking-[0.12em] ${tone === "red" ? "text-red" : "text-ink-muted"}`}>
-        Publier
-      </span>
-      <strong className="text-[19px] font-bold leading-[1.15] tracking-[-0.02em] text-ink">{title}</strong>
-      <span className="text-[14px] leading-[1.45] text-ink-soft">{note}</span>
-      <span aria-hidden="true" className="mt-1 font-mono text-[13px] text-ink-muted">
-        →
-      </span>
-    </Link>
+    <span className={cn("inline-block border px-[9px] py-[5px] font-mono text-[10.5px] uppercase tracking-[0.07em]", PASTILLE[registre])}>
+      {registre === "attente" ? "Devis envoyé" : registre === "prete" ? "Prête" : REGISTRES[registre].label}
+    </span>
   );
 }
 
-/** Une ligne de travail en attente : ce qu'il y a à faire, et combien. */
-function File({ href, label, count, note }: { href: string; label: string; count: number; note: string }) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center justify-between gap-4 border-t border-border-hairline py-3.5 text-ink transition-colors hover:text-red"
-      data-row="1"
-    >
-      <span className="min-w-0">
-        <strong className="text-[15.5px] font-semibold">{label}</strong>
-        <span className="mt-0.5 block text-[13.5px] text-ink-soft">{note}</span>
-      </span>
-      <span className="flex shrink-0 items-center gap-3">
-        <span className={`font-mono text-[15px] ${count > 0 ? "text-ink" : "text-ink-muted"}`}>{count}</span>
-        <span aria-hidden="true" data-arrow="1" className="text-[15px] text-ink-muted">
-          →
-        </span>
-      </span>
-    </Link>
-  );
-}
+const CELL = "px-[22px] py-[15px]";
+const PANNEAU = "border border-border bg-surface p-5";
 
-/** Le reste du back-office, en clair. Rien n'est caché derrière un menu. */
-const INDEX: { titre: string; liens: { href: string; label: string; note: string }[] }[] = [
-  {
-    titre: "Boutique",
-    liens: [
-      { href: "/admin/annonces/nouvelle", label: "Nouvelle annonce", note: "Le formulaire court : six champs" },
-      { href: "/admin/stock", label: "Tous les articles", note: "Prix, stock, photos, mise en ligne" },
-      { href: "/admin/shop-orders", label: "Commandes boutique", note: "À préparer, expédiées, retirées" },
-      { href: "/admin/catalog/figurines", label: "Importer une figurine", note: "Recherche HobbyLink Japan, création en brouillon" },
-      { href: "/admin/trade-ins", label: "Reprises", note: "Offres à faire, consoles reçues" },
-    ],
-  },
-  {
-    titre: "Atelier",
-    liens: [
-      { href: "/admin/atelier", label: "File de réparation", note: "Diagnostic, devis, atelier, retour" },
-      { href: "/admin/reception", label: "Réception", note: "Colis attendus et arrivés" },
-      { href: "/admin/orders", label: "Tous les dossiers", note: "Historique complet" },
-      { href: "/admin/sav", label: "SAV", note: "Retours sous garantie" },
-    ],
-  },
-  {
-    titre: "Tarifs de réparation",
-    liens: [
-      { href: "/admin/catalog/brands", label: "Marques", note: "Sony, Nintendo, Microsoft…" },
-      { href: "/admin/catalog/models", label: "Consoles", note: "Les modèles réparables et leurs pages" },
-      { href: "/admin/catalog/faults", label: "Pannes", note: "Les symptômes proposés au client" },
-      { href: "/admin/catalog/repairs", label: "Prestations et prix", note: "Ce qui est facturé, par console et par panne" },
-    ],
-  },
-  {
-    titre: "Le site",
-    liens: [
-      { href: "/admin/content", label: "Textes et pages", note: "Accueil, FAQ, mentions, galerie" },
-      { href: "/admin/settings", label: "Réglages", note: "Nom, adresse, horaires, garantie, livraison" },
-      { href: "/admin/reviews", label: "Avis clients", note: "À publier ou masquer" },
-      { href: "/admin/customers", label: "Clients", note: "Fiches et historique" },
-    ],
-  },
-  {
-    titre: "Gestion",
-    liens: [
-      { href: "/admin/options", label: "Options et packs", note: "Suppléments proposés au devis" },
-      { href: "/admin/shipping", label: "Transport", note: "Transporteurs et tarifs" },
-      { href: "/admin/technicians", label: "Techniciens", note: "Qui travaille sur quoi" },
-      { href: "/admin/analytics", label: "Statistiques", note: "Chiffre d'affaires, marges, coûts" },
-    ],
-  },
+/** Les quatre raccourcis de publication. Action rare, donc en bas de colonne. */
+const AJOUTS = [
+  { label: "Un jeu vidéo", href: `/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.GAME}` },
+  { label: "Une console", href: `/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.CONSOLE}` },
+  { label: "Une figurine", href: "/admin/catalog/figurines" },
+  { label: "Une prestation", href: "/admin/catalog/repairs/new" },
 ];
 
-export default async function AdminHomePage() {
-  const user = await requireStaffOrRedirect();
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
+  await requireStaffOrRedirect();
+  const { f } = await searchParams;
+  const onglet = ORDRE.includes(f as Registre) ? (f as Registre) : null;
   const db = createSupabaseAdminClient();
 
+  const { data } = await db
+    .from("repair_orders")
+    .select("id, order_number, model_name, fault_name, repair_name, status, total_cents, customer_first_name, customer_last_name, created_at, updated_at")
+    .in("status", EN_COURS)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  const toutes: Ligne[] = (data ?? []).flatMap((o) => {
+    const registre = registreOf(o.status);
+    if (!registre) return [];
+    const nom = [o.customer_first_name, o.customer_last_name].filter(Boolean).join(" ").trim();
+    return [
+      {
+        id: o.id,
+        ref: o.order_number,
+        client: nom || "Client sans nom",
+        console: o.model_name ?? "Console non précisée",
+        panne: o.fault_name ?? o.repair_name ?? "Panne à qualifier",
+        // Pas encore chiffré : un tiret, jamais un zéro qui passerait pour gratuit.
+        prix: o.total_cents ? formatPrice(o.total_cents) : "—",
+        registre,
+        // `updated_at` est la dernière écriture du dossier : pour un devis en
+        // attente, c'est l'envoi. Faute d'horodatage dédié, c'est la meilleure
+        // approximation disponible, et elle ne sert qu'à trier les relances.
+        attendDepuis: registre === "attente" ? joursDepuis(o.updated_at ?? o.created_at) : null,
+      },
+    ];
+  });
+
+  const parRegistre = (r: Registre) => toutes.filter((l) => l.registre === r);
+  const lignes = onglet ? parRegistre(onglet) : toutes;
+
+  // Commandes boutique récentes, pour la colonne de droite.
+  const { data: commandes } = await db
+    .from("shop_orders")
+    .select("id, order_number, status, fulfillment, total_cents")
+    .in("status", ["PAID", "PREPARED", "SHIPPED"])
+    .order("created_at", { ascending: false })
+    .limit(4);
+
   /**
-   * `head: true` ne ramène que le total : on n'a pas besoin des lignes pour
-   * afficher un nombre. Et une base injoignable rend zéro plutôt que de faire
-   * tomber la page — l'accueil du back-office doit toujours s'ouvrir.
+   * « À faire maintenant », déduit de la liste et non saisi à la main.
+   *
+   * Les relances les plus anciennes d'abord — ce sont elles qui bloquent le
+   * chiffre d'affaires —, puis les colis à préparer, puis les consoles à
+   * ouvrir. Un dossier qui n'appelle aucune action n'y figure pas.
    */
-  const total = async (p: PromiseLike<{ count: number | null }>) => {
-    try {
-      return (await p).count ?? 0;
-    } catch {
-      return 0;
-    }
-  };
+  const relances = parRegistre("attente")
+    .filter((l) => (l.attendDepuis ?? 0) >= 2)
+    .sort((a, b) => (b.attendDepuis ?? 0) - (a.attendDepuis ?? 0))
+    .slice(0, 3)
+    .map((l) => ({
+      id: l.id,
+      label: `Relancer ${l.client} — devis envoyé ${depuis(l.attendDepuis)}`,
+      meta: `${l.ref} · ${l.prix}`,
+      urgent: true,
+    }));
 
-  const OUVERTS = ["PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "RECEPTION_CHECK", "DIAGNOSIS", "WAITING_CUSTOMER_APPROVAL", "APPROVED", "REPAIRING", "QUALITY_CONTROL", "READY_TO_SHIP", "RETURN_REQUIRED", "SAV", "DISPUTED"] as const;
+  const colis = parRegistre("prete")
+    .slice(0, 2)
+    .map((l) => ({ id: l.id, label: `Préparer le colis retour de ${l.client}`, meta: `${l.ref} · ${l.console}`, urgent: false }));
 
-  const [reparations, commandes, reprises, brouillons] = await Promise.all([
-    total(db.from("repair_orders").select("id", { count: "exact", head: true }).in("status", [...OUVERTS])),
-    total(db.from("shop_orders").select("id", { count: "exact", head: true }).in("status", ["PAID", "PREPARED"])),
-    total(db.from("trade_in_requests").select("id", { count: "exact", head: true }).eq("status", "NEW")),
-    total(db.from("products").select("id", { count: "exact", head: true }).eq("is_active", false)),
-  ]);
+  const aOuvrir = parRegistre("diag");
+  const diagnostics = aOuvrir.length
+    ? [
+        {
+          id: "diag",
+          label: aOuvrir.length === 1 ? "Diagnostiquer la console reçue" : `Diagnostiquer les ${aOuvrir.length} consoles reçues`,
+          meta: aOuvrir.slice(0, 3).map((l) => l.ref).join(", "),
+          urgent: false,
+        },
+      ]
+    : [];
 
-  const prenom = user.profile.first_name?.trim();
+  const aFaire = [...relances, ...colis, ...diagnostics];
 
   return (
-    <div className="mx-auto w-full max-w-[1420px] px-4 py-7 sm:px-[30px]">
-      <h1 className="text-[clamp(24px,3vw,34px)] font-bold tracking-[-0.03em] text-ink">
-        {prenom ? `Bonjour ${prenom}.` : "Back-office"}
-      </h1>
-      <p className="mt-2 max-w-[60ch] text-[15.5px] leading-[1.5] text-ink-soft">
-        Qu&apos;est-ce que vous voulez faire&#8239;?
-      </p>
-
-      {/* ── Publier, en premier : c'est le geste le plus fréquent ───────── */}
-      <h2 className="mt-8 font-mono text-[11.5px] uppercase tracking-[0.14em] text-red">Mettre en vente</h2>
-      <div className="mt-4 grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-        <Action
-          href={`/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.GAME}`}
-          title="Un jeu vidéo"
-          note="Six champs. La jaquette et le résumé se récupèrent ensuite depuis IGDB, sur la fiche."
-          tone="red"
-        />
-        <Action href={`/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.CONSOLE}`} title="Une console" note="Six champs : nom, plateforme, état, prix, quantité. Le reste est déduit." />
-        <Action
-          href="/admin/catalog/figurines"
-          title="Une figurine"
-          note="Cherchez-la chez HobbyLink Japan : la fiche est créée en brouillon, prête à compléter."
-          tone="red"
-        />
-        <Action href="/admin/catalog/repairs/new" title="Une réparation" note="Une prestation facturable : console, panne, prix et délai." />
+    <div className="mx-auto w-full max-w-[1440px] px-[22px] pb-14 pt-[26px]">
+      {/* ── Ligne d'état : quatre nombres, rien de plus ──────────────────── */}
+      <div className="mb-[26px] grid gap-px border border-border bg-border" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
+        {ORDRE.map((r) => {
+          const n = parRegistre(r).length;
+          return (
+            <Link key={r} href={`/admin?f=${r}`} className="flex flex-col gap-1.5 bg-surface p-5 transition-colors hover:bg-surface-muted">
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">{REGISTRES[r].label}</span>
+              {/* Un seul compteur en rouge : celui qui bloque le chiffre d'affaires. */}
+              <span className={cn("text-[34px] font-bold leading-none tracking-[-0.035em]", r === "attente" && n > 0 ? "text-red" : "text-ink")}>{n}</span>
+              <span className="text-[13.5px] text-ink-muted">{REGISTRES[r].note}</span>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* ── Ce qui attend ───────────────────────────────────────────────── */}
-      <h2 className="mt-10 font-mono text-[11.5px] uppercase tracking-[0.14em] text-ink-muted">Ce qui vous attend</h2>
-      <div className="mt-3 border-b border-border-hairline">
-        <File href="/admin/atelier" label="Réparations en cours" count={reparations} note="Dossiers ouverts, du diagnostic au retour" />
-        <File href="/admin/shop-orders" label="Commandes à préparer" count={commandes} note="Payées, pas encore expédiées ni retirées" />
-        <File href="/admin/trade-ins" label="Reprises à évaluer" count={reprises} note="Demandes reçues, en attente d'une offre" />
-        <File href="/admin/stock?f=inactive" label="Articles en brouillon" count={brouillons} note="Créés mais pas encore en ligne" />
-      </div>
+      <div data-split="1">
+        {/* ══ colonne principale : les réparations ══ */}
+        <section id="liste" className="min-w-0 border border-border bg-surface">
+          <div className="flex flex-wrap items-end justify-between gap-4 px-[22px] pt-5">
+            <h1 className="text-[23px] font-bold tracking-[-0.028em] text-ink">Réparations en cours</h1>
+            <Link
+              href="/admin/reception"
+              className="bg-red px-[18px] py-3 text-[14.5px] font-semibold text-white transition-colors hover:bg-ink"
+            >
+              Nouvelle réparation
+            </Link>
+          </div>
 
-      {/* ── L'index, en clair ───────────────────────────────────────────── */}
-      <h2 className="mt-10 font-mono text-[11.5px] uppercase tracking-[0.14em] text-ink-muted">Tout le back-office</h2>
-      <div className="mt-4 grid gap-x-8 gap-y-7" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
-        {INDEX.map((groupe) => (
-          <section key={groupe.titre} className="min-w-0">
-            <h3 className="text-[15.5px] font-semibold tracking-[-0.01em] text-ink">{groupe.titre}</h3>
-            <ul className="mt-2 flex list-none flex-col p-0">
-              {groupe.liens.map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} className="block border-t border-border-hairline py-2.5 transition-colors hover:text-red">
-                    <span className="text-[14.5px] text-ink">{l.label}</span>
-                    <span className="mt-0.5 block text-[13px] leading-[1.4] text-ink-muted">{l.note}</span>
+          <div className="flex flex-wrap gap-5 border-b border-border px-[22px] pt-4">
+            {[{ key: null, label: "Toutes", n: toutes.length }, ...ORDRE.map((r) => ({ key: r, label: REGISTRES[r].label, n: parRegistre(r).length }))].map((t) => {
+              const actif = t.key === onglet;
+              return (
+                <Link
+                  key={t.label}
+                  href={t.key ? `/admin?f=${t.key}` : "/admin"}
+                  aria-current={actif ? "page" : undefined}
+                  className={cn(
+                    "whitespace-nowrap border-b-2 pb-[11px] text-[14.5px] transition-colors",
+                    actif ? "border-ink font-semibold text-ink" : "border-transparent text-ink-soft hover:text-ink",
+                  )}
+                >
+                  {t.label} <span className="font-mono text-[12px] text-ink-muted">{t.n}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Le tableau garde une largeur minimale et défile dans son propre
+              conteneur : c'est la page qui ne doit jamais partir de travers. */}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] border-collapse text-[14.5px]">
+              <thead>
+                <tr className="bg-surface-muted">
+                  {["Réf.", "Client et console", "Panne", "État", "Prix", ""].map((h, i) => (
+                    <th
+                      key={h || i}
+                      scope="col"
+                      className={cn(CELL, "whitespace-nowrap border-b border-border py-[11px] text-left font-mono text-[10px] font-medium uppercase tracking-[0.1em] text-ink-muted")}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {lignes.map((l) => (
+                  <tr key={l.id} data-arow="1" className="border-b border-border-hairline">
+                    <td className={cn(CELL, "whitespace-nowrap font-mono text-[13.5px]")}>{l.ref}</td>
+                    <td className={CELL}>
+                      <span className="block font-semibold">{l.client}</span>
+                      <span className="block text-[13px] text-ink-muted">{l.console}</span>
+                    </td>
+                    <td className={CELL}>{l.panne}</td>
+                    <td className={cn(CELL, "whitespace-nowrap")}>
+                      <Pastille registre={l.registre} />
+                    </td>
+                    <td className={cn(CELL, "whitespace-nowrap font-mono text-[13.5px]")}>{l.prix}</td>
+                    <td className={cn(CELL, "whitespace-nowrap text-right")}>
+                      {/* Chaque ligne porte son action juste, pas une flèche
+                          identique partout : c'est ce qui rend la liste
+                          utilisable sans réfléchir. */}
+                      <Link href={`/admin/orders/${l.id}`} data-open="1" className="font-mono text-[11px] uppercase tracking-[0.07em] text-ink-muted">
+                        {REGISTRES[l.registre].action} →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+                {!lignes.length ? (
+                  <tr>
+                    <td colSpan={6} className={cn(CELL, "text-[14px] text-ink-muted")}>
+                      {onglet ? "Aucune réparation dans cet état." : "Aucune réparation en cours."}
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* ══ colonne de droite ══ */}
+        <div className="flex min-w-0 flex-col gap-[22px]">
+          <section className={PANNEAU}>
+            <h2 className="text-[17px] font-bold tracking-[-0.022em] text-ink">À faire maintenant</h2>
+            <span className="mb-3.5 mt-1 block text-[13.5px] text-ink-muted">Par ordre d&apos;urgence.</span>
+            {aFaire.length ? (
+              <div className="flex flex-col">
+                {aFaire.map((t) => (
+                  <Link key={t.id} href="#liste" data-arow="1" className="flex items-start gap-[11px] border-t border-border-hairline py-3">
+                    <span aria-hidden="true" className={cn("mt-1.5 block h-[7px] w-[7px] shrink-0", t.urgent ? "bg-red" : "bg-ink")} />
+                    <span className="min-w-0">
+                      <span className="block text-[14.5px] leading-[1.35]">{t.label}</span>
+                      <span className="mt-0.5 block font-mono text-[11px] text-ink-muted">{t.meta}</span>
+                    </span>
                   </Link>
-                </li>
-              ))}
-            </ul>
+                ))}
+                <span className="border-t border-border-hairline" />
+              </div>
+            ) : (
+              <p className="border-t border-border-hairline py-3 text-[14px] text-ink-muted">Rien n&apos;attend d&apos;action. L&apos;atelier est à jour.</p>
+            )}
           </section>
-        ))}
+
+          <section className={PANNEAU}>
+            <div className="mb-3.5 flex items-baseline justify-between gap-3">
+              <h2 className="text-[17px] font-bold tracking-[-0.022em] text-ink">Commandes boutique</h2>
+              <Link href="/admin/shop-orders" className="font-mono text-[10.5px] uppercase tracking-[0.07em] text-ink-muted transition-colors hover:text-red">
+                Tout voir
+              </Link>
+            </div>
+            {commandes?.length ? (
+              <div className="flex flex-col">
+                {commandes.map((c) => {
+                  const aExpedier = c.status === "PAID" || (c.status === "PREPARED" && c.fulfillment !== "PICKUP");
+                  return (
+                    <Link key={c.id} href={`/admin/shop-orders/${c.id}`} data-arow="1" className="flex items-center justify-between gap-3 border-t border-border-hairline py-3">
+                      <span className="min-w-0">
+                        <span className="block font-mono text-[12.5px]">{c.order_number}</span>
+                        <span className="mt-0.5 block text-[13.5px] text-ink-muted">
+                          {c.fulfillment === "PICKUP" ? "Retrait magasin" : "Livraison"}
+                        </span>
+                      </span>
+                      <span className="whitespace-nowrap text-right">
+                        <span className="block font-mono text-[13.5px]">{formatPrice(c.total_cents)}</span>
+                        <span className={cn("mt-0.5 block font-mono text-[10px] uppercase tracking-[0.07em]", aExpedier ? "text-red" : "text-ink-muted")}>
+                          {aExpedier ? "À expédier" : c.status === "SHIPPED" ? "Expédiée" : "Prête"}
+                        </span>
+                      </span>
+                    </Link>
+                  );
+                })}
+                <span className="border-t border-border-hairline" />
+              </div>
+            ) : (
+              <p className="border-t border-border-hairline py-3 text-[14px] text-ink-muted">Aucune commande en attente.</p>
+            )}
+          </section>
+
+          {/* Action rare : reléguée en bas, et c'est délibéré. */}
+          <section className={PANNEAU}>
+            <h2 className="mb-3.5 text-[17px] font-bold tracking-[-0.022em] text-ink">Ajouter au catalogue</h2>
+            <div className="grid grid-cols-2 gap-[9px]">
+              {AJOUTS.map((a) => (
+                <Link
+                  key={a.label}
+                  href={a.href}
+                  data-act="1"
+                  className="border border-border-strong bg-surface px-[11px] py-[13px] text-left text-[14px] font-semibold text-ink"
+                >
+                  {a.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

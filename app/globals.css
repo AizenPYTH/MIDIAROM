@@ -740,3 +740,55 @@ body {
   [data-card]:hover [data-zoom] { transform: none; }
   [data-row]:hover { padding-left: 0; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Back-office — l'écran de travail
+   ═══════════════════════════════════════════════════════════════════════════
+   Mouvement quasi nul, et c'est délibéré : c'est un outil, pas une vitrine.
+   Un survol de ligne, un lien d'action qui passe au rouge, un bouton qui
+   s'inverse. Rien d'autre.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * La géométrie des deux colonnes vit ici, jamais en style en ligne : un style
+ * en ligne l'emporterait sur la requête de média et la liste resterait écrasée
+ * à 340 px de colonne sur un écran de téléphone.
+ */
+[data-split] {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 1080px) {
+  [data-split] {
+    grid-template-columns: 1fr;
+  }
+}
+
+/**
+ * `data-arow` et non `data-row` : le site public décale ses lignes de 10 px au
+ * survol, ce qui ferait sauter les cellules d'un tableau. Deux écrans, deux
+ * grammaires.
+ */
+[data-arow] {
+  transition: background 0.15s;
+}
+[data-open],
+[data-act] {
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-arow]:hover {
+    background: var(--bg-alt);
+  }
+  [data-arow]:hover [data-open] {
+    color: var(--red);
+  }
+  [data-act]:hover {
+    background: var(--text);
+    border-color: var(--text);
+    color: #ffffff;
+  }
+}

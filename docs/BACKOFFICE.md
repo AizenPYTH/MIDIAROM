@@ -1,74 +1,126 @@
 # Back-office
 
-## Par où on entre
+## L'écran
 
-`/admin` répond à une seule question : **qu'est-ce que vous voulez faire ?**
+`/admin` répond à une seule question : **qu'est-ce qui attend une action.**
 
-1. **Mettre en vente** — quatre cartes : un jeu vidéo, une console, une
-   figurine, une réparation.
-2. **Ce qui vous attend** — réparations en cours, commandes à préparer,
-   reprises à évaluer, articles en brouillon. Chaque ligne porte son compte,
-   lu en base.
-3. **Tout le back-office** — l'index complet, en clair, groupé par métier.
+La liste des réparations **est** la page. Le réparateur l'ouvre vingt fois par
+jour pour suivre des dossiers, pas pour publier un article : l'ajout au
+catalogue tient donc en quatre boutons discrets, en bas de la colonne de
+droite. C'est un renversement assumé de la version précédente, qui ouvrait sur
+« Qu'est-ce que vous voulez faire ? » et quatre grandes cartes de publication.
 
-Avant, `/admin` ouvrait directement la file de l'atelier et **toute** la
-navigation vivait dans un menu « Plus ». Comme la barre ne portait aucun onglet,
-ce bouton restait collé à gauche et son panneau de 560 px s'ouvrait vers la
-gauche — hors de l'écran. On pouvait tenir le site sans jamais trouver l'import
-de figurines. La file de l'atelier est maintenant à `/admin/atelier`, et la
-barre porte cinq onglets permanents : Accueil · Atelier · Commandes · Articles ·
-Tarifs.
+| Bloc | Ce qu'il porte |
+| --- | --- |
+| Ligne d'état | Quatre nombres, chacun un lien qui filtre la liste |
+| Réparations en cours | Onglets de filtrage, puis le tableau : Réf. · Client et console · Panne · État · Prix · action |
+| À faire maintenant | Déduit de la liste, par ordre d'urgence |
+| Commandes boutique | Les quatre dernières, avec leur état |
+| Ajouter au catalogue | Un jeu vidéo · Une console · Une figurine · Une prestation |
+
+La barre porte cinq onglets permanents — Accueil · Atelier · Commandes ·
+Articles · Tarifs. Avant, elle n'en portait aucun : tout vivait dans un menu
+« Plus » qui, sans onglet à sa gauche, ouvrait son panneau de 560 px vers la
+gauche, hors de l'écran. On pouvait tenir le site sans jamais trouver l'import
+de figurines.
+
+## Les quatre registres
+
+La base connaît vingt-deux statuts ; le réparateur en lit quatre.
+`lib/admin/workbench.ts` fait le regroupement **une seule fois**, et c'est lui
+qui décide à la fois du traitement visuel et de l'action de la ligne.
+
+| Registre | Statuts | Apparence | Action | Sens |
+| --- | --- | --- | --- | --- |
+| `diag` | PAID → DIAGNOSIS | blanc, bordure grise | Diagnostiquer | à faire à l'atelier |
+| `attente` | WAITING_CUSTOMER_APPROVAL | **rouge** `#fdecec` / `#a8161c` | Relancer | la balle est chez le client |
+| `atelier` | APPROVED, REPAIRING, QUALITY_CONTROL | encre pleine | Ouvrir | à faire à l'atelier |
+| `prete` | READY_TO_SHIP | gris | Expédier | terminé |
+
+Le statut brut ne remonte jamais jusqu'au rendu. **Chaque ligne porte son
+action juste**, pas une flèche identique partout : c'est ce qui rend la liste
+utilisable sans réfléchir.
+
+`tests/workbench.test.ts` vérifie qu'aucun statut ne tombe dans deux registres
+— sinon la réparation apparaîtrait deux fois et les compteurs cesseraient de
+totaliser — et qu'aucun registre ne partage l'action d'un autre.
+
+## Le rouge
+
+**Il ne signale qu'une chose : ce qui dépend du client.** Le compteur des devis
+en attente, l'état « Devis envoyé », les puces de relance en retard, les
+commandes à expédier, le bouton « Nouvelle réparation ». Nulle part ailleurs —
+sinon il ne signale plus rien.
+
+## Rien n'est inventé
+
+Chaque nombre est compté en base. « À faire maintenant » se déduit de la liste :
+les relances de deux jours ou plus, les plus anciennes d'abord, puis les colis
+à préparer, puis les consoles à ouvrir. Un bloc sans donnée le dit — « Rien
+n'attend d'action. L'atelier est à jour. » — plutôt que d'afficher un tiret.
+
+Aucun indicateur décoratif : ni taux de satisfaction, ni courbe de chiffre
+d'affaires.
 
 ## Publier une annonce
 
-**`/admin/annonces/nouvelle`** — six champs :
+**`/admin/annonces/nouvelle`** — le formulaire court :
 
-| Champ | Pourquoi il est demandé |
+| Champ | Note |
 | --- | --- |
 | Rayon | Jeux vidéo · Consoles · Figurines Manga / Anime |
 | Nom | — |
-| Plateforme *(ou licence pour une figurine)* | La colonne est obligatoire en base, et l'exemple s'adapte au rayon |
+| Plateforme *(ou licence pour une figurine)* | L'exemple s'adapte au rayon |
 | État | Neuf, révisé, occasion A/B/C |
 | Prix | Accepte `49,90`, `49.90`, `129,50 €` |
 | Quantité | 1 par défaut |
+| **Photos** | Choix de fichiers, envoi, vignettes, réordonnable |
 
-Tout le reste est fabriqué : la **référence** (`FIG-260915-LUFFY-K3P9` — rayon,
-date, premier mot, tirage aléatoire), le **slug** de la fiche publique, le seuil
-de stock, l'ordre d'affichage. Le formulaire complet à vingt-sept champs existe
-toujours : il s'ouvre juste après, quand il y a enfin quelque chose à y mettre
-— photos, caractéristiques, fiche IGDB, mouvements de stock.
+Le formulaire complet en compte vingt-sept, dont un SKU et un slug à inventer
+soi-même. Ici, la **référence** (`FIG-260915-LUFFY-K3P9`), le **slug** de la
+fiche publique, le seuil de stock et l'ordre d'affichage sont fabriqués.
 
-**L'article n'est pas en ligne par défaut.** Il lui manque ses photos, et une
-fiche sans photo se vend mal. Une case permet de publier immédiatement : c'est
-le magasin qui décide.
+Les photos montent dans le bucket `content-media` et leurs chemins voyagent
+dans des champs cachés. Ils viennent donc du navigateur : l'action ne garde que
+ce qui a la forme d'un objet du bucket, jamais une URL absolue qui ferait
+afficher une image d'un autre domaine sur la fiche produit
+(`tests/listings.test.ts`). La première photo est la vignette du rayon.
 
-`lib/catalog/listing.ts` porte les deux seules étapes qui peuvent se tromper en
-silence — lire un prix, fabriquer une référence — et `tests/listings.test.ts`
-les couvre. Un prix mal lu entre en base sans erreur ; une référence non unique
-fait échouer le deuxième article de la journée.
+L'ancien téléverseur rendait un **chemin à copier-coller** dans un champ texte ;
+autant dire qu'on ne mettait pas de photo, et un article sans visuel ne se vend
+pas.
 
-## Importer une figurine
+**L'article n'est pas en ligne par défaut.** Une case permet de publier
+immédiatement : c'est le magasin qui décide.
 
-**`/admin/catalog/figurines`**, accessible en un clic depuis l'accueil et depuis
-le menu. Recherche chez HobbyLink Japan, création en brouillon. Il faut
-`APIFY_TOKEN` : sans lui, la page affiche quoi faire au lieu d'échouer. Voir
-`docs/FIGURINES.md`.
-
-## Ce que fait quoi
+## Où va le reste
 
 | Écran | Pour |
 | --- | --- |
-| `/admin/atelier` | La file de réparation : diagnostic, devis, atelier, retour |
-| `/admin/shop-orders` | Commandes boutique à préparer, expédier, remettre |
+| `/admin/atelier` | La vue maître/détail : diagnostic, devis, expédition dans un seul volet |
+| `/admin/orders/[id]` | La fiche complète d'une réparation |
+| `/admin/shop-orders` | Commandes boutique |
 | `/admin/stock` | Tous les articles : prix, stock, photos, mise en ligne |
-| `/admin/catalog/*` | Les tarifs de réparation : marques, consoles, pannes, prestations |
-| `/admin/trade-ins` | Reprises : offres à faire, consoles reçues |
-| `/admin/settings` | Nom, adresse, horaires, garantie, livraison — ce que le site public affiche |
-| `/admin/content` | Textes, FAQ, mentions légales, galerie |
+| `/admin/catalog/*` | Tarifs de réparation : marques, consoles, pannes, prestations |
+| `/admin/catalog/figurines` | Import HobbyLink Japan — voir `docs/FIGURINES.md` |
+| `/admin/settings` | Nom, adresse, horaires, garantie, livraison |
+
+## Tokens
+
+Ceux du site public. Fond d'application `#f4f4f6`, panneaux blancs, angles nets,
+aucune ombre, Archivo + IBM Plex Mono.
+
+La géométrie des deux colonnes vit dans `globals.css` (`[data-split]`), jamais
+en style en ligne : un style en ligne l'emporterait sur la requête de média et
+la colonne de droite resterait à 340 px sur un téléphone.
+
+Le survol du back-office utilise `data-arow`, et non `data-row` : le site public
+décale ses lignes de 10 px au survol, ce qui ferait sauter les cellules d'un
+tableau.
 
 ## Ce qui reste à faire
 
 Le formulaire long (`/admin/stock/[id]`) est encore une liste plate de
-vingt-sept champs. Il est le bon outil pour ajuster une fiche, pas pour en
-créer une — c'est ce que le formulaire court corrige. Le regrouper en sections
-serait le prochain pas utile.
+vingt-sept champs. Il est le bon outil pour ajuster une fiche, pas pour en créer
+une — c'est ce que le formulaire court corrige. Le regrouper en sections serait
+le prochain pas utile.

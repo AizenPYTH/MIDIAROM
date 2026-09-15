@@ -45,3 +45,28 @@ describe("référence fabriquée", () => {
     expect(buildSku("GAME", "★★★")).toMatch(/^JEU-\d{6}-[A-Z]+-[A-Z0-9]{4}$/);
   });
 });
+
+describe("chemins de photos reçus du navigateur", () => {
+  // La règle appliquée par l'action : un objet de notre bucket, jamais une URL.
+  const accepte = (v: string) => /^[\w-]+\/[\w.-]+$/.test(v.trim());
+
+  it("accepte un objet du bucket", () => {
+    expect(accepte("produits/3f2a-91bc.webp")).toBe(true);
+    expect(accepte("produits/photo_1.jpg")).toBe(true);
+  });
+
+  it("refuse tout ce qui pointerait ailleurs", () => {
+    // Ces champs sont cachés, donc modifiables : une URL absolue ferait
+    // afficher une image d'un autre domaine sur la fiche produit.
+    for (const v of [
+      "https://exemple.invalid/photo.jpg",
+      "//exemple.invalid/photo.jpg",
+      "../../etc/passwd",
+      "produits/../secret.jpg",
+      "produits/sous/dossier.jpg",
+      "",
+    ]) {
+      expect(accepte(v), v).toBe(false);
+    }
+  });
+});

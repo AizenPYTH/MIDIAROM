@@ -52,6 +52,16 @@ export async function createListingAction(_prev: unknown, formData: FormData): P
     return { status: "error", error: "La quantité doit être un nombre positif.", field: "quantity" };
   }
 
+  // Les chemins viennent de champs cachés, donc du navigateur : on ne garde
+  // que ce qui ressemble à un objet de notre propre bucket, et jamais une URL
+  // absolue qui pointerait ailleurs.
+  const photos = formData
+    .getAll("images")
+    .filter((v): v is string => typeof v === "string")
+    .map((v) => v.trim())
+    .filter((v) => /^[\w-]+\/[\w.-]+$/.test(v))
+    .slice(0, 12);
+
   const db = createSupabaseAdminClient();
 
   // Un slug est une adresse publique : il doit être unique. On suffixe plutôt
@@ -74,7 +84,9 @@ export async function createListingAction(_prev: unknown, formData: FormData): P
       cost_cents: 0,
       quantity: quantite,
       low_stock_threshold: 2,
-      images: [],
+      // Les photos choisies dans le formulaire. La première est la vignette
+      // du rayon ; `PhotoPicker` garantit l'ordre, l'action ne le réarrange pas.
+      images: photos,
       includes: [],
       // Mise en ligne immédiate seulement si c'est demandé : par défaut
       // l'article attend ses photos.

@@ -21,6 +21,26 @@ export function igdbImageUrl(imageId: string, size: GameImageSize = "cover_big",
   return `${IMAGE_CDN}/t_${size}${retina ? "_2x" : ""}/${imageId}.jpg`;
 }
 
+/**
+ * Remonte une URL IGDB déjà construite à la double densité.
+ *
+ * `t_cover_big` fait 264 px de large. Une vignette de rayon en occupe jusqu'à
+ * 232 en CSS, soit 464 réels sur un écran à deux pixels par point : le
+ * navigateur agrandissait donc une image deux fois trop petite, et la jaquette
+ * paraissait floue.
+ *
+ * Elle travaille sur l'URL plutôt que sur l'identifiant parce que le cache
+ * `igdb_games` stocke le `Game` déjà normalisé, URL comprise : reconstruire à
+ * la lecture corrige aussi les fiches synchronisées avant ce changement, sans
+ * resynchroniser quoi que ce soit. Une URL déjà en `_2x`, ou qui ne vient pas
+ * du CDN d'IGDB, est rendue telle quelle.
+ */
+export function retinaUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (!url.startsWith(IMAGE_CDN) || /_2x\//.test(url)) return url;
+  return url.replace(/\/t_([a-z0-9_]+)\//, "/t_$1_2x/");
+}
+
 function toImage(raw: IgdbImage | undefined | null, size: GameImageSize): GameImage | null {
   if (!raw?.image_id) return null;
   return { imageId: raw.image_id, url: igdbImageUrl(raw.image_id, size), width: raw.width ?? null, height: raw.height ?? null };

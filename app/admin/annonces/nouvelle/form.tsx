@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { createListingAction, type NewListingState } from "@/app/admin/actions/listings";
 import { CATEGORY_LABELS, PUBLIC_CATEGORIES, type ProductCategory } from "@/lib/shop/status";
+import { PhotoPicker } from "@/components/admin/photo-picker";
 
 /**
  * Le formulaire court d'une nouvelle annonce.
@@ -122,16 +123,22 @@ export function NewListingForm({ initialCategory }: { initialCategory: ProductCa
         <textarea id="description" name="description" rows={4} className={CHAMP} />
       </div>
 
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="photos" hint="La première est celle que la boutique montre en vignette.">
+          Photos
+        </Label>
+        <PhotoPicker />
+      </div>
+
       {/*
-        Par défaut, l'article n'est pas en ligne : il lui manque encore ses
-        photos, et une fiche sans photo se vend mal. La case existe quand
-        même — c'est le magasin qui décide, pas nous.
+        Par défaut, l'article n'est pas en ligne. La case existe quand même —
+        c'est le magasin qui décide, pas nous.
       */}
       <label htmlFor="publish" className="flex items-start gap-3 border border-border bg-surface-muted p-4">
         <input id="publish" name="publish" type="checkbox" className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[#d81f26]" />
         <span className="text-[14px] leading-[1.45] text-ink-soft">
           <strong className="font-semibold text-ink">Mettre en ligne tout de suite.</strong> Sans cette case, l&apos;article est créé
-          hors ligne : vous ajoutez les photos, puis vous le publiez depuis sa fiche.
+          hors ligne : vous le complétez sur sa fiche, puis vous le publiez.
         </span>
       </label>
 

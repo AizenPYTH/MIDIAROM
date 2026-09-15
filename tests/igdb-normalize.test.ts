@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardImage, heroImage, igdbImageUrl, normalizeGame } from "@/lib/igdb/normalize";
+import { cardImage, heroImage, igdbImageUrl, normalizeGame, retinaUrl } from "@/lib/igdb/normalize";
 import type { IgdbGame } from "@/lib/igdb/types";
 
 /** Réponse IGDB représentative : champs présents, imbriqués, et epoch secondes. */
@@ -85,3 +85,30 @@ describe("choix du visuel selon l'usage", () => {
     expect(cardImage(game)?.imageId).toBe("co1wyy");
   });
 });
+
+describe("densité des visuels", () => {
+  it("double la densité d'une jaquette servie trop petite", () => {
+    // t_cover_big fait 264 px ; une vignette de rayon en demande jusqu'à 464
+    // sur un écran à deux pixels par point, d'où l'effet flou.
+    expect(retinaUrl("https://images.igdb.com/igdb/image/upload/t_cover_big/co1abc.jpg")).toBe(
+      "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co1abc.jpg",
+    );
+    expect(retinaUrl("https://images.igdb.com/igdb/image/upload/t_720p/ar1abc.jpg")).toBe(
+      "https://images.igdb.com/igdb/image/upload/t_720p_2x/ar1abc.jpg",
+    );
+  });
+
+  it("ne double pas deux fois", () => {
+    const deja = "https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co1abc.jpg";
+    expect(retinaUrl(deja)).toBe(deja);
+  });
+
+  it("laisse tranquille ce qui ne vient pas d'IGDB", () => {
+    // Une photo du magasin n'a pas de jeton de taille à remplacer.
+    const maison = "/medias/consoles/ps5.webp";
+    expect(retinaUrl(maison)).toBe(maison);
+    expect(retinaUrl(null)).toBeNull();
+    expect(retinaUrl("")).toBeNull();
+  });
+});
+

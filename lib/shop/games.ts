@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getGames } from "@/lib/igdb/service";
-import { cardImage, heroImage } from "@/lib/igdb/normalize";
+import { cardImage, heroImage, retinaUrl } from "@/lib/igdb/normalize";
 import type { Game } from "@/lib/igdb/types";
 import type { Product } from "@/lib/shop/catalog";
 
@@ -86,8 +86,10 @@ function toListing(product: Product, game: Game | null): GameListing {
     rating: game?.rating ?? null,
     ratingCount: game?.ratingCount ?? null,
 
-    coverUrl: cover?.url ?? productImages[0] ?? null,
-    heroUrl: hero?.url ?? productImages[0] ?? null,
+    // Double densité pour la jaquette et l'artwork : ce sont les deux visuels
+    // affichés plus grands que la taille servie par défaut.
+    coverUrl: retinaUrl(cover?.url) ?? productImages[0] ?? null,
+    heroUrl: retinaUrl(hero?.url) ?? productImages[0] ?? null,
     screenshotUrls: (game?.screenshots ?? []).map((s) => s.url),
     productImages,
 
