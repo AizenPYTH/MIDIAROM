@@ -37,7 +37,7 @@ export function FooterColumn({ titre, liens }: { titre: string; liens: LienPied[
             href={lien.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-h-[44px] items-center text-[14px] transition-colors hover:text-on-dark active:text-on-dark lg:min-h-0"
+            className="flex min-h-[44px] items-center text-[15px] transition-colors hover:text-on-dark active:text-on-dark lg:min-h-0 lg:text-[14.5px]"
           >
             {lien.label}
           </a>
@@ -45,7 +45,7 @@ export function FooterColumn({ titre, liens }: { titre: string; liens: LienPied[
           <Link
             key={lien.label}
             href={lien.href}
-            className="flex min-h-[44px] items-center text-[14px] transition-colors hover:text-on-dark active:text-on-dark lg:min-h-0"
+            className="flex min-h-[44px] items-center text-[15px] transition-colors hover:text-on-dark active:text-on-dark lg:min-h-0 lg:text-[14.5px]"
           >
             {lien.label}
           </Link>
@@ -57,7 +57,7 @@ export function FooterColumn({ titre, liens }: { titre: string; liens: LienPied[
   if (!mobile) {
     return (
       <div className="flex flex-col gap-2.5">
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-on-dark-3">{titre}</span>
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.13em] text-on-dark-3">{titre}</span>
         {contenu}
       </div>
     );
@@ -70,7 +70,10 @@ export function FooterColumn({ titre, liens }: { titre: string; liens: LienPied[
         onClick={() => setDeplie((v) => !v)}
         aria-expanded={ouvert}
         aria-controls={id}
-        className="flex min-h-[48px] w-full cursor-pointer items-center justify-between gap-3 text-left font-mono text-[10.5px] uppercase tracking-[0.12em] text-on-dark-3 active:text-on-dark"
+        /* L'intitulé d'une colonne repliée est une cible, pas une étiquette :
+           il se lit en clair (#f4f4f6), là où la version dépliée de
+           l'ordinateur le laisse en gris. */
+        className="flex min-h-[48px] w-full cursor-pointer items-center justify-between gap-3 text-left font-mono text-[10.5px] uppercase tracking-[0.13em] text-on-dark"
       >
         {titre}
         <span aria-hidden="true" className="block text-[15px] leading-none transition-transform duration-200" style={{ transform: ouvert ? "rotate(45deg)" : "none" }}>

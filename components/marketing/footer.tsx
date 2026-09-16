@@ -64,13 +64,13 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
   const adresse = [brand.address_line1, [brand.postal_code, brand.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
 
   return (
-    <footer className="mt-auto bg-ink px-[22px] pb-[26px] pt-[46px] text-on-dark-2">
-      <div className="page-wrap grid gap-2 lg:gap-8" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(208px, 1fr))" }}>
-        <div className="flex flex-col gap-[11px]">
+    <footer className="mt-auto bg-ink px-[clamp(16px,4vw,64px)] pb-[26px] pt-[clamp(28px,4vw,60px)] text-on-dark-2">
+      <div className="page-wrap grid gap-0 lg:gap-[34px]" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
+        <div className="mb-[18px] flex flex-col gap-[11px] lg:mb-0">
           <span className="text-on-dark">
             <BrandMark name={brand.name} size="sm" />
           </span>
-          <span className="max-w-[32ch] text-[14px] leading-[1.55]">
+          <span className="max-w-[34ch] text-[14px] leading-[1.55] lg:text-[14.5px]">
             Atelier de réparation de consoles et boutique gaming.
             {adresse ? ` ${adresse}.` : ""}
           </span>
@@ -79,17 +79,21 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
         {colonnes.map((col) => (
           <FooterColumn key={col.title} titre={col.title} liens={col.links} />
         ))}
+
+        {/* Le filet de fermeture de la dernière colonne repliée : sans lui, la
+            pile d'accordéons du téléphone s'arrête sur un bord ouvert. */}
+        <span aria-hidden="true" className="block lg:hidden" style={{ borderTop: "1px solid rgba(242,242,244,0.16)" }} />
       </div>
 
       <div
-        className="page-wrap mt-[30px] flex flex-wrap justify-between gap-[18px] pt-[18px] font-mono text-[11px] uppercase tracking-[0.06em] text-on-dark-3"
+        className="page-wrap mt-5 flex flex-wrap justify-between gap-5 pt-5 font-mono text-[10.5px] uppercase leading-[1.7] tracking-[0.07em] text-on-dark-3 lg:mt-[34px] lg:text-[11px]"
         style={{ borderTop: "1px solid rgba(242,242,244,0.16)" }}
       >
         <span>
           © {new Date().getFullYear()} {brand.name}
           {brand.city ? ` — ${brand.city}` : ""}
         </span>
-        <span>Paiement sécurisé · Envoi suivi · Garantie 3 mois</span>
+        <span>Devis avant intervention · Garantie 3 mois · Envoi suivi</span>
       </div>
     </footer>
   );

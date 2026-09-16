@@ -33,36 +33,39 @@
      ──────────────────────────────────────────────────────────────────────── */
 
   /* Fonds */
-  --bg: #ffffff;
-  --bg-alt: #fafafa;
-  --bg-sunken: #f4f4f6;
+  --bg: #f5f5f6;
+  --bg-alt: #fafafb;
+  --bg-sunken: #f0f0f2;
+  /* Le fond de l'en-tête collant : le même gris, presque opaque, derrière un
+     flou. Ce qui défile dessous reste deviné sans jamais gêner la lecture. */
+  --bg-blur: rgba(245, 245, 246, 0.92);
 
   /* Encres. Contrastes mesurés sur blanc : 18,4:1 · 8,3:1 · 5,07:1. */
-  --text: #0f0f11;
-  --text-2: #4a4a51;
-  --text-3: #6e6e73;
+  --text: #101114;
+  --text-2: #3d3e45;
+  --text-3: #54555c;
   /* Décoratif uniquement — 3,4:1, sous le seuil AA. Jamais un texte utile. */
-  --text-4: #8b8b93;
+  --text-4: #74757c;
 
   /* L'accent, et lui seul. Au survol il passe à l'encre, jamais à un autre rouge. */
   --red: #d81f26;
-  --red-ink: #0f0f11;
+  --red-ink: #101114;
   /* Sur fond noir, le rouge de base tombe à 3,3:1 : il s'éclaircit. */
   --red-on-dark: #ff5a60;
 
   /* Filets. Quatre valeurs, quatre rôles. */
-  --hairline: #ededf0;
-  --stroke: #e0e0e4;
-  --stroke-section: #e6e6e9;
+  --hairline: #eeeef0;
+  --stroke: #e2e2e5;
+  --stroke-section: #e2e2e5;
   --stroke-strong: #dcdce0;
 
   /* Sur fond noir */
-  --on-dark: #f2f2f4;
-  --on-dark-2: #b9b9c0;
-  --on-dark-3: #7e7e86;
+  --on-dark: #f4f4f6;
+  --on-dark-2: #adaeb6;
+  --on-dark-3: #8b8c94;
 
   /* Une seule ombre dans toute la charte, et seulement au survol d'une carte. */
-  --glow-panel: 0 14px 30px rgba(15, 15, 17, 0.1);
+  --glow-panel: none;
   --glow-button: none;
   --glass: #ffffff;
   --glass-flat: #ffffff;
@@ -71,11 +74,11 @@
   /* Anciens noms de palette, repointés : les pages qui écrivent encore
      `bg-ink-900` ou `text-paper` suivent la direction sans être réécrites. */
   --paper: #ffffff;
-  --paper-alt: #fafafa;
-  --paper-strong: #f4f4f6;
-  --ink-900: #0f0f11;
-  --ink-800: #1b1b1f;
-  --ink-750: #33333a;
+  --paper-alt: #fafafb;
+  --paper-strong: #f0f0f2;
+  --ink-900: #101114;
+  --ink-800: #1b1c20;
+  --ink-750: #33343a;
   --ink-700: rgba(15, 15, 17, 0.1);
   --ink-650: rgba(15, 15, 17, 0.14);
   --ink-600: rgba(15, 15, 17, 0.2);
@@ -122,8 +125,8 @@
   --color-success-soft: rgba(22, 121, 74, 0.09);
   --color-warning: #8a5a00;
   --color-warning-soft: rgba(138, 90, 0, 0.09);
-  --color-danger: #c1262d;
-  --color-danger-soft: rgba(193, 38, 45, 0.08);
+  --color-danger: #a5161c;
+  --color-danger-soft: #fdeced;
   --color-info: var(--text-2);
   --color-info-soft: rgba(15, 15, 17, 0.05);
 
@@ -133,11 +136,11 @@
   --color-placeholder-fg: var(--text-3);
   --color-on-accent: #ffffff;
 
-  /* Archivo porte les titres comme le corps ; IBM Plex Mono donne le registre
-     atelier — étiquettes, prix, références, HUD. */
-  --font-display: var(--font-archivo), Archivo, Helvetica, sans-serif;
-  --font-sans: var(--font-archivo), Archivo, Helvetica, sans-serif;
-  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+  /* Schibsted Grotesk porte les titres comme le corps ; Geist Mono donne le
+     registre atelier — étiquettes, prix, références, états, numéros. */
+  --font-display: var(--font-display-face), "Schibsted Grotesk", Helvetica, sans-serif;
+  --font-sans: var(--font-display-face), "Schibsted Grotesk", Helvetica, sans-serif;
+  --font-mono: var(--font-mono-face), "Geist Mono", ui-monospace, monospace;
 
   color-scheme: light;
 }
@@ -714,7 +717,7 @@ body {
 
 /* Survol d'une carte : la seule ombre de la charte, et elle n'existe qu'ici. */
 [data-card] {
-  transition: border-color 0.2s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.2, 0.8, 0.25, 1);
+  transition: background 0.25s, border-color 0.2s;
 }
 [data-zoom] { transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.25, 1); }
 [data-buy] { transition: background 0.2s, border-color 0.2s, color 0.2s; }
@@ -724,14 +727,15 @@ body {
 
 /* Au doigt, un état de survol reste collé après le tap : réservé au pointeur. */
 @media (hover: hover) and (pointer: fine) {
+  /* v9 : la carte passe en blanc, sans se soulever et sans ombre — le handoff
+     interdit l'une comme l'autre. C'est le fond qui signale la carte visée. */
   [data-card]:hover {
-    border-color: var(--text);
-    box-shadow: var(--glow-panel);
-    transform: translateY(-3px);
+    background: #ffffff;
+    border-color: var(--stroke-strong);
   }
-  [data-card]:hover [data-zoom] { transform: scale(1.05); }
-  [data-card]:hover [data-buy] { background: var(--red); border-color: var(--red); color: #ffffff; }
-  [data-row]:hover { background: var(--bg-alt); padding-left: 10px; }
+  [data-card]:hover [data-zoom] { transform: scale(1.06); }
+  [data-card]:hover [data-buy] { background: var(--ink-900); border-color: var(--ink-900); color: #ffffff; }
+  [data-row]:hover { background: #ffffff; padding-left: 14px; }
   [data-row]:hover [data-arrow] { transform: translateX(6px); color: var(--red); }
   /* Même geste sur une carte de rayon : la réglette du bas répond au survol
      de la carte entière, pas seulement du lien qu'elle contient. */
@@ -847,29 +851,22 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Mise à l'échelle sur grand écran
+   La colonne du site
    ═══════════════════════════════════════════════════════════════════════════
-   Le contenu plafonnait à 1380 px à partir de 1440 px de fenêtre : un écran de
-   2560 px affichait donc exactement la même colonne, perdue au milieu de
-   590 px de vide de chaque côté.
-   Il ne s'agit pas d'agrandir le contenu avec l'écran — la typographie et les
-   grilles gardent leurs bornes, et rien ne bouge en dessous de 1700 px, donc
-   le rendu sur un 13 pouces est inchangé au pixel près. La colonne gagne
-   seulement deux paliers, assez pour que la page occupe son écran sans que les
-   lignes de texte deviennent illisibles.
+   Une seule largeur, 1560 px, pour l'en-tête, le pied de page et toutes les
+   sections. Elle plafonnait auparavant à 1380 px puis gagnait deux paliers à
+   1700 et 2200 px : trois valeurs, donc trois alignements possibles, et le mur
+   d'images de l'accueil — bloqué, lui, à la borne du handoff — cessait d'être
+   d'aplomb avec le logo dès le premier palier.
+   Il ne s'agit pas d'agrandir le contenu avec l'écran : la typographie et les
+   grilles gardent leurs bornes, et au-delà de 1560 px la page reste centrée.
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  --page-max: 1380px;
-}
-@media (min-width: 1700px) {
-  :root {
-    --page-max: 1500px;
-  }
-}
-@media (min-width: 2200px) {
-  :root {
-    --page-max: 1600px;
-  }
+  /* v9 : une seule borne, 1560 px, celle du handoff. Les trois paliers
+     précédents faisaient diverger l'en-tête, le pied de page et les sections
+     de l'accueil d'un écran à l'autre — le mur d'images n'était plus aligné
+     sur le logo au-delà de 1700 px. */
+  --page-max: 1560px;
 }
 
 /**
@@ -889,3 +886,122 @@ body {
    La puce coupée au bord droit suffit à dire qu'il y a une suite. */
 [data-rail] { scrollbar-width: none; -ms-overflow-style: none; }
 [data-rail]::-webkit-scrollbar { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   v9 — le socle du handoff « 207 MÉDI@ROME final »
+
+   Page claire, imagerie sombre : ce sont les photographies d'atelier qui
+   apportent l'univers jeu, pas l'interface. Angles nets, aucune ombre, et des
+   séparations obtenues par des gouttières de 2 px sur le fond gris plutôt que
+   par des bordures dessinées — c'est ce qui donne l'effet « mur d'images ».
+
+   Les grilles sont toutes en `auto-fit` / `auto-fill` + `minmax` : aucune
+   requête de média n'est nécessaire, elles se réorganisent seules de 360 px à
+   1560 px. Elles vivent ici et non en style en ligne, car un style en ligne
+   battrait toute règle de média qu'on voudrait ajouter ensuite.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Les quatre machines et les trois rayons, sur une seule ligne.
+   Le handoff pose 330 px de minimum ; mesuré, cela donne 3 tuiles + 1 orpheline
+   sur un portable de 1440 px, parce qu'il manque 0,3 px par colonne — la
+   quatrième bascule pour trois dixièmes de pixel. 288 px pour les machines et
+   300 px pour les rayons remettent chaque série sur sa ligne dès 1280 px, sans
+   toucher au rapport des cadres ni aux gouttières de 2 px. */
+[data-g-pf] { display: grid; grid-template-columns: repeat(auto-fit, minmax(288px, 1fr)); gap: 2px; }
+[data-g-shop] { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2px; }
+/* Le mur de produits : deux colonnes au doigt, sans exception.
+   `auto-fill minmax(220px,1fr)` retombe à **une** colonne sur 390 px — une
+   pochette de jeu par écran, et huit écrans pour voir le rayon. Le handoff
+   mobile impose `1fr 1fr` ; on le reprend tel quel en dessous de 700 px, et on
+   rend la main à l'auto-remplissage au-delà. */
+[data-g-prod] { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+@media (min-width: 700px) {
+  [data-g-prod] { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+}
+[data-g-step] { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; }
+[data-g-fault] { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 34px; }
+/* Le hero, et son inversion d'ordre.
+   Au doigt : une colonne, et la photographie s'intercale entre le paragraphe
+   et les boutons — on montre les machines avant de demander un geste.
+   Dès 900 px : deux colonnes, le texte à gauche en deux rangées (A au-dessus,
+   B en dessous), la photographie à droite sur les deux rangées. `align-content`
+   centre le groupe de rangées : sans lui, le texte se collait en haut d'une
+   colonne aussi haute que la photo. */
+[data-hero-v9] { display: grid; grid-template-columns: 1fr; gap: 0; }
+@media (min-width: 900px) {
+  [data-hero-v9] {
+    grid-template-columns: minmax(340px, 1fr) minmax(340px, 1fr);
+    align-content: center;
+  }
+  [data-hero-v9] > [data-hero-a]   { grid-column: 1; grid-row: 1; align-self: end; }
+  [data-hero-v9] > [data-hero-b]   { grid-column: 1; grid-row: 2; align-self: start; }
+  [data-hero-v9] > [data-hero-img] { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+}
+[data-store-v9] { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2px; }
+
+/* Chaque cadre reprend le format de sa source. Un cadre au mauvais format
+   ampute la scène : c'est le défaut qui avait tué la première version. */
+[data-shot] { aspect-ratio: 3 / 2; }
+
+/* ── Motion : quatre effets, pas un de plus ──────────────────────────────────
+   Aucune bibliothèque, une seule courbe. Et surtout **aucune révélation au
+   défilement** : un `ViewTimeline` mesure ses bornes une fois et se périme dès
+   qu'une hauteur change dans le document — la moitié de la page reste alors
+   invisible pour toujours. Le contenu est visible d'emblée. */
+@keyframes v9-up    { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes v9-frame { from { opacity: 0; clip-path: inset(0 0 12% 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+@keyframes v9-scan {
+  0%, 6%    { transform: translateY(-4%); opacity: 0; }
+  14%, 82%  { opacity: .9; }
+  94%, 100% { transform: translateY(104%); opacity: 0; }
+}
+@keyframes v9-blip { 0%, 52% { opacity: 1; } 53%, 100% { opacity: .18; } }
+
+[data-up]           { animation: v9-up .8s cubic-bezier(.16, 1, .3, 1) both; }
+[data-up="2"]       { animation-delay: .08s; }
+[data-up="3"]       { animation-delay: .15s; }
+[data-up="4"]       { animation-delay: .22s; }
+[data-frame]        { animation: v9-frame 1.1s cubic-bezier(.16, 1, .3, 1) .05s both; }
+[data-scan]         { animation: v9-scan 8s cubic-bezier(.45, 0, .55, 1) infinite; }
+[data-blip]         { animation: v9-blip 1.6s steps(1) infinite; }
+
+/* ── Survol : PC uniquement. Sur mobile, tout passe par :active ───────────── */
+@media (hover: hover) and (pointer: fine) {
+  [data-tile] img            { transition: transform .7s cubic-bezier(.16, 1, .3, 1); }
+  [data-tile]:hover img      { transform: scale(1.045); }
+  [data-tile] [data-rule]    { transform: scaleX(0); transform-origin: left center; transition: transform .5s cubic-bezier(.16, 1, .3, 1); }
+  [data-tile]:hover [data-rule] { transform: scaleX(1); }
+  [data-add]                 { transition: background .2s, color .2s, border-color .2s; }
+  [data-line]                { transition: background .2s, padding-left .3s cubic-bezier(.16, 1, .3, 1); }
+  [data-line]:hover          { background: #fff; padding-left: 14px; }
+  [data-line]:hover [data-go]{ color: var(--red); transform: translateX(5px); }
+  [data-go]                  { transition: color .2s, transform .3s cubic-bezier(.16, 1, .3, 1); }
+  [data-btn]                 { transition: background .22s, color .22s, border-color .22s, transform .22s cubic-bezier(.16, 1, .3, 1); }
+  [data-btn]:hover           { transform: translateY(-2px); }
+}
+
+/* Le doigt n'a pas de survol : l'état visible passe par :active. */
+[data-tile]:active,
+[data-card]:active,
+[data-line]:active { background: #fff; }
+[data-btn]:active  { transform: scale(.99); }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-up], [data-frame] { opacity: 1 !important; transform: none !important; clip-path: none !important; }
+  [data-tile] [data-rule] { transform: scaleX(1) !important; }
+}
+
+/* Angles nets, rayon 0 : règle de charte v9. Le projet porte des rayons hérités
+   sur des dizaines de composants ; les neutraliser ici évite de réécrire chaque
+   classe. Les cercles vrais — pastilles d'initiales, points d'état, anneau de
+   progression, halos — sont préservés : ce sont des formes, pas des coins
+   arrondis. */
+[class*="rounded-"]:not([class*="rounded-full"]) { border-radius: 0 !important; }
+
+/* Sauf les commandes. Un bouton `rounded-full` n'est pas un cercle : c'est une
+   gélule, et une gélule au milieu d'une page à angles nets se voit — « Retour »
+   et « Continuer » de la fiche de réparation ressortaient en pastilles sur un
+   fond noir parfaitement carré. On ne vise que `a` et `button` : les `span` et
+   les `div` ronds, eux, sont bien des formes. */
+a[class*="rounded-full"],
+button[class*="rounded-full"] { border-radius: 0 !important; }

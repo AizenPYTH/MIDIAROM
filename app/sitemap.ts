@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { getModelsWithActiveRepairs, getSeoPublishedRepairs } from "@/lib/repair/catalog";
 import { getProducts } from "@/lib/shop/catalog";
+import { CATEGORY_SLUGS } from "@/lib/shop/status";
 
 export const revalidate = 3600;
 
@@ -19,6 +20,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE_URL}${ROUTES.repair}`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}${ROUTES.shop}`, changeFrequency: "daily", priority: 0.9 },
+    // Chaque rayon est une page à part entière, avec son titre, sa description
+    // et sa canonique : il a sa place au plan du site.
+    { url: `${SITE_URL}${ROUTES.shop}?cat=${CATEGORY_SLUGS.GAME}`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${SITE_URL}${ROUTES.shop}?cat=${CATEGORY_SLUGS.CONSOLE}`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${SITE_URL}${ROUTES.shop}?cat=${CATEGORY_SLUGS.COLLECTIBLE}`, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}${ROUTES.howItWorks}`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}${ROUTES.trust}`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}${ROUTES.faq}`, changeFrequency: "monthly", priority: 0.6 },

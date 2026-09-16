@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, IBM_Plex_Mono } from "next/font/google";
+import { Geist_Mono, Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 import { AnalyticsProvider } from "@/lib/analytics/client";
 import { CartProvider } from "@/components/shop/cart-provider";
@@ -10,14 +10,18 @@ import { getBrandSettings } from "@/lib/settings";
 /**
  * Deux polices, deux rôles.
  *
- * **Archivo** porte les titres comme le corps : une grotesque étroite et
- * droite, qui tient les grands titres serrés du hero sans devenir décorative.
- * **IBM Plex Mono** marque ce qui se lit d'un coup d'œil — étiquettes, prix,
- * références, badges, HUD. C'est ce mono qui donne le registre atelier, et il
- * ne sert jamais à un paragraphe.
+ * **Schibsted Grotesk** porte les titres comme le corps. Elle tient le H1 à
+ * 92 px avec un interlettrage de −0,045em sans se casser, et reste lisible à
+ * 15 px dans une fiche produit — c'est la condition d'un design dont le
+ * spectaculaire vient de l'échelle et non des effets.
+ * **Geist Mono** marque ce qui se lit d'un coup d'œil : étiquettes, prix,
+ * références, états, numéros de section. Elle ne sert jamais à un paragraphe.
+ *
+ * Les graisses sont déclarées jusqu'à 800 : le handoff s'en sert pour les
+ * titres. En demander moins ferait synthétiser le gras par le navigateur.
  */
-const archivo = Archivo({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-archivo", display: "swap" });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono", display: "swap" });
+const grotesk = Schibsted_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-display-face", display: "swap" });
+const mono = Geist_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono-face", display: "swap" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandSettings();
@@ -33,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#f5f5f6",
   width: "device-width",
   initialScale: 1,
 };
@@ -42,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const adsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
   return (
-    <html lang="fr" className={`h-full ${archivo.variable} ${plexMono.variable}`}>
+    <html lang="fr" className={`h-full ${grotesk.variable} ${mono.variable}`}>
       <body className="flex min-h-full flex-col">
         <AnalyticsProvider gaId={gaId} adsId={adsId}>
           {/* Le panier vit dans le stockage local du visiteur : il doit

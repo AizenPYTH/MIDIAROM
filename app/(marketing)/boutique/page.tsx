@@ -10,11 +10,51 @@ import { cn } from "@/lib/utils/cn";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Boutique — consoles, jeux, accessoires, rétro",
-  description: "Le stock du magasin en ligne : consoles neuves et d'occasion révisées, jeux, accessoires, rétrogaming. Retrait en boutique ou envoi.",
-  alternates: { canonical: `${SITE_URL}${ROUTES.shop}` },
+/**
+ * Chaque rayon est une page à part entière.
+ *
+ * Les trois rayons partageaient un seul titre, une seule description et une
+ * seule adresse canonique : pour un moteur de recherche comme pour un lien
+ * partagé, « Figurines » et « Consoles » étaient la même page. C'est ce que
+ * signalait la maquette, où les trois entrées du menu pointaient sur la même
+ * ancre.
+ *
+ * Le paramètre `cat` décide donc aussi des métadonnées, et la canonique porte
+ * le rayon. Les autres filtres — état, plateforme, prix, tri — n'y figurent
+ * pas : ce sont des vues d'un même rayon, pas des pages distinctes, et les
+ * indexer produirait des dizaines de doublons.
+ */
+const RAYONS_SEO: Record<string, { titre: string; description: string }> = {
+  [CATEGORY_SLUGS.GAME]: {
+    titre: "Jeux vidéo — neuf, occasion testée, import et collector",
+    description: "Le rayon jeux vidéo du 207 rue de Rome : PlayStation, Nintendo, Xbox et rétro, neufs et d'occasion testés. Retrait en boutique ou envoi suivi.",
+  },
+  [CATEGORY_SLUGS.CONSOLE]: {
+    titre: "Consoles — récentes et rétro, révisées en atelier",
+    description: "Consoles PlayStation, Nintendo, Xbox et rétro, révisées dans notre atelier de Marseille, garanties trois mois. Manettes et accessoires.",
+  },
+  [CATEGORY_SLUGS.COLLECTIBLE]: {
+    titre: "Figurines manga et anime — One Piece, Naruto, Dragon Ball",
+    description: "Figurines de personnages manga et anime : One Piece, Naruto, Dragon Ball, Demon Slayer, Jujutsu Kaisen. En rayon au 207 rue de Rome à Marseille.",
+  },
 };
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Search> }): Promise<Metadata> {
+  const { cat } = await searchParams;
+  const rayon = cat ? RAYONS_SEO[cat] : undefined;
+  if (!rayon) {
+    return {
+      title: "Boutique — consoles, jeux, figurines, rétro",
+      description: "Le stock du magasin en ligne : consoles neuves et d'occasion révisées, jeux, figurines manga et anime, rétrogaming. Retrait en boutique ou envoi.",
+      alternates: { canonical: `${SITE_URL}${ROUTES.shop}` },
+    };
+  }
+  return {
+    title: rayon.titre,
+    description: rayon.description,
+    alternates: { canonical: `${SITE_URL}${ROUTES.shop}?cat=${cat}` },
+  };
+}
 
 const SORTS: { key: NonNullable<ProductFilters["sort"]>; label: string }[] = [
   { key: "recent", label: "Nouveautés" },

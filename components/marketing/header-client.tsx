@@ -37,12 +37,19 @@ export function AccountLink({ onNavigate, className }: { onNavigate?: () => void
 }
 
 /**
- * Menu du téléphone (écran M1) : un carré de 38 px à trois traits, qui ouvre un
- * panneau **plein écran** sur fond papier. Pas de glissement ni de fondu —
- * apparition immédiate, comme le reste du design.
+ * Le menu du téléphone : un carré de 44 px à trois traits, qui ouvre un tiroir.
  *
- * Le carré visible fait 38 px, mais la zone cliquable en fait 44 : c'est la
- * cible tactile minimale, et un bouton de menu manqué est le premier abandon.
+ * Le panneau ne prend plus tout l'écran. Il descend du haut, sur un voile
+ * sombre, et laisse voir la page en dessous : on sait d'où l'on vient et un
+ * appui à côté referme. Les entrées sont des lignes de 17,5 px séparées d'un
+ * filet, avec une flèche à droite — sept destinations tiennent alors sans
+ * défilement, là où les titres de 26 px de l'ancien panneau en montraient
+ * quatre. Chaque ligne fait au moins 44 px de haut : c'est la cible tactile
+ * minimale, et une entrée de menu manquée est le premier abandon.
+ *
+ * Pas de glissement ni de fondu — apparition immédiate, comme le reste du
+ * design. La touche Échap referme, et le défilement de la page est bloqué tant
+ * que le tiroir est ouvert.
  */
 export function MobileNav({ items, brand }: { items: { href: string; label: string }[]; brand?: BrandSettings }) {
   const [open, setOpen] = useState(false);
@@ -51,6 +58,14 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
     return () => {
       document.body.style.overflow = "";
     };
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
   const close = () => setOpen(false);
@@ -64,36 +79,76 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
         aria-expanded={open}
         aria-controls="mobile-nav"
         aria-label="Ouvrir le menu"
-        className="flex h-11 w-11 cursor-pointer items-center justify-center"
+        className="flex h-11 w-11 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 border border-border-strong bg-surface"
       >
-        {/* Burger de la charte v4 : carré arrondi, deux traits. */}
-        <span className="flex h-10 w-10 flex-col items-center justify-center gap-[5px] border border-border-strong">
-          <span className="block h-[1.5px] w-[18px] bg-ink" />
-          <span className="block h-[1.5px] w-[18px] bg-ink" />
-        </span>
+        <span aria-hidden="true" className="block h-[1.5px] w-[17px] bg-ink" />
+        <span aria-hidden="true" className="block h-[1.5px] w-[17px] bg-ink" />
+        <span aria-hidden="true" className="block h-[1.5px] w-[17px] bg-ink" />
       </button>
       {open ? (
-        <div id="mobile-nav" className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-bg">
-          <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-muted">Menu</span>
-            <button type="button" onClick={close} aria-label="Fermer le menu" className="flex h-11 w-11 cursor-pointer items-center justify-center text-[26px] leading-none text-ink">
-              ×
-            </button>
-          </div>
-          <nav className="flex flex-col divide-y divide-border" aria-label="Navigation mobile">
-            {items.map((item) => (
-              <Link key={item.href} href={item.href} onClick={close} className="px-4 py-3.5 font-display text-[26px] font-bold leading-[1.15] tracking-[-0.03em] text-ink transition-colors hover:text-red">
-                {item.label}
+        <div
+          id="mobile-nav"
+          className="fixed inset-0 z-50 overflow-y-auto"
+          style={{ backgroundColor: "rgba(16,17,20,0.55)" }}
+          onClick={(e) => {
+            // Le voile referme ; le panneau, lui, garde ses clics.
+            if (e.target === e.currentTarget) close();
+          }}
+        >
+          <div className="mx-auto max-w-[540px] bg-bg px-4 pb-5 pt-3.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.13em] text-ink-faint">Menu</span>
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Fermer le menu"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center border border-border-strong bg-surface text-[19px] leading-none text-ink"
+              >
+                ×
+              </button>
+            </div>
+
+            <nav className="mt-1.5 flex flex-col" aria-label="Navigation mobile">
+              {items.map((item, i) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={close}
+                  className={`flex min-h-[44px] items-center justify-between gap-3 border-t border-border py-[15px] text-[17.5px] text-ink ${i === 0 ? "font-bold" : "font-medium"}`}
+                >
+                  <span>{item.label}</span>
+                  <span aria-hidden="true" className="text-[15px] text-ink-faint">
+                    →
+                  </span>
+                </Link>
+              ))}
+              <span aria-hidden="true" className="block border-t border-border" />
+            </nav>
+
+            <div className="mt-4 flex gap-0.5">
+              <Link
+                href={ROUTES.tracking}
+                onClick={close}
+                className="flex-1 border border-border-strong bg-surface p-[15px] text-center font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink"
+              >
+                Suivi
               </Link>
-            ))}
-          </nav>
-          <div className="mt-auto flex flex-col gap-3 border-t border-border px-4 py-5">
-            <Link href={ROUTES.tracking} onClick={close} className="bg-red px-4 py-[15px] text-center font-mono text-[11.5px] uppercase tracking-[0.12em] text-white transition-colors hover:bg-ink">
-              Suivre ma réparation
+              <AccountLink
+                onNavigate={close}
+                className="flex-1 border border-border-strong bg-surface p-[15px] text-center font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink"
+              />
+            </div>
+
+            <Link
+              href={ROUTES.repair}
+              onClick={close}
+              className="mt-0.5 block bg-red p-[15px] text-center text-[16.5px] font-semibold text-white"
+            >
+              Demander un diagnostic
             </Link>
-            <AccountLink onNavigate={close} className="border border-ink px-4 py-[15px] text-center font-mono text-[11.5px] uppercase tracking-[0.12em] text-ink" />
+
             {address || brand?.phone || brand?.hours ? (
-              <div className="mt-1 flex flex-col gap-1 font-mono text-[12px] leading-[1.5] text-ink-muted">
+              <div className="mt-4 flex flex-col gap-1 font-mono text-[11.5px] leading-[1.6] text-ink-faint">
                 {address ? <span>{address}</span> : null}
                 {brand?.phone ? (
                   <a href={`tel:${brand.phone.replace(/\s/g, "")}`} className="inline-flex min-h-[44px] items-center text-ink">
@@ -122,7 +177,7 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
  */
 export function NavList({ items, courant }: { items: { href: string; label: string }[]; courant: string }) {
   return (
-    <nav className="page-wrap mt-[11px] flex flex-wrap gap-x-[22px] gap-y-1.5 text-[14.5px] font-medium" aria-label="Navigation principale">
+    <nav className="flex flex-wrap gap-x-[22px] gap-y-1.5 text-[14.5px] font-medium" aria-label="Navigation principale">
       {items.map((item) => {
         const actif = item.href === courant;
         return (
@@ -157,8 +212,8 @@ export function PrimaryNav({ items }: { items: { href: string; label: string }[]
  *
  * Un `<form>` en GET vers le catalogue : elle fonctionne sans JavaScript, et
  * elle atterrit sur la vraie page de résultats plutôt que sur une liste
- * fabriquée à côté. Plafonnée à 420 px pour que le bouton rouge reste à sa
- * droite sur les largeurs intermédiaires.
+ * fabriquée à côté. Plafonnée à 340 px : au-delà, elle pousse le bouton rouge
+ * hors de la ligne unique de l'en-tête.
  */
 export function SearchField() {
   return (
@@ -168,18 +223,18 @@ export function SearchField() {
       // Sous lg, la recherche prend sa ligne entière, sous le logo : c'est le
       // premier geste d'un visiteur de boutique, elle ne partage pas sa ligne
       // avec le panier et le bouton menu.
-      className="order-3 flex w-full min-w-0 max-w-none flex-[1_1_100%] items-center gap-2.5 rounded-[8px] border border-border-strong bg-surface-muted px-3.5 py-2.5 lg:order-none lg:w-auto lg:max-w-[420px] lg:flex-[1_1_220px]"
+      className="order-3 flex w-full min-w-0 max-w-none flex-[1_1_100%] items-center gap-2 border border-border-strong bg-surface px-3 py-[11px] lg:order-none lg:w-auto lg:max-w-[340px] lg:flex-[1_1_130px] lg:px-[13px] lg:py-2.5"
     >
-      <span aria-hidden="true" className="font-mono text-[12px] text-ink-muted">
+      <span aria-hidden="true" className="font-mono text-[12px] text-ink-faint">
         ⌕
       </span>
       <input
         type="search"
         name="q"
         id="recherche-boutique"
-        placeholder="Rechercher un jeu, une console, une figurine"
+        placeholder="Rechercher un jeu, une figurine"
         aria-label="Rechercher dans la boutique"
-        className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-muted sm:text-[14.5px]"
+        className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-faint lg:text-[14.5px]"
       />
     </form>
   );
