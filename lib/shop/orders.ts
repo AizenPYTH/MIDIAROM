@@ -96,6 +96,17 @@ export async function createShopOrderAndCheckout(input: ShopOrderInput, currentU
 
   const successUrl = `${SITE_URL}${ROUTES.shopConfirmation}/${order.id}?token=${order.tracking_token}&payment=${payment.id}`;
   const cancelUrl = `${SITE_URL}${ROUTES.shopCheckout}?cancelled=1`;
+
+  // Panier sans rien à encaisser (article offert retiré au magasin, par
+  // exemple) : Stripe refuse les sessions sous 0,50 €. On confirme par le même
+  // chemin que le webhook, pour que le stock, la facture et l'e-mail suivent.
+  if (totals.totalCents === 0) {
+    const { confirmPayment } = await import("@/lib/orders/payments");
+    await confirmPayment({ providerSessionId: `free_${payment.id}`, providerPaymentId: null, amountCents: 0, currency: "EUR", paymentId: payment.id, raw: { free: true, reason: "total_zero", at: new Date().toISOString() } });
+    await audit({ actorId: currentUser?.id ?? null, actorRole: currentUser?.profile.role ?? null, action: "shop_order.created", resourceType: "shop_orders", resourceId: order.id, newValue: { order_number: order.order_number, total_cents: 0, free: true } });
+    return { orderId: order.id, orderNumber: order.order_number, redirectUrl: successUrl };
+  }
+
   const session = await provider.createCheckout({
     paymentId: payment.id,
     orderId: order.id,

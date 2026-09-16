@@ -159,6 +159,56 @@ d("server-side pricing and compatibility guards", () => {
     const { data } = await admin().from("repair_orders").select("id").eq("customer_email", base.customer.email);
     expect(data ?? []).toHaveLength(0);
   });
+
+  /**
+   * Une commande sans rien à encaisser doit aboutir.
+   *
+   * Prestation « sur devis » (prix à zéro tant que le diagnostic n'a pas eu
+   * lieu) déposée en main propre à l'atelier (transport gratuit) : le total
+   * vaut zéro. Le tunnel envoyait quand même le client chez Stripe, qui refuse
+   * toute session sous 0,50 € — la commande échouait au dernier écran, après
+   * que le client eut tout saisi.
+   *
+   * Le dossier doit donc être créé, encaissé à zéro et poussé jusqu'à l'attente
+   * du colis, exactement comme après un vrai paiement.
+   */
+  it("mène à terme une commande dont le total est nul, sans passer par le prestataire de paiement", async () => {
+    const db = admin();
+    const { data: gratuit } = await db.from("shipping_methods").select("id").eq("is_active", true).eq("price_cents", 0).limit(1).maybeSingle();
+    if (!gratuit) return; // aucun mode de dépôt gratuit au catalogue : rien à vérifier
+    const { data: surDevis } = await db.from("repairs").select("id").eq("is_active", true).eq("price_cents", 0).limit(1).maybeSingle();
+    if (!surDevis) return;
+
+    const email = `total-nul-${Date.now()}@example.com`;
+    const result = await createOrderAndCheckout(
+      {
+        customer: { first_name: "Total", last_name: "Nul", email, phone: "" },
+        address: { line1: "207 rue de Rome", line2: "", postal_code: "13006", city: "Marseille", country_code: "FR" as const },
+        customer_notes: "",
+        console_serial_number: "",
+        console_already_opened: false,
+        accept_terms: true as const,
+        attribution: null,
+        symptoms: [] as string[],
+        photos: [] as string[],
+        selection: { repairId: surDevis.id, optionIds: [], packIds: [], shippingMethodId: gratuit.id },
+      },
+      null,
+    );
+
+    // Le client part vers sa confirmation, pas vers une page de paiement.
+    expect(result.redirectUrl).toContain("/confirmation/");
+
+    const { data: order } = await db.from("repair_orders").select("id, status, total_cents").eq("customer_email", email).single();
+    expect(order!.total_cents).toBe(0);
+    // Le dossier a franchi PAID puis AWAITING_SHIPMENT, comme après un règlement.
+    expect(order!.status).toBe("AWAITING_SHIPMENT");
+    const { data: payment } = await db.from("payments").select("status, amount_cents").eq("order_id", order!.id).single();
+    expect(payment!.status).toBe("SUCCEEDED");
+    expect(payment!.amount_cents).toBe(0);
+
+    await db.from("repair_orders").delete().eq("id", order!.id);
+  });
 });
 
 d("unique numbers under concurrency", () => {

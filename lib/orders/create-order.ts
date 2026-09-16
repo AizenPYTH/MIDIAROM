@@ -185,6 +185,39 @@ export async function createOrderAndCheckout(input: CreateOrderInput, currentUse
 
   const successUrl = `${SITE_URL}${ROUTES.checkout}/confirmation/${order.id}?token=${order.tracking_token}&payment=${payment.id}`;
   const cancelUrl = `${SITE_URL}${ROUTES.checkout}/${repair.id}?cancelled=1`;
+
+  await addOrderEvent({ orderId: order.id, type: "ORDER_CREATED", title: "Commande enregistrée", description: pricing.totalCents === 0 ? "Aucun règlement n'est attendu aujourd'hui." : "En attente de confirmation du paiement.", actorId: currentUser?.id ?? null });
+
+  /**
+   * Rien à encaisser aujourd'hui.
+   *
+   * Cas courant et légitime : une prestation « sur devis » déposée en main
+   * propre à l'atelier — le prix n'est connu qu'après diagnostic et le
+   * transport est gratuit. Le total vaut alors zéro, et Stripe refuse toute
+   * session en dessous de 0,50 € : le client verrait le tunnel échouer au
+   * tout dernier écran, après avoir tout saisi.
+   *
+   * On confirme par le même chemin que le webhook plutôt que d'inventer un
+   * statut : le dossier franchit PAID puis AWAITING_SHIPMENT, reçoit son
+   * e-mail et son étiquette comme n'importe quel autre. Le montant reste zéro,
+   * aucune règle de prix n'est touchée — on saute l'encaissement, pas l'étape.
+   */
+  if (pricing.totalCents === 0) {
+    // Import différé : lib/orders/payments dépend de lib/shop/orders, qui
+    // dépend de ce fichier. Le charger ici casse le cycle à l'initialisation.
+    const { confirmPayment } = await import("@/lib/orders/payments");
+    await confirmPayment({
+      providerSessionId: `free_${payment.id}`,
+      providerPaymentId: null,
+      amountCents: 0,
+      currency: "EUR",
+      paymentId: payment.id,
+      raw: { free: true, reason: "total_zero", at: new Date().toISOString() },
+    });
+    await audit({ actorId: currentUser?.id ?? customer.id, actorRole: currentUser?.profile.role ?? "CUSTOMER", action: "order.created", resourceType: "repair_orders", resourceId: order.id, orderId: order.id, newValue: { total_cents: 0, repair_id: repair.id, free: true } });
+    return { orderId: order.id, orderNumber: order.order_number, paymentId: payment.id, redirectUrl: successUrl };
+  }
+
   const session = await provider.createCheckout({
     paymentId: payment.id,
     orderId: order.id,
@@ -200,7 +233,6 @@ export async function createOrderAndCheckout(input: CreateOrderInput, currentUse
   });
   await db.from("payments").update({ provider_session_id: session.providerSessionId }).eq("id", payment.id);
 
-  await addOrderEvent({ orderId: order.id, type: "ORDER_CREATED", title: "Commande enregistrée", description: "En attente de confirmation du paiement.", actorId: currentUser?.id ?? null });
   await audit({ actorId: currentUser?.id ?? customer.id, actorRole: currentUser?.profile.role ?? "CUSTOMER", action: "order.created", resourceType: "repair_orders", resourceId: order.id, orderId: order.id, newValue: { total_cents: pricing.totalCents, repair_id: repair.id } });
   await trackServerEvent({
     event: ANALYTICS_EVENTS.START_PAYMENT,
