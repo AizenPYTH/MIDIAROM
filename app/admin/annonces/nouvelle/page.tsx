@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireAdminOrRedirect } from "@/lib/security/auth";
 import { NewListingForm } from "@/app/admin/annonces/nouvelle/form";
-import { categoryFromSlug, PUBLIC_CATEGORIES } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { codeDuSlug, rayonsPublics } from "@/lib/shop/rayons";
 
 /**
  * Nouvelle annonce.
@@ -17,8 +18,11 @@ export const metadata = { title: "Nouvelle annonce" };
 export default async function NewListingPage({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
   await requireAdminOrRedirect();
   const { cat } = await searchParams;
-  const demande = categoryFromSlug(cat);
-  const initial = demande && PUBLIC_CATEGORIES.includes(demande) ? demande : "CONSOLE";
+  // Les rayons proposés sont ceux du magasin, pas une liste figée dans le code :
+  // celui que le vendeur vient d'ouvrir doit être là.
+  const publics = rayonsPublics(await getRayons());
+  const demande = codeDuSlug(publics, cat);
+  const initial = demande ?? publics[0]?.code ?? "CONSOLE";
 
   return (
     <div className="w-full page-wrap px-4 py-7 sm:px-[30px]">
@@ -30,7 +34,7 @@ export default async function NewListingPage({ searchParams }: { searchParams: P
         L&apos;essentiel maintenant, le reste après&#8239;: référence, adresse de la fiche et réglages de stock sont fabriqués tout
         seuls.
       </p>
-      <NewListingForm initialCategory={initial} />
+      <NewListingForm initialCategory={initial} rayons={publics} />
     </div>
   );
 }

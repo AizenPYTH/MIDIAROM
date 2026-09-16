@@ -1249,7 +1249,7 @@ export type Database = {
           sku: string;
           slug: string;
           name: string;
-          category: Database["public"]["Enums"]["product_category"];
+          category: string;
           platform: string;
           model_id: string | null;
           condition: Database["public"]["Enums"]["product_condition"];
@@ -1290,7 +1290,7 @@ export type Database = {
           sku: string;
           slug: string;
           name: string;
-          category?: Database["public"]["Enums"]["product_category"];
+          category?: string;
           platform: string;
           model_id?: string | null;
           condition?: Database["public"]["Enums"]["product_condition"];
@@ -1331,7 +1331,7 @@ export type Database = {
           sku?: string;
           slug?: string;
           name?: string;
-          category?: Database["public"]["Enums"]["product_category"];
+          category?: string;
           platform?: string;
           model_id?: string | null;
           condition?: Database["public"]["Enums"]["product_condition"];
@@ -1543,6 +1543,42 @@ export type Database = {
             referencedColumns: ["id"];
           }
         ];
+      };
+      product_categories: {
+        Row: {
+          id: string;
+          code: string;
+          label: string;
+          label_singular: string;
+          slug: string;
+          position: number;
+          is_public: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          label: string;
+          label_singular: string;
+          slug: string;
+          position?: number;
+          is_public?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          label?: string;
+          label_singular?: string;
+          slug?: string;
+          position?: number;
+          is_public?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       repair_categories: {
         Row: {

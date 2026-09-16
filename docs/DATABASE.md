@@ -8,6 +8,7 @@ Migrations dans `supabase/migrations/` (ordre = préfixe horodaté). Toute modif
 | --- | --- |
 | Comptes | `profiles` (rôle, 1:1 `auth.users`), `addresses`, `workshops`, `technicians` |
 | Catalogue | `brands`, `console_models`, `faults`, `repair_categories` (familles de pannes du catalogue client), `repairs` (modèle × panne, prix, garantie, SEO, `category_id`, `price_is_provisional`), `repair_options`, `option_categories`, `repair_option_compatibility`, `repair_included_options`, `packs`, `pack_items`, `shipping_methods`, `test_checklists`, `test_checklist_items`, `packaging_instructions` |
+| Boutique | `product_categories` (les rayons : code, libellés, slug, ordre, visibilité), `products` (`category` → `product_categories.code`), `shop_orders`, `shop_order_items`, `stock_movements` |
 | Dossiers | `repair_orders` (snapshot commercial, `order_number` REP-XXXXXX, `tracking_token`), `repair_order_items`, `order_status_history`, `order_events`, `order_media`, `order_messages` |
 | Atelier | `reception_reports`, `diagnostics`, `supplementary_quotes`, `supplementary_quote_items`, `quote_decisions`, `repair_work_logs`, `repair_parts`, `repair_tests`, `repair_test_results` |
 | Paiement / transport | `payments`, `payment_provider_events`, `invoices`, `shipments`, `shipping_events` |
@@ -40,6 +41,42 @@ Le front ne génère jamais ces numéros.
 - Storage : buckets privés `reception-media`, `diagnostic-media`, `repair-media`, `shipping-media`, `final-media`, `sav-media`, `documents` (chemin `<order_id>/<KIND>/<uuid>.<ext>`) ; `content-media` public en lecture, écriture admin.
 
 Tests : `supabase/tests/rls.test.sql` (exécutés par `npm run test:db`) vérifient notamment que le client A ne voit jamais le dossier du client B, que le technicien ne modifie pas les prix, et que les policies storage isolent les fichiers par dossier.
+
+## Les rayons de la boutique
+
+`product_categories` est la liste des rayons, et elle se gère depuis le
+back-office (`/admin/catalog/rayons`). Elle a remplacé le type énuméré
+`product_category` : ouvrir un rayon demandait une migration, un déploiement et
+la modification d'une dizaine de fichiers, ce que le vendeur ne pouvait pas
+faire seul.
+
+| Colonne | Rôle |
+| --- | --- |
+| `code` | Clé technique, référencée par `products.category`. La renommer déplace tout le rayon (`on update cascade`) |
+| `label` / `label_singular` | « Consoles » / « Console » |
+| `slug` | Segment d'adresse, `/boutique?cat=consoles`. Le changer casse les liens publiés |
+| `position` | Ordre d'affichage |
+| `is_public` | Faux = rayon interne (c'est le cas d'`ACCESSORY` et de `PART`) |
+
+`products.category` est passé d'énuméré à `text` avec une clé étrangère
+(`on update cascade`, `on delete restrict`) : un article ne peut pas pointer
+vers un rayon inexistant, et un rayon qui contient des articles ne se supprime
+pas — on le masque. Les cinq rayons d'origine ont été repris à l'identique,
+codes et slugs compris : aucune adresse publiée ne change. Le type
+`product_category` subsiste mais n'est plus référencé par aucune colonne —
+PostgreSQL ne sait pas retirer une valeur d'un énuméré, et le laisser ne coûte
+rien.
+
+Côté application, `lib/shop/rayons.ts` porte le type et les fonctions pures ;
+`getRayons()` (`lib/shop/categories.ts`) lit la table, met le résultat en cache
+pour la requête, et **retombe sur les cinq rayons d'origine si la table n'existe
+pas encore** : le code peut donc être déployé avant que la migration ne soit
+appliquée sur Supabase.
+
+> Après avoir joué `20260916000002_product_categories.sql` sur un environnement,
+> PostgREST doit recharger son cache de schéma (`notify pgrst, 'reload schema'`)
+> pour voir la nouvelle table. Supabase le fait de lui-même quand la migration
+> passe par le tableau de bord ou la CLI.
 
 ## Catalogue de réparation
 

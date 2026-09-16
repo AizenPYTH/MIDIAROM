@@ -3,7 +3,7 @@ import { ROUTES } from "@/config/site";
 import { HomeVisual } from "@/components/marketing/home/visual";
 import { HOME_VISUALS, PLATFORM_VISUALS } from "@/lib/content/assets";
 import { RayonV9 } from "@/components/marketing/home/rayon-v9";
-import { CATEGORY_SLUGS } from "@/lib/shop/status";
+import type { Rayon } from "@/lib/shop/rayons";
 import type { Product } from "@/lib/shop/catalog";
 import type { BrandSettings } from "@/config/brand";
 
@@ -443,28 +443,22 @@ export function ParcoursV9() {
 
 // ───────────────────────────── 6 · la boutique ───────────────────────────────
 
-const RAYONS = [
-  {
-    cle: "jeux" as const,
-    slug: CATEGORY_SLUGS.GAME,
-    titre: "Jeux vidéo",
-    texte: "Neuf, occasion testée, import et collector.",
-  },
-  {
-    cle: "consoles" as const,
-    slug: CATEGORY_SLUGS.CONSOLE,
-    titre: "Consoles",
-    texte: "Récentes et rétro, révisées en atelier, manettes et accessoires.",
-  },
-  {
-    cle: "figurines" as const,
-    slug: CATEGORY_SLUGS.COLLECTIBLE,
-    titre: "Figurines manga / anime",
-    texte: "One Piece, Naruto, Dragon Ball, Demon Slayer, Jujutsu Kaisen.",
-  },
-];
+/**
+ * Ce qu'on sait dire d'un rayon, au-delà de son nom.
+ *
+ * L'affiche et la phrase sont rédigées et photographiées pour les trois rayons
+ * d'origine — ce sont de vraies photographies du magasin, elles ne se
+ * fabriquent pas. Un rayon ouvert au back-office n'en a pas : sa tuile porte
+ * alors son libellé sur la plaque d'attente, ce qui est honnête, plutôt qu'une
+ * phrase inventée sur une image empruntée.
+ */
+const RAYONS_REDIGES: Record<string, { cle: "jeux" | "consoles" | "figurines"; texte: string }> = {
+  GAME: { cle: "jeux", texte: "Neuf, occasion testée, import et collector." },
+  CONSOLE: { cle: "consoles", texte: "Récentes et rétro, révisées en atelier, manettes et accessoires." },
+  COLLECTIBLE: { cle: "figurines", texte: "One Piece, Naruto, Dragon Ball, Demon Slayer, Jujutsu Kaisen." },
+};
 
-export function BoutiqueV9() {
+export function BoutiqueV9({ rayons }: { rayons: Rayon[] }) {
   return (
     <section id="boutique" className={`${SHELL} ${PAD} pt-[clamp(40px,5vw,84px)]`}>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-6">
@@ -485,19 +479,24 @@ export function BoutiqueV9() {
       </div>
 
       <div data-g-shop="1">
-        {RAYONS.map((r) => (
-          <Link key={r.cle} href={`${ROUTES.shop}?cat=${r.slug}`} data-tile="1" data-shot="1" className="relative block overflow-hidden bg-ink text-white">
-            <HomeVisual src={HOME_VISUALS[r.cle]} alt={`Rayon ${r.titre.toLowerCase()}`} label={r.titre} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 500px" />
-            <span aria-hidden="true" className="absolute inset-0" style={{ background: VOILE }} />
-            <span className="absolute inset-x-0 bottom-0 flex flex-col gap-[7px] p-[26px]">
-              <span data-rule="1" aria-hidden="true" className="block h-0.5 w-11 bg-red" />
-              <strong className="mt-1 text-[clamp(22px,2.2vw,32px)] font-extrabold tracking-[-0.034em]">{r.titre}</strong>
-              <span className="text-[14.5px] leading-[1.4]" style={{ color: "#d3d3d8" }}>
-                {r.texte}
+        {rayons.map((r) => {
+          const redige = RAYONS_REDIGES[r.code];
+          return (
+            <Link key={r.code} href={`${ROUTES.shop}?cat=${r.slug}`} data-tile="1" data-shot="1" className="relative block overflow-hidden bg-ink text-white">
+              <HomeVisual src={redige ? HOME_VISUALS[redige.cle] : null} alt={`Rayon ${r.label.toLowerCase()}`} label={r.label} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 500px" />
+              <span aria-hidden="true" className="absolute inset-0" style={{ background: VOILE }} />
+              <span className="absolute inset-x-0 bottom-0 flex flex-col gap-[7px] p-[26px]">
+                <span data-rule="1" aria-hidden="true" className="block h-0.5 w-11 bg-red" />
+                <strong className="mt-1 text-[clamp(22px,2.2vw,32px)] font-extrabold tracking-[-0.034em]">{r.label}</strong>
+                {redige ? (
+                  <span className="text-[14.5px] leading-[1.4]" style={{ color: "#d3d3d8" }}>
+                    {redige.texte}
+                  </span>
+                ) : null}
               </span>
-            </span>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

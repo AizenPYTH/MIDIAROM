@@ -62,6 +62,7 @@ export interface EntityDef {
     | "test_checklists"
     | "option_categories"
     | "marketing_costs"
+    | "product_categories"
     | "products";
   label: string;
   labelPlural: string;
@@ -240,6 +241,46 @@ export const ENTITIES: Record<string, EntityDef> = {
     ],
     schema: z.object({ name: text(100).min(1), slug, category_id: nullableUuid, price_cents: int.min(0), estimated_cost_cents: int.min(0).default(0), estimated_minutes: int.min(0).default(0), short_description: optText(300), description: optText(), applies_to_all: bool.default(false), is_recommended: bool.default(false), is_active: bool.default(true), display_order: int.default(0) }),
     revalidate: ["/reparation"],
+  },
+  /**
+   * Les rayons de la boutique.
+   *
+   * C'est la réponse à « et si je veux vendre autre chose dans six mois ». Le
+   * vendeur ouvre un rayon ici, et il apparaît le jour même dans le menu du
+   * site, dans les filtres de la boutique, dans le formulaire de nouvelle
+   * annonce et au plan du site — sans déploiement.
+   *
+   * Deux champs demandent de la prudence, et leurs libellés le disent :
+   *   - le **code** est la clé que portent les produits. Le changer déplace
+   *     tout le rayon (`on update cascade` en base) ;
+   *   - le **slug** est une adresse publique. Le changer casse les liens déjà
+   *     partagés et indexés.
+   * Un rayon qui contient des produits ne peut pas être supprimé : la base le
+   * refuse (`on delete restrict`). C'est voulu — on le décoche plutôt.
+   */
+  product_categories: {
+    table: "product_categories",
+    label: "Rayon",
+    labelPlural: "Rayons de la boutique",
+    basePath: "/admin/catalog/rayons",
+    listColumns: ["label", "code", "slug", "position", "is_public"],
+    fields: [
+      { name: "label", label: "Nom du rayon", type: "text", required: true, width: "half", hint: "Le titre de la section : « Jeux vidéo », « Cartes à collectionner »." },
+      { name: "label_singular", label: "Nom d'un article", type: "text", required: true, width: "half", hint: "Au singulier, pour le coin d'une vignette : « Jeu », « Carte »." },
+      { name: "code", label: "Code interne", type: "text", required: true, width: "half", hint: "MAJUSCULES sans accent. C'est la clé que portent les articles : la changer déplace tout le rayon." },
+      { name: "slug", label: "Adresse du rayon", type: "slug", required: true, width: "half", hint: "/boutique?cat=… — la changer casse les liens déjà partagés." },
+      { name: "position", label: "Ordre d'affichage", type: "number", width: "half", hint: "Du plus petit au plus grand." },
+      { name: "is_public", label: "Visible en boutique", type: "checkbox", width: "half", hint: "Décoché : le rayon reste géré ici, invisible sur le site." },
+    ],
+    schema: z.object({
+      label: text(60).min(1),
+      label_singular: text(60).min(1),
+      code: z.string().trim().regex(/^[A-Z][A-Z0-9_]{1,31}$/, "Code invalide : MAJUSCULES, chiffres et _, 2 à 32 caractères, commençant par une lettre"),
+      slug,
+      position: int.default(0),
+      is_public: bool.default(true),
+    }),
+    revalidate: ["/", "/boutique"],
   },
   option_categories: {
     table: "option_categories",

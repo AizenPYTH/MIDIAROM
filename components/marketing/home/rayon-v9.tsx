@@ -6,7 +6,8 @@ import { useMemo, useState } from "react";
 import { ROUTES } from "@/config/site";
 import { publicMediaUrl } from "@/components/marketing/gallery";
 import { AddToCartButton } from "@/components/shop/cart-widgets";
-import { CATEGORY_LABELS, CONDITION_SHORT, stockLabel, type ProductCategory, type ProductCondition } from "@/lib/shop/status";
+import { CONDITION_SHORT, stockLabel, type ProductCondition } from "@/lib/shop/status";
+import { libelleDe, type Rayon } from "@/lib/shop/rayons";
 import { formatPrice } from "@/lib/utils/format";
 
 /**
@@ -30,18 +31,29 @@ export interface RayonProduit {
   quantity: number;
   seuil: number;
   condition: ProductCondition;
-  category: ProductCategory;
+  category: string;
   platform: string;
   image: string | null;
 }
 
-/** Les quatre filtres, dans l'ordre du handoff. `null` = tout le rayon. */
-const FILTRES: { label: string; cat: ProductCategory | null }[] = [
-  { label: "Tout", cat: null },
-  { label: "Jeux", cat: "GAME" },
-  { label: "Consoles", cat: "CONSOLE" },
-  { label: "Figurines", cat: "COLLECTIBLE" },
-];
+/**
+ * Les filtres : « Tout », puis un par rayon public.
+ *
+ * Ils ne sont plus écrits en dur. Le vendeur peut ouvrir un rayon depuis le
+ * back-office, et le mur d'accueil le propose le jour même. Le tri porte sur le
+ * **code** du rayon, jamais sur le libellé affiché — c'est ce qui permet de
+ * renommer « Figurines Manga / Anime » sans casser silencieusement le filtre.
+ *
+ * Les libellés du mur sont courts : la puce fait 44 px de haut et il en tient
+ * quatre sur 390 px. Un rayon dont le nom de section est long garde donc son
+ * premier mot ici.
+ */
+function courts(rayons: readonly Rayon[]): { label: string; cat: string | null }[] {
+  return [
+    { label: "Tout", cat: null },
+    ...rayons.map((r) => ({ label: r.label.split(/\s+[—/·]\s+|\s+/)[0] ?? r.label, cat: r.code })),
+  ];
+}
 
 /**
  * Le badge, et sa couleur.
@@ -57,7 +69,7 @@ function badgeDe(p: RayonProduit): { texte: string; rouge: boolean } | null {
   return null;
 }
 
-function Carte({ produit }: { produit: RayonProduit }) {
+function Carte({ produit, rayons }: { produit: RayonProduit; rayons: readonly Rayon[] }) {
   const href = `${ROUTES.shop}/${produit.slug}`;
   const badge = badgeDe(produit);
   const stock = stockLabel(produit.quantity, produit.seuil, produit.condition);
@@ -90,7 +102,7 @@ function Carte({ produit }: { produit: RayonProduit }) {
 
       <div className="flex flex-1 flex-col gap-1.5 p-3 sm:gap-[7px] sm:p-4">
         <span className="font-mono text-[9.5px] uppercase tracking-[0.05em] text-ink-faint sm:text-[10px] sm:tracking-[0.06em]">
-          {CATEGORY_LABELS[produit.category]} · {CONDITION_SHORT[produit.condition]}
+          {libelleDe(rayons, produit.category)} · {CONDITION_SHORT[produit.condition]}
         </span>
         <Link href={href} className="flex-1 text-[14px] font-semibold leading-[1.3] tracking-[-0.012em] sm:text-[15px] sm:leading-[1.32]">
           {produit.name}
@@ -107,14 +119,15 @@ function Carte({ produit }: { produit: RayonProduit }) {
   );
 }
 
-export function RayonV9({ produits, total }: { produits: RayonProduit[]; total: number }) {
+export function RayonV9({ produits, total, rayons }: { produits: RayonProduit[]; total: number; rayons: Rayon[] }) {
   const [actif, setActif] = useState<string>("Tout");
+  const FILTRES = useMemo(() => courts(rayons), [rayons]);
 
   const montres = useMemo(() => {
     const f = FILTRES.find((x) => x.label === actif);
     const liste = !f || f.cat === null ? produits : produits.filter((p) => p.category === f.cat);
     return liste.slice(0, 12);
-  }, [produits, actif]);
+  }, [produits, actif, FILTRES]);
 
   return (
     <section id="rayon" className={`mx-auto w-full max-w-[1560px] px-[clamp(16px,4vw,64px)] pt-[clamp(32px,4vw,64px)]`}>
@@ -155,7 +168,7 @@ export function RayonV9({ produits, total }: { produits: RayonProduit[]; total: 
       {montres.length ? (
         <div data-g-prod="1">
           {montres.map((p) => (
-            <Carte key={p.id} produit={p} />
+            <Carte key={p.id} produit={p} rayons={rayons} />
           ))}
         </div>
       ) : (

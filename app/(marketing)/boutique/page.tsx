@@ -4,7 +4,8 @@ import { ROUTES, SITE_URL } from "@/config/site";
 import { Container, Eyebrow } from "@/components/ui/misc";
 import { ProductCard, ProductGrid } from "@/components/shop/product-card";
 import { getProductCategoryCounts, getProductPlatforms, getProducts, type ProductFilters } from "@/lib/shop/catalog";
-import { CATEGORY_LABELS, CATEGORY_SLUGS, PUBLIC_CATEGORIES, type ProductCategory } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { codeDuSlug, libelleDe, rayonsPublics, slugDe } from "@/lib/shop/rayons";
 import { ShopCategories } from "@/components/marketing/home/sections";
 import { cn } from "@/lib/utils/cn";
 
@@ -25,15 +26,15 @@ export const dynamic = "force-dynamic";
  * indexer produirait des dizaines de doublons.
  */
 const RAYONS_SEO: Record<string, { titre: string; description: string }> = {
-  [CATEGORY_SLUGS.GAME]: {
+  jeux: {
     titre: "Jeux vidéo — neuf, occasion testée, import et collector",
     description: "Le rayon jeux vidéo du 207 rue de Rome : PlayStation, Nintendo, Xbox et rétro, neufs et d'occasion testés. Retrait en boutique ou envoi suivi.",
   },
-  [CATEGORY_SLUGS.CONSOLE]: {
+  consoles: {
     titre: "Consoles — récentes et rétro, révisées en atelier",
     description: "Consoles PlayStation, Nintendo, Xbox et rétro, révisées dans notre atelier de Marseille, garanties trois mois. Manettes et accessoires.",
   },
-  [CATEGORY_SLUGS.COLLECTIBLE]: {
+  figurines: {
     titre: "Figurines manga et anime — One Piece, Naruto, Dragon Ball",
     description: "Figurines de personnages manga et anime : One Piece, Naruto, Dragon Ball, Demon Slayer, Jujutsu Kaisen. En rayon au 207 rue de Rome à Marseille.",
   },
@@ -41,8 +42,27 @@ const RAYONS_SEO: Record<string, { titre: string; description: string }> = {
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Search> }): Promise<Metadata> {
   const { cat } = await searchParams;
-  const rayon = cat ? RAYONS_SEO[cat] : undefined;
-  if (!rayon) {
+  const rayons = await getRayons();
+  const code = codeDuSlug(rayons, cat);
+  // La canonique porte toujours le slug **propre** du rayon, jamais l'alias par
+  // lequel on est arrivé : `?cat=manga` et `?cat=figurines` montrent le même
+  // rayon, et deux canoniques différentes en feraient deux pages aux yeux d'un
+  // moteur.
+  const slugCanonique = code ? slugDe(rayons, code) : cat;
+  const redige = slugCanonique ? RAYONS_SEO[slugCanonique] : undefined;
+
+  // Un rayon créé au back-office n'a pas de texte rédigé : on en fabrique un
+  // honnête à partir de son libellé plutôt que de lui donner le titre général
+  // de la boutique, qui ferait de lui un doublon aux yeux d'un moteur.
+  if (!redige && code) {
+    const label = libelleDe(rayons, code);
+    return {
+      title: `${label} — 207 rue de Rome, Marseille`,
+      description: `Le rayon ${label.toLowerCase()} du 207 MÉDI@ROM : stock du magasin, retrait en boutique ou envoi suivi.`,
+      alternates: { canonical: `${SITE_URL}${ROUTES.shop}?cat=${slugCanonique}` },
+    };
+  }
+  if (!redige) {
     return {
       title: "Boutique — consoles, jeux, figurines, rétro",
       description: "Le stock du magasin en ligne : consoles neuves et d'occasion révisées, jeux, figurines manga et anime, rétrogaming. Retrait en boutique ou envoi.",
@@ -50,9 +70,9 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
     };
   }
   return {
-    title: rayon.titre,
-    description: rayon.description,
-    alternates: { canonical: `${SITE_URL}${ROUTES.shop}?cat=${cat}` },
+    title: redige.titre,
+    description: redige.description,
+    alternates: { canonical: `${SITE_URL}${ROUTES.shop}?cat=${slugCanonique}` },
   };
 }
 
@@ -95,7 +115,8 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     maxCents: cents(sp.max),
     sort,
   };
-  const [products, platforms, counts] = await Promise.all([getProducts(filters), getProductPlatforms(), getProductCategoryCounts()]);
+  const [products, platforms, counts, rayons] = await Promise.all([getProducts(filters), getProductPlatforms(), getProductCategoryCounts(), getRayons()]);
+  const rayonCourant = codeDuSlug(rayons, sp.cat);
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
@@ -103,7 +124,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       <div className="mb-7 flex flex-wrap items-end justify-between gap-6">
         <div>
           <Eyebrow>Boutique</Eyebrow>
-          <h1 className="mt-2 text-[clamp(28px,3.4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{sp.cat ? CATEGORY_LABELS[(Object.entries(CATEGORY_SLUGS).find(([, s]) => s === sp.cat)?.[0] ?? "CONSOLE") as ProductCategory] : sp.retro === "1" ? "Rétro & occasion" : "En rayon cette semaine"}</h1>
+          <h1 className="mt-2 text-[clamp(28px,3.4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{rayonCourant ? libelleDe(rayons, rayonCourant) : sp.retro === "1" ? "Rétro & occasion" : "En rayon cette semaine"}</h1>
         </div>
         <span className="border-b border-sale font-mono text-[12.5px] uppercase tracking-[0.06em] text-sale">
           {products.length} / {total} réf.
@@ -167,10 +188,11 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         </Chip>
         {/* Une catégorie sans aucune référence n'est pas un filtre : c'est une
             promesse vide. On n'affiche que celles qui ont du stock. */}
-        {PUBLIC_CATEGORIES.filter((c) => counts[c] > 0)
-          .map((c) => (
-            <Chip key={c} href={buildHref(sp, { cat: CATEGORY_SLUGS[c], retro: undefined })} active={sp.cat === CATEGORY_SLUGS[c]}>
-              {CATEGORY_LABELS[c]} · {counts[c]}
+        {rayonsPublics(rayons)
+          .filter((r) => (counts[r.code] ?? 0) > 0)
+          .map((r) => (
+            <Chip key={r.code} href={buildHref(sp, { cat: r.slug, retro: undefined })} active={sp.cat === r.slug}>
+              {r.label} · {counts[r.code]}
             </Chip>
           ))}
         <Chip href={buildHref(sp, { retro: "1", cat: undefined })} active={sp.retro === "1"}>

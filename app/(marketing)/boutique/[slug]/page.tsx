@@ -9,7 +9,9 @@ import { AddToCartButton } from "@/components/shop/cart-widgets";
 import { ProductCard } from "@/components/shop/product-card";
 import { ProductTile } from "@/components/shop/product-tile";
 import { getProductBySlug, getProducts } from "@/lib/shop/catalog";
-import { CATEGORY_LABELS, CATEGORY_SLUGS, CONDITION_DESCRIPTIONS, CONDITION_LABELS, stockLabel, stockState } from "@/lib/shop/status";
+import { CONDITION_DESCRIPTIONS, CONDITION_LABELS, stockLabel, stockState } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { libelleDe, slugDe } from "@/lib/shop/rayons";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSetting } from "@/lib/settings";
 import { formatPrice } from "@/lib/utils/format";
@@ -33,11 +35,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await getProductBySlug(slug);
   if (!product) notFound();
   const db = createSupabaseAdminClient();
-  const [shop, model, related] = await Promise.all([
+  const [shop, model, related, rayons] = await Promise.all([
     getSetting("shop"),
     product.model_id ? db.from("console_models").select("slug, name").eq("id", product.model_id).maybeSingle().then((r) => r.data) : Promise.resolve(null),
     getProducts({ platform: product.platform, availability: "stock" }, 5),
+    getRayons(),
   ]);
+  // Le libellé et le lien du rayon viennent de la liste réelle : un rayon
+  // renommé au back-office se lit ici sans redéploiement, et un code orphelin
+  // reste affiché tel quel plutôt que de laisser un fil d'Ariane vide.
+  const rayonLabel = libelleDe(rayons, product.category);
+  const rayonSlug = slugDe(rayons, product.category);
   const specs = Object.entries((product.specs ?? {}) as Record<string, string>);
   const state = stockState(product.quantity, product.low_stock_threshold);
   const others = related.filter((p) => p.id !== product.id).slice(0, 4);
@@ -55,7 +63,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   return (
     <Container className="py-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Breadcrumbs items={[{ label: "Boutique", href: ROUTES.shop }, { label: CATEGORY_LABELS[product.category], href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS[product.category]}` }, { label: product.name }]} />
+      <Breadcrumbs items={[{ label: "Boutique", href: ROUTES.shop }, { label: rayonLabel, href: rayonSlug ? `${ROUTES.shop}?cat=${rayonSlug}` : ROUTES.shop }, { label: product.name }]} />
       <div className="mt-6 grid gap-10 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
         <div className="flex flex-col gap-2">
           {/* Ni filet ni aplat : la photo est détourée sur blanc, elle doit se poser
@@ -78,7 +86,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
         <div className="flex flex-col gap-4">
           <Eyebrow>
-            {product.platform} · {CATEGORY_LABELS[product.category]}
+            {product.platform} · {rayonLabel}
           </Eyebrow>
           <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{product.name}</h1>
           <p className="font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-muted">Réf. {product.sku}</p>

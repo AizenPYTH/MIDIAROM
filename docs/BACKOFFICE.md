@@ -62,13 +62,54 @@ n'attend d'action. L'atelier est à jour. » — plutôt que d'afficher un tiret
 Aucun indicateur décoratif : ni taux de satisfaction, ni courbe de chiffre
 d'affaires.
 
+## Ouvrir un rayon
+
+**`/admin/catalog/rayons`** — la liste des rayons de la boutique, et le bouton
+qui en ajoute un.
+
+Les rayons ne sont plus écrits dans le code. La table `product_categories` porte
+le nom, le nom au singulier, le **code**, le **slug** d'adresse, l'ordre
+d'affichage et la visibilité. Ajouter « Cartes à collectionner » y suffit : le
+rayon apparaît le jour même dans le menu du site, dans les filtres de la
+boutique et du mur d'accueil, dans le formulaire de nouvelle annonce, au plan du
+site, et il obtient sa propre page — son titre, sa description, sa canonique.
+Aucun déploiement.
+
+| Champ | Note |
+| --- | --- |
+| Nom du rayon | Le titre de la section : « Jeux vidéo » |
+| Nom d'un article | Au singulier, pour le coin d'une vignette : « Jeu » |
+| Code interne | MAJUSCULES sans accent. **C'est la clé que portent les articles** : la changer déplace tout le rayon (la base propage, `on update cascade`) |
+| Adresse du rayon | `/boutique?cat=…`. **La changer casse les liens déjà partagés et indexés** |
+| Ordre d'affichage | Du plus petit au plus grand |
+| Visible en boutique | Décoché : le rayon reste géré ici, invisible sur le site. C'est le cas d'`ACCESSORY` et de `PART` |
+
+Deux garde-fous viennent de la base, pas de l'écran :
+
+- **un article ne peut pas pointer vers un rayon inexistant** (clé étrangère) ;
+- **un rayon qui contient des articles ne se supprime pas** (`on delete
+  restrict`). On le décoche : il disparaît de la vitrine sans que son stock
+  devienne introuvable.
+
+Côté code, la règle tient en une phrase : **plus rien n'écrit la liste en dur**.
+`lib/shop/rayons.ts` porte le type et les fonctions pures, `getRayons()`
+(`lib/shop/categories.ts`) va chercher la liste et la met en cache pour la durée
+d'une requête. Si la table n'existe pas encore sur un environnement, `getRayons()`
+rend les cinq rayons d'origine : la boutique fonctionne comme avant, et bascule
+toute seule le jour où la migration passe.
+
+Un rayon ouvert au back-office n'a ni affiche ni phrase rédigée — ce sont de
+vraies photographies du magasin, elles ne se fabriquent pas. Sa tuile d'accueil
+porte donc son nom sur la plaque d'attente, ce qui est honnête, plutôt qu'une
+image empruntée.
+
 ## Publier une annonce
 
 **`/admin/annonces/nouvelle`** — le formulaire court :
 
 | Champ | Note |
 | --- | --- |
-| Rayon | Jeux vidéo · Consoles · Figurines Manga / Anime |
+| Rayon | Les rayons publics du magasin, dans l'ordre du back-office |
 | Nom | — |
 | Plateforme *(ou licence pour une figurine)* | L'exemple s'adapte au rayon |
 | État | Neuf, révisé, occasion A/B/C |
@@ -102,6 +143,7 @@ immédiatement : c'est le magasin qui décide.
 | `/admin/shop-orders` | Commandes boutique |
 | `/admin/stock` | Tous les articles : prix, stock, photos, mise en ligne |
 | `/admin/annonces/nouvelle` | Créer un article à la main — jeu, console, figurine, accessoire, pièce |
+| `/admin/catalog/rayons` | Les rayons de la boutique : en ouvrir un, le renommer, le masquer |
 | `/admin/catalog/*` | Tarifs de réparation : marques, consoles, pannes, prestations |
 | `/admin/settings` | Nom, adresse, horaires, garantie, livraison |
 

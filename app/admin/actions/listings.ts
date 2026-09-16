@@ -6,7 +6,8 @@ import { requireAdmin } from "@/lib/security/auth";
 import { audit } from "@/lib/security/audit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { buildSku, priceToCents, slugify } from "@/lib/catalog/listing";
-import { PUBLIC_CATEGORIES, type ProductCategory } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { rayonsPublics } from "@/lib/shop/rayons";
 
 /**
  * Créer une annonce en une fois.
@@ -35,8 +36,10 @@ export async function createListingAction(_prev: unknown, formData: FormData): P
   const nom = str(formData, "name");
   if (!nom) return { status: "error", error: "Donnez un nom à l'article.", field: "name" };
 
-  const categorie = str(formData, "category") as ProductCategory;
-  if (!PUBLIC_CATEGORIES.includes(categorie)) {
+  // Le rayon est validé contre la liste réelle du magasin : un code inventé
+  // dans le navigateur ne passe pas, et un rayon créé ce matin passe.
+  const categorie = str(formData, "category");
+  if (!rayonsPublics(await getRayons()).some((r) => r.code === categorie)) {
     return { status: "error", error: "Choisissez un rayon.", field: "category" };
   }
 

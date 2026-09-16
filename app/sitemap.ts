@@ -2,7 +2,8 @@ import type { MetadataRoute } from "next";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { getModelsWithActiveRepairs, getSeoPublishedRepairs } from "@/lib/repair/catalog";
 import { getProducts } from "@/lib/shop/catalog";
-import { CATEGORY_SLUGS } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { rayonsPublics } from "@/lib/shop/rayons";
 
 export const revalidate = 3600;
 
@@ -11,20 +12,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // proposée à l'indexation, alors que chacune a son titre, sa description et
   // ses données structurées. Un magasin en ligne dont le catalogue n'est pas
   // dans son sitemap se prive de la moitié de ses pages.
-  const [models, repairs, products] = await Promise.all([
+  const [models, repairs, products, rayons] = await Promise.all([
     getModelsWithActiveRepairs().catch(() => []),
     getSeoPublishedRepairs().catch(() => []),
     getProducts({}, 1000).catch(() => []),
+    getRayons().catch(() => []),
   ]);
   const statics: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE_URL}${ROUTES.repair}`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}${ROUTES.shop}`, changeFrequency: "daily", priority: 0.9 },
     // Chaque rayon est une page à part entière, avec son titre, sa description
-    // et sa canonique : il a sa place au plan du site.
-    { url: `${SITE_URL}${ROUTES.shop}?cat=${CATEGORY_SLUGS.GAME}`, changeFrequency: "daily", priority: 0.8 },
-    { url: `${SITE_URL}${ROUTES.shop}?cat=${CATEGORY_SLUGS.CONSOLE}`, changeFrequency: "daily", priority: 0.8 },
-    { url: `${SITE_URL}${ROUTES.shop}?cat=${CATEGORY_SLUGS.COLLECTIBLE}`, changeFrequency: "daily", priority: 0.8 },
+    // et sa canonique : il a sa place au plan du site. La liste vient de la
+    // base — un rayon ouvert au back-office est indexable sans redéploiement.
+    ...rayonsPublics(rayons).map((r) => ({ url: `${SITE_URL}${ROUTES.shop}?cat=${r.slug}`, changeFrequency: "daily" as const, priority: 0.8 })),
     { url: `${SITE_URL}${ROUTES.howItWorks}`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}${ROUTES.trust}`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}${ROUTES.faq}`, changeFrequency: "monthly", priority: 0.6 },

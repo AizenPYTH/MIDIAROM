@@ -1,5 +1,5 @@
 import { ROUTES } from "@/config/site";
-import { CATEGORY_SLUGS } from "@/lib/shop/status";
+import type { Rayon } from "@/lib/shop/rayons";
 import { BrandMark } from "@/components/marketing/header";
 import { FooterColumn } from "@/components/marketing/footer-column";
 import type { BrandSettings } from "@/config/brand";
@@ -16,7 +16,7 @@ import type { SocialSettings } from "@/lib/settings";
  * L'adresse, la ville et les réseaux viennent des réglages. Un réseau non
  * renseigné ne laisse pas de trou : sa ligne n'existe pas.
  */
-export function SiteFooter({ brand, social, models }: { brand: BrandSettings; social: SocialSettings; models: { slug: string; name: string }[] }) {
+export function SiteFooter({ brand, social, models, rayons }: { brand: BrandSettings; social: SocialSettings; models: { slug: string; name: string }[]; rayons: Rayon[] }) {
   const socials = [
     { label: "Instagram", href: social.instagram },
     { label: "Facebook", href: social.facebook },
@@ -41,9 +41,9 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
     {
       title: "Boutique",
       links: [
-        { label: "Jeux vidéo", href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.GAME}` },
-        { label: "Consoles", href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.CONSOLE}` },
-        { label: "Figurines manga / anime", href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.COLLECTIBLE}` },
+        // Un lien par rayon public, dans l'ordre du back-office : le plan du
+        // site suit la boutique, il ne la décrit pas de mémoire.
+        ...rayons.map((r) => ({ label: r.label, href: `${ROUTES.shop}?cat=${r.slug}` })),
         { label: "Mon compte", href: ROUTES.account },
         { label: "Panier", href: ROUTES.cart },
       ],

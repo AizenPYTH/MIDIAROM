@@ -4,7 +4,8 @@ import { BoutiqueV9, HeroV9, MachinesV9, MagasinV9, PannesV9, ParcoursV9 } from 
 import { RayonV9, type RayonProduit } from "@/components/marketing/home/rayon-v9";
 import { getProductCategoryCounts, getProducts } from "@/lib/shop/catalog";
 import { getModelsWithActiveRepairs } from "@/lib/repair/catalog";
-import { PUBLIC_CATEGORIES } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { rayonsPublics } from "@/lib/shop/rayons";
 import { getSeoPage } from "@/lib/content";
 import { getBrandSettings, getBusinessRules } from "@/lib/settings";
 import { formatPrice } from "@/lib/utils/format";
@@ -56,18 +57,24 @@ function liensMachines(models: { slug: string }[]): Record<string, string> {
 }
 
 export default async function HomePage() {
-  const [brand, rules, counts, products, models] = await Promise.all([
+  const [brand, rules, counts, products, models, rayons] = await Promise.all([
     getBrandSettings(),
     // Le tarif de diagnostic affiché doit être celui que la caisse applique.
     getBusinessRules(),
     getProductCategoryCounts(),
     getProducts({ sort: "recent" }, MUR),
     getModelsWithActiveRepairs().catch(() => []),
+    getRayons(),
   ]);
+
+  // Les rayons publics, dans l'ordre choisi au back-office. Le mur d'accueil,
+  // ses filtres et son total n'en connaissent pas d'autres.
+  const publics = rayonsPublics(rayons);
+  const codesPublics = publics.map((r) => r.code);
 
   // Le total du bouton « Voir tout le catalogue » ne compte que les rayons
   // publics : accessoires et pièces détachées ne sont pas des rayons ici.
-  const total = PUBLIC_CATEGORIES.reduce((n, c) => n + (counts[c] ?? 0), 0);
+  const total = codesPublics.reduce((n, c) => n + (counts[c] ?? 0), 0);
 
   // Zéro veut dire « pas de diagnostic facturé » : on n'annonce alors rien,
   // plutôt que d'afficher « 0 € », qui se lirait comme une promesse.
@@ -76,7 +83,7 @@ export default async function HomePage() {
   // Le mur ne montre que les rayons publics : un câble ou une pièce détachée
   // n'a rien à faire en vitrine, et fausserait les filtres.
   const produits: RayonProduit[] = products
-    .filter((p) => PUBLIC_CATEGORIES.includes(p.category))
+    .filter((p) => codesPublics.includes(p.category))
     .map((p) => ({
       id: p.id,
       name: p.name,
@@ -96,8 +103,8 @@ export default async function HomePage() {
       <MachinesV9 modelHrefs={liensMachines(models)} />
       <PannesV9 />
       <ParcoursV9 />
-      <BoutiqueV9 />
-      <RayonV9 produits={produits} total={total} />
+      <BoutiqueV9 rayons={publics} />
+      <RayonV9 produits={produits} total={total} rayons={publics} />
       <MagasinV9 brand={brand} />
     </>
   );

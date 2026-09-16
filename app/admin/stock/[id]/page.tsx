@@ -2,7 +2,8 @@ import Link from "next/link";
 import { EntityEditPage } from "@/components/admin/entity-pages";
 import { Section } from "@/components/admin/ui";
 import { StockAdjustForm } from "@/components/admin/shop-forms";
-import { categoryFromSlug } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { codeDuSlug } from "@/lib/shop/rayons";
 
 /**
  * La fiche d'un article.
@@ -28,7 +29,7 @@ export default async function ProductPage({
   // « Publier un jeu vidéo » et « Publier une console », sur l'accueil du
   // back-office, ouvrent ce formulaire avec le bon rayon déjà choisi. Un slug
   // inconnu ne pré-remplit rien plutôt que d'imposer une catégorie au hasard.
-  const category = categoryFromSlug(cat);
+  const category = codeDuSlug(await getRayons(), cat);
   return (
     <EntityEditPage entityKey="products" id={id} defaults={category ? { category } : undefined}>
       {(row) => (

@@ -2,7 +2,9 @@ import "server-only";
 import { cache } from "react";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/types/database";
-import { categoryFromSlug, type ProductCategory, type ProductCondition } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { codeDuSlug } from "@/lib/shop/rayons";
+import { type ProductCondition } from "@/lib/shop/status";
 
 export type Product = Tables<"products">;
 
@@ -24,7 +26,9 @@ const db = () => createSupabaseAdminClient();
 /** Produits actifs filtrés (catalogue public). Les prix et le stock viennent de la base. */
 export const getProducts = cache(async (filters: ProductFilters = {}, limit = 200): Promise<Product[]> => {
   let query = db().from("products").select("*").eq("is_active", true);
-  const category = categoryFromSlug(filters.category);
+  // Le slug se résout sur la **vraie** liste : un rayon créé par le vendeur
+  // doit être filtrable dès sa création, sans redéploiement.
+  const category = codeDuSlug(await getRayons(), filters.category);
   if (category) query = query.eq("category", category);
   if (filters.platform) query = query.ilike("platform", filters.platform);
   if (filters.modelId) query = query.eq("model_id", filters.modelId);
@@ -81,10 +85,18 @@ export const getProductPlatforms = cache(async (): Promise<string[]> => {
   return [...new Set((data ?? []).map((p) => p.platform))].sort((a, b) => a.localeCompare(b, "fr"));
 });
 
-export const getProductCategoryCounts = cache(async (): Promise<Record<ProductCategory, number>> => {
-  const { data } = await db().from("products").select("category").eq("is_active", true);
-  const counts: Record<ProductCategory, number> = { CONSOLE: 0, GAME: 0, ACCESSORY: 0, PART: 0, COLLECTIBLE: 0, MANGA: 0 };
-  for (const p of data ?? []) counts[p.category] += 1;
+/**
+ * Combien d'articles actifs par rayon.
+ *
+ * Les clés sont amorcées depuis la liste des rayons — un rayon vide doit
+ * répondre 0 et non `undefined`, sinon son compteur disparaîtrait de la
+ * boutique le jour où il se vide. Un produit rangé dans un code absent de la
+ * liste est tout de même compté : c'est une anomalie qu'il vaut mieux voir.
+ */
+export const getProductCategoryCounts = cache(async (): Promise<Record<string, number>> => {
+  const [{ data }, rayons] = await Promise.all([db().from("products").select("category").eq("is_active", true), getRayons()]);
+  const counts: Record<string, number> = Object.fromEntries(rayons.map((r) => [r.code, 0]));
+  for (const p of data ?? []) counts[p.category] = (counts[p.category] ?? 0) + 1;
   return counts;
 });
 

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { CATEGORY_SLUGS } from "@/lib/shop/status";
+import { courtLabel, type Rayon } from "@/lib/shop/rayons";
 import { ROUTES } from "@/config/site";
 import type { BrandSettings } from "@/config/brand";
 import { AccountLink, MobileNav, NavList, PrimaryNav, SearchField } from "@/components/marketing/header-client";
@@ -23,20 +23,24 @@ import { UTILITY_BAR } from "@/components/marketing/home/content";
  * Les rayons partent dans le tiroir — les afficher *en plus* du bouton menu
  * donnait deux navigations concurrentes.
  */
-const NAV = [
-  { href: ROUTES.repair, label: "Réparation" },
-  { href: ROUTES.shop, label: "Boutique" },
-  { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.GAME}`, label: "Jeux vidéo" },
-  { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.CONSOLE}`, label: "Consoles" },
-  { href: `${ROUTES.shop}?cat=${CATEGORY_SLUGS.COLLECTIBLE}`, label: "Figurines" },
-  { href: ROUTES.contact, label: "Magasin" },
-];
-
 /**
- * Le tiroir du téléphone porte toute la navigation : il rouvre donc l'accueil,
- * que le logo assure sur grand écran mais qu'un menu ouvert masque.
+ * Les entrées de la barre : réparation, boutique, un rayon par rayon public,
+ * puis le magasin.
+ *
+ * Les rayons ne sont plus écrits ici : ils viennent de `product_categories` et
+ * se gèrent au back-office. Un rayon ouvert un matin est dans le menu l'après-
+ * midi. Le libellé du menu est court — « Figurines », pas « Figurines Manga /
+ * Anime » — parce que six entrées doivent tenir sur une ligne de 1440 px ; on
+ * garde donc le premier mot du libellé de section.
  */
-const NAV_MOBILE = [{ href: ROUTES.home, label: "Accueil" }, ...NAV];
+function navDe(rayons: readonly Rayon[]): { href: string; label: string }[] {
+  return [
+    { href: ROUTES.repair, label: "Réparation" },
+    { href: ROUTES.shop, label: "Boutique" },
+    ...rayons.map((r) => ({ href: `${ROUTES.shop}?cat=${r.slug}`, label: courtLabel(r.label) })),
+    { href: ROUTES.contact, label: "Magasin" },
+  ];
+}
 
 /**
  * La croix directionnelle : cinq carrés de 5 px, le centre en rouge.
@@ -73,7 +77,12 @@ export function BrandMark({ name, size = "md", mark = "square" }: { name: string
   );
 }
 
-export function SiteHeader({ brand }: { brand: BrandSettings }) {
+export function SiteHeader({ brand, rayons }: { brand: BrandSettings; rayons: Rayon[] }) {
+  const NAV = navDe(rayons);
+  // Le tiroir du téléphone porte toute la navigation : il rouvre donc l'accueil,
+  // que le logo assure sur grand écran mais qu'un menu ouvert masque.
+  const NAV_MOBILE = [{ href: ROUTES.home, label: "Accueil" }, ...NAV];
+
   return (
     <>
       {/*

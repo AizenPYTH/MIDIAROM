@@ -1,4 +1,3 @@
-import type { ProductCategory } from "@/lib/shop/status";
 
 /**
  * Slug lisible et stable, dérivé du nom. C'est l'adresse publique de la fiche.
@@ -46,8 +45,12 @@ export function priceToCents(saisie: string): number | null {
  * tirés au sort — assez pour que deux articles saisis dans la même minute ne se
  * marchent pas dessus, assez court pour être lu à voix haute au comptoir.
  */
-export function buildSku(category: ProductCategory, name: string): string {
-  const rayon = { GAME: "JEU", CONSOLE: "CON", COLLECTIBLE: "FIG", ACCESSORY: "ACC", PART: "PIE", MANGA: "FIG" }[category] ?? "ART";
+export function buildSku(category: string, name: string): string {
+  // Les cinq rayons d'origine ont leur trigramme lisible ; un rayon ouvert au
+  // back-office prend les trois premières lettres de son code, et « ART » en
+  // dernier recours. Une référence doit rester prononçable au comptoir.
+  const connus: Record<string, string> = { GAME: "JEU", CONSOLE: "CON", COLLECTIBLE: "FIG", ACCESSORY: "ACC", PART: "PIE", MANGA: "FIG" };
+  const rayon = connus[category] ?? (category.replace(/[^A-Z]/g, "").slice(0, 3) || "ART");
   const jour = new Date().toISOString().slice(2, 10).replace(/-/g, "");
   const suffixe = Math.random().toString(36).slice(2, 6).toUpperCase();
   const mot = slugify(name).split("-")[0]?.slice(0, 6).toUpperCase() || "ART";

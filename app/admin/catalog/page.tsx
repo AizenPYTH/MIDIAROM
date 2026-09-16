@@ -8,17 +8,21 @@ export default async function CatalogHub() {
   await requireAdminOrRedirect();
   const db = createSupabaseAdminClient();
   const c = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
-  const [brands, models, faults, repairs, seo] = await Promise.all([
+  const [brands, models, faults, repairs, seo, rayons] = await Promise.all([
     c(db.from("brands").select("id", { count: "exact", head: true })),
     c(db.from("console_models").select("id", { count: "exact", head: true })),
     c(db.from("faults").select("id", { count: "exact", head: true })),
     c(db.from("repairs").select("id", { count: "exact", head: true }).eq("is_active", true)),
     c(db.from("repairs").select("id", { count: "exact", head: true }).eq("is_seo_published", true)),
+    // Les rayons de la boutique se gèrent ici aussi : c'est le seul endroit où
+    // l'on ouvre une famille de produits qui n'existait pas.
+    Promise.resolve(c(db.from("product_categories").select("id", { count: "exact", head: true }))).catch(() => 0),
   ]);
   return (
     <div className="space-y-6">
       <PageHeader title="Catalogue" description="Consoles, modèles, pannes et prestations. Chaque combinaison modèle × panne publiée génère une page SEO." />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Rayons de la boutique" value={rayons} hint="Ajouter une famille de produits" href="/admin/catalog/rayons" />
         <StatCard label="Marques" value={brands} href="/admin/catalog/brands" />
         <StatCard label="Modèles" value={models} href="/admin/catalog/models" />
         <StatCard label="Pannes" value={faults} href="/admin/catalog/faults" />

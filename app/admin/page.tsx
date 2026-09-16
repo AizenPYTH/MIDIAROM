@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireStaffOrRedirect } from "@/lib/security/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { CATEGORY_SLUGS } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { rayonsPublics } from "@/lib/shop/rayons";
 import { depuis, EN_COURS, joursDepuis, ORDRE, REGISTRES, registreOf, type Registre } from "@/lib/admin/workbench";
 import { formatPrice } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
@@ -58,13 +59,21 @@ function Pastille({ registre }: { registre: Registre }) {
 
 const PANNEAU = "bg-surface p-5";
 
-/** Les quatre raccourcis de publication. Action rare, donc en bas de colonne. */
-const AJOUTS = [
-  { label: "Un jeu vidéo", href: `/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.GAME}` },
-  { label: "Une console", href: `/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.CONSOLE}` },
-  { label: "Une figurine", href: `/admin/annonces/nouvelle?cat=${CATEGORY_SLUGS.COLLECTIBLE}` },
-  { label: "Une prestation", href: "/admin/catalog/repairs/new" },
-];
+/**
+ * Les raccourcis de publication. Action rare, donc en bas de colonne.
+ *
+ * Un par rayon public — le vendeur qui ouvre « Cartes à collectionner » le
+ * retrouve ici sans qu'on ait rien à redéployer —, plus la prestation, qui
+ * relève de l'atelier et non de la boutique. On s'arrête à trois rayons : la
+ * grille en compte deux par ligne, et l'ajout au catalogue ne doit pas
+ * reprendre le haut de la page.
+ */
+function ajoutsDe(rayons: { code: string; label: string; slug: string }[]): { label: string; href: string }[] {
+  return [
+    ...rayons.slice(0, 3).map((r) => ({ label: r.label, href: `/admin/annonces/nouvelle?cat=${r.slug}` })),
+    { label: "Une prestation", href: "/admin/catalog/repairs/new" },
+  ];
+}
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ f?: string }> }) {
   await requireStaffOrRedirect();
@@ -105,6 +114,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const lignes = onglet ? parRegistre(onglet) : toutes;
 
   // Commandes boutique récentes, pour la colonne de droite.
+  const rayons = rayonsPublics(await getRayons());
+  const AJOUTS = ajoutsDe(rayons);
+
   const { data: commandes } = await db
     .from("shop_orders")
     .select("id, order_number, status, fulfillment, total_cents")

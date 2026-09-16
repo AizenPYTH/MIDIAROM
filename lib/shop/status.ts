@@ -1,9 +1,18 @@
 import type { Enums } from "@/types/database";
+import { ALIAS_SLUGS, RAYONS_PAR_DEFAUT, codeDuSlug, rayonsPublics, type Rayon } from "@/lib/shop/rayons";
 
 /** Libellés, tons et règles pures de la boutique (utilisables côté client et dans les tests). */
 export type ShopOrderStatus = Enums<"shop_order_status">;
 export type ProductCondition = Enums<"product_condition">;
-export type ProductCategory = Enums<"product_category">;
+/**
+ * Le rayon d'un produit — un code, pas une valeur d'énuméré.
+ *
+ * La liste vit en base (`product_categories`) et se gère depuis le back-office :
+ * le type ne peut donc plus l'énumérer. Tout ce qui affiche un rayon doit
+ * savoir quoi faire d'un code inconnu — les fonctions de `lib/shop/rayons.ts`
+ * s'en chargent.
+ */
+export type ProductCategory = string;
 export type ShopFulfillment = Enums<"shop_fulfillment">;
 
 export const SHOP_ORDER_STATUSES: readonly ShopOrderStatus[] = ["PENDING", "PAID", "PREPARED", "SHIPPED", "DELIVERED", "CANCELLED"];
@@ -84,92 +93,48 @@ export const CONDITION_DESCRIPTIONS: Record<ProductCondition, string> = {
   USED_C: "Occasion avec défauts esthétiques marqués ou accessoires manquants, fonctionnel. Défauts détaillés sur la fiche.",
 };
 
-export const CATEGORY_LABELS: Record<ProductCategory, string> = {
-  CONSOLE: "Consoles",
-  GAME: "Jeux vidéo",
-  ACCESSORY: "Accessoires",
-  PART: "Pièces",
-  // Les figurines de personnages — One Piece, Naruto, Dragon Ball… — et les
-  // collectors de jeu vidéo partagent ce rayon. Le magasin ne vend pas de
-  // tomes papier : voir MANGA ci-dessous.
-  COLLECTIBLE: "Figurines Manga / Anime",
-  MANGA: "Figurines Manga / Anime",
-};
-
 /**
- * Le même rayon, au singulier et sans détour.
+ * Les libellés, slugs et rayons publics **par défaut**.
  *
- * `CATEGORY_LABELS` nomme une section — « Figurines Manga / Anime » tient sur
- * un chip de filtre, pas dans le coin d'une vignette de 150 px. Ce second jeu
- * d'étiquettes sert partout où l'on qualifie **un** article.
+ * Ce ne sont plus les seuls possibles : ils décrivent les cinq rayons livrés
+ * avec le magasin, et servent de repli partout où la liste réelle n'est pas
+ * disponible (test, composant purement client, base sans la table). Dès qu'un
+ * écran affiche des rayons pour de bon, il lit la liste de la base via
+ * `getRayons()` et passe par `libelleDe()` / `slugDe()`.
  */
-export const CATEGORY_SHORT: Record<ProductCategory, string> = {
-  CONSOLE: "Console",
-  GAME: "Jeu",
-  ACCESSORY: "Accessoire",
-  PART: "Pièce",
-  COLLECTIBLE: "Figurine",
-  MANGA: "Figurine",
-};
+export const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(RAYONS_PAR_DEFAUT.map((r) => [r.code, r.label]));
+
+/** Le même rayon au singulier : « Console », pour le coin d'une vignette. */
+export const CATEGORY_SHORT: Record<string, string> = Object.fromEntries(RAYONS_PAR_DEFAUT.map((r) => [r.code, r.short]));
+
+export const CATEGORY_SLUGS: Record<string, string> = Object.fromEntries(RAYONS_PAR_DEFAUT.map((r) => [r.code, r.slug]));
 
 /**
  * `MANGA` est une valeur morte.
  *
- * Elle a été ajoutée en croyant que le magasin vendrait des livres manga ; il
- * ne vend que des **figurines** de personnages, qui sont des `COLLECTIBLE`.
- * PostgreSQL ne sait pas retirer une valeur d'un type énuméré, et la base
- * interdit désormais son usage (contrainte `products_category_not_manga`,
- * migration 20260915000002). Elle reste donc dans le type, invisible partout.
- *
- * Toute liste de rayons montrée au public doit filtrer sur cette liste.
+ * Elle a été ajoutée à l'ancien type énuméré en croyant que le magasin vendrait
+ * des livres manga ; il ne vend que des **figurines** de personnages, qui sont
+ * des `COLLECTIBLE`. Elle n'existe pas dans `product_categories`, et la clé
+ * étrangère de `products.category` interdit désormais de l'employer. Le slug
+ * `manga`, lui, reste redirigé — il a été publié.
  */
-export const DEPRECATED_CATEGORIES: readonly ProductCategory[] = ["MANGA"];
+export const DEPRECATED_CATEGORIES: readonly string[] = Object.keys(ALIAS_SLUGS).length ? ["MANGA"] : [];
+
+/** Les rayons montrés au public, dans l'ordre d'affichage. */
+export const PUBLIC_CATEGORIES: readonly string[] = rayonsPublics(RAYONS_PAR_DEFAUT).map((r) => r.code);
+
+/** Ce que le public ne voit pas : rayons internes de l'atelier. */
+export const NON_PUBLIC_CATEGORIES: readonly string[] = RAYONS_PAR_DEFAUT.filter((r) => !r.isPublic).map((r) => r.code);
 
 /**
- * Les rayons du magasin, dans l'ordre d'affichage.
+ * Le code de rayon d'un slug d'adresse.
  *
- * Trois, et trois seulement. `ACCESSORY` et `PART` existent en base parce que
- * l'atelier a besoin de suivre des manettes de remplacement et des pièces
- * détachées, mais MÉDI@ROM n'est pas une boutique d'informatique : les mettre
- * en rayon ferait croire qu'on vend des composants. Ils restent gérables au
- * back-office, invisibles côté public.
+ * La liste est facultative : sans elle, on résout sur les cinq rayons par
+ * défaut. Le code serveur qui connaît la vraie liste **doit** la passer, sinon
+ * un rayon créé par le vendeur ne serait pas reconnu dans une adresse.
  */
-export const PUBLIC_CATEGORIES: readonly ProductCategory[] = ["GAME", "CONSOLE", "COLLECTIBLE"];
-
-/** Ce que le public ne voit pas : rayons internes et valeurs mortes. */
-export const NON_PUBLIC_CATEGORIES: readonly ProductCategory[] = (
-  Object.keys(CATEGORY_LABELS) as ProductCategory[]
-).filter((c) => !PUBLIC_CATEGORIES.includes(c));
-
-export const CATEGORY_SLUGS: Record<ProductCategory, string> = {
-  CONSOLE: "consoles",
-  GAME: "jeux",
-  ACCESSORY: "accessoires",
-  PART: "pieces",
-  COLLECTIBLE: "figurines",
-  // Jamais produit dans un lien : `categoryFromSlug` renvoie le slug « manga »
-  // vers COLLECTIBLE, pour que les anciennes adresses tombent sur le bon rayon.
-  MANGA: "manga",
-};
-
-/**
- * Anciens slugs qui doivent continuer à mener quelque part.
- *
- * `/boutique?cat=manga` a été publié : le laisser pointer vers une catégorie
- * interdite donnerait un rayon vide. Il mène au rayon qui a repris son contenu.
- */
-const SLUG_ALIASES: Record<string, ProductCategory> = {
-  manga: "COLLECTIBLE",
-};
-
-export function categoryFromSlug(slug: string | undefined): ProductCategory | null {
-  if (!slug) return null;
-  const alias = SLUG_ALIASES[slug];
-  if (alias) return alias;
-  const entry = (Object.entries(CATEGORY_SLUGS) as [ProductCategory, string][])
-    .filter(([category]) => !DEPRECATED_CATEGORIES.includes(category))
-    .find(([, s]) => s === slug);
-  return entry ? entry[0] : null;
+export function categoryFromSlug(slug: string | undefined, rayons: readonly Rayon[] = RAYONS_PAR_DEFAUT): ProductCategory | null {
+  return codeDuSlug(rayons, slug);
 }
 
 export type StockState = "IN_STOCK" | "LOW" | "OUT";

@@ -41,7 +41,7 @@ function cell(column: string, value: unknown, options: SelectOptions): React.Rea
 }
 
 const COLUMN_LABELS: Record<string, string> = {
-  name: "Nom", slug: "Slug", display_order: "Ordre", is_active: "Actif", brand_id: "Marque", model_id: "Modèle", fault_id: "Panne", price_cents: "Prix", is_seo_published: "SEO", applies_to_all: "Universelle", is_recommended: "Recommandée", code: "Code", provider_code: "Transporteur", includes_outbound: "Aller", includes_return: "Retour", question: "Question", category: "Catégorie", title: "Titre", image_path: "Image", is_published: "Publié", version: "Version", is_current: "En vigueur", path: "Chemin", no_index: "No-index", key: "Clé", sku: "SKU", platform: "Plateforme", condition: "État", quantity: "Stock", family: "Famille", source: "Source", campaign: "Campagne", period_start: "Début", period_end: "Fin", amount_cents: "Montant",
+  name: "Nom", slug: "Slug", display_order: "Ordre", is_active: "Actif", brand_id: "Marque", model_id: "Modèle", fault_id: "Panne", price_cents: "Prix", is_seo_published: "SEO", applies_to_all: "Universelle", is_recommended: "Recommandée", code: "Code", provider_code: "Transporteur", includes_outbound: "Aller", includes_return: "Retour", question: "Question", category: "Catégorie", title: "Titre", image_path: "Image", is_published: "Publié", version: "Version", is_current: "En vigueur", path: "Chemin", no_index: "No-index", key: "Clé", sku: "SKU", platform: "Plateforme", condition: "État", quantity: "Stock", family: "Famille", source: "Source", campaign: "Campagne", period_start: "Début", period_end: "Fin", amount_cents: "Montant", label: "Nom", label_singular: "Au singulier", position: "Ordre", is_public: "En boutique",
 };
 
 export async function EntityListPage({ entityKey, title, description, extra }: { entityKey: string; title?: string; description?: string; extra?: React.ReactNode }) {
@@ -49,7 +49,12 @@ export async function EntityListPage({ entityKey, title, description, extra }: {
   const entity = getEntity(entityKey);
   if (!entity) notFound();
   const idField = entity.idField ?? "id";
-  const orderBy = entity.fields.some((f) => f.name === "display_order") ? "display_order" : entity.fields.some((f) => f.name === "name") ? "name" : idField;
+  // Une liste se lit dans l'ordre où elle s'affiche. On cherche donc la colonne
+  // de rang que l'entité porte — `display_order` ou `position` — avant de se
+  // rabattre sur un nom, puis sur l'identifiant. Trier par identifiant une liste
+  // qui a un ordre d'affichage donne un classement que personne ne reconnaît.
+  const colonne = (n: string) => entity.fields.some((f) => f.name === n);
+  const orderBy = colonne("display_order") ? "display_order" : colonne("position") ? "position" : colonne("name") ? "name" : colonne("label") ? "label" : idField;
   const [{ data }, options] = await Promise.all([createGenericAdminClient().from(entity.table).select("*").order(orderBy, { ascending: true }).limit(500), loadSelectOptions()]);
   const rows = (data ?? []) as Record<string, unknown>[];
   return (

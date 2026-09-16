@@ -3,7 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { FilterChips, StatBand, StatCard, Table, Td, Th } from "@/components/admin/ui";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireAdminOrRedirect } from "@/lib/security/auth";
-import { CATEGORY_LABELS, CONDITION_SHORT, stockState } from "@/lib/shop/status";
+import { CONDITION_SHORT, stockState } from "@/lib/shop/status";
+import { getRayons } from "@/lib/shop/categories";
+import { libelleDe } from "@/lib/shop/rayons";
 import { formatPrice } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 
@@ -26,7 +28,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
     const term = q.trim().replace(/[%,]/g, "");
     query = query.or(`name.ilike.%${term}%,sku.ilike.%${term}%,platform.ilike.%${term}%`);
   }
-  const { data: all } = await query.limit(1000);
+  const [{ data: all }, rayons] = await Promise.all([query.limit(1000), getRayons()]);
   const products = (all ?? []).filter((p) => {
     const state = stockState(p.quantity, p.low_stock_threshold);
     if (filter === "low") return state === "LOW";
@@ -81,7 +83,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
                     <Link href={`/admin/stock/${p.id}`} className="font-medium text-ink hover:text-accent-light">
                       {p.name}
                     </Link>
-                    <span className="block text-[12px] text-ink-muted">{CATEGORY_LABELS[p.category]}</span>
+                    <span className="block text-[12px] text-ink-muted">{libelleDe(rayons, p.category)}</span>
                   </Td>
                   <Td label="Plateforme" className="text-[13px] text-ink-faint">{p.platform}</Td>
                   <Td label="État" className="font-mono text-[11.5px] text-ink-soft">{CONDITION_SHORT[p.condition]}</Td>

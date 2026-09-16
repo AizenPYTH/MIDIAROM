@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { createListingAction, type NewListingState } from "@/app/admin/actions/listings";
-import { CATEGORY_LABELS, PUBLIC_CATEGORIES, type ProductCategory } from "@/lib/shop/status";
+import type { Rayon } from "@/lib/shop/rayons";
 import { PhotoPicker } from "@/components/admin/photo-picker";
 
 /**
@@ -19,6 +19,11 @@ import { PhotoPicker } from "@/components/admin/photo-picker";
  * moins bien, parce que son nom ne dit pas ce qu'on attend.
  */
 
+/**
+ * Les exemples sont rédigés pour les trois rayons d'origine ; un rayon ouvert
+ * au back-office n'en a pas, et le champ garde alors son intitulé neutre —
+ * mieux vaut pas d'exemple qu'un exemple qui parle d'autre chose.
+ */
 const EXEMPLES: Record<string, { platform: string; name: string }> = {
   GAME: { platform: "PlayStation 5", name: "EA Sports FC 26" },
   CONSOLE: { platform: "PlayStation 5", name: "PS5 Slim — pack manette" },
@@ -45,9 +50,9 @@ function Label({ htmlFor, children, hint }: { htmlFor: string; children: React.R
   );
 }
 
-export function NewListingForm({ initialCategory }: { initialCategory: ProductCategory }) {
+export function NewListingForm({ initialCategory, rayons }: { initialCategory: string; rayons: Rayon[] }) {
   const [state, action, pending] = useActionState<NewListingState, FormData>(createListingAction, { status: "idle" });
-  const [category, setCategory] = useState<ProductCategory>(initialCategory);
+  const [category, setCategory] = useState<string>(initialCategory);
   const exemple = EXEMPLES[category] ?? EXEMPLES.CONSOLE!;
 
   return (
@@ -61,7 +66,9 @@ export function NewListingForm({ initialCategory }: { initialCategory: ProductCa
       <div className="flex flex-col gap-2">
         <Label htmlFor="category">Qu&apos;est-ce que vous vendez&#8239;?</Label>
         <div className="flex flex-wrap gap-2">
-          {PUBLIC_CATEGORIES.map((c) => (
+          {rayons.map((r) => {
+            const c = r.code;
+            return (
             <label
               key={c}
               className={`cursor-pointer border px-4 py-3 text-[14.5px] font-medium transition-colors ${
@@ -77,9 +84,10 @@ export function NewListingForm({ initialCategory }: { initialCategory: ProductCa
                 onChange={() => setCategory(c)}
                 className="sr-only"
               />
-              {CATEGORY_LABELS[c]}
+              {r.label}
             </label>
-          ))}
+            );
+          })}
         </div>
       </div>
 
