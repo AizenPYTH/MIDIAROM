@@ -131,8 +131,11 @@ describe("le libellé court de la barre de navigation", () => {
     expect(court("Consoles")).toBe("Consoles");
   });
 
-  it("coupe sur le séparateur avant de couper sur les mots", () => {
-    expect(court("Figurines Manga / Anime")).toBe("Figurines Manga");
+  it("coupe sur le séparateur, puis sur les mots si c'est encore trop long", () => {
+    // « Figurines Manga » tenait dans la limite précédente et poussait le
+    // bouton rouge sur une deuxième ligne à 1440 px.
+    expect(court("Figurines Manga / Anime")).toBe("Figurines");
+    expect(court("Rétro · occasion")).toBe("Rétro");
   });
 
   it("ramène un rayon au nom long à son premier mot", () => {

@@ -108,17 +108,21 @@ export function codeDuSlug(rayons: readonly Rayon[], slug: string | null | undef
  * Le libellé court d'un rayon, pour une barre de navigation.
  *
  * Une entrée de menu se lit d'un coup d'œil et partage sa ligne avec sept
- * autres : « Cartes à collectionner » n'y tient pas. On coupe d'abord sur un
- * séparateur explicite — « Figurines Manga / Anime » devient « Figurines
- * Manga » —, puis, s'il le faut, on garde le premier mot. Un premier mot de
- * trois lettres (« Kit », « Les ») n'apprend rien : on en garde deux.
+ * autres, la recherche, trois utilitaires et un bouton : « Cartes à
+ * collectionner » n'y tient pas. On coupe d'abord sur un séparateur explicite,
+ * puis, au-delà de douze caractères, on garde le premier mot — « Figurines
+ * Manga / Anime » devient « Figurines », « Cartes à collectionner » devient
+ * « Cartes ». Douze et non seize : mesuré à 1440 px, « Figurines Manga »
+ * poussait le bouton rouge sur une deuxième ligne pour un visiteur connecté,
+ * dont l'entête porte « Mon espace » et non « Compte ». Un premier mot de trois
+ * lettres (« Kit », « Les ») n'apprend rien : on en garde deux.
  *
  * Le libellé complet reste celui du pied de page, du fil d'Ariane et du titre
  * de la page de rayon : c'est le menu, et lui seul, qui abrège.
  */
 export function courtLabel(label: string): string {
   const tete = label.split(/\s+[—/·]\s+/)[0]?.trim() ?? label;
-  if (tete.length <= 16) return tete;
+  if (tete.length <= 12) return tete;
   const mots = tete.split(/\s+/);
   const un = mots[0] ?? tete;
   return un.length >= 4 ? un : mots.slice(0, 2).join(" ");
