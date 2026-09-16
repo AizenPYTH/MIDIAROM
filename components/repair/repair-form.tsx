@@ -357,7 +357,16 @@ export function RepairForm(props: RepairFormProps) {
           <span className="mono-label text-ink-muted">Devis en ligne</span>
           <h3 className="mt-2 font-display text-[clamp(24px,2.5vw,33px)] font-bold leading-[1.02] tracking-[-0.035em] text-ink">{stepTitle}</h3>
         </div>
-        <div className="text-right">
+        {/*
+          L'estimation, à droite du titre — sur écran large seulement.
+          Insécable et large de cent cinquante pixels, elle ne laissait que
+          cinquante-neuf pixels au titre de l'étape sur un téléphone : « Quel
+          appareil ? » débordait de son cadre. Le chiffre n'est pas perdu pour
+          autant, le bouton principal le porte déjà sous `lg` (voir
+          `runningTotal`) — c'est même là qu'on le regarde, le haut du panneau
+          étant hors de l'écran au moment de valider.
+        */}
+        <div className="hidden text-right lg:block">
           <span className="mono-label text-ink-muted">Estimation</span>
           <p className="mt-2 whitespace-nowrap font-mono text-[19px] text-sale">{estimate}</p>
         </div>
@@ -626,7 +635,7 @@ export function RepairForm(props: RepairFormProps) {
             ) : (
               <>
                 {nextLabel}
-                {runningTotal ? <span className="sm:hidden"> · {runningTotal}</span> : null}
+                {runningTotal ? <span className="lg:hidden"> · {runningTotal}</span> : null}
               </>
             )}
           </button>

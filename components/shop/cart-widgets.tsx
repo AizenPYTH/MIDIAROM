@@ -21,7 +21,7 @@ export function CartLink({ className }: { className?: string }) {
   return (
     <Link
       href={ROUTES.cart}
-      className={cn("whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-soft transition-colors hover:text-red", className)}
+      className={cn("inline-flex min-h-[44px] items-center whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-soft transition-colors hover:text-red lg:min-h-0", className)}
       aria-label={`Panier, ${count} article${count > 1 ? "s" : ""}`}
     >
       Panier ({ready ? count : 0})
@@ -57,7 +57,21 @@ export function AddToCartButton({ productId, available, className, size = "sm" }
     >
       {/* « Ajouter au panier » en toutes lettres : sur une carte, « Ajouter »
           seul laisse au visiteur le soin de deviner où. */}
-      {available <= 0 ? "Indisponible" : added ? "Ajouté ✓" : inCart >= available ? "Maximum atteint" : "Ajouter au panier"}
+      {available <= 0 ? (
+        "Indisponible"
+      ) : added ? (
+        "Ajouté ✓"
+      ) : inCart >= available ? (
+        "Maximum atteint"
+      ) : (
+        <>
+          {/* Deux colonnes de cartes à 155 px : « Ajouter au panier » y passe à
+              la ligne et double la hauteur du bouton. Le handoff mobile dit
+              « Ajouter » — le panier est le seul endroit où l'on ajoute. */}
+          <span className="sm:hidden">Ajouter</span>
+          <span className="hidden sm:inline">Ajouter au panier</span>
+        </>
+      )}
     </button>
   );
 }

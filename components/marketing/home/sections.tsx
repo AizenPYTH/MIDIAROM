@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/site";
 import { HomeVisual } from "@/components/marketing/home/visual";
+import { PlatformCard } from "@/components/marketing/home/platform-card";
 import { HOME_VISUAL_ALTS, HOME_VISUAL_FOCUS, HOME_VISUALS, PLATFORM_VISUALS } from "@/lib/content/assets";
 import { WorkshopVideo } from "@/components/marketing/home/workshop-video";
 import { ProductCard, ProductGrid } from "@/components/shop/product-card";
@@ -77,9 +78,27 @@ export function Hero() {
               Voir les réparations
             </Link>
           </div>
-          <ul data-enter="4" className="mt-1.5 flex list-none flex-wrap gap-2.5 p-0">
+          {/*
+            Les puces de réassurance.
+            Empilées, elles prenaient trois lignes pleine largeur sous les deux
+            boutons et repoussaient le premier bloc de réparations d'un écran.
+            Le handoff mobile en fait un rail qui glisse au doigt, avec accroche
+            au défilement ; au-delà de `sm`, elles reprennent leur place sur une
+            ligne qui se replie. La barre de défilement est masquée : le rail se
+            devine à la puce coupée au bord, pas à une glissière.
+          */}
+          <ul
+            data-enter="4"
+            data-rail="1"
+            className="-mx-4 mt-1.5 flex list-none gap-2.5 overflow-x-auto px-4 p-0 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+            style={{ scrollSnapType: "x mandatory" }}
+          >
             {HERO_TRUST.map((t) => (
-              <li key={t} className="border border-border px-3.5 py-2.5 font-mono text-[11.5px] tracking-[0.04em] text-ink-soft">
+              <li
+                key={t}
+                className="shrink-0 whitespace-nowrap border border-border px-3.5 py-2.5 font-mono text-[11.5px] tracking-[0.04em] text-ink-soft sm:shrink"
+                style={{ scrollSnapAlign: "start" }}
+              >
                 {t}
               </li>
             ))}
@@ -184,33 +203,34 @@ export function Repairs({ models = [], diagnostic }: { models?: { slug: string }
           // console d'une autre marque.
           const visuel = PLATFORM_VISUALS[p.key];
           return (
-          <li key={p.key} data-rise="1" data-card="1" className="flex min-w-0 flex-col border border-border bg-surface">
-            <span className="relative block overflow-hidden border-b border-border" style={{ aspectRatio: "16 / 10" }}>
-              <span data-zoom="1" className="absolute inset-0">
-                <HomeVisual
-                  src={visuel?.src ?? null}
-                  alt={visuel?.alt ?? ""}
-                  label={p.name}
-                  position={visuel?.position}
-                  positionMobile={visuel?.mobile}
-                  sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 380px"
-                />
-              </span>
-            </span>
-            <div className="flex flex-1 flex-col gap-[13px] p-5">
-              <span className="flex items-baseline justify-between gap-3">
-                <strong className="text-[20px] font-bold tracking-[-0.025em]">{p.name}</strong>
-                <span className="whitespace-nowrap font-mono text-[12px] text-ink-muted">{p.from}</span>
-              </span>
-              <span className="font-mono text-[11px] tracking-[0.04em] text-ink-muted">{p.models}</span>
-
+            <PlatformCard
+              key={p.key}
+              titre={p.name}
+              prix={p.from}
+              modeles={p.models}
+              nbPannes={p.faults.length}
+              visuel={
+                <span className="relative block overflow-hidden border-b border-border" style={{ aspectRatio: "16 / 10" }}>
+                  <span data-zoom="1" className="absolute inset-0">
+                    <HomeVisual
+                      src={visuel?.src ?? null}
+                      alt={visuel?.alt ?? ""}
+                      label={p.name}
+                      position={visuel?.position}
+                      positionMobile={visuel?.mobile}
+                      sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 380px"
+                    />
+                  </span>
+                </span>
+              }
+            >
               <div className="flex flex-col">
                 {p.faults.map((f) => (
                   <Link
                     key={f.label}
                     href={href}
                     data-row="1"
-                    className="flex items-center justify-between gap-3 border-t border-border-hairline py-[11px] text-ink"
+                    className="flex min-h-[44px] items-center justify-between gap-3 border-t border-border-hairline py-[11px] text-ink active:bg-surface-muted"
                   >
                     <span className="min-w-0 text-[14.5px]">{f.label}</span>
                     <span className="flex items-center gap-[11px] whitespace-nowrap">
@@ -225,12 +245,11 @@ export function Repairs({ models = [], diagnostic }: { models?: { slug: string }
 
               <Link
                 href={href}
-                className="mt-auto border border-ink p-[13px] text-center text-[14.5px] font-semibold text-ink transition-colors duration-200 hover:bg-ink hover:text-white"
+                className="mt-auto flex min-h-[48px] items-center justify-center border border-ink p-[13px] text-center text-[14.5px] font-semibold text-ink transition-colors duration-200 hover:bg-ink hover:text-white active:bg-ink active:text-white"
               >
                 Diagnostic {p.name}
               </Link>
-            </div>
-          </li>
+            </PlatformCard>
           );
         })}
       </ul>
@@ -412,7 +431,7 @@ export function ShopCategories({ heading = true }: { heading?: boolean } = {}) {
           </div>
           <Link
             href={ROUTES.shop}
-            className="whitespace-nowrap border-b-2 border-red pb-[3px] font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink"
+            className="inline-flex min-h-[44px] items-center whitespace-nowrap border-b-2 border-red pb-[3px] font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink sm:min-h-0"
           >
             Tout le catalogue
           </Link>
@@ -488,7 +507,7 @@ export function ProductWall({ products, total }: { products: Product[]; total: n
             </li>
           ))}
         </ul>
-        <Link href={`${ROUTES.shop}?tri=recent`} className="whitespace-nowrap font-mono text-[11.5px] text-ink-muted transition-colors hover:text-red">
+        <Link href={`${ROUTES.shop}?tri=recent`} className="inline-flex min-h-[44px] items-center whitespace-nowrap font-mono text-[11.5px] text-ink-muted transition-colors hover:text-red sm:min-h-0">
           Trier : nouveautés
         </Link>
       </div>

@@ -884,3 +884,8 @@ body {
   max-width: var(--page-max);
   margin-inline: auto;
 }
+
+/* Rails horizontaux du mobile : on glisse au doigt, sans glissière visible.
+   La puce coupée au bord droit suffit à dire qu'il y a une suite. */
+[data-rail] { scrollbar-width: none; -ms-overflow-style: none; }
+[data-rail]::-webkit-scrollbar { display: none; }

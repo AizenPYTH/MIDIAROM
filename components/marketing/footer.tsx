@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { ROUTES } from "@/config/site";
 import { CATEGORY_SLUGS } from "@/lib/shop/status";
 import { BrandMark } from "@/components/marketing/header";
+import { FooterColumn } from "@/components/marketing/footer-column";
 import type { BrandSettings } from "@/config/brand";
 import type { SocialSettings } from "@/lib/settings";
 
@@ -65,7 +65,7 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
 
   return (
     <footer className="mt-auto bg-ink px-[22px] pb-[26px] pt-[46px] text-on-dark-2">
-      <div className="page-wrap grid gap-8" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(208px, 1fr))" }}>
+      <div className="page-wrap grid gap-2 lg:gap-8" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(208px, 1fr))" }}>
         <div className="flex flex-col gap-[11px]">
           <span className="text-on-dark">
             <BrandMark name={brand.name} size="sm" />
@@ -77,20 +77,7 @@ export function SiteFooter({ brand, social, models }: { brand: BrandSettings; so
         </div>
 
         {colonnes.map((col) => (
-          <div key={col.title} className="flex flex-col gap-2.5">
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-on-dark-3">{col.title}</span>
-            {col.links.map((link) =>
-              link.external ? (
-                <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="text-[14px] transition-colors hover:text-on-dark">
-                  {link.label}
-                </a>
-              ) : (
-                <Link key={link.label} href={link.href} className="text-[14px] transition-colors hover:text-on-dark">
-                  {link.label}
-                </Link>
-              ),
-            )}
-          </div>
+          <FooterColumn key={col.title} titre={col.title} liens={col.links} />
         ))}
       </div>
 

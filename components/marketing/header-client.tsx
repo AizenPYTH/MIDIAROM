@@ -96,7 +96,7 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
               <div className="mt-1 flex flex-col gap-1 font-mono text-[12px] leading-[1.5] text-ink-muted">
                 {address ? <span>{address}</span> : null}
                 {brand?.phone ? (
-                  <a href={`tel:${brand.phone.replace(/\s/g, "")}`} className="text-ink">
+                  <a href={`tel:${brand.phone.replace(/\s/g, "")}`} className="inline-flex min-h-[44px] items-center text-ink">
                     {brand.phone}
                   </a>
                 ) : null}
@@ -165,7 +165,10 @@ export function SearchField() {
     <form
       action={ROUTES.shop}
       role="search"
-      className="flex min-w-0 max-w-[420px] flex-[1_1_220px] items-center gap-2.5 rounded-[8px] border border-border-strong bg-surface-muted px-3.5 py-2.5"
+      // Sous lg, la recherche prend sa ligne entière, sous le logo : c'est le
+      // premier geste d'un visiteur de boutique, elle ne partage pas sa ligne
+      // avec le panier et le bouton menu.
+      className="order-3 flex w-full min-w-0 max-w-none flex-[1_1_100%] items-center gap-2.5 rounded-[8px] border border-border-strong bg-surface-muted px-3.5 py-2.5 lg:order-none lg:w-auto lg:max-w-[420px] lg:flex-[1_1_220px]"
     >
       <span aria-hidden="true" className="font-mono text-[12px] text-ink-muted">
         ⌕
