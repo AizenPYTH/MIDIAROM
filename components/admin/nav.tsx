@@ -20,8 +20,9 @@ export interface AdminMenuGroup {
 
 const TAB_CLASS = "flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-[2px] px-4 py-2.5 font-mono text-[11.5px] uppercase tracking-[0.12em] transition-colors";
 
+/** Le compteur suit son onglet : il s'inverse quand l'onglet devient sombre. */
 function Count({ value }: { value: number }) {
-  return <span className="rounded-[2px] bg-surface-strong px-2 py-0.5 font-mono text-[10.5px] text-ink-soft">{value}</span>;
+  return <span className="rounded-[2px] bg-surface-strong px-2 py-0.5 font-mono text-[10.5px] text-ink-soft group-aria-[current=page]:bg-[rgba(255,255,255,0.16)] group-aria-[current=page]:text-paper">{value}</span>;
 }
 
 /**
@@ -68,7 +69,7 @@ export function AdminNav({ tabs, groups }: { tabs: AdminTab[]; groups: AdminMenu
         {tabs.map((item) => {
           const active = isActive(item);
           return (
-            <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn(TAB_CLASS, active ? "bg-paper text-ink-900" : "border border-border text-ink-muted hover:text-ink")}>
+            <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn(TAB_CLASS, "group", active ? "border border-ink-900 bg-ink-900 text-paper" : "border border-border text-ink-muted hover:border-ink-muted hover:text-ink")}>
               {item.label}
               {item.count ? <Count value={item.count} /> : null}
             </Link>
@@ -79,7 +80,7 @@ export function AdminNav({ tabs, groups }: { tabs: AdminTab[]; groups: AdminMenu
       {groups.length ? (
         <details ref={menuRef} className="relative shrink-0">
           <summary
-            className={cn(TAB_CLASS, "cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden", activeInMenu ? "bg-paper text-ink-900" : "border border-border text-ink-muted hover:text-ink")}
+            className={cn(TAB_CLASS, "cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden", activeInMenu ? "border border-ink-900 bg-ink-900 text-paper" : "border border-border text-ink-muted hover:border-ink-muted hover:text-ink")}
             aria-label="Plus de sections"
           >
             Plus

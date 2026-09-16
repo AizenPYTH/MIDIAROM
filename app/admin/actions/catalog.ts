@@ -167,6 +167,29 @@ function backToModel(modelId: string): string {
   return `/admin/catalog/repairs?model=${encodeURIComponent(modelId)}`;
 }
 
+/**
+ * Comment se facture une prestation, d'après ce que l'atelier a coché.
+ *
+ * Le marqueur « sur devis » se déduisait du montant (`price_cents === 0`), si
+ * bien qu'on ne pouvait pas offrir une prestation sans la faire passer pour non
+ * chiffrée, ni garder un tarif de référence sur une intervention qui exige un
+ * devis. Le choix est désormais posé par l'utilisateur ; le montant ne le
+ * décide plus.
+ *
+ * En mode devis, le montant est ramené à zéro : c'est la seule valeur honnête
+ * pour « pas de prix fixe », et cela évite au moteur de tarification de
+ * facturer un reliquat que le client n'a jamais vu. La distinction reste
+ * entière, puisqu'elle vit dans le drapeau et non dans le montant.
+ *
+ * Renvoie `null` si un prix fixe est demandé sans montant lisible.
+ */
+function pricingFromForm(formData: FormData): { price_cents: number; price_is_provisional: boolean } | null {
+  if (formData.get("pricing_mode") === "QUOTE") return { price_cents: 0, price_is_provisional: true };
+  const cents = centsFromInput(formData.get("price"));
+  if (cents === null) return null;
+  return { price_cents: cents, price_is_provisional: false };
+}
+
 const repairRowSchema = z.object({
   name: z.string().trim().min(2, "Nom trop court").max(140),
   summary: z.string().trim().max(200),
@@ -178,13 +201,13 @@ export async function updateRepairRowAction(formData: FormData): Promise<void> {
   const user = await requireAdmin();
   const id = String(formData.get("repair_id") ?? "");
   const modelId = String(formData.get("model_id") ?? "");
-  const priceCents = centsFromInput(formData.get("price"));
+  const pricing = pricingFromForm(formData);
   const parsed = repairRowSchema.safeParse({
     name: formData.get("name"),
     summary: formData.get("summary") ?? "",
     display_order: formData.get("display_order") ?? 0,
   });
-  if (!id || !parsed.success || priceCents === null) {
+  if (!id || !parsed.success || !pricing) {
     redirect(`${backToModel(modelId)}&error=${encodeURIComponent("Prix ou nom invalide : la prestation n'a pas été modifiée.")}`);
   }
   const categoryId = String(formData.get("category_id") ?? "");
@@ -192,10 +215,7 @@ export async function updateRepairRowAction(formData: FormData): Promise<void> {
     name: parsed.data.name,
     summary: parsed.data.summary || null,
     display_order: parsed.data.display_order,
-    price_cents: priceCents,
-    // Saisir un tarif lève le marqueur « à configurer » posé à l'import du
-    // catalogue client, qui ne comportait aucun prix.
-    price_is_provisional: priceCents === 0,
+    ...pricing,
     category_id: categoryId || null,
     is_active: formData.get("is_active") === "on",
   };
@@ -213,10 +233,10 @@ export async function createModelRepairAction(formData: FormData): Promise<void>
   const user = await requireAdmin();
   const modelId = String(formData.get("model_id") ?? "");
   const faultId = String(formData.get("fault_id") ?? "");
-  const priceCents = centsFromInput(formData.get("price"));
+  const pricing = pricingFromForm(formData);
   const name = String(formData.get("name") ?? "").trim();
-  if (!modelId || !faultId || priceCents === null || name.length < 2) {
-    redirect(`${backToModel(modelId)}&error=${encodeURIComponent("Choisissez une panne, un nom et un prix valides.")}`);
+  if (!modelId || !faultId || !pricing || name.length < 2) {
+    redirect(`${backToModel(modelId)}&error=${encodeURIComponent("Choisissez une panne, un nom et une tarification valides.")}`);
   }
   const db = createSupabaseAdminClient();
   const [{ data: model }, { data: fault }] = await Promise.all([
@@ -231,8 +251,7 @@ export async function createModelRepairAction(formData: FormData): Promise<void>
     fault_id: faultId,
     name,
     slug: fault.slug,
-    price_cents: priceCents,
-    price_is_provisional: priceCents === 0,
+    ...pricing,
     category_id: categoryId || null,
     display_order: ((last?.display_order as number | undefined) ?? 0) + 10,
     is_active: true,

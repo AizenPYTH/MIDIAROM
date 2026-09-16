@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, FormError, FormSuccess, Input, Select, Textarea } from "@/components/ui/form";
 import { PhotoPicker } from "@/components/admin/photo-picker";
+import { PricingModeField } from "@/components/admin/pricing-mode";
 import { buildSku, slugify } from "@/lib/catalog/listing";
 import type { ProductCategory } from "@/lib/shop/status";
 import type { EntityDef, FieldDef } from "@/lib/admin/entities";
@@ -19,7 +20,7 @@ function defaultValue(field: FieldDef, row: Record<string, unknown> | null): str
   }
   const v = row?.[field.name];
   if (v == null) return "";
-  if (field.type === "cents") return (Number(v) / 100).toFixed(2);
+  if (field.type === "cents" || field.type === "pricing") return (Number(v) / 100).toFixed(2);
   if (field.type === "list" || field.type === "photos") return Array.isArray(v) ? v.join("\n") : "";
   if (field.type === "json") return JSON.stringify(v, null, 2);
   return String(v);
@@ -144,6 +145,22 @@ export function EntityForm({
         <Field key={field.name} label={libelle(field)} htmlFor="photos" hint={aide(field)} error={error} className={cls}>
           <PhotoPicker name={field.name} initial={brut.split("\n").filter(Boolean)} />
         </Field>
+      );
+    }
+
+    // La tarification pilote deux colonnes : elle se rend elle-même, sans
+    // l'étiquette de `Field`, qui en annoncerait une seule.
+    if (field.type === "pricing") {
+      const devis = Boolean(valeurs?.price_is_provisional);
+      return (
+        <div key={field.name} className={cls}>
+          <PricingModeField
+            initialMode={devis ? "QUOTE" : "FIXED"}
+            initialPriceEuros={devis ? "" : brut}
+            label={libelle(field)}
+            error={error ?? errors.price_is_provisional}
+          />
+        </div>
       );
     }
 

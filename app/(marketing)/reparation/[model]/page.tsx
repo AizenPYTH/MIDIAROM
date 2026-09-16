@@ -45,10 +45,11 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
     provider: { "@type": "LocalBusiness", name: brand.name },
     areaServed: "FR",
     serviceType: "Réparation de console de jeux",
-    // Une prestation « sur devis » n'a pas de prix : publier 0,00 € annoncerait
-    // une réparation gratuite dans les résultats de recherche.
+    // Une prestation « Nécessite un devis » n'a pas de prix : rien à publier.
+    // Une prestation à 0 € en a bien un — elle est offerte, et l'annoncer est
+    // exact. Le drapeau décide, pas le montant.
     offers: repairs
-      .filter((r) => !r.price_is_provisional && r.price_cents > 0)
+      .filter((r) => !r.price_is_provisional)
       .map((r) => ({ "@type": "Offer", name: r.name, price: (r.price_cents / 100).toFixed(2), priceCurrency: "EUR", url: `${SITE_URL}${ROUTES.repair}/${model.slug}/${r.fault.slug}` })),
   };
 

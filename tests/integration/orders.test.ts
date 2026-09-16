@@ -161,6 +161,34 @@ d("server-side pricing and compatibility guards", () => {
   });
 
   /**
+   * Le mode de tarification décide de ce qui est facturé, pas le montant stocké.
+   *
+   * Une prestation « Nécessite un devis » ne doit rien ajouter au total, même
+   * si un tarif traîne encore dans sa colonne — sinon le client réglerait un
+   * prix qu'on ne lui a jamais montré. Une prestation à prix fixe, elle, doit
+   * être facturée au centime près.
+   */
+  it("facture un prix fixe au centime, et rien pour une prestation qui nécessite un devis", async () => {
+    const db = admin();
+    const avant = await db.from("repairs").select("price_cents, price_is_provisional").eq("id", ps5HdmiId).single();
+    try {
+      // Prix fixe : le total porte exactement le montant du catalogue.
+      await db.from("repairs").update({ price_cents: 4990, price_is_provisional: false }).eq("id", ps5HdmiId);
+      const fixe = await priceSelection(await getRepairOffer((await getRepairById(ps5HdmiId))!), { optionIds: [], packIds: [], shippingMethodId: null });
+      expect(fixe.lines.find((l) => l.type === "REPAIR")!.totalCents).toBe(4990);
+      expect(fixe.totalCents).toBe(4990);
+
+      // Devis : aucune ligne facturée pour la réparation.
+      await db.from("repairs").update({ price_cents: 0, price_is_provisional: true }).eq("id", ps5HdmiId);
+      const devis = await priceSelection(await getRepairOffer((await getRepairById(ps5HdmiId))!), { optionIds: [], packIds: [], shippingMethodId: null });
+      expect(devis.lines.find((l) => l.type === "REPAIR")!.totalCents).toBe(0);
+      expect(devis.totalCents).toBe(0);
+    } finally {
+      await db.from("repairs").update(avant.data!).eq("id", ps5HdmiId);
+    }
+  });
+
+  /**
    * Une commande sans rien à encaisser doit aboutir.
    *
    * Prestation « sur devis » (prix à zéro tant que le diagnostic n'a pas eu

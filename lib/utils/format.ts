@@ -10,16 +10,23 @@ export function formatPrice(cents: number): string {
 }
 
 /**
- * Prix d'une prestation du catalogue, « Sur devis » tant qu'aucun tarif n'a
- * été saisi.
+ * Prix d'une prestation du catalogue.
  *
- * Le catalogue arrive entièrement non chiffré (`price_is_provisional`) : passer
- * ces lignes à `formatPrice` afficherait « 0,00 € », c'est-à-dire une
- * réparation gratuite, sur les pages publiques comme dans les données
- * structurées envoyées à Google.
+ * Trois cas, et un seul champ pour les départager : `price_is_provisional`.
+ * Le montant ne décide de rien — il ne l'a jamais bien fait, puisqu'un tarif à
+ * zéro peut vouloir dire deux choses opposées :
+ *
+ *   price_is_provisional = true            → « Nécessite un devis »
+ *   false, price_cents  = 0                → « Gratuit »
+ *   false, price_cents  > 0                → « 50,00 € »
+ *
+ * L'ancienne version répondait « Sur devis » dès que le montant valait zéro :
+ * une prestation offerte était donc impossible à annoncer, et le catalogue ne
+ * savait pas distinguer « je ne sais pas encore » de « je ne facture rien ».
  */
 export function formatRepairPrice(cents: number, provisional: boolean): string {
-  return provisional || cents <= 0 ? "Sur devis" : formatPrice(cents);
+  if (provisional) return "Nécessite un devis";
+  return cents === 0 ? "Gratuit" : formatPrice(cents);
 }
 
 /** "+34,90 €" for add-ons. */

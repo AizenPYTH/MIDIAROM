@@ -85,9 +85,10 @@ export default async function RepairPage({ params }: { params: Promise<{ model: 
       provider: { "@type": "LocalBusiness", name: brand.name, url: SITE_URL },
       areaServed: "FR",
       url,
-      // Pas d'offre tant que la prestation est « sur devis » : annoncer
-      // 0,00 € à Google reviendrait à promettre une réparation gratuite.
-      ...(repair.price_is_provisional || repair.price_cents <= 0
+      // Pas d'offre tant que la prestation « Nécessite un devis » : annoncer
+      // 0,00 € à Google reviendrait à promettre un prix qui n'est pas arbitré.
+      // Une prestation réellement offerte, elle, publie bien son 0,00 €.
+      ...(repair.price_is_provisional
         ? {}
         : { offers: { "@type": "Offer", price: (repair.price_cents / 100).toFixed(2), priceCurrency: "EUR", availability: "https://schema.org/InStock", url } }),
     },

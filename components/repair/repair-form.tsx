@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import Link from "next/link";
 import { ROUTES } from "@/config/site";
 import { Checkbox, FormError } from "@/components/ui/form";
-import { formatPrice, formatPriceDelta } from "@/lib/utils/format";
+import { formatPrice, formatPriceDelta, formatRepairPrice } from "@/lib/utils/format";
 import { useAnalytics } from "@/lib/analytics/client";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { PricingResult } from "@/lib/pricing/engine";
@@ -163,7 +163,9 @@ export function RepairForm(props: RepairFormProps) {
       return base.includes(name) ? base.filter((n) => n !== name) : [...base, name];
     });
 
-  const repairPrice = (r: FormRepair) => (r.priceProvisional || !showPrices ? "sur devis" : formatPrice(r.priceCents));
+  // Le libellé du catalogue, mot pour mot : « Nécessite un devis », « Gratuit »
+  // ou le montant. Aucun 0,00 € ne passe pour un prix qui n'a pas été arbitré.
+  const repairPrice = (r: FormRepair) => formatRepairPrice(r.priceCents, r.priceProvisional || !showPrices);
 
   // Pannes fréquentes du modèle d'abord, puis les symptômes génériques non couverts.
   const symptomChoices = useMemo(() => {

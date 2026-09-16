@@ -6,7 +6,7 @@ import { SLUG_REGEX } from "@/lib/utils/slug";
  * Each entity maps form fields to a zod schema; the server action validates,
  * writes with the admin client after `requireAdmin()`, audits and revalidates.
  */
-export type FieldType = "text" | "textarea" | "markdown" | "number" | "cents" | "checkbox" | "select" | "slug" | "list" | "json" | "photos" | "spec";
+export type FieldType = "text" | "textarea" | "markdown" | "number" | "cents" | "checkbox" | "select" | "slug" | "list" | "json" | "photos" | "spec" | "pricing";
 
 export interface FieldDef {
   name: string;
@@ -162,7 +162,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       { name: "slug", label: "Slug (fiche)", type: "slug", required: true, width: "half" },
       { name: "summary", label: "Résumé (une phrase)", type: "text" },
       { name: "description", label: "Description (markdown)", type: "markdown" },
-      { name: "price_cents", label: "Prix TTC (€)", type: "cents", required: true, width: "half" },
+      { name: "price_cents", label: "Tarification", type: "pricing", required: true },
       { name: "compare_at_price_cents", label: "Prix barré (€)", type: "cents", width: "half" },
       { name: "estimated_cost_cents", label: "Coût pièces estimé (€)", type: "cents", width: "half", hint: "Pour le calcul de marge" },
       { name: "estimated_minutes", label: "Temps estimé (min)", type: "number", width: "half" },
@@ -193,6 +193,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       summary: optText(300),
       description: optText(20000),
       price_cents: int.min(0),
+      price_is_provisional: bool.default(false),
       compare_at_price_cents: nullableInt,
       estimated_cost_cents: int.min(0).default(0),
       estimated_minutes: int.min(0).default(0),
@@ -586,6 +587,24 @@ export function formDataToObject(entity: EntityDef, formData: FormData): Record<
       // fondre, et l'ordre des champs ne le garantit pas.
       case "spec":
         break;
+      /**
+       * La tarification porte deux colonnes à elle seule : le montant et le
+       * drapeau « nécessite un devis ». Elles ne peuvent pas être saisies
+       * séparément sans redevenir contradictoires — un montant à zéro ne dit
+       * pas s'il s'agit d'une prestation offerte ou d'un prix encore inconnu.
+       */
+      case "pricing": {
+        const devis = formData.get("pricing_mode") === "QUOTE";
+        out.price_is_provisional = devis;
+        if (devis) {
+          out[field.name] = 0;
+        } else {
+          const brut = typeof formData.get("price") === "string" ? String(formData.get("price")) : "";
+          const n = Math.round(Number(brut.replace(",", ".")) * 100);
+          out[field.name] = brut === "" ? "" : Number.isFinite(n) ? n : Number.NaN;
+        }
+        break;
+      }
       default:
         out[field.name] = value;
     }

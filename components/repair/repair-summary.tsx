@@ -33,14 +33,17 @@ export function RepairFacts({ repair }: { repair: Repair }) {
 }
 
 export function PriceTag({ cents, compareAt, provisional = false, size = "lg" }: { cents: number; compareAt?: number | null; provisional?: boolean; size?: "md" | "lg" }) {
-  // « Sur devis » n'est pas un montant : ni prix barré, ni mention TTC.
-  const quoted = provisional || cents <= 0;
+  // « Nécessite un devis » n'est pas un montant : ni prix barré, ni « TTC ».
+  // Un tarif à zéro, lui, en est un — c'est une prestation offerte, et le
+  // drapeau seul les départage.
+  const quoted = provisional;
+  const offert = !provisional && cents === 0;
   const type = size === "lg" ? "text-[26px]" : "text-[19px]";
   return (
     <div className="flex items-baseline gap-2">
       <span className={`font-mono ${type} font-semibold text-ink`}>{formatRepairPrice(cents, provisional)}</span>
-      {!quoted && compareAt && compareAt > cents ? <span className="font-mono text-[13px] text-ink-muted line-through">{formatPrice(compareAt)}</span> : null}
-      <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">{quoted ? "après diagnostic" : "TTC"}</span>
+      {!quoted && !offert && compareAt && compareAt > cents ? <span className="font-mono text-[13px] text-ink-muted line-through">{formatPrice(compareAt)}</span> : null}
+      <span className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">{quoted ? "après diagnostic" : offert ? "offert" : "TTC"}</span>
     </div>
   );
 }

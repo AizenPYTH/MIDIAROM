@@ -3,6 +3,8 @@ import { EntityListPage } from "@/components/admin/entity-pages";
 import { createModelRepairAction, deleteModelRepairAction, updateRepairRowAction } from "@/app/admin/actions/catalog";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireAdminOrRedirect } from "@/lib/security/auth";
+import { PricingModeField } from "@/components/admin/pricing-mode";
+import { pricingSummary } from "@/lib/shop/pricing-mode";
 import { cn } from "@/lib/utils/cn";
 
 export const dynamic = "force-dynamic";
@@ -102,7 +104,7 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
                       {!m.is_active ? <span className="ml-1.5 font-mono text-[10px] uppercase text-ink-muted">masquée</span> : null}
                     </span>
                     <span className="flex shrink-0 items-baseline gap-1.5 font-mono text-[11px]">
-                      {c.todo ? <span className="text-warning" title={`${c.todo} tarif(s) à configurer`}>{c.todo}⚠</span> : null}
+                      {c.todo ? <span className="text-warning" title={`${c.todo} prestation(s) qui nécessitent un devis`}>{c.todo}⚠</span> : null}
                       <span className={c.active ? "text-ink-muted" : "text-warning"}>{c.active}</span>
                     </span>
                   </Link>
@@ -143,18 +145,18 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
                   <>
                     {" "}
                     <strong className="text-warning">
-                      {todo} prestation{todo > 1 ? "s" : ""} sans tarif
+                      {todo} prestation{todo > 1 ? "s" : ""} en « Nécessite un devis »
                     </strong>{" "}
-                    : elles s&apos;affichent « sur devis » tant qu&apos;un prix n&apos;est pas saisi.
+                    : le client ne voit aucun montant et le prix se décide après diagnostic. Basculez-les sur « Prix fixe » au fur et à mesure que vous arrêtez vos tarifs.
                   </>
                 ) : null}
               </p>
 
-              <div className="mt-5 hidden gap-2 border-b border-border pb-2 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted lg:grid lg:[grid-template-columns:minmax(0,2fr)_minmax(0,1.6fr)_150px_88px_60px_60px_auto]">
+              <div className="mt-5 hidden gap-2 border-b border-border pb-2 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted xl:grid xl:[grid-template-columns:minmax(0,2.2fr)_minmax(0,1fr)_130px_250px_56px_56px_auto]">
                 <span>Prestation</span>
                 <span>Résumé client</span>
                 <span>Catégorie</span>
-                <span>Prix TTC</span>
+                <span>Tarification</span>
                 <span>Ordre</span>
                 <span>Active</span>
                 <span />
@@ -167,7 +169,7 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
                   <ul className="flex flex-col">
                     {group.rows.map((r) => (
                       <li key={r.id} className="flex flex-wrap items-center gap-2 border-b border-border py-2.5">
-                        <form action={updateRepairRowAction} className="grid min-w-0 flex-1 gap-2 lg:[grid-template-columns:minmax(0,2fr)_minmax(0,1.6fr)_150px_88px_60px_60px_auto]">
+                        <form action={updateRepairRowAction} className="grid min-w-0 flex-1 gap-2 xl:[grid-template-columns:minmax(0,2.2fr)_minmax(0,1fr)_130px_250px_56px_56px_auto]">
                           <input type="hidden" name="repair_id" value={r.id} />
                           <input type="hidden" name="model_id" value={selected.id} />
                           <span className="flex min-w-0 flex-col gap-0.5">
@@ -175,7 +177,7 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
                             <span className="font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
                               {(r.fault as { name: string } | null)?.name}
                               {r.is_diagnostic_only ? " · diagnostic" : ""}
-                              {r.price_is_provisional ? <span className="ml-1.5 text-warning">· tarif à configurer</span> : null}
+                              <span className={cn("ml-1.5", r.price_is_provisional ? "text-warning" : "text-ink-faint")}>· {pricingSummary(r.price_cents, r.price_is_provisional)}</span>
                             </span>
                           </span>
                           <input name="summary" defaultValue={r.summary ?? ""} maxLength={200} placeholder="Phrase affichée au client (facultatif)" aria-label="Résumé client" className={cn(INPUT, "w-full")} />
@@ -187,18 +189,15 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
                               </option>
                             ))}
                           </select>
-                          <input
-                            name="price"
-                            defaultValue={(r.price_cents / 100).toFixed(2)}
-                            inputMode="decimal"
-                            required
-                            aria-label={`Prix de ${r.name}`}
-                            className={cn(INPUT, "w-full text-right font-mono", r.price_is_provisional && "border-warning text-warning")}
+                          <PricingModeField
+                            layout="inline"
+                            initialMode={r.price_is_provisional ? "QUOTE" : "FIXED"}
+                            initialPriceEuros={(r.price_cents / 100).toFixed(2)}
                           />
                           <input name="display_order" type="number" min={0} max={999} defaultValue={r.display_order} aria-label="Ordre d'affichage" className={cn(INPUT, "w-full text-right font-mono")} />
                           <label className="flex items-center gap-2 text-[12px] text-ink-faint">
                             <input type="checkbox" name="is_active" defaultChecked={r.is_active} className="h-4 w-4 accent-[var(--accent)]" aria-label="Prestation active" />
-                            <span className="lg:sr-only">Active</span>
+                            <span className="xl:sr-only">Active</span>
                           </label>
                           <span className="flex items-center gap-2">
                             <button type="submit" className="cursor-pointer whitespace-nowrap bg-accent px-3 py-2 font-mono text-[11px] uppercase tracking-[0.06em] text-white hover:bg-paper hover:text-ink-900">
@@ -225,9 +224,9 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
 
               <form action={createModelRepairAction} className="mt-5 flex flex-wrap items-end gap-2 border-t border-border pt-5">
                 <input type="hidden" name="model_id" value={selected.id} />
-                <span className="flex flex-col gap-1">
+                <span className="flex min-w-0 max-w-full flex-col gap-1">
                   <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted">Panne</span>
-                  <select name="fault_id" required aria-label="Panne" className={cn(INPUT, "min-w-[190px]")}>
+                  <select name="fault_id" required aria-label="Panne" className={cn(INPUT, "w-full min-w-0 max-w-full sm:min-w-[190px]")}>
                     {available.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.name}
@@ -239,9 +238,9 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
                   <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted">Nom de la prestation</span>
                   <input name="name" required minLength={2} maxLength={140} placeholder={`Ex. : Réparation port HDMI ${selected.name}`} aria-label="Nom de la nouvelle prestation" className={cn(INPUT, "w-full")} />
                 </span>
-                <span className="flex flex-col gap-1">
+                <span className="flex min-w-0 max-w-full flex-col gap-1">
                   <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted">Catégorie</span>
-                  <select name="category_id" aria-label="Catégorie de la nouvelle prestation" className={cn(INPUT, "min-w-[170px]")}>
+                  <select name="category_id" aria-label="Catégorie de la nouvelle prestation" className={cn(INPUT, "w-full min-w-0 max-w-full sm:min-w-[170px]")}>
                     <option value="">Sans catégorie</option>
                     {(categories ?? []).map((c) => (
                       <option key={c.id} value={c.id}>
@@ -250,9 +249,8 @@ export default async function RepairsPage({ searchParams }: { searchParams: Prom
                     ))}
                   </select>
                 </span>
-                <span className="flex flex-col gap-1">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-muted">Prix TTC</span>
-                  <input name="price" required inputMode="decimal" placeholder="0 = sur devis" aria-label="Prix de la nouvelle prestation" className={cn(INPUT, "w-[110px] text-right font-mono")} />
+                <span className="flex min-w-[250px] flex-col gap-1">
+                  <PricingModeField initialMode="QUOTE" initialPriceEuros="" />
                 </span>
                 <button type="submit" disabled={!available.length} className="cursor-pointer bg-accent px-3.5 py-2.5 font-mono text-[11px] uppercase tracking-[0.06em] text-white hover:bg-paper hover:text-ink-900 disabled:cursor-not-allowed disabled:opacity-50">
                   Ajouter la prestation

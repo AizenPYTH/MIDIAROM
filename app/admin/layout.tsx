@@ -97,26 +97,40 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <Backdrop />
-      <header className="sticky top-0 z-40 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-border px-4 py-3 backdrop-blur-[14px] sm:px-[30px]" style={{ background: "rgba(7,6,10,0.5)" }}>
-        <Link href={ROUTES.admin} className="flex items-center gap-2.5 whitespace-nowrap text-ink">
+      {/*
+        Bandeau graphite opaque.
+        Il était posé sur `rgba(7,6,10,0.5)` : un noir à demi transparent qui,
+        au-dessus d'un back-office blanc, donnait un gris moyen changeant au fil
+        du défilement. Les encres de la charte sont faites pour le fond clair
+        (#0f0f11, #6e6e73) : sur ce gris elles perdaient leur contraste, et les
+        éléments clairs — les initiales, le rouge — disparaissaient.
+        Le fond est désormais franc, et les textes prennent les encres « sur
+        fond noir » déjà définies (--on-dark, --on-dark-2). Le survol passe par
+        --red-on-dark : le rouge de marque ne tient que 3,3:1 sur du noir.
+      */}
+      <header
+        className="sticky top-0 z-40 flex flex-wrap items-center gap-x-5 gap-y-3 border-b px-4 py-3 backdrop-blur-[14px] sm:px-[30px]"
+        style={{ background: "#0d0d10", borderBottomColor: "rgba(255,255,255,0.12)" }}
+      >
+        <Link href={ROUTES.admin} className="flex items-center gap-2.5 whitespace-nowrap text-[var(--on-dark)] transition-colors hover:text-[var(--red-on-dark)]">
           <PulseDot />
           <span className="font-display text-[17px] font-extrabold uppercase tracking-[-0.01em]">{brand.name}</span>
         </Link>
-        <span className="chip border border-border text-ink-muted">Atelier</span>
+        <span className="chip border border-[rgba(255,255,255,0.22)] text-[var(--on-dark-2)]">Atelier</span>
         <span className="flex-1" />
-        <span className="hidden whitespace-nowrap font-mono text-[11.5px] text-ink-muted sm:inline">{todayLabel()}</span>
+        <span className="hidden whitespace-nowrap font-mono text-[11.5px] text-[var(--on-dark-2)] sm:inline">{todayLabel()}</span>
         <span className="flex items-center gap-2.5 whitespace-nowrap">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full font-mono text-[11px] font-semibold text-[var(--color-on-accent)]" style={{ background: "var(--gradient-cta)" }} aria-hidden="true">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full font-mono text-[11px] font-semibold text-white" style={{ background: "var(--red)" }} aria-hidden="true">
             {initials}
           </span>
-          <span className="hidden text-[14px] text-ink-soft sm:inline">{user.profile.first_name}</span>
+          <span className="hidden text-[14px] text-[var(--on-dark)] sm:inline">{user.profile.first_name}</span>
         </span>
-        <span className="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-muted">
-          <Link href={ROUTES.home} className="transition-colors hover:text-sale">
+        <span className="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--on-dark-2)]">
+          <Link href={ROUTES.home} className="min-h-[44px] items-center transition-colors hover:text-[var(--red-on-dark)] sm:min-h-0 inline-flex">
             Site
           </Link>
           <form action={logoutAction}>
-            <button type="submit" className="cursor-pointer transition-colors hover:text-sale">
+            <button type="submit" className="inline-flex min-h-[44px] cursor-pointer items-center transition-colors hover:text-[var(--red-on-dark)] sm:min-h-0">
               Sortir
             </button>
           </form>
