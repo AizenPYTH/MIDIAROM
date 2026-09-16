@@ -795,16 +795,124 @@ body {
  * en ligne l'emporterait sur la requête de média et la liste resterait écrasée
  * à 340 px de colonne sur un écran de téléphone.
  */
-[data-split] {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 22px;
-  align-items: start;
+/* ── Back-office v9 : la géométrie de l'écran de travail ─────────────────────
+   Elle vit ici, dans la feuille de styles, et non en style en ligne : une
+   déclaration en ligne bat toutes les requêtes de média, et la liste restait
+   écrasée à 330 px sur téléphone.
+
+   **L'ordre change avec la largeur, et c'est le cœur du plan.** Sur ordinateur
+   la liste est le contenu et « À faire maintenant » occupe la colonne de
+   droite. Sur téléphone, le réparateur ne balaye pas sept lignes : il veut
+   savoir quoi faire maintenant. Le balisage est donc écrit dans l'ordre du
+   téléphone — à faire, compteurs, liste, le reste — et c'est la grille de
+   l'ordinateur qui replace chaque bloc. */
+[data-admin-v9] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
-@media (max-width: 1080px) {
-  [data-split] {
-    grid-template-columns: 1fr;
+@media (min-width: 1081px) {
+  [data-admin-v9] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 2px;
+    align-items: start;
   }
+  [data-admin-v9] > [data-kpi] { grid-column: 1 / -1; grid-row: 1; }
+  [data-admin-v9] > [data-liste] { grid-column: 1; grid-row: 2; }
+  [data-admin-v9] > [data-col2] {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+/* Sous 1081 px, la colonne de droite n'existe pas : ses deux blocs remontent
+   dans le flux du parent pour être ordonnés séparément — « À faire maintenant »
+   tout en haut, le reste tout en bas. `display: contents` fait exactement cela,
+   sans dupliquer le balisage ni dessiner deux fois la même liste. */
+@media (max-width: 1080px) {
+  [data-col2] { display: contents; }
+  /* L'ordre du téléphone, indépendant du balisage : à faire, compteurs, liste,
+     le reste. Le balisage garde l'ordre de l'ordinateur — il n'y a qu'une
+     liste, écrite une seule fois. */
+  [data-admin-v9] > [data-kpi] { order: 2; }
+  [data-admin-v9] > [data-liste] { order: 3; }
+  [data-col2] > [data-now] { order: 1; }
+  [data-col2] > [data-side] { order: 4; }
+}
+
+/* Les quatre compteurs. Deux par deux au doigt : quatre colonnes de 90 px
+   donneraient des chiffres de 44 px qui débordent de leur case. */
+[data-kpi] {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+@media (min-width: 700px) {
+  [data-kpi] { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+}
+/* Le soulignement de l'onglet actif — et du compteur qui le porte — est une
+   base statique ici ; seule sa *couleur* est pilotée par l'état en ligne. Un
+   `border-bottom` en raccourci piloté par l'état s'applique avec un rendu de
+   retard : le compteur choisi apparaît sans trait pendant que le précédent
+   garde le sien. */
+[data-act-kpi] { border-bottom: 2px solid transparent; transition: background-color 0.15s, color 0.15s; }
+[data-tab] { border-bottom-width: 2px; border-bottom-style: solid; }
+@media (hover: hover) and (pointer: fine) {
+  [data-act-kpi]:hover { background-color: var(--bg-alt); }
+  /* Le chiffre rougit au survol : le raccourci se signale sans repeindre la
+     case entière. */
+  [data-act-kpi]:hover [data-n] { color: var(--red); }
+}
+[data-act-kpi]:active { background-color: var(--bg-alt); }
+
+/* Une réparation : trois étages au doigt, une ligne à la souris.
+   Un tableau à six colonnes ne tient pas sur 390 px, et un défilement
+   horizontal caché est pire que pas de tableau. Une seule grille, deux
+   dessins — le balisage ne change pas, donc la liste n'est écrite qu'une
+   fois. */
+[data-rep] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "ref badge"
+    "client client"
+    "panne panne"
+    "sep sep"
+    "prix action";
+  align-items: center;
+  gap: 6px 12px;
+  padding: 14px 16px;
+}
+[data-rep] > [data-c="ref"] { grid-area: ref; }
+[data-rep] > [data-c="badge"] { grid-area: badge; justify-self: end; }
+[data-rep] > [data-c="client"] { grid-area: client; }
+[data-rep] > [data-c="panne"] { grid-area: panne; }
+[data-rep] > [data-c="prix"] { grid-area: prix; }
+[data-rep] > [data-c="action"] { grid-area: action; justify-self: end; }
+/* Le filet qui sépare l'étage du prix : une case à part, qui traverse les deux
+   colonnes. Posé en `border-top` sur les cellules « prix » et « action », il se
+   coupait en deux au niveau de la gouttière. */
+[data-rep] > [data-c="sep"] { grid-area: sep; height: 0; margin: 4px 0 2px; border-top: 1px solid var(--hairline); }
+@media (min-width: 860px) {
+  [data-rep] {
+    grid-template-columns: 104px minmax(0, 1.1fr) minmax(0, 1.2fr) 148px 86px auto;
+    grid-template-areas: "ref client panne badge prix action";
+    gap: 0 18px;
+    padding: 15px 22px;
+  }
+  [data-rep] > [data-c="badge"] { justify-self: start; }
+  [data-rep] > [data-c="sep"] { display: none; }
+}
+
+/* La ligne d'en-têtes n'existe que là où il y a des colonnes. `[data-rep]`
+   impose `display: grid` sans couche, donc bat l'utilitaire `hidden` de
+   Tailwind : le masquage se fait ici, dans la même grammaire. */
+[data-rephead] { display: none; }
+@media (min-width: 860px) {
+  [data-rephead] { display: grid; padding-top: 11px; padding-bottom: 11px; }
 }
 
 /**

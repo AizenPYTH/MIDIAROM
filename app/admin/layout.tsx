@@ -5,7 +5,8 @@ import { isAdminRole } from "@/lib/orders/status";
 import { getBrandSettings } from "@/lib/settings";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { AdminNav, type AdminMenuGroup, type AdminTab } from "@/components/admin/nav";
-import { Backdrop, PulseDot } from "@/components/marketing/backdrop";
+import { Backdrop } from "@/components/marketing/backdrop";
+import { DPad } from "@/components/marketing/header";
 import { logoutAction } from "@/app/(auth)/actions";
 
 export const dynamic = "force-dynamic";
@@ -113,7 +114,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         style={{ background: "#0d0d10", borderBottomColor: "rgba(255,255,255,0.12)" }}
       >
         <Link href={ROUTES.admin} className="flex items-center gap-2.5 whitespace-nowrap text-[var(--on-dark)] transition-colors hover:text-[var(--red-on-dark)]">
-          <PulseDot />
+          {/* La même croix directionnelle que le site, bras éclaircis pour
+              tenir sur la bande noire. Une seule marque, deux fonds. */}
+          <DPad arms="var(--on-dark-3)" />
           <span className="font-display text-[17px] font-extrabold uppercase tracking-[-0.01em]">{brand.name}</span>
         </Link>
         <span className="chip border border-[rgba(255,255,255,0.22)] text-[var(--on-dark-2)]">Atelier</span>

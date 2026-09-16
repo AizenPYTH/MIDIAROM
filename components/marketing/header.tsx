@@ -45,14 +45,14 @@ const NAV_MOBILE = [{ href: ROUTES.home, label: "Accueil" }, ...NAV];
  * CSS, sans image ni police d'icônes. Le rouge du centre est l'un des rares
  * emplois autorisés de l'accent.
  */
-function DPad() {
+export function DPad({ arms = "#c9c9ce" }: { arms?: string }) {
   return (
     <span aria-hidden="true" className="grid shrink-0" style={{ gridTemplateColumns: "5px 5px 5px", gridTemplateRows: "5px 5px 5px", gap: "2px" }}>
-      <span style={{ gridArea: "1/2", backgroundColor: "#c9c9ce" }} />
-      <span style={{ gridArea: "2/1", backgroundColor: "#c9c9ce" }} />
+      <span style={{ gridArea: "1/2", backgroundColor: arms }} />
+      <span style={{ gridArea: "2/1", backgroundColor: arms }} />
       <span style={{ gridArea: "2/2", backgroundColor: "var(--red)" }} />
-      <span style={{ gridArea: "2/3", backgroundColor: "#c9c9ce" }} />
-      <span style={{ gridArea: "3/2", backgroundColor: "#c9c9ce" }} />
+      <span style={{ gridArea: "2/3", backgroundColor: arms }} />
+      <span style={{ gridArea: "3/2", backgroundColor: arms }} />
     </span>
   );
 }
