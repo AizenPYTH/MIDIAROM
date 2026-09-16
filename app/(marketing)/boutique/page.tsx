@@ -5,8 +5,8 @@ import { Container, Eyebrow } from "@/components/ui/misc";
 import { ProductCard, ProductGrid } from "@/components/shop/product-card";
 import { getProductCategoryCounts, getProductPlatforms, getProducts, type ProductFilters } from "@/lib/shop/catalog";
 import { getRayons } from "@/lib/shop/categories";
-import { codeDuSlug, libelleDe, rayonsPublics, slugDe } from "@/lib/shop/rayons";
-import { ShopCategories } from "@/components/marketing/home/sections";
+import { articleDe, codeDuSlug, libelleDe, rayonsPublics, slugDe, titreDuFiltre } from "@/lib/shop/rayons";
+import { RayonsEnTuiles } from "@/components/marketing/home/v9";
 import { cn } from "@/lib/utils/cn";
 
 export const dynamic = "force-dynamic";
@@ -117,6 +117,20 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   };
   const [products, platforms, counts, rayons] = await Promise.all([getProducts(filters), getProductPlatforms(), getProductCategoryCounts(), getRayons()]);
   const rayonCourant = codeDuSlug(rayons, sp.cat);
+
+  /*
+    Le mot du filtre suit le rayon, jamais l'inverse.
+    Dans « Figurines », la colonne `platform` porte une **licence** ; dans
+    « Jeux vidéo » et « Consoles », une **plateforme**. Sur la boutique
+    entière, elle porte les deux, et le filtre le dit au lieu d'en choisir un.
+    Les valeurs sont regroupées sous le nom de leur rayon : « Naruto
+    Shippuden » ne peut plus se lire comme une console.
+  */
+  const titreFiltre = titreDuFiltre(rayonsPublics(rayons), rayonCourant);
+  const tagsVisibles = rayonCourant ? platforms.filter((t) => t.rayon === rayonCourant) : platforms;
+  const tagsParRayon = rayonsPublics(rayons)
+    .map((r) => ({ rayon: r, valeurs: tagsVisibles.filter((t) => t.rayon === r.code).map((t) => t.valeur) }))
+    .filter((g) => g.valeurs.length);
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
@@ -124,9 +138,14 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       <div className="mb-7 flex flex-wrap items-end justify-between gap-6">
         <div>
           <Eyebrow>Boutique</Eyebrow>
-          <h1 className="mt-2 text-[clamp(28px,3.4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{rayonCourant ? libelleDe(rayons, rayonCourant) : sp.retro === "1" ? "Rétro & occasion" : "En rayon cette semaine"}</h1>
+          <h1 className="mt-2 text-[clamp(28px,3.4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{rayonCourant ? libelleDe(rayons, rayonCourant) : sp.retro === "1" ? "Rétro et occasion" : "En rayon cette semaine"}</h1>
         </div>
-        <span className="border-b border-sale font-mono text-[12.5px] uppercase tracking-[0.06em] text-sale">
+        {/* Un décompte n'est pas une alerte : il reste en encre. Le rouge de la
+            charte v9 ne signale que six choses — la marque, les numéros de
+            section, le bouton principal, l'onglet actif, les affordances de
+            survol et ce qui dépend du client. L'étendre à un compteur revient à
+            ne plus rien signaler. */}
+        <span className="border-b border-border-strong font-mono text-[12.5px] uppercase tracking-[0.06em] text-ink-faint">
           {products.length} / {total} réf.
         </span>
       </div>
@@ -135,14 +154,26 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       <form method="get" action={ROUTES.shop} className="mb-4 flex flex-wrap items-center gap-2">
         {sp.cat ? <input type="hidden" name="cat" value={sp.cat} /> : null}
         {sp.retro ? <input type="hidden" name="retro" value={sp.retro} /> : null}
-        <input name="q" defaultValue={sp.q ?? ""} placeholder="Rechercher un jeu, une console, une référence" aria-label="Recherche" className="min-w-0 flex-[1_1_260px] border border-border-strong bg-field px-3 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:py-[9px] sm:text-[14px]" />
-        <select name="plateforme" defaultValue={sp.plateforme ?? ""} aria-label="Plateforme" className="flex-[1_1_150px] border border-border-strong bg-field px-3 py-3 font-mono text-[16px] uppercase tracking-[0.06em] text-ink sm:flex-none sm:py-[9px] sm:text-[12px]">
-          <option value="">Toutes plateformes</option>
-          {platforms.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
+        <input name="q" defaultValue={sp.q ?? ""} placeholder="Rechercher un jeu, une console, une figurine" aria-label="Recherche" className="min-w-0 flex-[1_1_260px] border border-border-strong bg-field px-3 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:py-[9px] sm:text-[14px]" />
+        <select name="plateforme" defaultValue={sp.plateforme ?? ""} aria-label={titreFiltre} className="flex-[1_1_150px] border border-border-strong bg-field px-3 py-3 font-mono text-[16px] uppercase tracking-[0.06em] text-ink sm:flex-none sm:py-[9px] sm:text-[12px]">
+          <option value="">{titreFiltre}</option>
+          {/* Un seul rayon à l'écran : pas la peine de coiffer la liste d'un
+              intitulé qui répète le filtre déjà actif. */}
+          {tagsParRayon.length === 1
+            ? tagsParRayon[0]!.valeurs.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))
+            : tagsParRayon.map((g) => (
+                <optgroup key={g.rayon.code} label={g.rayon.label}>
+                  {g.valeurs.map((v) => (
+                    <option key={v} value={v}>
+                      {v}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
         </select>
         <select name="etat" defaultValue={sp.etat ?? ""} aria-label="État" className="flex-[1_1_150px] border border-border-strong bg-field px-3 py-3 font-mono text-[16px] uppercase tracking-[0.06em] text-ink sm:flex-none sm:py-[9px] sm:text-[12px]">
           <option value="">Tout état</option>
@@ -175,7 +206,10 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           est déjà. */}
       {!sp.cat && sp.retro !== "1" && !sp.q ? (
         <div className="-mx-4 mb-8 sm:-mx-8">
-          <ShopCategories heading={false} />
+          {/* Les mêmes tuiles que l'accueil, et la même source : les rayons de
+              la base. La page portait sa propre copie, figée sur trois rayons —
+              celui que le vendeur ouvre au back-office n'y apparaissait pas. */}
+          <RayonsEnTuiles rayons={rayonsPublics(rayons)} />
         </div>
       ) : null}
 
@@ -208,7 +242,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         <ProductGrid>
           {products.map((p) => (
             <li key={p.id} className="min-w-0">
-              <ProductCard product={p} />
+              <ProductCard product={p} rayonLabel={articleDe(rayons, p.category)} />
             </li>
           ))}
         </ProductGrid>

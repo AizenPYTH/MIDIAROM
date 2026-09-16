@@ -14,7 +14,7 @@ export interface FieldDef {
   type: FieldType;
   required?: boolean;
   hint?: string;
-  options?: { value: string; label: string }[] | "brands" | "models" | "faults" | "option_categories";
+  options?: { value: string; label: string }[] | "brands" | "models" | "faults" | "option_categories" | "rayons";
   width?: "full" | "half";
 
   // ── Ce qui suit ne sert qu'au formulaire : rien n'atteint la base ──────────
@@ -32,6 +32,15 @@ export interface FieldDef {
   categories?: string[];
   /** Libellé qui change avec le rayon : « Plateforme » devient « Licence ». */
   labelByCategory?: Record<string, string>;
+  /**
+   * Le libellé vient du mot que le rayon emploie (`product_categories.tag_label`).
+   *
+   * C'est le cas de `platform` : « Plateforme » pour un jeu, « Licence » pour
+   * une figurine, et le mot que le vendeur aura choisi pour un rayon qu'il
+   * ouvrira lui-même. Écrire la correspondance en dur ici la figerait aux cinq
+   * rayons d'origine.
+   */
+  labelFromRayonTag?: boolean;
   hintByCategory?: Record<string, string>;
   /** Champ replié sous « Options avancées » : rarement touché. */
   advanced?: boolean;
@@ -87,6 +96,26 @@ const int = z.coerce.number().int();
 const nullableInt = z.union([z.literal(""), z.coerce.number().int()]).transform((v) => (v === "" ? null : v));
 const nullableUuid = z.union([z.literal(""), z.string().uuid()]).transform((v) => (v ? v : null));
 const list = z.array(z.string().trim().min(1));
+
+/**
+ * Le libellé d'un champ pour un rayon donné.
+ *
+ * Trois règles, dans cet ordre : le mot que le rayon emploie
+ * (`labelFromRayonTag` — « Plateforme » ou « Licence » selon qu'on saisit un
+ * jeu ou une figurine), puis une exception écrite à la main
+ * (`labelByCategory`), puis le libellé général.
+ *
+ * Extrait ici, et non gardé dans le composant, pour que le formulaire et les
+ * tests lisent la même règle : une correspondance recopiée dans un test finit
+ * toujours par diverger de celle qui s'affiche.
+ */
+export function libelleDuChamp(f: FieldDef, categorie: string | null | undefined, motsDeTag?: Record<string, string>): string {
+  if (f.labelFromRayonTag && categorie) {
+    const mot = motsDeTag?.[categorie];
+    if (mot) return mot.charAt(0).toUpperCase() + mot.slice(1);
+  }
+  return (categorie && f.labelByCategory?.[categorie]) || f.label;
+}
 
 export const ENTITIES: Record<string, EntityDef> = {
   brands: {
@@ -263,12 +292,13 @@ export const ENTITIES: Record<string, EntityDef> = {
     label: "Rayon",
     labelPlural: "Rayons de la boutique",
     basePath: "/admin/catalog/rayons",
-    listColumns: ["label", "code", "slug", "position", "is_public"],
+    listColumns: ["label", "code", "slug", "tag_label", "position", "is_public"],
     fields: [
       { name: "label", label: "Nom du rayon", type: "text", required: true, width: "half", hint: "Le titre de la section : « Jeux vidéo », « Cartes à collectionner »." },
       { name: "label_singular", label: "Nom d'un article", type: "text", required: true, width: "half", hint: "Au singulier, pour le coin d'une vignette : « Jeu », « Carte »." },
       { name: "code", label: "Code interne", type: "text", required: true, width: "half", hint: "MAJUSCULES sans accent. C'est la clé que portent les articles : la changer déplace tout le rayon." },
       { name: "slug", label: "Adresse du rayon", type: "slug", required: true, width: "half", hint: "/boutique?cat=… — la changer casse les liens déjà partagés." },
+      { name: "tag_label", label: "Ce que porte la ligne au-dessus du nom", type: "text", required: true, width: "half", hint: "Au singulier, en minuscules : « plateforme » pour un jeu ou une console, « licence » pour une figurine. C'est le mot qu'emploiera le filtre de la boutique." },
       { name: "position", label: "Ordre d'affichage", type: "number", width: "half", hint: "Du plus petit au plus grand." },
       { name: "is_public", label: "Visible en boutique", type: "checkbox", width: "half", hint: "Décoché : le rayon reste géré ici, invisible sur le site." },
     ],
@@ -277,6 +307,7 @@ export const ENTITIES: Record<string, EntityDef> = {
       label_singular: text(60).min(1),
       code: z.string().trim().regex(/^[A-Z][A-Z0-9_]{1,31}$/, "Code invalide : MAJUSCULES, chiffres et _, 2 à 32 caractères, commençant par une lettre"),
       slug,
+      tag_label: text(24).min(2),
       position: int.default(0),
       is_public: bool.default(true),
     }),
@@ -504,12 +535,14 @@ ENTITIES.products = {
   fields: [
     // ── Informations ────────────────────────────────────────────────────────
     { name: "name", label: "Nom", type: "text", required: true, section: "Informations" },
-    { name: "category", label: "Catégorie", type: "select", required: true, width: "half", section: "Informations", options: [{ value: "CONSOLE", label: "Console" }, { value: "GAME", label: "Jeu" }, { value: "ACCESSORY", label: "Accessoire" }, { value: "PART", label: "Pièce" }, { value: "COLLECTIBLE", label: "Figurine manga / anime" }] },
+    // Les rayons viennent de `product_categories` : celui que le vendeur ouvre
+    // au back-office doit être proposable ici le jour même.
+    { name: "category", label: "Rayon", type: "select", required: true, width: "half", section: "Informations", options: "rayons" },
     { name: "condition", label: "État", type: "select", required: true, width: "half", section: "Informations", options: [{ value: "NEW", label: "Neuf" }, { value: "REFURBISHED", label: "Révisé en atelier" }, { value: "USED_A", label: "Occasion — grade A" }, { value: "USED_B", label: "Occasion — grade B" }, { value: "USED_C", label: "Occasion — grade C" }] },
     // Une seule colonne pour deux réalités : la plateforme d'un jeu, la licence
     // d'une figurine. C'est la ligne que la boutique affiche au-dessus du nom.
     { name: "platform", label: "Plateforme", type: "text", required: true, width: "half", section: "Informations",
-      labelByCategory: { COLLECTIBLE: "Licence / série" },
+      labelFromRayonTag: true,
       hintByCategory: { COLLECTIBLE: "One Piece, Naruto, Dragon Ball… affiché au-dessus du nom", GAME: "PlayStation 5, Nintendo Switch…", CONSOLE: "PlayStation 5, Xbox Series X…" } },
     { name: "spec:Personnage", label: "Personnage", type: "spec", specKey: "Personnage", width: "half", section: "Informations", categories: ["COLLECTIBLE"], hint: "Luffy, Son Goku, Tanjiro…" },
     { name: "spec:Fabricant", label: "Fabricant / marque", type: "spec", specKey: "Fabricant", width: "half", section: "Informations", categories: ["COLLECTIBLE"] },

@@ -6,8 +6,7 @@ import { Checkbox, Field, FormError, FormSuccess, Input, Select, Textarea } from
 import { PhotoPicker } from "@/components/admin/photo-picker";
 import { PricingModeField } from "@/components/admin/pricing-mode";
 import { buildSku, slugify } from "@/lib/catalog/listing";
-import type { ProductCategory } from "@/lib/shop/status";
-import type { EntityDef, FieldDef } from "@/lib/admin/entities";
+import { libelleDuChamp, type EntityDef, type FieldDef } from "@/lib/admin/entities";
 import { deleteEntityAction, saveEntityAction, type EntityActionResult } from "@/app/admin/actions/catalog";
 
 export type SelectOptions = Record<string, { value: string; label: string }[]>;
@@ -62,6 +61,7 @@ export function EntityForm({
   row,
   defaults,
   selectOptions,
+  motsDeTag,
 }: {
   entityKey: string;
   entity: Pick<EntityDef, "fields" | "sections" | "categoryField"> & { idField: string };
@@ -76,6 +76,12 @@ export function EntityForm({
    */
   defaults?: Record<string, unknown> | null;
   selectOptions: SelectOptions;
+  /**
+   * Le mot que chaque rayon emploie pour `platform` : « plateforme », « licence »…
+   * Il vient de la base, pas d'une table écrite ici — un rayon ouvert par le
+   * vendeur apporte son propre mot.
+   */
+  motsDeTag?: Record<string, string>;
 }) {
   const bound = saveEntityAction.bind(null, entityKey);
   const [state, action, pending] = useActionState<EntityActionResult | null, FormData>(bound, null);
@@ -99,7 +105,7 @@ export function EntityForm({
   const [forces, setForces] = useState<Record<string, string>>({});
   const derive = useMemo(
     () => ({
-      sku: nom.trim() ? buildSku((categorie || "CONSOLE") as ProductCategory, nom) : "",
+      sku: nom.trim() ? buildSku(categorie || "CONSOLE", nom) : "",
       slug: nom.trim() ? slugify(nom) : "",
     }),
     // Le SKU tire au sort quatre caractères : il ne se recalcule que quand le
@@ -116,7 +122,7 @@ export function EntityForm({
    * rayon, puis on répond à ses questions.
    */
   const visible = (f: FieldDef) => !champCategorie || !f.categories || (categorie ? f.categories.includes(categorie) : false);
-  const libelle = (f: FieldDef) => (categorie && f.labelByCategory?.[categorie]) || f.label;
+  const libelle = (f: FieldDef) => libelleDuChamp(f, categorie, motsDeTag);
   const aide = (f: FieldDef) => (categorie && f.hintByCategory?.[categorie]) || f.hint;
 
   const sections = entity.sections?.length ? entity.sections : [""];

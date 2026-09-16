@@ -1553,6 +1553,7 @@ export type Database = {
           slug: string;
           position: number;
           is_public: boolean;
+          tag_label: string;
           created_at: string;
           updated_at: string;
         };
@@ -1564,6 +1565,7 @@ export type Database = {
           slug: string;
           position?: number;
           is_public?: boolean;
+          tag_label?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -1575,6 +1577,7 @@ export type Database = {
           slug?: string;
           position?: number;
           is_public?: boolean;
+          tag_label?: string;
           created_at?: string;
           updated_at?: string;
         };

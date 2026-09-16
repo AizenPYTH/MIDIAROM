@@ -20,7 +20,7 @@ export const getRayons = cache(async (): Promise<Rayon[]> => {
   try {
     const { data, error } = await createSupabaseAdminClient()
       .from("product_categories")
-      .select("code, label, label_singular, slug, position, is_public")
+      .select("code, label, label_singular, slug, position, is_public, tag_label")
       .order("position", { ascending: true });
     if (error || !data?.length) return ordonnes(RAYONS_PAR_DEFAUT);
     return ordonnes(
@@ -31,6 +31,7 @@ export const getRayons = cache(async (): Promise<Rayon[]> => {
         slug: r.slug,
         position: r.position,
         isPublic: r.is_public,
+        tagLabel: r.tag_label,
       })),
     );
   } catch {

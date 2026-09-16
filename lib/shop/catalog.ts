@@ -80,9 +80,30 @@ export const getFeaturedProducts = cache(async (limit = 8): Promise<Product[]> =
 });
 
 /** Plateformes présentes dans le catalogue actif (pour les filtres). */
-export const getProductPlatforms = cache(async (): Promise<string[]> => {
-  const { data } = await db().from("products").select("platform").eq("is_active", true);
-  return [...new Set((data ?? []).map((p) => p.platform))].sort((a, b) => a.localeCompare(b, "fr"));
+/**
+ * Ce que porte `products.platform`, rangé par rayon.
+ *
+ * La colonne dit « PlayStation 5 » pour un jeu et « One Piece » pour une
+ * figurine : la même donnée, pas la même chose. Le filtre les listait à plat
+ * sous « Toutes plateformes », qui proposait donc « Naruto Shippuden » entre
+ * « Nintendo 64 » et « PlayStation 4 ».
+ *
+ * On rend ici la liste **avec son rayon**, et c'est le rayon qui dit le mot
+ * juste (`tagLabel`). Une valeur employée dans plusieurs rayons est rattachée
+ * au premier dans l'ordre d'affichage : « Nintendo Switch » sert aux jeux comme
+ * aux consoles, elle n'a pas à figurer deux fois.
+ */
+export const getProductPlatforms = cache(async (): Promise<{ valeur: string; rayon: string }[]> => {
+  const [{ data }, rayons] = await Promise.all([db().from("products").select("platform, category").eq("is_active", true), getRayons()]);
+  const rang = new Map(rayons.map((r, i) => [r.code, i]));
+  const premier = new Map<string, string>();
+  for (const p of data ?? []) {
+    const vu = premier.get(p.platform);
+    if (!vu || (rang.get(p.category) ?? 99) < (rang.get(vu) ?? 99)) premier.set(p.platform, p.category);
+  }
+  return [...premier.entries()]
+    .map(([valeur, rayon]) => ({ valeur, rayon }))
+    .sort((a, b) => (rang.get(a.rayon) ?? 99) - (rang.get(b.rayon) ?? 99) || a.valeur.localeCompare(b.valeur, "fr"));
 });
 
 /**

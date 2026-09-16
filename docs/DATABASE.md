@@ -57,6 +57,7 @@ faire seul.
 | `slug` | Segment d'adresse, `/boutique?cat=consoles`. Le changer casse les liens publiés |
 | `position` | Ordre d'affichage |
 | `is_public` | Faux = rayon interne (c'est le cas d'`ACCESSORY` et de `PART`) |
+| `tag_label` | Le nom, **dans ce rayon**, de ce que porte `products.platform` : « plateforme » pour un jeu ou une console, « licence » pour une figurine |
 
 `products.category` est passé d'énuméré à `text` avec une clé étrangère
 (`on update cascade`, `on delete restrict`) : un article ne peut pas pointer
@@ -66,6 +67,21 @@ codes et slugs compris : aucune adresse publiée ne change. Le type
 `product_category` subsiste mais n'est plus référencé par aucune colonne —
 PostgreSQL ne sait pas retirer une valeur d'un énuméré, et le laisser ne coûte
 rien.
+
+### Une colonne, deux réalités
+
+`products.platform` porte « PlayStation 5 » pour un jeu et « One Piece » pour
+une figurine. C'est la même donnée — la ligne affichée au-dessus du nom du
+produit — mais pas la même chose, et les confondre donnait un filtre « Toutes
+plateformes » qui proposait « Naruto Shippuden » entre « Nintendo 64 » et
+« PlayStation 4 ».
+
+Le mot juste appartient donc au **rayon**, pas au code : `tag_label`. Le filtre
+de la boutique s'en sert pour son intitulé (« Toutes les licences » dans les
+figurines, « Toutes les plateformes » dans les jeux, « Plateformes et licences »
+sur la boutique entière) et regroupe ses valeurs sous le nom de leur rayon. Le
+back-office renomme le champ de la même façon, sur la fiche complète comme sur
+le formulaire court.
 
 Côté application, `lib/shop/rayons.ts` porte le type et les fonctions pures ;
 `getRayons()` (`lib/shop/categories.ts`) lit la table, met le résultat en cache

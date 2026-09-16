@@ -1,5 +1,5 @@
 import type { Enums } from "@/types/database";
-import { ALIAS_SLUGS, RAYONS_PAR_DEFAUT, codeDuSlug, rayonsPublics, type Rayon } from "@/lib/shop/rayons";
+import { RAYONS_PAR_DEFAUT, codeDuSlug, rayonsPublics, type Rayon } from "@/lib/shop/rayons";
 
 /** Libellés, tons et règles pures de la boutique (utilisables côté client et dans les tests). */
 export type ShopOrderStatus = Enums<"shop_order_status">;
@@ -118,7 +118,7 @@ export const CATEGORY_SLUGS: Record<string, string> = Object.fromEntries(RAYONS_
  * étrangère de `products.category` interdit désormais de l'employer. Le slug
  * `manga`, lui, reste redirigé — il a été publié.
  */
-export const DEPRECATED_CATEGORIES: readonly string[] = Object.keys(ALIAS_SLUGS).length ? ["MANGA"] : [];
+export const DEPRECATED_CATEGORIES: readonly string[] = ["MANGA"];
 
 /** Les rayons montrés au public, dans l'ordre d'affichage. */
 export const PUBLIC_CATEGORIES: readonly string[] = rayonsPublics(RAYONS_PAR_DEFAUT).map((r) => r.code);

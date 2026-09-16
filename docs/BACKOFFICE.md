@@ -81,6 +81,7 @@ Aucun déploiement.
 | Nom d'un article | Au singulier, pour le coin d'une vignette : « Jeu » |
 | Code interne | MAJUSCULES sans accent. **C'est la clé que portent les articles** : la changer déplace tout le rayon (la base propage, `on update cascade`) |
 | Adresse du rayon | `/boutique?cat=…`. **La changer casse les liens déjà partagés et indexés** |
+| Ce que porte la ligne au-dessus du nom | « plateforme » pour un jeu ou une console, « licence » pour une figurine. C'est le mot qu'emploiera le filtre de la boutique, et le nom du champ dans le formulaire d'article |
 | Ordre d'affichage | Du plus petit au plus grand |
 | Visible en boutique | Décoché : le rayon reste géré ici, invisible sur le site. C'est le cas d'`ACCESSORY` et de `PART` |
 

@@ -11,7 +11,7 @@ import { ProductTile } from "@/components/shop/product-tile";
 import { getProductBySlug, getProducts } from "@/lib/shop/catalog";
 import { CONDITION_DESCRIPTIONS, CONDITION_LABELS, stockLabel, stockState } from "@/lib/shop/status";
 import { getRayons } from "@/lib/shop/categories";
-import { libelleDe, slugDe } from "@/lib/shop/rayons";
+import { articleDe, libelleDe, slugDe } from "@/lib/shop/rayons";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSetting } from "@/lib/settings";
 import { formatPrice } from "@/lib/utils/format";
@@ -71,8 +71,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <div className="relative aspect-square overflow-hidden bg-surface">
             {/* `object-contain` comme sur les cartes du rayon : sur une fiche
                 produit, recadrer, c'est cacher une partie de ce qu'on vend. */}
-            {product.images[0] ? <Image src={publicMediaUrl(product.images[0])} alt={product.name} fill sizes="(min-width: 640px) 50vw, 100vw" className="object-contain p-[7%]" priority /> : <ProductTile name={product.name} platform={product.platform} category={product.category} />}
-            <span className={cn("absolute left-3 top-3 px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.06em]", product.condition === "NEW" ? "bg-ink-900 text-paper" : "bg-sale text-white")}>{CONDITION_LABELS[product.condition]}</span>
+            {product.images[0] ? <Image src={publicMediaUrl(product.images[0])} alt={product.name} fill sizes="(min-width: 640px) 50vw, 100vw" className="object-contain p-[7%]" priority /> : <ProductTile name={product.name} platform={product.platform} categoryLabel={articleDe(rayons, product.category)} />}
+            {/* Rouge pour la seule chose qui sort de l'ordinaire : une console
+                révisée dans notre atelier. « Occasion — grade A » est un fait,
+                pas une alerte : en rouge, il se lisait comme un avertissement.
+                Même règle que sur le mur d'accueil et les cartes du rayon. */}
+            <span className={cn("absolute left-3 top-3 px-2 py-1 font-mono text-[10.5px] uppercase tracking-[0.06em]", product.condition === "REFURBISHED" ? "bg-sale text-white" : "bg-ink-900 text-paper")}>{CONDITION_LABELS[product.condition]}</span>
           </div>
           {product.images.length > 1 ? (
             <div className="grid grid-cols-4 gap-2">
@@ -156,7 +160,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <Eyebrow>Dans le même rayon</Eyebrow>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-3.5 sm:[grid-template-columns:repeat(auto-fill,minmax(230px,1fr))]">
             {others.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard key={p.id} product={p} rayonLabel={articleDe(rayons, p.category)} />
             ))}
           </div>
         </section>

@@ -6,6 +6,8 @@ import {
   codeDuSlug,
   codifieRayon,
   courtLabel,
+  motDuTag,
+  titreDuFiltre,
   libelleDe,
   ordonnes,
   rayonsPublics,
@@ -22,7 +24,7 @@ import {
  * part, et un rayon inconnu ne doit jamais faire disparaître un libellé.
  */
 
-const NOUVEAU: Rayon = { code: "GOODIES", label: "Goodies et porte-clés", short: "Goodie", slug: "goodies", position: 25, isPublic: true };
+const NOUVEAU: Rayon = { code: "GOODIES", label: "Goodies et porte-clés", short: "Goodie", slug: "goodies", position: 25, isPublic: true, tagLabel: "licence" };
 
 describe("les rayons livrés par défaut", () => {
   it("reprennent exactement les cinq rayons d'origine, codes et slugs compris", () => {
@@ -92,9 +94,9 @@ describe("libellés", () => {
 describe("ordre d'affichage", () => {
   it("suit la position, puis le nom à position égale", () => {
     const melange: Rayon[] = [
-      { code: "B", label: "Bravo", short: "B", slug: "b", position: 10, isPublic: true },
-      { code: "A", label: "Alpha", short: "A", slug: "a", position: 10, isPublic: true },
-      { code: "C", label: "Charlie", short: "C", slug: "c", position: 5, isPublic: true },
+      { code: "B", label: "Bravo", short: "B", slug: "b", position: 10, isPublic: true, tagLabel: "plateforme" },
+      { code: "A", label: "Alpha", short: "A", slug: "a", position: 10, isPublic: true, tagLabel: "plateforme" },
+      { code: "C", label: "Charlie", short: "C", slug: "c", position: 5, isPublic: true, tagLabel: "plateforme" },
     ];
     expect(ordonnes(melange).map((r) => r.code)).toEqual(["C", "A", "B"]);
   });
@@ -145,5 +147,37 @@ describe("le libellé court de la barre de navigation", () => {
 
   it("garde deux mots quand le premier n'apprend rien", () => {
     expect(court("Kit de remplacement complet")).toBe("Kit de");
+  });
+});
+
+describe("plateforme ou licence : le mot appartient au rayon", () => {
+  const publics = rayonsPublics(RAYONS_PAR_DEFAUT);
+
+  it("dit « licence » dans les figurines et « plateforme » ailleurs", () => {
+    // C'est toute l'affaire : « One Piece » n'est pas une plateforme.
+    expect(motDuTag(RAYONS_PAR_DEFAUT, "COLLECTIBLE")).toBe("licence");
+    expect(motDuTag(RAYONS_PAR_DEFAUT, "GAME")).toBe("plateforme");
+    expect(motDuTag(RAYONS_PAR_DEFAUT, "CONSOLE")).toBe("plateforme");
+  });
+
+  it("se rabat sur « plateforme » pour un rayon inconnu", () => {
+    expect(motDuTag(RAYONS_PAR_DEFAUT, "GOODIES")).toBe("plateforme");
+    expect(motDuTag(RAYONS_PAR_DEFAUT, null)).toBe("plateforme");
+  });
+
+  it("nomme le filtre d'un rayon avec le mot de ce rayon", () => {
+    expect(titreDuFiltre(publics, "COLLECTIBLE")).toBe("Toutes les licences");
+    expect(titreDuFiltre(publics, "GAME")).toBe("Toutes les plateformes");
+  });
+
+  it("annonce les deux quand aucun rayon n'est choisi", () => {
+    // La boutique entière porte les deux : le filtre le dit, plutôt que d'en
+    // élire un et de mentir sur l'autre.
+    expect(titreDuFiltre(publics, null)).toBe("Plateformes et licences");
+  });
+
+  it("n'annonce qu'un mot quand tous les rayons emploient le même", () => {
+    const machines = publics.filter((r) => r.tagLabel === "plateforme");
+    expect(titreDuFiltre(machines, null)).toBe("Toutes les plateformes");
   });
 });

@@ -81,7 +81,7 @@ function Frame({
 }
 
 /** Une carte de vrai produit : prix réel, stock réel, ajout au panier. */
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, rayonLabel }: { product: Product; rayonLabel?: string }) {
   const image = product.images[0];
   const state = stockState(product.quantity, product.low_stock_threshold);
   const href = `${ROUTES.shop}/${product.slug}`;
@@ -105,7 +105,10 @@ export function ProductCard({ product }: { product: Product }) {
             className="object-contain p-[9%]"
           />
         ) : (
-          <ProductTile name={product.name} platform={product.platform} category={product.category} />
+          // Sans photo, la plaque d'attente nomme le rayon en clair. Le
+          // libellé vient de l'appelant, qui a la liste des rayons : écrire
+          // « COLLECTIBLE » dans une vitrine n'apprendrait rien à personne.
+          <ProductTile name={product.name} platform={product.platform} categoryLabel={rayonLabel ?? product.platform} />
         )}
       </Frame>
 

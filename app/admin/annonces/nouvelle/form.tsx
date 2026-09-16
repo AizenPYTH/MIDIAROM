@@ -54,6 +54,7 @@ export function NewListingForm({ initialCategory, rayons }: { initialCategory: s
   const [state, action, pending] = useActionState<NewListingState, FormData>(createListingAction, { status: "idle" });
   const [category, setCategory] = useState<string>(initialCategory);
   const exemple = EXEMPLES[category] ?? EXEMPLES.CONSOLE!;
+  const motTag = rayons.find((r) => r.code === category)?.tagLabel || "plateforme";
 
   return (
     <form action={action} className="mt-7 flex max-w-[640px] flex-col gap-6">
@@ -97,8 +98,11 @@ export function NewListingForm({ initialCategory, rayons }: { initialCategory: s
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="platform" hint={category === "COLLECTIBLE" ? "La licence : One Piece, Naruto, Demon Slayer…" : "La console concernée."}>
-          {category === "COLLECTIBLE" ? "Licence" : "Plateforme"}
+        {/* Le mot vient du rayon (`product_categories.tag_label`), pas d'un test
+            sur un code écrit ici : un rayon ouvert par le vendeur apporte le
+            sien, et « One Piece » cesse d'être présenté comme une plateforme. */}
+        <Label htmlFor="platform" hint={motTag === "licence" ? "La licence : One Piece, Naruto, Demon Slayer…" : "La console concernée."}>
+          {motTag.charAt(0).toUpperCase() + motTag.slice(1)}
         </Label>
         <input id="platform" name="platform" required placeholder={exemple.platform} className={CHAMP} />
       </div>

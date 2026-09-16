@@ -1,4 +1,3 @@
-import { CATEGORY_SHORT } from "@/lib/shop/status";
 
 /**
  * La vignette d'un article dont la photo n'est pas encore déposée.
@@ -31,7 +30,7 @@ import { CATEGORY_SHORT } from "@/lib/shop/status";
  * `aria-hidden` : le nom, la plateforme et l'état sont déjà écrits en toutes
  * lettres à côté. Les répéter ferait lire deux fois le même article.
  */
-export function ProductTile({ name, platform, category }: { name: string; platform: string; category: string }) {
+export function ProductTile({ name, platform, categoryLabel }: { name: string; platform: string; categoryLabel: string }) {
   return (
     <span
       aria-hidden="true"
@@ -55,7 +54,7 @@ export function ProductTile({ name, platform, category }: { name: string; platfo
           letterSpacing: "0.12em",
         }}
       >
-        {CATEGORY_SHORT[category] ?? category}
+        {categoryLabel}
       </span>
       <span className="relative flex flex-col" style={{ gap: "clamp(6px, 1.6cqw, 12px)" }}>
         <span className="block bg-red" style={{ height: 2, width: "clamp(24px, 9cqw, 54px)" }} />

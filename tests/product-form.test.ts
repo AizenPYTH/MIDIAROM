@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ENTITIES, formDataToObject, type FieldDef } from "@/lib/admin/entities";
+import { ENTITIES, formDataToObject, libelleDuChamp, type FieldDef } from "@/lib/admin/entities";
+import { RAYONS_PAR_DEFAUT } from "@/lib/shop/rayons";
 
 /**
  * La fiche d'un article, rayon par rayon.
@@ -18,7 +19,9 @@ import { ENTITIES, formDataToObject, type FieldDef } from "@/lib/admin/entities"
 const produits = ENTITIES.products!;
 const champ = (nom: string) => produits.fields.find((f) => f.name === nom)!;
 const visible = (f: FieldDef, cat: string) => !f.categories || f.categories.includes(cat);
-const libelle = (f: FieldDef, cat: string) => f.labelByCategory?.[cat] ?? f.label;
+/** Les mots que les rayons emploient, comme le formulaire les reçoit de la base. */
+const MOTS = Object.fromEntries(RAYONS_PAR_DEFAUT.map((r) => [r.code, r.tagLabel]));
+const libelle = (f: FieldDef, cat: string) => libelleDuChamp(f, cat, MOTS);
 
 /** Ce que le formulaire montre pour un rayon donné, sections comprises. */
 function champsVisibles(cat: string): FieldDef[] {
@@ -45,9 +48,15 @@ describe("les champs d'un article suivent son rayon", () => {
   it("appelle la plateforme par son nom dans chaque rayon", () => {
     // Une seule colonne pour deux réalités : c'est la ligne affichée au-dessus
     // du nom en boutique. On la renomme, on ne la duplique pas.
-    expect(libelle(champ("platform"), "COLLECTIBLE")).toBe("Licence / série");
+    // Le mot vient du rayon lui-même (`product_categories.tag_label`), pas
+    // d'une table écrite dans le code : un rayon ouvert par le vendeur apporte
+    // le sien.
+    expect(libelle(champ("platform"), "COLLECTIBLE")).toBe("Licence");
     expect(libelle(champ("platform"), "GAME")).toBe("Plateforme");
     expect(libelle(champ("platform"), "CONSOLE")).toBe("Plateforme");
+    // Rayon inconnu du jeu de mots : on retombe sur le libellé général plutôt
+    // que sur une case sans nom.
+    expect(libelle(champ("platform"), "GOODIES")).toBe("Plateforme");
     // Et elle reste obligatoire : la boutique l'affiche toujours.
     expect(champ("platform").required).toBe(true);
   });

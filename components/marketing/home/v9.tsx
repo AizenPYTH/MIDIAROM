@@ -468,6 +468,43 @@ const RAYONS_REDIGES: Record<string, { cle: "jeux" | "consoles" | "figurines"; t
   COLLECTIBLE: { cle: "figurines", texte: "One Piece, Naruto, Dragon Ball, Demon Slayer, Jujutsu Kaisen." },
 };
 
+/**
+ * Les rayons en tuiles photo, format 3/2, gouttières de 2 px.
+ *
+ * Partagé par l'accueil et la page boutique : c'était la même rangée dessinée
+ * deux fois, et la copie de la boutique portait encore les trois rayons écrits
+ * en dur — un rayon ouvert au back-office n'y serait jamais apparu.
+ */
+export function RayonsEnTuiles({ rayons }: { rayons: Rayon[] }) {
+  return (
+    <div data-g-shop="1">
+      {rayons.map((r) => {
+        const redige = RAYONS_REDIGES[r.code];
+        return (
+          <Link key={r.code} href={`${ROUTES.shop}?cat=${r.slug}`} data-tile="1" data-shot="1" className="relative block overflow-hidden bg-ink text-white">
+            <HomeVisual
+              src={redige ? HOME_VISUALS[redige.cle] : null}
+              alt={`Rayon ${r.label.toLowerCase()}`}
+              label={r.label}
+              sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 500px"
+            />
+            <span aria-hidden="true" className="absolute inset-0" style={{ background: VOILE }} />
+            <span className="absolute inset-x-0 bottom-0 flex flex-col gap-[7px] p-[26px]">
+              <span data-rule="1" aria-hidden="true" className="block h-0.5 w-11 bg-red" />
+              <strong className="mt-1 text-[clamp(22px,2.2vw,32px)] font-extrabold tracking-[-0.034em]">{r.label}</strong>
+              {redige ? (
+                <span className="text-[14.5px] leading-[1.4]" style={{ color: "#d3d3d8" }}>
+                  {redige.texte}
+                </span>
+              ) : null}
+            </span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 export function BoutiqueV9({ rayons }: { rayons: Rayon[] }) {
   return (
     <section id="boutique" className={`${SHELL} ${PAD} pt-[clamp(40px,5vw,84px)]`}>
@@ -488,26 +525,7 @@ export function BoutiqueV9({ rayons }: { rayons: Rayon[] }) {
         </Link>
       </div>
 
-      <div data-g-shop="1">
-        {rayons.map((r) => {
-          const redige = RAYONS_REDIGES[r.code];
-          return (
-            <Link key={r.code} href={`${ROUTES.shop}?cat=${r.slug}`} data-tile="1" data-shot="1" className="relative block overflow-hidden bg-ink text-white">
-              <HomeVisual src={redige ? HOME_VISUALS[redige.cle] : null} alt={`Rayon ${r.label.toLowerCase()}`} label={r.label} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 500px" />
-              <span aria-hidden="true" className="absolute inset-0" style={{ background: VOILE }} />
-              <span className="absolute inset-x-0 bottom-0 flex flex-col gap-[7px] p-[26px]">
-                <span data-rule="1" aria-hidden="true" className="block h-0.5 w-11 bg-red" />
-                <strong className="mt-1 text-[clamp(22px,2.2vw,32px)] font-extrabold tracking-[-0.034em]">{r.label}</strong>
-                {redige ? (
-                  <span className="text-[14.5px] leading-[1.4]" style={{ color: "#d3d3d8" }}>
-                    {redige.texte}
-                  </span>
-                ) : null}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
+      <RayonsEnTuiles rayons={rayons} />
     </section>
   );
 }

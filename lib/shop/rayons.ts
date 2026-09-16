@@ -25,6 +25,16 @@ export interface Rayon {
   position: number;
   /** Faux = rayon interne, géré au back-office et invisible en boutique. */
   isPublic: boolean;
+  /**
+   * Le nom, **dans ce rayon**, de ce que porte `products.platform`.
+   *
+   * Une console ou un jeu ont une « plateforme » ; une figurine a une
+   * « licence ». C'est la même colonne et la même ligne au-dessus du nom du
+   * produit, mais pas le même mot. Les confondre donnait un filtre « Toutes
+   * plateformes » qui proposait « One Piece » et « Naruto Shippuden » entre
+   * « Nintendo 64 » et « PlayStation 4 ».
+   */
+  tagLabel: string;
 }
 
 /**
@@ -41,14 +51,14 @@ export interface Rayon {
  * d'informatique et ne les met pas en vitrine.
  */
 export const RAYONS_PAR_DEFAUT: readonly Rayon[] = [
-  { code: "GAME", label: "Jeux vidéo", short: "Jeu", slug: "jeux", position: 10, isPublic: true },
-  { code: "CONSOLE", label: "Consoles", short: "Console", slug: "consoles", position: 20, isPublic: true },
+  { code: "GAME", label: "Jeux vidéo", short: "Jeu", slug: "jeux", position: 10, isPublic: true, tagLabel: "plateforme" },
+  { code: "CONSOLE", label: "Consoles", short: "Console", slug: "consoles", position: 20, isPublic: true, tagLabel: "plateforme" },
   // Les figurines de personnages — One Piece, Naruto, Dragon Ball… — et les
   // collectors de jeu vidéo partagent ce rayon. Le magasin ne vend pas de tomes
   // papier : voir l'alias « manga » plus bas.
-  { code: "COLLECTIBLE", label: "Figurines Manga / Anime", short: "Figurine", slug: "figurines", position: 30, isPublic: true },
-  { code: "ACCESSORY", label: "Accessoires", short: "Accessoire", slug: "accessoires", position: 40, isPublic: false },
-  { code: "PART", label: "Pièces", short: "Pièce", slug: "pieces", position: 50, isPublic: false },
+  { code: "COLLECTIBLE", label: "Figurines Manga / Anime", short: "Figurine", slug: "figurines", position: 30, isPublic: true, tagLabel: "licence" },
+  { code: "ACCESSORY", label: "Accessoires", short: "Accessoire", slug: "accessoires", position: 40, isPublic: false, tagLabel: "plateforme" },
+  { code: "PART", label: "Pièces", short: "Pièce", slug: "pieces", position: 50, isPublic: false, tagLabel: "plateforme" },
 ];
 
 /**
@@ -102,6 +112,35 @@ export function codeDuSlug(rayons: readonly Rayon[], slug: string | null | undef
   if (direct) return direct.code;
   const alias = ALIAS_SLUGS[slug];
   return alias && rayons.some((r) => r.code === alias) ? alias : null;
+}
+
+/**
+ * Le mot que ce rayon emploie pour `products.platform`, au singulier.
+ *
+ * Repli « plateforme » : c'est le cas de la majorité du magasin, et un rayon
+ * inconnu ne doit pas laisser un champ sans nom.
+ */
+export function motDuTag(rayons: readonly Rayon[], code: string | null | undefined): string {
+  return rayonDe(rayons, code)?.tagLabel || "plateforme";
+}
+
+/**
+ * L'intitulé « tout » du filtre, au pluriel.
+ *
+ * Un rayon choisi : son mot à lui — « Toutes les licences » dans les figurines,
+ * « Toutes les plateformes » dans les jeux. Aucun rayon choisi : la boutique
+ * entière porte les deux, et le filtre le dit au lieu d'en élire un et de
+ * mentir sur l'autre.
+ *
+ * Le pluriel est un simple « s » : les mots employés ici sont choisis au
+ * back-office et restent des noms communs courts.
+ */
+export function titreDuFiltre(rayons: readonly Rayon[], code: string | null | undefined): string {
+  const concernes = code ? rayons.filter((r) => r.code === code) : rayons;
+  const mots = [...new Set(concernes.map((r) => r.tagLabel || "plateforme"))].map((m) => `${m}s`);
+  if (!mots.length) return "Toutes les plateformes";
+  if (mots.length === 1) return `Toutes les ${mots[0]}`;
+  return mots.map((m, i) => (i === 0 ? m.charAt(0).toUpperCase() + m.slice(1) : m)).join(" et ");
 }
 
 /**

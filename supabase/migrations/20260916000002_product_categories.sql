@@ -33,6 +33,12 @@ create table if not exists public.product_categories (
   -- Un rayon non public reste gérable au back-office et invisible en boutique :
   -- c'est ce qui permet de suivre des pièces détachées sans les mettre en vente.
   is_public boolean not null default true,
+  -- Comment s'appelle, dans ce rayon, ce que porte `products.platform`.
+  -- Une console ou un jeu ont une **plateforme** ; une figurine a une
+  -- **licence**. C'est la même colonne et la même ligne au-dessus du nom du
+  -- produit, mais pas le même mot — et confondre les deux donnait un filtre
+  -- « Toutes plateformes » qui proposait « One Piece » et « Naruto Shippuden ».
+  tag_label text not null default 'plateforme' check (length(btrim(tag_label)) between 2 and 24),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -45,16 +51,30 @@ comment on column public.product_categories.slug is
   'Segment d''adresse du rayon (/boutique?cat=<slug>). Le changer casse les liens déjà publiés et indexés.';
 comment on column public.product_categories.is_public is
   'false = rayon interne, visible au back-office seulement. ACCESSORY et PART le sont : MÉDI@ROM ne vend pas de composants.';
+comment on column public.product_categories.tag_label is
+  'Le nom, dans ce rayon, de ce que porte products.platform : « plateforme » pour un jeu ou une console, « licence » pour une figurine. Au singulier et en minuscules.';
 
 -- Les cinq rayons d'aujourd'hui, repris tels quels. `on conflict do nothing` :
 -- rejouer la migration ne réécrit pas un libellé que le vendeur aurait changé.
-insert into public.product_categories (code, label, label_singular, slug, position, is_public) values
-  ('GAME',        'Jeux vidéo',              'Jeu',        'jeux',        10, true),
-  ('CONSOLE',     'Consoles',                'Console',    'consoles',    20, true),
-  ('COLLECTIBLE', 'Figurines Manga / Anime', 'Figurine',   'figurines',   30, true),
-  ('ACCESSORY',   'Accessoires',             'Accessoire', 'accessoires', 40, false),
-  ('PART',        'Pièces',                  'Pièce',      'pieces',      50, false)
+insert into public.product_categories (code, label, label_singular, slug, position, is_public, tag_label) values
+  ('GAME',        'Jeux vidéo',              'Jeu',        'jeux',        10, true,  'plateforme'),
+  ('CONSOLE',     'Consoles',                'Console',    'consoles',    20, true,  'plateforme'),
+  ('COLLECTIBLE', 'Figurines Manga / Anime', 'Figurine',   'figurines',   30, true,  'licence'),
+  ('ACCESSORY',   'Accessoires',             'Accessoire', 'accessoires', 40, false, 'plateforme'),
+  ('PART',        'Pièces',                  'Pièce',      'pieces',      50, false, 'plateforme')
 on conflict (code) do nothing;
+
+-- La colonne a pu être ajoutée après coup sur une base où les cinq rayons
+-- existaient déjà : le `on conflict do nothing` ci-dessus ne les aurait pas
+-- corrigés. On ne touche qu'au rayon des figurines, et seulement s'il porte
+-- encore la valeur par défaut — un libellé choisi par le vendeur est gardé.
+update public.product_categories
+   set tag_label = 'licence'
+ where code = 'COLLECTIBLE' and tag_label = 'plateforme';
+
+-- Rattrapage pour une base où la table existait avant l'ajout de `tag_label`.
+alter table public.product_categories
+  add column if not exists tag_label text not null default 'plateforme';
 
 -- `products.category` passe du type énuméré au texte, puis reçoit sa clé
 -- étrangère. La conversion est une simple projection : les valeurs sont déjà

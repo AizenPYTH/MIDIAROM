@@ -8,24 +8,34 @@ import { EntityForm, DeleteEntityButton, type SelectOptions } from "@/components
 import { getEntity } from "@/lib/admin/entities";
 import { createGenericAdminClient } from "@/lib/supabase/generic";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getRayons } from "@/lib/shop/categories";
 import { requireAdminOrRedirect } from "@/lib/security/auth";
 import { formatPrice } from "@/lib/utils/format";
 
 /** Loads the options for select fields (brands, models, faults, categories). */
 export async function loadSelectOptions(): Promise<SelectOptions> {
   const db = createSupabaseAdminClient();
-  const [brands, models, faults, cats] = await Promise.all([
+  const [brands, models, faults, cats, rayons] = await Promise.all([
     db.from("brands").select("id, name").order("display_order"),
     db.from("console_models").select("id, name, brand:brands(name)").order("display_order"),
     db.from("faults").select("id, name").order("display_order"),
     db.from("option_categories").select("id, name").order("display_order"),
+    getRayons(),
   ]);
   return {
     brands: (brands.data ?? []).map((b) => ({ value: b.id, label: b.name })),
     models: (models.data ?? []).map((m) => ({ value: m.id, label: `${(m.brand as { name: string } | null)?.name ?? ""} ${m.name}`.trim() })),
     faults: (faults.data ?? []).map((f) => ({ value: f.id, label: f.name })),
     option_categories: (cats.data ?? []).map((c) => ({ value: c.id, label: c.name })),
+    // Les rayons de la boutique, y compris ceux ouverts par le vendeur. Le
+    // libellé au singulier : on choisit **un** rayon pour **un** article.
+    rayons: rayons.map((r) => ({ value: r.code, label: r.short })),
   };
+}
+
+/** Le mot que chaque rayon emploie pour `products.platform`. */
+async function motsDeTag(): Promise<Record<string, string>> {
+  return Object.fromEntries((await getRayons()).map((r) => [r.code, r.tagLabel]));
 }
 
 function cell(column: string, value: unknown, options: SelectOptions): React.ReactNode {
@@ -41,7 +51,7 @@ function cell(column: string, value: unknown, options: SelectOptions): React.Rea
 }
 
 const COLUMN_LABELS: Record<string, string> = {
-  name: "Nom", slug: "Slug", display_order: "Ordre", is_active: "Actif", brand_id: "Marque", model_id: "Modèle", fault_id: "Panne", price_cents: "Prix", is_seo_published: "SEO", applies_to_all: "Universelle", is_recommended: "Recommandée", code: "Code", provider_code: "Transporteur", includes_outbound: "Aller", includes_return: "Retour", question: "Question", category: "Catégorie", title: "Titre", image_path: "Image", is_published: "Publié", version: "Version", is_current: "En vigueur", path: "Chemin", no_index: "No-index", key: "Clé", sku: "SKU", platform: "Plateforme", condition: "État", quantity: "Stock", family: "Famille", source: "Source", campaign: "Campagne", period_start: "Début", period_end: "Fin", amount_cents: "Montant", label: "Nom", label_singular: "Au singulier", position: "Ordre", is_public: "En boutique",
+  name: "Nom", slug: "Slug", display_order: "Ordre", is_active: "Actif", brand_id: "Marque", model_id: "Modèle", fault_id: "Panne", price_cents: "Prix", is_seo_published: "SEO", applies_to_all: "Universelle", is_recommended: "Recommandée", code: "Code", provider_code: "Transporteur", includes_outbound: "Aller", includes_return: "Retour", question: "Question", category: "Catégorie", title: "Titre", image_path: "Image", is_published: "Publié", version: "Version", is_current: "En vigueur", path: "Chemin", no_index: "No-index", key: "Clé", sku: "SKU", platform: "Plateforme / licence", condition: "État", quantity: "Stock", family: "Famille", source: "Source", campaign: "Campagne", period_start: "Début", period_end: "Fin", amount_cents: "Montant", label: "Nom", label_singular: "Au singulier", position: "Ordre", is_public: "En boutique", tag_label: "Ligne du dessus",
 };
 
 export async function EntityListPage({ entityKey, title, description, extra }: { entityKey: string; title?: string; description?: string; extra?: React.ReactNode }) {
@@ -126,7 +136,7 @@ export async function EntityEditPage({
     if (!data) notFound();
     row = data as Record<string, unknown>;
   }
-  const options = await loadSelectOptions();
+  const [options, tags] = await Promise.all([loadSelectOptions(), motsDeTag()]);
   const prefill = isNew && defaults && Object.keys(defaults).length ? defaults : null;
   const label = row ? String(row.name ?? row.title ?? row.question ?? row[idField]) : `Nouveau : ${entity.label}`;
   return (
@@ -136,7 +146,7 @@ export async function EntityEditPage({
         <PageHeader className="mt-1" title={label} actions={row ? <DeleteEntityButton entityKey={entityKey} id={String(row[idField])} label={label} /> : undefined} />
       </div>
       <div className="rounded-lg border border-border bg-surface p-5">
-        <EntityForm entityKey={entityKey} entity={{ fields: entity.fields, sections: entity.sections, categoryField: entity.categoryField, idField: entity.idField ?? "id" }} row={row} defaults={prefill} selectOptions={options} />
+        <EntityForm entityKey={entityKey} entity={{ fields: entity.fields, sections: entity.sections, categoryField: entity.categoryField, idField: entity.idField ?? "id" }} row={row} defaults={prefill} selectOptions={options} motsDeTag={tags} />
       </div>
       {row && children ? await children(row) : null}
     </div>
