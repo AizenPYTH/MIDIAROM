@@ -177,7 +177,7 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
  */
 export function NavList({ items, courant }: { items: { href: string; label: string }[]; courant: string }) {
   return (
-    <nav className="flex flex-wrap gap-x-[22px] gap-y-1.5 text-[14.5px] font-medium" aria-label="Navigation principale">
+    <nav className="flex flex-wrap gap-x-[15px] gap-y-1.5 text-[14.5px] font-medium min-[1560px]:gap-x-[22px]" aria-label="Navigation principale">
       {items.map((item) => {
         const actif = item.href === courant;
         return (
@@ -223,7 +223,7 @@ export function SearchField() {
       // Sous lg, la recherche prend sa ligne entière, sous le logo : c'est le
       // premier geste d'un visiteur de boutique, elle ne partage pas sa ligne
       // avec le panier et le bouton menu.
-      className="order-3 flex w-full min-w-0 max-w-none flex-[1_1_100%] items-center gap-2 border border-border-strong bg-surface px-3 py-[11px] lg:order-none lg:w-auto lg:max-w-[340px] lg:flex-[1_1_130px] lg:px-[13px] lg:py-2.5"
+      className="order-3 flex w-full min-w-0 max-w-none flex-[1_1_100%] items-center gap-2 border border-border-strong bg-surface px-3 py-[11px] lg:order-none lg:w-auto lg:flex-[1_1_130px] lg:px-[11px] lg:py-2.5 min-[1280px]:max-w-[340px] min-[1560px]:px-[13px]"
     >
       <span aria-hidden="true" className="font-mono text-[12px] text-ink-faint">
         ⌕

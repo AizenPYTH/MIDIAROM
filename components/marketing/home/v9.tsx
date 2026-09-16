@@ -173,15 +173,25 @@ export function HeroV9({ diagnostic }: { diagnostic?: string | null }) {
 
         {/* Les quatre promesses chiffrées. Rail qui glisse au doigt sous `sm` :
             empilées, elles repoussaient la première section d'un écran. */}
+        {/*
+          Les quatre promesses restent sur **une** ligne à partir de `sm`.
+          En `flex-wrap`, le navigateur préfère renvoyer « 1997 · Atelier ouvert
+          depuis » à la ligne plutôt que de rétrécir les cellules : sur un écran
+          de 1152 px, la quatrième promesse tombait seule sous les trois autres,
+          avec un trou au-dessus. En `nowrap` avec des cellules qui peuvent
+          rétrécir (`min-w-0`), c'est l'étiquette en petites capitales qui passe
+          sur deux lignes — et une étiquette sur deux lignes se lit, une
+          promesse orpheline non. Le chiffre, lui, ne se coupe jamais.
+        */}
         <ul
           data-up="4"
           data-rail="1"
-          className="-mx-[clamp(16px,4vw,64px)] mt-2.5 flex list-none gap-[26px] overflow-x-auto border-t border-border px-[clamp(16px,4vw,64px)] pt-[22px] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+          className="-mx-[clamp(16px,4vw,64px)] mt-2.5 flex list-none gap-[26px] overflow-x-auto border-t border-border px-[clamp(16px,4vw,64px)] pt-[22px] sm:mx-0 sm:flex-nowrap sm:gap-[18px] sm:overflow-visible sm:px-0 min-[1560px]:gap-[26px]"
         >
           {promesses.map((p) => (
-            <li key={p.v} className="flex shrink-0 flex-col gap-px sm:shrink">
-              <span className="text-[21px] font-bold tracking-[-0.03em]">{p.k}</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">{p.v}</span>
+            <li key={p.v} className="flex shrink-0 flex-col gap-px sm:min-w-0 sm:shrink">
+              <span className="whitespace-nowrap text-[21px] font-bold tracking-[-0.03em]">{p.k}</span>
+              <span className="font-mono text-[10px] uppercase leading-[1.35] tracking-[0.1em] text-ink-faint">{p.v}</span>
             </li>
           ))}
         </ul>

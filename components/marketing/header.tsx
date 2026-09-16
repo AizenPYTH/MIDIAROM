@@ -106,10 +106,10 @@ export function SiteHeader({ brand, rayons }: { brand: BrandSettings; rayons: Ra
         pour les navigateurs sans `backdrop-filter`.
       */}
       <header
-        className="sticky top-0 z-40 border-b border-border-section bg-bg px-4 py-3 lg:px-[26px] lg:py-[14px]"
+        className="sticky top-0 z-40 border-b border-border-section bg-bg px-4 py-3 lg:px-[18px] lg:py-[14px] min-[1560px]:px-[26px]"
         style={{ backgroundColor: "var(--bg-blur)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}
       >
-        <div className="page-wrap flex flex-wrap items-center gap-x-3 gap-y-3 lg:gap-x-[26px]">
+        <div className="page-wrap flex flex-wrap items-center gap-x-3 gap-y-3 lg:gap-x-[14px] min-[1560px]:gap-x-[26px]">
           <Link href={ROUTES.home} aria-label={`${brand.name} — accueil`} className="flex min-h-[44px] min-w-0 flex-1 items-center text-ink lg:min-h-0 lg:flex-none">
             <span className="hidden lg:block">
               <BrandMark name={brand.name} mark="dpad" />
@@ -124,14 +124,18 @@ export function SiteHeader({ brand, rayons }: { brand: BrandSettings; rayons: Ra
               bascule toute la page en rendu client si elle n'est pas isolée.
               Masquée sous lg : le tiroir porte déjà ces entrées. */}
           {/*
-            Une ligne au-dessus de 1400 px, deux en dessous.
-            Mesuré : à 1440 px tout tient sur une ligne et la recherche garde
-            204 px ; à 1280 px le bouton rouge tombait déjà tout seul sur une
-            deuxième ligne, à gauche, ce qui est pire que deux lignes assumées.
+            Une ligne au-dessus de 1280 px, deux en dessous.
+            Le seuil était à 1400 px : un écran de 1366 ou de 1280 — c'est-à-dire
+            la plupart des portables à 100 % de zoom — recevait donc un en-tête
+            sur deux lignes, alors que le même écran à 80 % en recevait un sur
+            une seule. Les espacements se resserrent en dessous de 1560 px
+            (gouttières, filets de la nav, retrait latéral) : mesuré, cela rend
+            122 px, assez pour que tout tienne sur une ligne dès 1280 px avec
+            une recherche encore utilisable.
             En dessous du seuil, la nav passe en dernière position et prend la
             largeur entière : ligne 1 les outils, ligne 2 les rayons.
           */}
-          <div className="order-4 hidden basis-full lg:block min-[1400px]:order-none min-[1400px]:basis-auto">
+          <div className="order-4 hidden basis-full lg:block min-[1280px]:order-none min-[1280px]:basis-auto">
             <Suspense fallback={<NavList items={NAV} courant="" />}>
               <PrimaryNav items={NAV} />
             </Suspense>
@@ -140,7 +144,7 @@ export function SiteHeader({ brand, rayons }: { brand: BrandSettings; rayons: Ra
           {/* Sous lg, la recherche prend sa ligne entière (order-3, base 100 %). */}
           <SearchField />
 
-          <div className="order-1 flex min-w-0 items-center gap-[18px] whitespace-nowrap lg:order-none">
+          <div className="order-1 flex min-w-0 items-center gap-[18px] whitespace-nowrap lg:order-none lg:gap-3 min-[1560px]:gap-[18px]">
             <Link href={ROUTES.tracking} className="hidden font-mono text-[11px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-red lg:inline">
               Suivi
             </Link>
@@ -150,10 +154,11 @@ export function SiteHeader({ brand, rayons }: { brand: BrandSettings; rayons: Ra
 
           <Link
             href={ROUTES.repair}
-            /* `ml-auto` seulement sur la ligne unique : au-delà de 1560 px la
-               recherche est à son plafond et il restait 36 px de vide après le
-               bouton, qui ne tombait plus sur le bord de la colonne. */
-            className="hidden whitespace-nowrap bg-red px-5 py-[13px] text-[14.5px] font-semibold text-white transition-colors duration-200 hover:bg-ink lg:inline-block min-[1400px]:ml-auto"
+            /* `ml-auto` dès `lg` : sur une ligne unique il pousse le bouton au
+               bord de la colonne quand la recherche est à son plafond ; sur
+               deux lignes il évite le trou de 180 px qui s'ouvrait à sa droite
+               et donnait un en-tête qui semble s'arrêter au milieu. */
+            className="hidden whitespace-nowrap bg-red px-[17px] py-[13px] text-[14.5px] font-semibold text-white transition-colors duration-200 hover:bg-ink lg:ml-auto lg:inline-block min-[1560px]:px-5"
           >
             Demander un diagnostic
           </Link>

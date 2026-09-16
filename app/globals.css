@@ -1009,13 +1009,20 @@ body {
    battrait toute règle de média qu'on voudrait ajouter ensuite.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Les quatre machines et les trois rayons, sur une seule ligne.
-   Le handoff pose 330 px de minimum ; mesuré, cela donne 3 tuiles + 1 orpheline
-   sur un portable de 1440 px, parce qu'il manque 0,3 px par colonne — la
-   quatrième bascule pour trois dixièmes de pixel. 288 px pour les machines et
-   300 px pour les rayons remettent chaque série sur sa ligne dès 1280 px, sans
-   toucher au rapport des cadres ni aux gouttières de 2 px. */
-[data-g-pf] { display: grid; grid-template-columns: repeat(auto-fit, minmax(288px, 1fr)); gap: 2px; }
+/* Les quatre machines : jamais trois et une orpheline.
+   `auto-fit` avec une largeur minimale laisse le navigateur choisir, et il
+   choisit trois colonnes dès que la fenêtre descend sous un seuil qui dépend du
+   minimum retenu — 330 px cassait à 1440, 288 px cassait à 1152. Or la série
+   compte **quatre** tuiles, un nombre connu : on pose donc les paliers nous-
+   mêmes, et il n'y a plus de quatrième tuile seule sur sa ligne à aucune
+   largeur. Une colonne au doigt, deux sur tablette, quatre sur ordinateur. */
+[data-g-pf] { display: grid; grid-template-columns: 1fr; gap: 2px; }
+@media (min-width: 620px) {
+  [data-g-pf] { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 1080px) {
+  [data-g-pf] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 [data-g-shop] { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2px; }
 /* Le mur de produits : deux colonnes au doigt, sans exception.
    `auto-fill minmax(220px,1fr)` retombe à **une** colonne sur 390 px — une
