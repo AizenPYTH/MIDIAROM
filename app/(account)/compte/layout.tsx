@@ -5,13 +5,20 @@ import { requireUserOrRedirect } from "@/lib/security/auth";
 import { isStaffRole } from "@/lib/orders/status";
 import { getBrandSettings } from "@/lib/settings";
 import { getRayons } from "@/lib/shop/categories";
+import { getProductCategoryCounts, getProductTags } from "@/lib/shop/catalog";
 import { rayonsPublics } from "@/lib/shop/rayons";
 import { SiteHeader } from "@/components/marketing/header";
 import { logoutAction } from "@/app/(auth)/actions";
 import { AccountNav } from "@/components/customer/account-nav";
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
-  const [user, brand, rayons] = await Promise.all([requireUserOrRedirect(ROUTES.account), getBrandSettings(), getRayons()]);
+  const [user, brand, rayons, tags, comptes] = await Promise.all([
+    requireUserOrRedirect(ROUTES.account),
+    getBrandSettings(),
+    getRayons(),
+    getProductTags(),
+    getProductCategoryCounts(),
+  ]);
   const items = [
     { href: ROUTES.accountOrders, label: "Mes réparations" },
     { href: ROUTES.accountTradeIns, label: "Mes reprises" },
@@ -20,7 +27,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   ];
   return (
     <>
-      <SiteHeader brand={brand} rayons={rayonsPublics(rayons)} />
+      <SiteHeader brand={brand} rayons={rayonsPublics(rayons)} tags={tags} comptes={comptes} />
       <main className="flex-1">
         <Container className="grid gap-8 py-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:py-14">
           <aside className="min-w-0">

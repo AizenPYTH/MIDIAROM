@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ROUTES } from "@/config/site";
@@ -165,8 +165,67 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
   );
 }
 
+/** Une entrée de la barre de navigation, avec son volet s'il en a un. */
+export interface EntreeNav {
+  href: string;
+  label: string;
+  /**
+   * Ce qui se déplie au survol. Absent pour une entrée qui ne mène pas à une
+   * liste — « Réparation », « Magasin ».
+   */
+  volet?: {
+    /** Ce que la colonne annonce : « plateformes », « licences ». */
+    intitule: string;
+    liens: { href: string; label: string }[];
+    /** Le lien du bas : « Voir les 12 consoles ». */
+    plus: { href: string; label: string };
+  };
+}
+
 /**
- * La deuxième ligne de l'en-tête : les rayons.
+ * Le volet d'un rayon : ses principales plateformes ou licences.
+ *
+ * Il ne liste pas tout. Six entrées, les plus fournies d'abord, puis un lien
+ * vers le rayon entier — un menu qui déroule quarante licences n'est plus un
+ * menu, c'est la page qu'il est censé remplacer. Ce qu'il montre vient du
+ * catalogue (`products.platform`), jamais d'une liste écrite en dur : une
+ * console mise en vente un matin est dans le menu l'après-midi.
+ *
+ * Fond plein et filet d'encre plutôt qu'une ombre : le panneau passe au-dessus
+ * de la page, il doit s'en détacher, et la charte v9 ne porte pas d'ombre.
+ */
+function Volet({ volet, onNavigate }: { volet: NonNullable<EntreeNav["volet"]>; onNavigate: () => void }) {
+  return (
+    // Le retrait vit sur l'enveloppe, pas sur le panneau : il prolonge la zone
+    // de survol jusqu'à celui-ci. Sans lui, descendre vers le menu traverse
+    // quinze pixels de vide et le referme.
+    <div className="absolute left-[-13px] top-full z-50 pt-[15px]">
+      <div className="min-w-[232px] border border-ink bg-bg py-1.5">
+        <span className="block px-[13px] pb-1.5 pt-[7px] font-mono text-[10px] uppercase tracking-[0.13em] text-ink-faint">{volet.intitule}</span>
+        {volet.liens.map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            onClick={onNavigate}
+            className="block whitespace-nowrap px-[13px] py-[7px] text-[14.5px] font-medium text-ink transition-colors hover:bg-surface-muted hover:text-red"
+          >
+            {l.label}
+          </Link>
+        ))}
+        <Link
+          href={volet.plus.href}
+          onClick={onNavigate}
+          className="mt-1.5 block whitespace-nowrap border-t border-border px-[13px] pb-[7px] pt-[11px] font-mono text-[10.5px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-red"
+        >
+          {volet.plus.label} →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * La barre des rayons, et ses volets.
  *
  * Découpée en deux, et pour une raison précise. `NavList` ne fait que dessiner ;
  * `PrimaryNav` lit l'adresse courante pour savoir quel onglet souligner. Comme
@@ -174,21 +233,99 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
  * toutes les pages, il empêcherait le pré-rendu statique de `/panier` et de
  * `/suivi` s'il n'était pas isolé derrière une frontière `<Suspense>`. La
  * navigation s'affiche donc toujours ; seul le soulignement attend.
+ *
+ * Le volet s'ouvre au survol **et au clavier** : `onFocus` sur l'enveloppe
+ * suffit, la tabulation entre alors naturellement dans les liens du panneau.
+ * La fermeture au `mouseleave` attend 120 ms — une trajectoire en diagonale
+ * vers le menu sort brièvement de l'entrée, et un volet qui se referme sous le
+ * curseur est inutilisable.
+ *
+ * L'entrée reste un lien vers le rayon : le volet abrège le chemin, il ne le
+ * remplace pas, et un appareil tactile — qui n'a pas de survol — navigue.
  */
-export function NavList({ items, courant }: { items: { href: string; label: string }[]; courant: string }) {
+export function NavList({ items, courant }: { items: EntreeNav[]; courant: string }) {
+  const [ouvert, setOuvert] = useState<string | null>(null);
+  const minuterie = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  /**
+   * Le focus rendu au rayon après Échap ne doit pas rouvrir le volet.
+   *
+   * Refermer avec le focus à l'intérieur le renverrait au début du document —
+   * on le remet donc sur l'entrée d'où le volet est sorti. Mais ce focus-là
+   * repasse par `onFocus`, qui rouvrirait aussitôt ce qu'on vient de fermer.
+   * Un seul événement suit, et ce drapeau l'absorbe.
+   */
+  const ignorerFocus = useRef(false);
+
+  const annuler = () => {
+    if (minuterie.current) clearTimeout(minuterie.current);
+    minuterie.current = null;
+  };
+  const ouvrir = useCallback((href: string) => {
+    if (ignorerFocus.current) {
+      ignorerFocus.current = false;
+      return;
+    }
+    if (minuterie.current) clearTimeout(minuterie.current);
+    minuterie.current = null;
+    setOuvert(href);
+  }, []);
+  const fermerPlusTard = useCallback(() => {
+    if (minuterie.current) clearTimeout(minuterie.current);
+    minuterie.current = setTimeout(() => setOuvert(null), 120);
+  }, []);
+  const fermer = useCallback(() => {
+    if (minuterie.current) clearTimeout(minuterie.current);
+    minuterie.current = null;
+    setOuvert(null);
+  }, []);
+
+  useEffect(() => () => annuler(), []);
+  useEffect(() => {
+    if (!ouvert) return;
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const declencheur = navRef.current?.querySelector<HTMLElement>('a[aria-expanded="true"]');
+      if (declencheur && navRef.current?.contains(document.activeElement)) {
+        ignorerFocus.current = true;
+        declencheur.focus();
+      }
+      setOuvert(null);
+    };
+    document.addEventListener("keydown", surTouche);
+    return () => document.removeEventListener("keydown", surTouche);
+  }, [ouvert]);
+
   return (
-    <nav className="flex flex-wrap gap-x-[15px] gap-y-1.5 text-[14.5px] font-medium min-[1560px]:gap-x-[22px]" aria-label="Navigation principale">
+    <nav ref={navRef} className="flex flex-wrap gap-x-[15px] gap-y-1.5 text-[14.5px] font-medium min-[1560px]:gap-x-[22px]" aria-label="Navigation principale">
       {items.map((item) => {
         const actif = item.href === courant;
-        return (
+        const lien = (
           <Link
-            key={item.href}
             href={item.href}
             aria-current={actif ? "page" : undefined}
+            aria-expanded={item.volet ? ouvert === item.href : undefined}
+            aria-haspopup={item.volet ? true : undefined}
+            // Le clic mène au rayon : le volet a fait son office, il se ferme.
+            onClick={item.volet ? fermer : undefined}
             className={`whitespace-nowrap border-b-2 pb-[3px] text-ink transition-colors ${actif ? "border-red" : "border-transparent hover:border-border-strong"}`}
           >
             {item.label}
           </Link>
+        );
+        if (!item.volet) return <span key={item.href}>{lien}</span>;
+        return (
+          <span
+            key={item.href}
+            className="relative"
+            onMouseEnter={() => ouvrir(item.href)}
+            onMouseLeave={fermerPlusTard}
+            onFocus={() => ouvrir(item.href)}
+            onBlur={fermerPlusTard}
+          >
+            {lien}
+            {ouvert === item.href ? <Volet volet={item.volet} onNavigate={fermer} /> : null}
+          </span>
         );
       })}
     </nav>
@@ -201,7 +338,7 @@ export function NavList({ items, courant }: { items: { href: string; label: stri
  * « Jeux vidéo » et « Consoles » pointent tous deux sur /boutique et
  * s'allumeraient ensemble.
  */
-export function PrimaryNav({ items }: { items: { href: string; label: string }[] }) {
+export function PrimaryNav({ items }: { items: EntreeNav[] }) {
   const pathname = usePathname();
   const cat = useSearchParams().get("cat");
   return <NavList items={items} courant={`${pathname}${cat ? `?cat=${cat}` : ""}`} />;

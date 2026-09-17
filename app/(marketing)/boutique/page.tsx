@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ROUTES, SITE_URL } from "@/config/site";
 import { Container, Eyebrow } from "@/components/ui/misc";
 import { ProductCard, ProductGrid } from "@/components/shop/product-card";
-import { getProductCategoryCounts, getProductPlatforms, getProducts, type ProductFilters } from "@/lib/shop/catalog";
+import { getProductCategoryCounts, getProductTags, getProducts, tagsDedoublonnes, type ProductFilters } from "@/lib/shop/catalog";
 import { getRayons } from "@/lib/shop/categories";
 import { articleDe, codeDuSlug, libelleDe, rayonsPublics, slugDe, titreDuFiltre } from "@/lib/shop/rayons";
 import { RayonsEnTuiles } from "@/components/marketing/home/v9";
@@ -115,7 +115,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     maxCents: cents(sp.max),
     sort,
   };
-  const [products, platforms, counts, rayons] = await Promise.all([getProducts(filters), getProductPlatforms(), getProductCategoryCounts(), getRayons()]);
+  const [products, tags, counts, rayons] = await Promise.all([getProducts(filters), getProductTags(), getProductCategoryCounts(), getRayons()]);
   const rayonCourant = codeDuSlug(rayons, sp.cat);
 
   /*
@@ -127,7 +127,14 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     Shippuden » ne peut plus se lire comme une console.
   */
   const titreFiltre = titreDuFiltre(rayonsPublics(rayons), rayonCourant);
-  const tagsVisibles = rayonCourant ? platforms.filter((t) => t.rayon === rayonCourant) : platforms;
+  /*
+    Un rayon à l'écran : **toutes** ses valeurs, y compris celles qu'il partage
+    avec un autre rayon. Le filtre de « Consoles » doit proposer la PlayStation 5
+    même si des jeux PlayStation 5 existent aussi. La boutique entière, elle,
+    n'écrit chaque valeur qu'une fois : la choisir y filtre les deux rayons, la
+    proposer sous deux intitulés ne proposerait pas deux choses.
+  */
+  const tagsVisibles = rayonCourant ? tags.filter((t) => t.rayon === rayonCourant) : tagsDedoublonnes(tags);
   const tagsParRayon = rayonsPublics(rayons)
     .map((r) => ({ rayon: r, valeurs: tagsVisibles.filter((t) => t.rayon === r.code).map((t) => t.valeur) }))
     .filter((g) => g.valeurs.length);

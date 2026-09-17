@@ -79,32 +79,62 @@ export const getFeaturedProducts = cache(async (limit = 8): Promise<Product[]> =
   return data ?? [];
 });
 
-/** Plateformes présentes dans le catalogue actif (pour les filtres). */
+/** Une valeur de `products.platform`, dans un rayon, et ce qu'elle y compte. */
+export interface TagProduit {
+  /** Le rayon où la valeur est employée (`products.category`). */
+  rayon: string;
+  /** « PlayStation 5 » dans les consoles, « One Piece » dans les figurines. */
+  valeur: string;
+  /** Combien d'articles actifs de ce rayon la portent. */
+  nombre: number;
+}
+
 /**
- * Ce que porte `products.platform`, rangé par rayon.
+ * Ce que porte `products.platform`, **une ligne par rayon**.
  *
  * La colonne dit « PlayStation 5 » pour un jeu et « One Piece » pour une
- * figurine : la même donnée, pas la même chose. Le filtre les listait à plat
- * sous « Toutes plateformes », qui proposait donc « Naruto Shippuden » entre
- * « Nintendo 64 » et « PlayStation 4 ».
+ * figurine : la même donnée, pas la même chose. C'est le rayon qui dit le mot
+ * juste (`tagLabel`), d'où la paire plutôt qu'une liste à plat.
  *
- * On rend ici la liste **avec son rayon**, et c'est le rayon qui dit le mot
- * juste (`tagLabel`). Une valeur employée dans plusieurs rayons est rattachée
- * au premier dans l'ordre d'affichage : « Nintendo Switch » sert aux jeux comme
- * aux consoles, elle n'a pas à figurer deux fois.
+ * Une valeur employée dans deux rayons rend **deux** lignes, et c'est le point
+ * important : « PlayStation 5 » sert aux jeux comme aux consoles. La version
+ * précédente ne la rattachait qu'au premier rayon, et le filtre du rayon
+ * « Consoles » perdait donc ses trois plus grosses plateformes — elles étaient
+ * comptées côté « Jeux vidéo ». À l'appelant de dédoublonner s'il présente la
+ * boutique entière, ce que fait `tagsDedoublonnes`.
  */
-export const getProductPlatforms = cache(async (): Promise<{ valeur: string; rayon: string }[]> => {
+export const getProductTags = cache(async (): Promise<TagProduit[]> => {
   const [{ data }, rayons] = await Promise.all([db().from("products").select("platform, category").eq("is_active", true), getRayons()]);
   const rang = new Map(rayons.map((r, i) => [r.code, i]));
-  const premier = new Map<string, string>();
+  const compte = new Map<string, TagProduit>();
   for (const p of data ?? []) {
-    const vu = premier.get(p.platform);
-    if (!vu || (rang.get(p.category) ?? 99) < (rang.get(vu) ?? 99)) premier.set(p.platform, p.category);
+    const clef = `${p.category}\u0000${p.platform}`;
+    const vu = compte.get(clef);
+    if (vu) vu.nombre += 1;
+    else compte.set(clef, { rayon: p.category, valeur: p.platform, nombre: 1 });
   }
-  return [...premier.entries()]
-    .map(([valeur, rayon]) => ({ valeur, rayon }))
-    .sort((a, b) => (rang.get(a.rayon) ?? 99) - (rang.get(b.rayon) ?? 99) || a.valeur.localeCompare(b.valeur, "fr"));
+  return [...compte.values()].sort((a, b) => (rang.get(a.rayon) ?? 99) - (rang.get(b.rayon) ?? 99) || a.valeur.localeCompare(b.valeur, "fr"));
 });
+
+/**
+ * La même liste, une seule fois par valeur, pour un filtre qui couvre toute la
+ * boutique.
+ *
+ * Choisir « PlayStation 5 » y filtre les jeux **et** les consoles : l'écrire
+ * deux fois, sous deux intitulés de rayon, ne proposerait pas deux choses. On
+ * garde le premier rayon dans l'ordre d'affichage et on additionne les
+ * comptes. `tags` est supposée déjà triée par rang de rayon — c'est ce que
+ * rend `getProductTags`.
+ */
+export function tagsDedoublonnes(tags: readonly TagProduit[]): TagProduit[] {
+  const par = new Map<string, TagProduit>();
+  for (const t of tags) {
+    const vu = par.get(t.valeur);
+    if (vu) vu.nombre += t.nombre;
+    else par.set(t.valeur, { ...t });
+  }
+  return [...par.values()];
+}
 
 /**
  * Combien d'articles actifs par rayon.

@@ -1,9 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { courtLabel, type Rayon } from "@/lib/shop/rayons";
+import type { Rayon } from "@/lib/shop/rayons";
+import { entreesDesRayons } from "@/lib/shop/menu";
 import { ROUTES } from "@/config/site";
 import type { BrandSettings } from "@/config/brand";
-import { AccountLink, MobileNav, NavList, PrimaryNav, SearchField } from "@/components/marketing/header-client";
+import type { TagProduit } from "@/lib/shop/catalog";
+import { AccountLink, MobileNav, NavList, PrimaryNav, SearchField, type EntreeNav } from "@/components/marketing/header-client";
 import { CartLink } from "@/components/shop/cart-widgets";
 import { UTILITY_BAR } from "@/components/marketing/home/content";
 
@@ -32,12 +34,17 @@ import { UTILITY_BAR } from "@/components/marketing/home/content";
  * midi. Le libellé du menu est court — « Figurines », pas « Figurines Manga /
  * Anime » — parce que six entrées doivent tenir sur une ligne de 1440 px ; on
  * garde donc le premier mot du libellé de section.
+ *
+ * Chaque rayon porte en plus un volet, construit par `lib/shop/menu.ts` : ce
+ * qu'il contient vraiment, pris dans le catalogue. Les règles qui le
+ * gouvernent — combien d'entrées, dans quel ordre, avec quel mot — vivent dans
+ * ce module pur, où elles se testent.
  */
-function navDe(rayons: readonly Rayon[]): { href: string; label: string }[] {
+function navDe(rayons: readonly Rayon[], tags: readonly TagProduit[], comptes: Record<string, number>): EntreeNav[] {
   return [
     { href: ROUTES.repair, label: "Réparation" },
     { href: ROUTES.shop, label: "Boutique" },
-    ...rayons.map((r) => ({ href: `${ROUTES.shop}?cat=${r.slug}`, label: courtLabel(r.label) })),
+    ...entreesDesRayons(rayons, tags, comptes),
     { href: ROUTES.contact, label: "Magasin" },
   ];
 }
@@ -77,11 +84,14 @@ export function BrandMark({ name, size = "md", mark = "square" }: { name: string
   );
 }
 
-export function SiteHeader({ brand, rayons }: { brand: BrandSettings; rayons: Rayon[] }) {
-  const NAV = navDe(rayons);
+export function SiteHeader({ brand, rayons, tags, comptes }: { brand: BrandSettings; rayons: Rayon[]; tags: TagProduit[]; comptes: Record<string, number> }) {
+  const NAV = navDe(rayons, tags, comptes);
   // Le tiroir du téléphone porte toute la navigation : il rouvre donc l'accueil,
-  // que le logo assure sur grand écran mais qu'un menu ouvert masque.
-  const NAV_MOBILE = [{ href: ROUTES.home, label: "Accueil" }, ...NAV];
+  // que le logo assure sur grand écran mais qu'un menu ouvert masque. Sans
+  // volet : un téléphone n'a pas de survol, et déplier trois sous-listes
+  // ferait du tiroir une page à défilement là où il tient aujourd'hui d'un
+  // coup d'œil. Les filtres de la boutique y donnent accès.
+  const NAV_MOBILE = [{ href: ROUTES.home, label: "Accueil" }, ...NAV.map((e) => ({ href: e.href, label: e.label }))];
 
   return (
     <>

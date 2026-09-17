@@ -169,6 +169,45 @@ photos client, fiches consoles.
    réelles, récapitulatif (prix et TVA vérifiés par le serveur), conditions, CGV.
    « Envoyer ma demande » crée le dossier puis redirige vers le paiement.
 
+## L'en-tête et ses volets
+
+Une seule ligne au-dessus de 1280 px : logo, six rayons, recherche, les trois
+utilitaires en mono, le bouton rouge. Les entrées de rayon viennent de
+`product_categories` — un rayon ouvert au back-office est dans le menu sans
+redéploiement — et portent un libellé court : « Figurines », pas « Figurines
+Manga / Anime », parce que six entrées doivent tenir sur une ligne de 1440 px.
+
+**Au survol, un rayon montre ce qu'il contient.** « Consoles » déplie les
+consoles en vente, « Jeux vidéo » leurs plateformes, « Figurines » leurs
+licences, puis un lien vers le rayon entier — « Voir les 9 consoles ». Trois
+règles le gouvernent :
+
+- **Ce qu'il montre vient du catalogue**, jamais d'une liste écrite en dur :
+  c'est `products.platform`, comptée par rayon (`getProductTags`). Une console
+  mise en vente le matin est dans le menu l'après-midi, et une valeur qui
+  disparaît du stock disparaît du menu.
+- **C'est le rayon qui nomme la colonne.** L'intitulé du volet est
+  `tagLabel` au pluriel : « plateformes » dans les jeux et les consoles,
+  « licences » dans les figurines. La même colonne, pas le même mot — c'est ce
+  qui évitait déjà à « Naruto Shippuden » de se lire comme une console dans le
+  filtre de la boutique.
+- **Huit entrées au plus**, les mieux fournies d'abord, puis le lien vers le
+  rayon. Un menu qui déroule quarante licences ne raccourcit plus rien : il
+  refait la page qu'il est censé remplacer. Un rayon vide n'ouvre pas de volet.
+
+Le volet s'ouvre au survol **et au clavier** — la tabulation sur un rayon le
+déplie et entre dans ses liens ; Échap referme et rend le focus au rayon. La
+fermeture au départ de la souris attend 120 ms : une trajectoire en diagonale
+vers le menu sort brièvement de l'entrée, et un volet qui se referme sous le
+curseur est inutilisable. L'entrée reste un lien vers le rayon : le volet
+abrège le chemin, il ne le remplace pas, et un appareil tactile — qui n'a pas
+de survol — navigue.
+
+Le tiroir du téléphone ne porte pas les volets : un téléphone n'a pas de
+survol, et déplier trois sous-listes ferait du tiroir une page à défilement là
+où il tient aujourd'hui d'un coup d'œil. Les filtres de la boutique y donnent
+accès.
+
 ## Responsive
 
 Le handoff mobile (écrans M1 à M6) est intégré et documenté à part :
