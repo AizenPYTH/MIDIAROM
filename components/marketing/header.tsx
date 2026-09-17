@@ -106,6 +106,10 @@ export function SiteHeader({ brand, rayons }: { brand: BrandSettings; rayons: Ra
         pour les navigateurs sans `backdrop-filter`.
       */}
       <header
+        /* Repère lu par la fiche de réparation du téléphone : elle remonte en
+           haut de l'écran à chaque étape, et doit s'arrêter juste sous cet
+           en-tête plutôt que dessous. */
+        data-entete-site="1"
         className="sticky top-0 z-40 border-b border-border-section bg-bg px-4 py-3 lg:px-[18px] lg:py-[14px] min-[1560px]:px-[26px]"
         style={{ backgroundColor: "var(--bg-blur)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}
       >

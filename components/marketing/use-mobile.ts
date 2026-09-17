@@ -6,6 +6,15 @@ import { useCallback, useSyncExternalStore } from "react";
 export const MQ_MOBILE = "(max-width: 1023px)";
 
 /**
+ * Le seuil du téléphone proprement dit — le `sm` de Tailwind, moins un pixel.
+ *
+ * Distinct de `MQ_MOBILE` : une tablette de 800 px reçoit la mise en page en
+ * une colonne, mais pas la trame de la fiche de réparation, qui est écrite pour
+ * un pouce et 390 px de large.
+ */
+export const MQ_TELEPHONE = "(max-width: 639px)";
+
+/**
  * « Sommes-nous sur un petit écran ? », lu comme une source extérieure.
  *
  * `useSyncExternalStore` plutôt qu'un `useState` alimenté par un effet : React
@@ -18,15 +27,18 @@ export const MQ_MOBILE = "(max-width: 1023px)";
  * balisage livré contient l'intégralité du contenu. Sans JavaScript, rien ne se
  * replie et la page reste entièrement lisible — c'est la règle du handoff.
  */
-export function useMobile(): boolean {
-  const souscrire = useCallback((rappel: () => void) => {
-    const mq = window.matchMedia(MQ_MOBILE);
-    mq.addEventListener("change", rappel);
-    return () => mq.removeEventListener("change", rappel);
-  }, []);
+export function useMobile(requete: string = MQ_MOBILE): boolean {
+  const souscrire = useCallback(
+    (rappel: () => void) => {
+      const mq = window.matchMedia(requete);
+      mq.addEventListener("change", rappel);
+      return () => mq.removeEventListener("change", rappel);
+    },
+    [requete],
+  );
   return useSyncExternalStore(
     souscrire,
-    () => window.matchMedia(MQ_MOBILE).matches,
+    () => window.matchMedia(requete).matches,
     () => false,
   );
 }

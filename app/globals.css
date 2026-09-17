@@ -1106,6 +1106,40 @@ body {
   [data-tile] [data-rule] { transform: scaleX(1) !important; }
 }
 
+/* ── /reparation au téléphone : la fiche est la page ─────────────────────────
+   Deux règles, et elles ne franchissent pas 640 px — le rendu de bureau est
+   inchangé. */
+@media (max-width: 639px) {
+  /*
+    La grille « Toutes les consoles prises en charge » ne s'impose plus.
+    Elle reposait, en bas de page, la question déjà posée par le premier écran
+    de la fiche : deux sélecteurs de console, l'un sous l'autre. Elle reste
+    atteignable — le lien du premier écran pointe sur `#catalogue`, et `:target`
+    l'ouvre — mais elle ne concurrence plus la fiche. Sans JavaScript.
+  */
+  #catalogue { display: none; }
+  #catalogue:target { display: block; }
+
+  /*
+    Une seule animation dans tout le parcours : l'écran entrant glisse de 16 px.
+    Un formulaire n'a pas à être animé, il a à répondre ; ce glissement dit
+    seulement « c'est un autre écran », ce qu'une apparition sèche ne dit pas.
+  */
+  [data-ecran] { animation: repair-slide 0.26s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  @keyframes repair-slide {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: none; }
+  }
+  [data-barre-etape] { transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+  /* Pas de survol sur un écran tactile : l'état est au doigt. */
+  [data-ecran] button:active { transform: scale(0.99); }
+}
+@media (max-width: 639px) and (prefers-reduced-motion: reduce) {
+  [data-ecran] { animation: none; }
+  [data-barre-etape] { transition: none; }
+}
+
 /* Angles nets, rayon 0 : règle de charte v9. Le projet porte des rayons hérités
    sur des dizaines de composants ; les neutraliser ici évite de réécrire chaque
    classe. Les cercles vrais — pastilles d'initiales, points d'état, anneau de

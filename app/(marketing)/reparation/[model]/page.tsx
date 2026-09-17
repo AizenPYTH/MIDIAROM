@@ -56,9 +56,13 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <section className="bg-ink-900 px-6 py-[64px] text-paper">
-        <div className="mx-auto grid max-w-[1280px] items-start gap-12 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
-          <div className="flex flex-col gap-[26px]">
+      {/* Au téléphone, la fiche de réparation va d'un bord à l'autre, comme sur
+          `/reparation` : c'est la même trame en cinq écrans, elle ne doit pas
+          apparaître ici encadrée de deux marges sombres. La présentation du
+          modèle garde son propre retrait, et rien ne change au-delà de 640 px. */}
+      <section className="bg-ink-900 px-0 pb-0 pt-[34px] text-paper sm:px-6 sm:py-[64px]">
+        <div className="mx-auto grid max-w-[1280px] items-start gap-8 sm:gap-12 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
+          <div className="flex flex-col gap-[26px] px-4 sm:px-0">
             <div className="text-[#a39c8c]">
               <Breadcrumbs items={[{ label: "Accueil", href: ROUTES.home }, { label: "Réparation", href: ROUTES.repair }, { label: model.name }]} />
             </div>

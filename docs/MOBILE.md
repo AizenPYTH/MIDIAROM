@@ -73,23 +73,57 @@ garde en revanche sa gouttière de 16 px au téléphone, posée à cette occasio
 
 ### M3 / M4 — Fiche de réparation
 
-Le parcours le plus important du site.
+Le parcours le plus important du site. Sous 640 px, il ne ressemble plus au
+bureau : **cinq écrans, une question par écran**. Le bureau en garde quatre et
+n'a pas changé d'un pixel — c'est le même état, le même modèle de données, les
+mêmes actions serveur. Le code vit dans `components/repair/repair-form.tsx`,
+derrière un unique `if (phone)` (`useMobile(MQ_TELEPHONE)`), avant le rendu de
+bureau resté intact.
 
-- **Étapes 1-2 sur fond encre**, 3-4 sur papier — la carte se fond dans la section
-  sombre qui l'accueille, puis repasse sur papier pour la saisie de texte.
-  Attention au piège signalé par le handoff : une ligne sélectionnée garde son fond
-  clair `--selection`, son texte doit donc repasser en encre foncée.
-- **Barre d'action collée en bas** : `sticky`, pas `fixed` — le clavier tactile la
-  pousse au lieu de la recouvrir. Elle porte la barre de progression et **le total
-  en cours** (« Continuer · 128 € ») ; rien n'est affiché tant que la prestation
-  est « sur devis », ce qui est le cas de tout le catalogue actuel.
-- Étape 1 en 2 colonnes, boutons de 60 px de haut minimum.
-- Étape 2 en pleine largeur, case 18 × 18 alignée en haut, prix sur la ligne du
-  libellé, note en dessous.
-- Étape 3 : zone de texte non redimensionnable, **bouton d'appareil photo**
-  (`capture="environment"`) à côté de la zone de dépôt, et **récapitulatif compact**
-  (appareil, prestation, estimation) que le bureau n'affiche qu'à l'étape 4.
-- Étape 4 : un champ par ligne.
+Les cinq écrans : **la console**, **le modèle**, **l'intervention**, **la
+panne**, **l'envoi**. L'étape 1 du bureau se lit en deux écrans — d'où cinq
+écrans pour quatre étapes ; `phase` (`marque` / `modele`) porte cette coupure.
+
+- **La fiche est la page.** `/reparation` perd sous 640 px son bandeau sombre,
+  son titre, son paragraphe d'introduction et les quatre étapes de « comment ça
+  marche » : la progression en haut de la fiche raconte déjà la même chose. La
+  grille « toutes les consoles » descend derrière le lien « Voir les N consoles
+  prises en charge » (une bascule `:target`, sans JavaScript), au lieu de poser
+  au bas de la page un second sélecteur de console.
+- **Bandeau de progression**, en encre : retour de 38 px, `Étape N sur 5 · <nom
+  de l'écran>` en mono 10 px, un filet rouge de 2 px, et « Aide ». Il remplace
+  l'anneau, le titre d'étape en 33 px et le bloc « Estimation » — trois objets
+  pour dire une chose. Le chiffre, lui, vit sur le bouton, là où le pouce est
+  déjà.
+- **Fil des choix** : la console puis l'intervention restent affichées en
+  pastilles cliquables sous le bandeau. Le contexte est permanent au lieu d'être
+  réaffirmé par un récapitulatif à chaque écran.
+- **Barre d'action collée en bas** : `sticky`, pas `fixed` — le clavier tactile
+  la pousse au lieu de la recouvrir. Son libellé dit ce qui manque
+  (« Choisissez votre console », « Décrivez la panne ») plutôt que « Continuer »
+  sur un bouton éteint.
+- Écrans 1 et 2 : des **lignes** de 60 px, pas des cartes — nom en 19 px, repère
+  en mono, chevron à droite.
+- Écran 3 : recherche, puis **une seule liste à plat** (les familles
+  d'intervention ne faisaient qu'ajouter des paliers), case **carrée** de 20 px,
+  prix à droite ; les options passent sous un filet, en « À ajouter ».
+- Écran 4 : zone de texte de 118 px, compteur honnête (« Encore N caractères, ou
+  cochez un symptôme » — la règle de validation, mot pour mot), pastilles de
+  symptôme de 44 px, **bouton d'appareil photo** (`capture="environment"`),
+  numéro de série et « déjà ouverte ».
+- Écran 5 : un champ par ligne, étiquettes permanentes, et le **récapitulatif en
+  dernier**, juste avant le bouton, avec l'estimation en 20 px.
+
+Deux points de mise en œuvre qui se sont payés cher :
+
+- **La remontée d'écran déduit la hauteur de l'en-tête collant du site**
+  (`[data-entete-site]`, mesurée et non écrite en dur). Remonter sur le haut de
+  la fiche posait le bandeau d'étape et la question *sous* l'en-tête, haut de
+  deux lignes au téléphone : l'écran s'ouvrait sur sa troisième ligne.
+- **Elle ne se déclenche pas au montage.** Sur `/reparation/<modèle>`, la fiche
+  n'ouvre pas la page : la console, sa photo et la liste de ses interventions la
+  précèdent, et remonter dessus à l'arrivée escamotait ce que le visiteur venu
+  de la recherche était précisément venu lire.
 
 La barre d'onglets basse s'efface sur les écrans dont la fiche est le contenu
 (`/reparation`, `/reparation/<modèle>`, `/commande/<id>`) : le design de référence
@@ -114,10 +148,6 @@ barre d'action au flux de la page.
 - **Libellés courts du bandeau de garanties** : les textes viennent du bloc CMS
   `homepage.reassurance`. Les raccourcir automatiquement reviendrait à réécrire du
   contenu client ; la bande défile, les libellés restent entiers.
-- **En-tête contextuel de la fiche de réparation** : le header du site reste en
-  place au lieu d'être remplacé par « ← Fiche de réparation · Étape N / 4 ». La
-  barre de progression a été reportée sur la barre d'action basse, où elle reste
-  visible pendant tout le défilement de l'étape.
 - **Liens du pied de page** : ils passent à la ligne au lieu de former une colonne
   stricte — le pied compte treize liens plus les réseaux, une colonne en ferait
   une page à elle seule.
@@ -133,6 +163,23 @@ publiques et des 3 routes de back-office à 360, 390 et 430 px (la boutique et l
 `scrollWidth - clientWidth`, de la hauteur de chaque commande et de la taille de
 police de chaque champ. Résultat attendu et obtenu : **aucun débordement, aucune
 cible sous 44 px, aucun champ sous 16 px**, à chacune des trois largeurs.
+
+La trame en cinq écrans a été parcourue de bout en bout à 390 px sur une
+**construction de production** (`npm run build` puis `next start`) : écrans 1 → 5,
+progression 20 → 100 %, libellé du bouton juste à chaque étape, bandeau d'étape
+entièrement visible sous l'en-tête (`masque = 0`), `scrollWidth - clientWidth = 0`
+partout, aucune exception JavaScript.
+
+**Piège de mesure.** En émulation CDP, `window.innerWidth` reste périmé après une
+navigation — il rend la largeur de l'appareil **plus la barre de défilement**
+(390 + 16) tant qu'aucun recalcul n'a eu lieu, et le fond `fixed inset-0` s'étire
+d'autant. On lit alors un débordement de 16 px qui n'existe pas : `body.scrollWidth`
+vaut 390, rien ne dépasse, et la page ne défile pas latéralement. Réappliquer
+`Emulation.setDeviceMetricsOverride` avant de mesurer lève l'artefact.
+
+Ce qui ne se vérifie pas en émulation, et reste un choix assumé : que le clavier
+tactile **pousse** la barre d'action au lieu de la recouvrir. C'est ce que
+garantit `sticky` plutôt que `fixed`.
 
 Les captures sont refaites après chaque changement : le rendu de bureau est
 contrôlé à 1280 px dans la foulée, pour vérifier qu'aucune classe `sm:` n'a été

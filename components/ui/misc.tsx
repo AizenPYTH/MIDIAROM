@@ -74,7 +74,12 @@ export function Breadcrumbs({ items }: { items: { label: string; href?: string }
                 {item.label}
               </Link>
             ) : (
-              <span aria-current="page" className="text-ink">
+              /* Pas de couleur forcée sur l'échelon courant : le fil est posé
+                 aussi bien sur une page claire que sur le bandeau sombre de
+                 `/reparation/[model]`, où « PlayStation 4 » s'écrivait alors en
+                 encre foncée sur fond foncé — le nom de la page était invisible.
+                 C'est la graisse qui le distingue, et elle tient sur les deux. */
+              <span aria-current="page" className="font-semibold">
                 {item.label}
               </span>
             )}
