@@ -43,6 +43,13 @@ create table if not exists public.product_categories (
   updated_at timestamptz not null default now()
 );
 
+-- Rattrapage pour une base ayant reçu la version précédente de ce fichier,
+-- où la table existe sans `tag_label`. Placé ici, **avant** le premier
+-- commentaire et la première insertion qui nomment la colonne : plus bas, la
+-- migration échouait sur ces bases-là au lieu de les rattraper.
+alter table public.product_categories
+  add column if not exists tag_label text not null default 'plateforme';
+
 comment on table public.product_categories is
   'Les rayons de la boutique. Ajoutables et renommables depuis le back-office : ne jamais recoder cette liste en dur dans l''application.';
 comment on column public.product_categories.code is
@@ -71,10 +78,6 @@ on conflict (code) do nothing;
 update public.product_categories
    set tag_label = 'licence'
  where code = 'COLLECTIBLE' and tag_label = 'plateforme';
-
--- Rattrapage pour une base où la table existait avant l'ajout de `tag_label`.
-alter table public.product_categories
-  add column if not exists tag_label text not null default 'plateforme';
 
 -- `products.category` passe du type énuméré au texte, puis reçoit sa clé
 -- étrangère. La conversion est une simple projection : les valeurs sont déjà
