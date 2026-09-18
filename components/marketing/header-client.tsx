@@ -29,7 +29,7 @@ export function AccountLink({ onNavigate, className }: { onNavigate?: () => void
     <Link
       href={loggedIn ? ROUTES.account : ROUTES.login}
       onClick={onNavigate}
-      className={className ?? "whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-soft transition-colors hover:text-red"}
+      className={className ?? "whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-soft transition-colors hover:text-brand"}
     >
       {loggedIn ? "Mon espace" : "Compte"}
     </Link>
@@ -142,7 +142,7 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
             <Link
               href={ROUTES.repair}
               onClick={close}
-              className="mt-0.5 block bg-red p-[15px] text-center text-[16.5px] font-semibold text-white"
+              className="mt-0.5 block bg-brand p-[15px] text-center text-[16.5px] font-semibold text-white"
             >
               Demander un diagnostic
             </Link>
@@ -207,7 +207,7 @@ function Volet({ volet, onNavigate }: { volet: NonNullable<EntreeNav["volet"]>; 
             key={l.href}
             href={l.href}
             onClick={onNavigate}
-            className="block whitespace-nowrap px-[13px] py-[7px] text-[14.5px] font-medium text-ink transition-colors hover:bg-surface-muted hover:text-red"
+            className="block whitespace-nowrap px-[13px] py-[7px] text-[14.5px] font-medium text-ink transition-colors hover:bg-surface-muted hover:text-brand"
           >
             {l.label}
           </Link>
@@ -215,7 +215,7 @@ function Volet({ volet, onNavigate }: { volet: NonNullable<EntreeNav["volet"]>; 
         <Link
           href={volet.plus.href}
           onClick={onNavigate}
-          className="mt-1.5 block whitespace-nowrap border-t border-border px-[13px] pb-[7px] pt-[11px] font-mono text-[10.5px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-red"
+          className="mt-1.5 block whitespace-nowrap border-t border-border px-[13px] pb-[7px] pt-[11px] font-mono text-[10.5px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-brand"
         >
           {volet.plus.label} →
         </Link>
@@ -308,7 +308,7 @@ export function NavList({ items, courant }: { items: EntreeNav[]; courant: strin
             aria-haspopup={item.volet ? true : undefined}
             // Le clic mène au rayon : le volet a fait son office, il se ferme.
             onClick={item.volet ? fermer : undefined}
-            className={`whitespace-nowrap border-b-2 pb-[3px] text-ink transition-colors ${actif ? "border-red" : "border-transparent hover:border-border-strong"}`}
+            className={`whitespace-nowrap border-b-2 pb-[3px] text-ink transition-colors ${actif ? "border-brand" : "border-transparent hover:border-border-strong"}`}
           >
             {item.label}
           </Link>

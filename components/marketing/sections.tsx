@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils/cn";
  * charte sombre. Cette direction n'a qu'une couleur, et une lueur colorée sur
  * du blanc se lit comme une tache. Il ne reste que le chiffre.
  */
-const STEP_TONE = "text-red";
+const STEP_TONE = "text-brand";
 
 /**
  * « Quatre temps, zéro surprise » : quatre cartes en verre, chacune portant une

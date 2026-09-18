@@ -2,6 +2,8 @@
 export interface FormModel {
   id: string;
   name: string;
+  /** « PS5 », « Switch OLED » : le nom court du catalogue, quand il existe. */
+  short: string;
   slug: string;
   tag: string; // précision affichée en mono sous le nom (variantes ou année)
   brandId: string;
@@ -16,6 +18,13 @@ export interface FormPlatform {
   key: string;
   label: string;
   note: string;
+  /**
+   * Le nom du visuel de la famille (`lib/content/platform-visuals.ts`).
+   *
+   * C'est le slug de la marque, pas son identifiant : `key` porte un UUID, qui
+   * ne nommera jamais un fichier. La tuile restait donc noire.
+   */
+  visuel: string;
 }
 
 export interface FormRepair {
@@ -73,6 +82,15 @@ export interface FormOffer {
   options: FormOption[];
   packs: FormPack[];
   shippingMethods: FormShipping[];
+  /**
+   * Ce que l'intervention couvre déjà, par son nom.
+   *
+   * Le serveur retire ces options de `options` — on ne vend pas deux fois le
+   * même geste. Sans leur nom, le client cherche « nettoyage » dans une liste
+   * qui n'en contient pas et croit l'atelier incomplet. La liste est donc
+   * annoncée, et la règle reste appliquée côté serveur.
+   */
+  includedNames: string[];
 }
 
 export interface FormConditions {

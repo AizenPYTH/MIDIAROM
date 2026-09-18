@@ -59,7 +59,7 @@ export function MobileTabBar() {
           const active = href === ROUTES.home ? pathname === ROUTES.home : pathname.startsWith(href);
           return (
             <Link key={href} href={href} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-1.5 px-1 pb-0.5", active ? "text-ink" : "text-ink-muted")}>
-              <Icon size={18} strokeWidth={1.5} className={active ? "text-red" : undefined} aria-hidden="true" />
+              <Icon size={18} strokeWidth={1.5} className={active ? "text-brand" : undefined} aria-hidden="true" />
               <span className="font-mono text-[9.5px] uppercase tracking-[0.12em]">{label}</span>
             </Link>
           );

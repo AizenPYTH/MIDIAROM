@@ -70,7 +70,7 @@ function Frame({
         <span
           className={cn(
             "absolute left-[11px] top-[11px] z-10 px-[9px] py-[5px] font-mono text-[10px] uppercase tracking-[0.07em]",
-            badgeTone === "red" ? "bg-red text-white" : badgeTone === "outline" ? "bg-bg/92 text-ink ring-1 ring-border" : "bg-ink text-white",
+            badgeTone === "red" ? "bg-brand text-white" : badgeTone === "outline" ? "bg-bg/92 text-ink ring-1 ring-border" : "bg-ink text-white",
           )}
         >
           {badge}
@@ -118,7 +118,7 @@ export function ProductCard({ product, rayonLabel }: { product: Product; rayonLa
             même hauteur de carte, sans creuser le vide d'une zone de trois
             lignes toujours vide. Un nom qui déborde prend sa troisième ligne. */}
         <h3 className="mt-2 min-h-[2lh] text-[15.5px] font-semibold leading-[1.32] tracking-[-0.014em] text-ink">
-          <Link href={href} className="transition-colors hover:text-red">
+          <Link href={href} className="transition-colors hover:text-brand">
             {product.name}
           </Link>
         </h3>
@@ -134,7 +134,7 @@ export function ProductCard({ product, rayonLabel }: { product: Product; rayonLa
             <span
               className={cn(
                 "whitespace-nowrap font-mono text-[10.5px] uppercase tracking-[0.05em]",
-                state === "OUT" ? "text-red" : state === "LOW" ? "text-warning" : "text-ink-muted",
+                state === "OUT" ? "text-brand" : state === "LOW" ? "text-warning" : "text-ink-muted",
               )}
             >
               {stockLabel(product.quantity, product.low_stock_threshold, product.condition)}

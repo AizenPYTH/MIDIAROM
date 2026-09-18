@@ -72,8 +72,8 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
           initialModelId={repair.model_id}
           initialRepairs={repairs.map(toFormRepair)}
           initialRepairId={repair.id}
-          initialOffer={toFormOffer(offer)}
-          initialStep={2}
+          initialOffer={toFormOffer(offer, offer.includedNames)}
+         
           initialCustomer={user ? { first_name: user.profile.first_name ?? "", last_name: user.profile.last_name ?? "", email: user.email, phone: user.profile.phone ?? "" } : null}
           initialAddress={defaultAddress ? { line1: defaultAddress.line1, line2: defaultAddress.line2 ?? "", postal_code: defaultAddress.postal_code, city: defaultAddress.city } : null}
           isLoggedIn={Boolean(user)}

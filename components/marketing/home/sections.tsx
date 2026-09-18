@@ -27,7 +27,7 @@ const WRAP = "page-wrap px-[22px]";
 /** L'intitulé rouge qui ouvre chaque section. */
 function Eyebrow({ children, onDark = false }: { children: React.ReactNode; onDark?: boolean }) {
   return (
-    <span className={`font-mono text-[11.5px] uppercase tracking-[0.14em] ${onDark ? "text-red-on-dark" : "text-red"}`}>{children}</span>
+    <span className={`font-mono text-[11.5px] uppercase tracking-[0.14em] ${onDark ? "text-brand-on-dark" : "text-brand"}`}>{children}</span>
   );
 }
 
@@ -67,7 +67,7 @@ export function Hero() {
           <div data-enter="3" className="mt-0.5 flex flex-wrap gap-3">
             <Link
               href={ROUTES.repair}
-              className="rounded-[9px] bg-red px-[26px] py-4 text-[16.5px] font-semibold text-white transition-colors duration-200 hover:bg-ink"
+              className="rounded-[9px] bg-brand px-[26px] py-4 text-[16.5px] font-semibold text-white transition-colors duration-200 hover:bg-ink"
             >
               Demander un diagnostic
             </Link>
@@ -124,7 +124,7 @@ export function Hero() {
             data-scan="1"
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-0 h-0.5"
-            style={{ background: "linear-gradient(90deg, rgba(216,31,38,0) 0%, #d81f26 22%, #d81f26 78%, rgba(216,31,38,0) 100%)" }}
+            style={{ background: "linear-gradient(90deg, rgba(15,94,215,0) 0%, #0f5ed7 22%, #0b7f63 78%, rgba(11,127,99,0) 100%)" }}
           />
 
           {/* La croix directionnelle : une séquence de touches, en détail. */}
@@ -142,7 +142,7 @@ export function Hero() {
           </span>
 
           <span className="pointer-events-none absolute bottom-3.5 left-3.5 flex items-center gap-2 bg-ink/90 px-[11px] py-[7px]">
-            <span data-hud-dot="1" aria-hidden="true" className="block h-1.5 w-1.5 bg-red" />
+            <span data-hud-dot="1" aria-hidden="true" className="block h-1.5 w-1.5 bg-brand" />
             <span className="font-mono text-[10.5px] uppercase tracking-[0.09em] text-on-dark">Diagnostic en cours</span>
           </span>
         </div>
@@ -262,7 +262,7 @@ export function Repairs({ models = [], diagnostic }: { models?: { slug: string }
         </p>
         <Link
           href={ROUTES.repair}
-          className="whitespace-nowrap bg-ink px-5 py-[13px] font-mono text-[11.5px] uppercase tracking-[0.06em] text-white transition-colors duration-200 hover:bg-red"
+          className="whitespace-nowrap bg-ink px-5 py-[13px] font-mono text-[11.5px] uppercase tracking-[0.06em] text-white transition-colors duration-200 hover:bg-brand"
         >
           Décrire ma panne
         </Link>
@@ -285,7 +285,7 @@ export function Journey({ diagnostic }: { diagnostic?: string | null }) {
           </div>
           <Link
             href={ROUTES.repair}
-            className="whitespace-nowrap rounded-[9px] bg-red px-6 py-[15px] text-[16px] font-semibold text-white transition-colors duration-200 hover:bg-white hover:text-ink"
+            className="whitespace-nowrap rounded-[9px] bg-brand px-6 py-[15px] text-[16px] font-semibold text-white transition-colors duration-200 hover:bg-white hover:text-ink"
           >
             Commencer mon diagnostic
           </Link>
@@ -294,7 +294,7 @@ export function Journey({ diagnostic }: { diagnostic?: string | null }) {
         <ol className="grid list-none gap-[26px] p-0" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(224px, 1fr))" }}>
           {stepsAvecTarif(diagnostic ?? null).map((s) => (
             <li key={s.n} data-rise="1" className="flex flex-col gap-2.5 pt-4" style={{ borderTop: "1px solid rgba(242,242,244,0.26)" }}>
-              <span className="font-mono text-[12px] tracking-[0.06em] text-red-on-dark">{s.n}</span>
+              <span className="font-mono text-[12px] tracking-[0.06em] text-brand-on-dark">{s.n}</span>
               <strong className="text-[18px] font-semibold tracking-[-0.02em]">{s.title}</strong>
               <span className="text-[14.5px] leading-[1.55] text-on-dark-2">{s.body}</span>
             </li>
@@ -348,7 +348,7 @@ export function Workshop({ video }: { video?: { src: string; poster?: string } }
     <ul className="mt-1 flex list-none flex-col p-0">
       {SAVOIR_FAIRE.map((s) => (
         <li key={s} className="flex items-baseline gap-[11px] border-t border-border-hairline py-[11px]">
-          <span aria-hidden="true" className="mt-[7px] block h-1.5 w-1.5 shrink-0 bg-red" />
+          <span aria-hidden="true" className="mt-[7px] block h-1.5 w-1.5 shrink-0 bg-brand" />
           <span className="text-[14.5px] leading-[1.45]">{s}</span>
         </li>
       ))}
@@ -431,7 +431,7 @@ export function ShopCategories({ heading = true }: { heading?: boolean } = {}) {
           </div>
           <Link
             href={ROUTES.shop}
-            className="inline-flex min-h-[44px] items-center whitespace-nowrap border-b-2 border-red pb-[3px] font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink sm:min-h-0"
+            className="inline-flex min-h-[44px] items-center whitespace-nowrap border-b-2 border-brand pb-[3px] font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink sm:min-h-0"
           >
             Tout le catalogue
           </Link>
@@ -507,7 +507,7 @@ export function ProductWall({ products, total }: { products: Product[]; total: n
             </li>
           ))}
         </ul>
-        <Link href={`${ROUTES.shop}?tri=recent`} className="inline-flex min-h-[44px] items-center whitespace-nowrap font-mono text-[11.5px] text-ink-muted transition-colors hover:text-red sm:min-h-0">
+        <Link href={`${ROUTES.shop}?tri=recent`} className="inline-flex min-h-[44px] items-center whitespace-nowrap font-mono text-[11.5px] text-ink-muted transition-colors hover:text-brand sm:min-h-0">
           Trier : nouveautés
         </Link>
       </div>
@@ -568,7 +568,7 @@ export function Store({ brand }: { brand: BrandSettings }) {
             {brand.phone ? (
               <a
                 href={`tel:${brand.phone.replace(/\s/g, "")}`}
-                className="whitespace-nowrap bg-ink px-[22px] py-3.5 text-[15.5px] font-semibold text-white transition-colors duration-200 hover:bg-red"
+                className="whitespace-nowrap bg-ink px-[22px] py-3.5 text-[15.5px] font-semibold text-white transition-colors duration-200 hover:bg-brand"
               >
                 {brand.phone}
               </a>

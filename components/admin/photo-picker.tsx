@@ -119,7 +119,7 @@ export function PhotoPicker({ name = "images", folder = "produits", initial = []
                 type="button"
                 onClick={() => retirer(p)}
                 aria-label={`Retirer la photo ${i + 1}`}
-                className="absolute right-1.5 top-1.5 flex h-6 w-6 cursor-pointer items-center justify-center border border-border-strong bg-bg/90 text-[15px] leading-none text-ink hover:border-red hover:text-red"
+                className="absolute right-1.5 top-1.5 flex h-6 w-6 cursor-pointer items-center justify-center border border-border-strong bg-bg/90 text-[15px] leading-none text-ink hover:border-brand hover:text-brand"
               >
                 ×
               </button>

@@ -26,7 +26,7 @@ export default async function NewListingPage({ searchParams }: { searchParams: P
 
   return (
     <div className="w-full page-wrap px-4 py-7 sm:px-[30px]">
-      <Link href="/admin" className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted transition-colors hover:text-red">
+      <Link href="/admin" className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted transition-colors hover:text-brand">
         ← Back-office
       </Link>
       <h1 className="mt-2 text-[clamp(23px,2.6vw,32px)] font-bold tracking-[-0.03em] text-ink">Nouvelle annonce</h1>

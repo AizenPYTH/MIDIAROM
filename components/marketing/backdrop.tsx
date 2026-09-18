@@ -20,5 +20,5 @@ export function Backdrop() {
  * s'éteint, il ne pulse pas. Carré, comme tout le reste de cette direction.
  */
 export function PulseDot({ className }: { className?: string }) {
-  return <span aria-hidden="true" data-hud-dot="1" className={`inline-block h-[6px] w-[6px] shrink-0 bg-red ${className ?? ""}`} />;
+  return <span aria-hidden="true" data-hud-dot="1" className={`inline-block h-[6px] w-[6px] shrink-0 bg-brand ${className ?? ""}`} />;
 }

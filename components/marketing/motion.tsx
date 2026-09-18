@@ -107,7 +107,7 @@ export function CursorHalo({ className }: { className?: string }) {
       ref={ref}
       aria-hidden="true"
       className={cn("pointer-events-none absolute h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-500", className)}
-      style={{ background: "radial-gradient(circle, rgba(216,31,38,0.05), transparent 62%)", opacity: on ? 1 : 0 }}
+      style={{ background: "radial-gradient(circle, rgba(15,94,215,0.05), transparent 62%)", opacity: on ? 1 : 0 }}
     />
   );
 }

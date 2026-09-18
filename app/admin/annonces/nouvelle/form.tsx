@@ -39,7 +39,7 @@ const ETATS: { value: string; label: string }[] = [
 ];
 
 const CHAMP =
-  "w-full rounded-[2px] border border-border-strong bg-field px-3.5 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-red focus:outline-none sm:text-[15px]";
+  "w-full rounded-[2px] border border-border-strong bg-field px-3.5 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none sm:text-[15px]";
 
 function Label({ htmlFor, children, hint }: { htmlFor: string; children: React.ReactNode; hint?: string }) {
   return (
@@ -147,7 +147,7 @@ export function NewListingForm({ initialCategory, rayons }: { initialCategory: s
         c'est le magasin qui décide, pas nous.
       */}
       <label htmlFor="publish" className="flex items-start gap-3 border border-border bg-surface-muted p-4">
-        <input id="publish" name="publish" type="checkbox" className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[#d81f26]" />
+        <input id="publish" name="publish" type="checkbox" className="mt-0.5 h-[18px] w-[18px] shrink-0 accent-[var(--brand)]" />
         <span className="text-[14px] leading-[1.45] text-ink-soft">
           <strong className="font-semibold text-ink">Mettre en ligne tout de suite.</strong> Sans cette case, l&apos;article est créé
           hors ligne : vous le complétez sur sa fiche, puis vous le publiez.
@@ -158,11 +158,11 @@ export function NewListingForm({ initialCategory, rayons }: { initialCategory: s
         <button
           type="submit"
           disabled={pending}
-          className="cursor-pointer rounded-[2px] bg-red px-7 py-3.5 text-[15.5px] font-semibold text-white transition-colors hover:bg-ink disabled:opacity-50"
+          className="cursor-pointer rounded-[2px] bg-brand px-7 py-3.5 text-[15.5px] font-semibold text-white transition-colors hover:bg-ink disabled:opacity-50"
         >
           {pending ? "Création…" : "Créer l'article"}
         </button>
-        <Link href="/admin" className="text-[14.5px] text-ink-soft transition-colors hover:text-red">
+        <Link href="/admin" className="text-[14.5px] text-ink-soft transition-colors hover:text-brand">
           Annuler
         </Link>
       </div>

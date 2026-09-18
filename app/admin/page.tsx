@@ -190,7 +190,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   data-n="1"
                   className={cn(
                     "text-[34px] font-extrabold leading-none tracking-[-0.04em] sm:text-[44px]",
-                    r === "attente" && n > 0 ? "text-red" : "text-ink",
+                    r === "attente" && n > 0 ? "text-brand" : "text-ink",
                   )}
                 >
                   {n}
@@ -209,7 +209,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </h1>
             {/* Sur téléphone, « Nouvelle réparation » vit dans la barre basse :
                 le répéter ici prendrait une ligne pour rien. */}
-            <Link href="/admin/reception" className="hidden bg-red px-[18px] py-3 text-[14.5px] font-semibold text-white transition-colors hover:bg-ink sm:inline-block">
+            <Link href="/admin/reception" className="hidden bg-brand px-[18px] py-3 text-[14.5px] font-semibold text-white transition-colors hover:bg-ink sm:inline-block">
               Nouvelle réparation
             </Link>
           </div>
@@ -298,7 +298,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   className="flex min-h-[44px] items-start gap-[11px] py-3 lg:min-h-0"
                   style={{ borderTop: "1px solid rgba(244,244,246,0.16)" }}
                 >
-                  <span aria-hidden="true" className={cn("mt-1.5 block h-[7px] w-[7px] shrink-0", t.urgent ? "bg-red" : "bg-on-dark-3")} />
+                  <span aria-hidden="true" className={cn("mt-1.5 block h-[7px] w-[7px] shrink-0", t.urgent ? "bg-brand" : "bg-on-dark-3")} />
                   <span className="min-w-0">
                     <span className="block text-[14.5px] leading-[1.35] text-on-dark">{t.label}</span>
                     <span className="mt-0.5 block font-mono text-[11px] text-on-dark-3">{t.meta}</span>
@@ -318,7 +318,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <section className={PANNEAU}>
             <div className="mb-3.5 flex items-baseline justify-between gap-3">
               <h2 className="text-[17px] font-bold tracking-[-0.022em] text-ink">Commandes boutique</h2>
-              <Link href="/admin/shop-orders" className="font-mono text-[10.5px] uppercase tracking-[0.07em] text-ink-faint transition-colors hover:text-red">
+              <Link href="/admin/shop-orders" className="font-mono text-[10.5px] uppercase tracking-[0.07em] text-ink-faint transition-colors hover:text-brand">
                 Tout voir
               </Link>
             </div>
@@ -334,7 +334,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                       </span>
                       <span className="whitespace-nowrap text-right">
                         <span className="block font-mono text-[13.5px]">{formatPrice(c.total_cents)}</span>
-                        <span className={cn("mt-0.5 block font-mono text-[10px] uppercase tracking-[0.07em]", aExpedier ? "text-red" : "text-ink-faint")}>
+                        <span className={cn("mt-0.5 block font-mono text-[10px] uppercase tracking-[0.07em]", aExpedier ? "text-brand" : "text-ink-faint")}>
                           {aExpedier ? "À expédier" : c.status === "SHIPPED" ? "Expédiée" : "Prête"}
                         </span>
                       </span>
@@ -382,7 +382,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <Link href="/admin#liste" className="flex min-h-[48px] shrink-0 items-center justify-center border border-border-strong bg-surface px-[17px] font-mono text-[11px] uppercase tracking-[0.06em] text-ink">
           Réparations
         </Link>
-        <Link href="/admin/reception" className="flex min-h-[48px] flex-1 items-center justify-center bg-red text-[16.5px] font-semibold text-white">
+        <Link href="/admin/reception" className="flex min-h-[48px] flex-1 items-center justify-center bg-brand text-[16.5px] font-semibold text-white">
           Nouvelle réparation
         </Link>
       </div>

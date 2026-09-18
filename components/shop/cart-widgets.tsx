@@ -21,7 +21,7 @@ export function CartLink({ className }: { className?: string }) {
   return (
     <Link
       href={ROUTES.cart}
-      className={cn("inline-flex min-h-[44px] items-center whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-soft transition-colors hover:text-red lg:min-h-0", className)}
+      className={cn("inline-flex min-h-[44px] items-center whitespace-nowrap font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-soft transition-colors hover:text-brand lg:min-h-0", className)}
       aria-label={`Panier, ${count} article${count > 1 ? "s" : ""}`}
     >
       Panier ({ready ? count : 0})
@@ -48,7 +48,7 @@ export function AddToCartButton({ productId, available, className, size = "sm" }
         // Contour au repos, rouge au survol de la carte entière (`[data-buy]`
         // dans globals.css) : le rouge marque l'action visée, pas huit boutons
         // à la fois dans une grille.
-        "cursor-pointer whitespace-nowrap border border-ink bg-transparent font-semibold text-ink transition-colors hover:border-red hover:bg-red hover:text-white disabled:cursor-not-allowed disabled:border-border-strong disabled:bg-transparent disabled:text-ink-muted disabled:opacity-100",
+        "cursor-pointer whitespace-nowrap border border-ink bg-transparent font-semibold text-ink transition-colors hover:border-brand hover:bg-brand hover:text-white disabled:cursor-not-allowed disabled:border-border-strong disabled:bg-transparent disabled:text-ink-muted disabled:opacity-100",
         // Au doigt le bouton « Ajouter » fait 44 px de haut ; à la souris il reprend
         // les proportions compactes de la carte du handoff.
         size === "sm" ? "px-3 py-[13px] text-[14px]" : "px-5 py-[15px] text-[15px]",

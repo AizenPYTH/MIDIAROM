@@ -131,7 +131,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
               </p>
             )}
           </div>
-          <RepairForm models={form.models} conditions={form.conditions} initialModelId={model.id} initialRepairs={formulaire} initialStep={2} initialCustomer={null} initialAddress={null} isLoggedIn={false} />
+          <RepairForm models={form.models} conditions={form.conditions} initialModelId={model.id} initialRepairs={formulaire} initialCustomer={null} initialAddress={null} isLoggedIn={false} />
         </div>
       </section>
       <Container className="py-10">

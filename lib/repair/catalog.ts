@@ -33,6 +33,8 @@ export interface RepairOffer {
   options: RepairOption[];
   packs: PackWithItems[];
   includedOptionIds: string[];
+  /** Le nom des options déjà comprises, pour l'annoncer au client. */
+  includedNames: string[];
   shippingMethods: ShippingMethod[];
 }
 
@@ -191,6 +193,7 @@ export async function getRepairOffer(repair: RepairWithRelations): Promise<Repai
 
   return {
     repair,
+    includedNames: includedOptionIds.map((id) => optionsById.get(id)?.name).filter((n): n is string => Boolean(n)),
     options: compatibleOptions.map((o) => strip(o) as RepairOption),
     packs: compatiblePacks.map((p) => ({ ...(strip(p) as Pack), optionIds: p.optionIds, options: p.options.map((o) => strip(o) as RepairOption) })),
     includedOptionIds,

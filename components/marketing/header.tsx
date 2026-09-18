@@ -78,7 +78,7 @@ export function DPad({ arms = "#c9c9ce" }: { arms?: string }) {
 export function BrandMark({ name, size = "md", mark = "square" }: { name: string; inverted?: boolean; size?: "md" | "sm"; mark?: "square" | "dpad" }) {
   return (
     <span className="flex items-center gap-[9px] whitespace-nowrap">
-      {mark === "dpad" ? <DPad /> : <span aria-hidden="true" className={`block shrink-0 bg-red ${size === "sm" ? "h-[11px] w-[11px]" : "h-3 w-3"}`} />}
+      {mark === "dpad" ? <DPad /> : <span aria-hidden="true" className={`block shrink-0 bg-brand ${size === "sm" ? "h-[11px] w-[11px]" : "h-3 w-3"}`} />}
       <span className={`font-display font-extrabold uppercase tracking-[-0.026em] ${size === "sm" ? "text-[17.5px]" : "text-[16.5px] lg:text-[19px]"}`}>{name}</span>
     </span>
   );
@@ -159,10 +159,10 @@ export function SiteHeader({ brand, rayons, tags }: { brand: BrandSettings; rayo
           <SearchField />
 
           <div className="order-1 flex min-w-0 items-center gap-[18px] whitespace-nowrap lg:order-none lg:gap-3 min-[1560px]:gap-[18px]">
-            <Link href={ROUTES.tracking} className="hidden font-mono text-[11px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-red lg:inline">
+            <Link href={ROUTES.tracking} className="hidden font-mono text-[11px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-brand lg:inline">
               Suivi
             </Link>
-            <AccountLink className="hidden font-mono text-[11px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-red lg:inline" />
+            <AccountLink className="hidden font-mono text-[11px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-brand lg:inline" />
             <CartLink className="lg:text-[11px] lg:tracking-[0.07em]" />
           </div>
 
@@ -172,7 +172,7 @@ export function SiteHeader({ brand, rayons, tags }: { brand: BrandSettings; rayo
                bord de la colonne quand la recherche est à son plafond ; sur
                deux lignes il évite le trou de 180 px qui s'ouvrait à sa droite
                et donnait un en-tête qui semble s'arrêter au milieu. */
-            className="hidden whitespace-nowrap bg-red px-[17px] py-[13px] text-[14.5px] font-semibold text-white transition-colors duration-200 hover:bg-ink lg:ml-auto lg:inline-block min-[1560px]:px-5"
+            className="hidden whitespace-nowrap bg-brand px-[17px] py-[13px] text-[14.5px] font-semibold text-white transition-colors duration-200 hover:bg-ink lg:ml-auto lg:inline-block min-[1560px]:px-5"
           >
             Demander un diagnostic
           </Link>

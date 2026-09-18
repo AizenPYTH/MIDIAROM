@@ -12,6 +12,7 @@ export function toFormModels(models: ConsoleModel[], brands: Brand[]): FormModel
     .map((m) => ({
       id: m.id,
       name: m.name,
+      short: m.short_name || m.name,
       slug: m.slug,
       tag: m.variants.length ? m.variants.join(", ") : m.release_year ? String(m.release_year) : (brandName.get(m.brand_id) ?? ""),
       brandId: m.brand_id,
@@ -47,9 +48,10 @@ export function toFormRepair(r: Repair & { fault: Fault; category?: RepairCatego
   };
 }
 
-export function toFormOffer(offer: RepairOffer): FormOffer {
+export function toFormOffer(offer: RepairOffer, includedNames: string[] = []): FormOffer {
   return {
     repairId: offer.repair.id,
+    includedNames,
     options: offer.options.map((o) => ({ id: o.id, name: o.name, note: o.short_description ?? "", priceCents: o.price_cents, isRecommended: o.is_recommended })),
     packs: offer.packs.map((p) => ({ id: p.id, name: p.name, note: p.short_description ?? `Comprend : ${p.options.map((o) => o.name).join(", ")}`, priceCents: p.price_cents, isRecommended: p.is_recommended, optionIds: p.optionIds })),
     shippingMethods: offer.shippingMethods.map((m) => ({ id: m.id, name: m.name, note: m.description ?? "", priceCents: m.price_cents, includesOutbound: m.includes_outbound, includesReturn: m.includes_return })),

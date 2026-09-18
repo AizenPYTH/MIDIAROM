@@ -38,7 +38,7 @@ const PAD = "px-[clamp(16px,4vw,64px)]";
 
 /** Le numéro de section, en mono rouge — la ponctuation de la page. */
 function Numero({ children, onDark = false }: { children: React.ReactNode; onDark?: boolean }) {
-  return <span className={`font-mono text-[11px] uppercase tracking-[0.16em] ${onDark ? "text-[var(--red-on-dark)]" : "text-red"}`}>{children}</span>;
+  return <span className={`font-mono text-[11px] uppercase tracking-[0.16em] ${onDark ? "text-[var(--red-on-dark)]" : "text-brand"}`}>{children}</span>;
 }
 
 function H2({ children }: { children: React.ReactNode }) {
@@ -90,8 +90,8 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
         dès 900 px ; ici, l'ordre du balisage est celui du téléphone.
       */}
       <div data-hero-a="1" className={`flex min-w-0 flex-col gap-[22px] ${PAD} pt-[clamp(22px,4.6vw,76px)]`}>
-        <span data-up="1" className="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-red">
-          <span data-blip="1" aria-hidden="true" className="block h-[7px] w-[7px] bg-red" />
+        <span data-up="1" className="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-brand">
+          <span data-blip="1" aria-hidden="true" className="block h-[7px] w-[7px] bg-brand" />
           Atelier ouvert · Marseille · depuis 1997
         </span>
 
@@ -163,7 +163,7 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-0 h-0.5"
             style={{
-              background: "linear-gradient(90deg, rgba(216,31,38,0) 0%, #d81f26 20%, #d81f26 80%, rgba(216,31,38,0) 100%)",
+              background: "linear-gradient(90deg, rgba(15,94,215,0) 0%, #0f5ed7 20%, #0b7f63 80%, rgba(11,127,99,0) 100%)",
             }}
           />
           {/*
@@ -190,7 +190,7 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
           page.
         */}
         <div data-up="3" className="flex flex-col gap-0.5 sm:flex-row sm:flex-wrap sm:gap-[11px]">
-          <Link href={ROUTES.repair} data-btn="1" className="block bg-red px-[30px] py-[18px] text-center text-[17px] font-semibold text-white hover:bg-ink sm:inline-block sm:w-auto">
+          <Link href={ROUTES.repair} data-btn="1" className="block bg-brand px-[30px] py-[18px] text-center text-[17px] font-semibold text-white hover:bg-ink sm:inline-block sm:w-auto">
             Demander un diagnostic
           </Link>
           <Link
@@ -292,7 +292,7 @@ export function MachinesV9({ familles }: { familles: FamilleVitrine[] }) {
               />
               <span aria-hidden="true" className="absolute inset-0" style={{ background: VOILE }} />
               <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 p-[22px]">
-                <span data-rule="1" aria-hidden="true" className="block h-0.5 w-10 bg-red" />
+                <span data-rule="1" aria-hidden="true" className="block h-0.5 w-10 bg-brand" />
                 <strong className="mt-1 text-[clamp(21px,2vw,25px)] font-bold tracking-[-0.03em]">{f.label}</strong>
                 <span className="font-mono text-[10.5px] tracking-[0.05em]" style={{ color: "#d3d3d8" }}>
                   {f.modeles.join(" · ")}
@@ -307,7 +307,7 @@ export function MachinesV9({ familles }: { familles: FamilleVitrine[] }) {
       </div>
 
       <div className="mt-[26px] flex flex-wrap items-center gap-[11px]">
-        <Link href={ROUTES.repair} data-btn="1" className="bg-red px-[26px] py-[16px] text-[16.5px] font-semibold text-white hover:bg-ink">
+        <Link href={ROUTES.repair} data-btn="1" className="bg-brand px-[26px] py-[16px] text-[16.5px] font-semibold text-white hover:bg-ink">
           Commencer une réparation
         </Link>
         <span className="font-mono text-[11.5px] text-ink-faint">Diagnostic sous 48 h · devis avant intervention</span>
@@ -366,7 +366,7 @@ export function PannesV9({ pannes }: { pannes: PanneVitrine[] }) {
         <p className="m-0 max-w-[62ch] text-[16px] leading-[1.5] text-ink-soft">
           Une panne absente de la liste, ou une console qui ne démarre plus sans raison identifiable&#8239;? Décrivez-la, le diagnostic tranchera.
         </p>
-        <Link href={ROUTES.repair} data-btn="1" className="whitespace-nowrap bg-ink px-6 py-[15px] font-mono text-[11.5px] uppercase tracking-[0.07em] text-white hover:bg-red">
+        <Link href={ROUTES.repair} data-btn="1" className="whitespace-nowrap bg-ink px-6 py-[15px] font-mono text-[11.5px] uppercase tracking-[0.07em] text-white hover:bg-brand">
           Décrire ma panne
         </Link>
       </div>
@@ -412,7 +412,7 @@ export function ParcoursV9() {
               de votre console
             </H2>
           </div>
-          <Link href={ROUTES.repair} data-btn="1" className="whitespace-nowrap bg-red px-7 py-[17px] text-[16.5px] font-semibold text-white hover:bg-white hover:text-ink">
+          <Link href={ROUTES.repair} data-btn="1" className="whitespace-nowrap bg-brand px-7 py-[17px] text-[16.5px] font-semibold text-white hover:bg-white hover:text-ink">
             Commencer mon diagnostic
           </Link>
         </div>
@@ -420,7 +420,7 @@ export function ParcoursV9() {
         <div data-g-step="1">
           {ETAPES.map((s) => (
             <div key={s.n} className="flex flex-col gap-2.5">
-              <span aria-hidden="true" className="block h-0.5 w-[34px] bg-red" />
+              <span aria-hidden="true" className="block h-0.5 w-[34px] bg-brand" />
               <span className="font-mono text-[11.5px] tracking-[0.08em] text-[var(--red-on-dark)]">{s.n}</span>
               <strong className="text-[19px] font-semibold tracking-[-0.022em]">{s.t}</strong>
               <span className="text-[15px] leading-[1.55] text-on-dark-2">{s.b}</span>
@@ -496,7 +496,7 @@ export function RayonsEnTuiles({ rayons }: { rayons: Rayon[] }) {
             />
             <span aria-hidden="true" className="absolute inset-0" style={{ background: VOILE }} />
             <span className="absolute inset-x-0 bottom-0 flex flex-col gap-[7px] p-[26px]">
-              <span data-rule="1" aria-hidden="true" className="block h-0.5 w-11 bg-red" />
+              <span data-rule="1" aria-hidden="true" className="block h-0.5 w-11 bg-brand" />
               <strong className="mt-1 text-[clamp(22px,2.2vw,32px)] font-extrabold tracking-[-0.034em]">{r.label}</strong>
               {redige ? (
                 <span className="text-[14.5px] leading-[1.4]" style={{ color: "#d3d3d8" }}>
@@ -525,7 +525,7 @@ export function BoutiqueV9({ rayons }: { rayons: Rayon[] }) {
         </div>
         <Link
           href={ROUTES.shop}
-          className="inline-flex min-h-[44px] items-center whitespace-nowrap border-b-2 border-red pb-[3px] font-mono text-[11.5px] uppercase tracking-[0.07em] sm:min-h-0"
+          className="inline-flex min-h-[44px] items-center whitespace-nowrap border-b-2 border-brand pb-[3px] font-mono text-[11.5px] uppercase tracking-[0.07em] sm:min-h-0"
         >
           Tout le catalogue
         </Link>
@@ -560,7 +560,7 @@ export function MagasinV9({ brand }: { brand: BrandSettings }) {
           </span>
           <div className="mt-2 flex flex-wrap gap-[11px]">
             {brand.phone ? (
-              <a href={`tel:${tel}`} data-btn="1" className="whitespace-nowrap bg-ink px-6 py-4 text-[16.5px] font-semibold text-white hover:bg-red">
+              <a href={`tel:${tel}`} data-btn="1" className="whitespace-nowrap bg-ink px-6 py-4 text-[16.5px] font-semibold text-white hover:bg-brand">
                 {brand.phone}
               </a>
             ) : null}

@@ -51,43 +51,50 @@ export default async function RepairIndexPage({ searchParams }: { searchParams: 
   return (
     <>
       {/*
-        Au téléphone, la fiche **est** la page.
-        L'ordre précédent faisait traverser un mur d'explication avant
-        d'atteindre le but : eyebrow, titre, paragraphe de 42 caractères de
-        large, les quatre étapes de « comment ça marche », deux liens en mono —
-        puis seulement la fiche. Or ces quatre étapes sont déjà racontées par la
-        progression en haut de la fiche : elles la répétaient. Le fond sombre
-        part avec elles, la fiche portant sa propre bande d'en-tête.
+        La fiche **est** la page.
+        Ce qui la précédait — eyebrow, titre, paragraphe, les quatre étapes de
+        « comment ça marche », deux liens en mono — racontait ce que la
+        progression de la fiche raconte déjà, en six cellules. Reste une phrase,
+        celle qui dit au visiteur ce qu'on attend de lui.
       */}
-      <section className="bg-bg px-0 py-0 text-ink sm:bg-ink-900 sm:px-6 sm:py-[64px] sm:text-paper">
-        <div className="mx-auto grid max-w-[1280px] items-start gap-0 sm:gap-12 [grid-template-columns:repeat(auto-fit,minmax(300px,1fr))]">
-          <div className="hidden flex-col gap-[26px] sm:flex">
-            <div>
-              <Eyebrow tone="repair">Atelier</Eyebrow>
-              <h1 className="mt-2 text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em]">Démarrer une réparation</h1>
-              <p className="mt-3.5 max-w-[42ch] text-[16.5px] leading-[1.55] text-[#c4bdae]">Choisissez votre console, la prestation et décrivez la panne : le prix s&apos;affiche immédiatement, le paiement se fait en ligne et vous recevez vos instructions d&apos;envoi.</p>
-            </div>
-            {howto.length ? <HowToList steps={howto.slice(0, 4)} /> : null}
-            <p className="font-mono text-[11.5px] text-ink-muted">
-              <Link href={ROUTES.howItWorks} className="hover:text-paper">
-                Toutes les étapes
-              </Link>
-              {" · "}
-              <Link href={ROUTES.packaging} className="hover:text-paper">
-                Instructions d&apos;emballage
-              </Link>
-            </p>
+      <section className="bg-bg px-[clamp(16px,3vw,32px)] pb-0 pt-[clamp(20px,2.4vw,34px)] text-ink">
+        <div className="mx-auto w-full max-w-[1400px]">
+          <div className="mb-[clamp(18px,2vw,26px)]">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.19em]" style={{ color: "var(--brand)" }}>
+              Réparation console
+            </span>
+            <h1 className="m-0 mt-2.5 text-[clamp(26px,3.2vw,44px)] font-extrabold leading-none tracking-[-0.042em]">
+              Identifiez votre console.
+              <br />
+              Nous nous occupons du reste.
+            </h1>
           </div>
+
           <RepairForm models={form.models} conditions={form.conditions} initialPlatform={plateforme} initialCustomer={null} initialAddress={null} isLoggedIn={false} catalogueCount={models.length} />
+
+          {howto.length ? (
+            <div className="mt-0.5 bg-surface p-[clamp(18px,2.2vw,32px)]">
+              <span className="block font-mono text-[10px] uppercase tracking-[0.19em] text-ink-faint">Comment ça se passe</span>
+              <div className="mt-3.5">
+                <HowToList steps={howto.slice(0, 4)} />
+              </div>
+              <p className="mt-4 font-mono text-[11.5px] text-ink-muted">
+                <Link href={ROUTES.howItWorks} className="hover:text-ink">
+                  Toutes les étapes
+                </Link>
+                {" · "}
+                <Link href={ROUTES.packaging} className="hover:text-ink">
+                  Instructions d&apos;emballage
+                </Link>
+              </p>
+            </div>
+          ) : null}
         </div>
       </section>
       {/*
-        La grille des consoles reste, mais elle ne s'impose plus.
-        Au téléphone elle reposait, tout en bas, la question déjà posée par le
-        premier écran de la fiche : deux sélecteurs de console sur la même page.
-        Elle est masquée par défaut (`#catalogue` dans `globals.css`) et
-        s'ouvre quand on suit le lien « Voir les N consoles prises en charge »
-        posé au bas du premier écran. Sur ordinateur, rien ne change.
+        La grille des consoles reste, mais elle ne s'impose plus : la première
+        étape de la fiche pose déjà la question. Masquée par défaut
+        (`#catalogue` dans `globals.css`), elle s'ouvre par le lien du bas.
       */}
       <Container id="catalogue" className="py-[64px]">
         <Eyebrow tone="repair">Catalogue</Eyebrow>

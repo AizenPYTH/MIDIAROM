@@ -19,5 +19,6 @@ export async function loadOfferAction(input: unknown): Promise<{ ok: true; offer
   if (!parsed.success) return { ok: false, error: "Prestation invalide" };
   const repair = await getRepairById(parsed.data);
   if (!repair || !repair.is_active) return { ok: false, error: "Prestation introuvable" };
-  return { ok: true, offer: toFormOffer(await getRepairOffer(repair)) };
+  const offre = await getRepairOffer(repair);
+  return { ok: true, offer: toFormOffer(offre, offre.includedNames) };
 }

@@ -93,7 +93,7 @@ function Carte({ produit, rayons }: { produit: RayonProduit; rayons: readonly Ra
         )}
         {badge ? (
           <span
-            className={`absolute left-2 top-2 px-[7px] py-1 font-mono text-[9px] uppercase tracking-[0.06em] text-white sm:left-[11px] sm:top-[11px] sm:px-[9px] sm:py-[5px] sm:text-[9.5px] sm:tracking-[0.07em] ${badge.rouge ? "bg-red" : "bg-ink"}`}
+            className={`absolute left-2 top-2 px-[7px] py-1 font-mono text-[9px] uppercase tracking-[0.06em] text-white sm:left-[11px] sm:top-[11px] sm:px-[9px] sm:py-[5px] sm:text-[9.5px] sm:tracking-[0.07em] ${badge.rouge ? "bg-brand" : "bg-ink"}`}
           >
             {badge.texte}
           </span>

@@ -57,7 +57,7 @@ export function ProductTile({ name, platform, categoryLabel }: { name: string; p
         {categoryLabel}
       </span>
       <span className="relative flex flex-col" style={{ gap: "clamp(6px, 1.6cqw, 12px)" }}>
-        <span className="block bg-red" style={{ height: 2, width: "clamp(24px, 9cqw, 54px)" }} />
+        <span className="block bg-brand" style={{ height: 2, width: "clamp(24px, 9cqw, 54px)" }} />
         <span
           className="font-display font-bold line-clamp-4"
           style={{ fontSize: "clamp(13px, 5.5cqw, 30px)", lineHeight: 1.16, letterSpacing: "-0.03em" }}

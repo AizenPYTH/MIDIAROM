@@ -93,7 +93,7 @@ export function WorkshopVideo({ src, poster, children }: { src?: string; poster?
       ) : null}
 
       <span className="pointer-events-none absolute left-3.5 top-3.5 flex items-center gap-2 bg-ink/90 px-[11px] py-[7px]">
-        <span data-hud-dot="1" aria-hidden="true" className="block h-1.5 w-1.5 bg-red" />
+        <span data-hud-dot="1" aria-hidden="true" className="block h-1.5 w-1.5 bg-brand" />
         <span className="font-mono text-[10.5px] uppercase tracking-[0.09em] text-on-dark">Atelier · sans son</span>
       </span>
 
@@ -102,7 +102,7 @@ export function WorkshopVideo({ src, poster, children }: { src?: string; poster?
           type="button"
           onClick={toggle}
           aria-pressed={playing}
-          className="absolute bottom-3.5 right-3.5 flex cursor-pointer items-center gap-2.5 border-0 bg-white px-[17px] py-3 font-mono text-[11px] font-medium uppercase tracking-[0.07em] text-ink transition-colors hover:bg-red hover:text-white"
+          className="absolute bottom-3.5 right-3.5 flex cursor-pointer items-center gap-2.5 border-0 bg-white px-[17px] py-3 font-mono text-[11px] font-medium uppercase tracking-[0.07em] text-ink transition-colors hover:bg-brand hover:text-white"
         >
           <span aria-hidden="true" className="block h-2 w-2 bg-current" />
           {playing ? "Pause" : "Lire"}
