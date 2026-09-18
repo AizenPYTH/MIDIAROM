@@ -1,4 +1,5 @@
 import { SiteHeader } from "@/components/marketing/header";
+import { DemoBanner } from "@/components/marketing/demo-banner";
 import { SiteFooter } from "@/components/marketing/footer";
 import { MobileTabBar } from "@/components/marketing/tab-bar";
 import { Backdrop } from "@/components/marketing/backdrop";
@@ -21,6 +22,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
       <a href="#contenu" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-paper focus:px-4 focus:py-2 focus:text-ink-900">
         Aller au contenu
       </a>
+      <DemoBanner />
       <SiteHeader brand={brand} rayons={publics} tags={tags} />
       <main id="contenu" className="flex-1">
         {children}

@@ -8,6 +8,7 @@ import { getRayons } from "@/lib/shop/categories";
 import { getProductTags } from "@/lib/shop/catalog";
 import { rayonsPublics } from "@/lib/shop/rayons";
 import { SiteHeader } from "@/components/marketing/header";
+import { DemoBanner } from "@/components/marketing/demo-banner";
 import { logoutAction } from "@/app/(auth)/actions";
 import { AccountNav } from "@/components/customer/account-nav";
 
@@ -21,6 +22,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
   ];
   return (
     <>
+      <DemoBanner />
       <SiteHeader brand={brand} rayons={rayonsPublics(rayons)} tags={tags} />
       <main className="flex-1">
         <Container className="grid gap-8 py-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:py-14">

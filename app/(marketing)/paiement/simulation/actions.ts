@@ -4,14 +4,18 @@ import { redirect } from "next/navigation";
 import { isMockPayments } from "@/lib/stripe";
 import { confirmPayment } from "@/lib/orders/payments";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { isProduction } from "@/lib/env";
+import { mockAutorise } from "@/lib/env";
 
 /**
- * DEVELOPMENT ONLY — simulates the provider confirming a payment. Goes
- * through the exact same `confirmPayment` path as the Stripe webhook.
+ * Simule la confirmation du prestataire. Elle passe par **exactement** le même
+ * `confirmPayment` que le webhook Stripe : ce qui est démontré ici est ce qui
+ * se produira en vrai.
+ *
+ * N'existe que là où le simulateur est autorisé — développement, ou production
+ * sous `DEMO_MODE=1`. Ailleurs, elle refuse.
  */
 export async function simulatePaymentAction(formData: FormData) {
-  if (isProduction() || !isMockPayments()) throw new Error("Payment simulation is disabled");
+  if (!mockAutorise() || !isMockPayments()) throw new Error("Payment simulation is disabled");
   const paymentId = String(formData.get("payment") ?? "");
   const sessionId = String(formData.get("session") ?? "");
   const outcome = String(formData.get("outcome") ?? "");

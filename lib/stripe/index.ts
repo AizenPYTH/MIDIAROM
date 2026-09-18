@@ -1,5 +1,5 @@
 import "server-only";
-import { getServerEnv } from "@/lib/env";
+import { getServerEnv, mockAutorise } from "@/lib/env";
 import type { PaymentProvider } from "@/lib/stripe/types";
 import { StripePaymentProvider } from "@/lib/stripe/providers/stripe";
 import { MockPaymentProvider } from "@/lib/stripe/providers/mock";
@@ -31,10 +31,12 @@ export function getPaymentProvider(): PaymentProvider {
     provider = new StripePaymentProvider(env.STRIPE_SECRET_KEY);
   } else {
     // Le simulateur encaisse sans rien encaisser : en production il ferait
-    // passer des dossiers pour payés. On refuse, bruyamment.
-    if (env.NODE_ENV === "production") {
+    // passer des dossiers pour payés. On refuse, bruyamment — sauf si
+    // `DEMO_MODE=1` a été posé à la main, auquel cas le site l'annonce par un
+    // bandeau permanent et personne ne peut le prendre pour une vraie caisse.
+    if (!mockAutorise()) {
       throw new PaymentConfigurationError(
-        "Le paiement simulé est refusé en production. Posez PAYMENT_PROVIDER=stripe et STRIPE_SECRET_KEY.",
+        "Le paiement simulé est refusé en production. Posez PAYMENT_PROVIDER=stripe et STRIPE_SECRET_KEY, ou DEMO_MODE=1 pour une démonstration.",
       );
     }
     provider = new MockPaymentProvider();

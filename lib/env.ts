@@ -26,6 +26,22 @@ const serverSchema = z.object({
   SHIPPING_PROVIDER: z.enum(["mock"]).default("mock"),
   SHIPPING_PROVIDER_API_KEY: z.string().optional(),
   CRON_SECRET: z.string().optional(),
+  /**
+   * Mode démonstration : les intégrations simulées sont tolérées en production.
+   *
+   * Sans lui, une construction de production refuse le paiement simulé et
+   * l'envoi d'e-mails en console — et c'est la bonne règle : un simulateur
+   * ferait passer des dossiers pour payés. Mais une démonstration client tourne
+   * sur une construction de production, et doit pouvoir dérouler le tunnel.
+   *
+   * Il s'allume donc **à la main**, jamais par défaut, et le site l'annonce :
+   * un bandeau permanent dit que rien n'est encaissé. On ne peut pas l'oublier
+   * allumé sans que tout le monde le voie.
+   */
+  DEMO_MODE: z
+    .string()
+    .optional()
+    .transform((v) => v === "1" || v === "true"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 
@@ -76,4 +92,14 @@ export function getServerEnv(): ServerEnv {
 
 export function isProduction(): boolean {
   return process.env.NODE_ENV === "production";
+}
+
+/**
+ * La démonstration a-t-elle le droit de tourner sur des intégrations simulées ?
+ *
+ * Vrai hors production — un développeur n'a pas de clé Stripe — ou en
+ * production quand `DEMO_MODE` est posé explicitement.
+ */
+export function mockAutorise(): boolean {
+  return process.env.NODE_ENV !== "production" || getServerEnv().DEMO_MODE;
 }

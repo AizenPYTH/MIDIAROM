@@ -1,5 +1,5 @@
 import "server-only";
-import { getServerEnv } from "@/lib/env";
+import { getServerEnv, mockAutorise } from "@/lib/env";
 import type { EmailProvider } from "@/lib/email/types";
 import { ConsoleEmailProvider } from "@/lib/email/providers/console";
 import { ResendEmailProvider } from "@/lib/email/providers/resend";
@@ -17,7 +17,7 @@ export function getEmailProvider(): EmailProvider {
     }
     case "console":
     default:
-      if (env.NODE_ENV === "production") throw new Error("EMAIL_PROVIDER=console is not allowed in production");
+      if (!mockAutorise()) throw new Error("EMAIL_PROVIDER=console est refusé en production. Posez EMAIL_PROVIDER=resend, ou DEMO_MODE=1 pour une démonstration.");
       provider = new ConsoleEmailProvider();
   }
   return provider;
