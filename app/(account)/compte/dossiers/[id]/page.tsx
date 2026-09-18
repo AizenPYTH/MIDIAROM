@@ -14,7 +14,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requireUserOrRedirect } from "@/lib/security/auth";
 import { signMedia } from "@/lib/media/service";
 import { signedMediaUrl } from "@/lib/shipping/service";
-import { computeWorkshopTimeline, CUSTOMER_CANCELLABLE_STATUSES, ORDER_STATUS_DESCRIPTIONS, ORDER_STATUS_LABELS, statusTone } from "@/lib/orders/status";
+import { computeTimeline, computeWorkshopTimeline, CUSTOMER_CANCELLABLE_STATUSES, ORDER_STATUS_DESCRIPTIONS, ORDER_STATUS_LABELS, statusTone } from "@/lib/orders/status";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/utils/format";
 import { getSetting } from "@/lib/settings";
 import { getInvoiceDocumentUrl, INVOICE_TYPE_LABELS } from "@/lib/invoices";
@@ -114,7 +114,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       <Card>
         <CardContent className="py-6">
-          <StatusTimeline steps={computeWorkshopTimeline(order.status)} />
+          {/* Même règle que sur le suivi public : tant que la console n'est
+              pas arrivée, une demande de devis suit la trame du devis. */}
+          <StatusTimeline steps={order.is_quote_request && !order.received_at ? computeTimeline(order.status, true) : computeWorkshopTimeline(order.status)} />
         </CardContent>
       </Card>
 

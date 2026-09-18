@@ -1243,6 +1243,45 @@ export type Database = {
           }
         ];
       };
+      product_categories: {
+        Row: {
+          id: string;
+          code: string;
+          label: string;
+          label_singular: string;
+          slug: string;
+          position: number;
+          is_public: boolean;
+          created_at: string;
+          updated_at: string;
+          tag_label: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          label: string;
+          label_singular: string;
+          slug: string;
+          position?: number;
+          is_public?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          tag_label?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          label?: string;
+          label_singular?: string;
+          slug?: string;
+          position?: number;
+          is_public?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          tag_label?: string;
+        };
+        Relationships: [];
+      };
       products: {
         Row: {
           id: string;
@@ -1369,6 +1408,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "products_category_fkey";
+            columns: ["category"];
+            isOneToOne: false;
+            referencedRelation: "product_categories";
+            referencedColumns: ["code"];
+          },
+          {
             foreignKeyName: "products_igdb_game_id_fkey";
             columns: ["igdb_game_id"];
             isOneToOne: false;
@@ -1431,6 +1477,7 @@ export type Database = {
           user_agent: string | null;
           ip_address: string | null;
           created_at: string;
+          comment: string | null;
         };
         Insert: {
           id?: string;
@@ -1442,6 +1489,7 @@ export type Database = {
           user_agent?: string | null;
           ip_address?: string | null;
           created_at?: string;
+          comment?: string | null;
         };
         Update: {
           id?: string;
@@ -1453,6 +1501,7 @@ export type Database = {
           user_agent?: string | null;
           ip_address?: string | null;
           created_at?: string;
+          comment?: string | null;
         };
         Relationships: [
           {
@@ -1543,45 +1592,6 @@ export type Database = {
             referencedColumns: ["id"];
           }
         ];
-      };
-      product_categories: {
-        Row: {
-          id: string;
-          code: string;
-          label: string;
-          label_singular: string;
-          slug: string;
-          position: number;
-          is_public: boolean;
-          tag_label: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          code: string;
-          label: string;
-          label_singular: string;
-          slug: string;
-          position?: number;
-          is_public?: boolean;
-          tag_label?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          code?: string;
-          label?: string;
-          label_singular?: string;
-          slug?: string;
-          position?: number;
-          is_public?: boolean;
-          tag_label?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
       };
       repair_categories: {
         Row: {
@@ -1897,6 +1907,7 @@ export type Database = {
           created_at: string;
           updated_at: string;
           symptoms: string[];
+          is_quote_request: boolean;
         };
         Insert: {
           id?: string;
@@ -1951,6 +1962,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           symptoms?: string[];
+          is_quote_request?: boolean;
         };
         Update: {
           id?: string;
@@ -2005,6 +2017,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           symptoms?: string[];
+          is_quote_request?: boolean;
         };
         Relationships: [
           {
@@ -2312,7 +2325,6 @@ export type Database = {
           updated_at: string;
           category_id: string | null;
           price_is_provisional: boolean;
-          /** Paraît dans la liste courte proposée au client. Les autres restent commandables derrière « Autre problème ». */
           is_featured: boolean;
           featured_order: number;
         };
@@ -3188,6 +3200,9 @@ export type Database = {
           paid_at: string | null;
           created_at: string;
           updated_at: string;
+          decision_token: string | null;
+          decision_token_expires_at: string | null;
+          decision_comment: string | null;
         };
         Insert: {
           id?: string;
@@ -3210,6 +3225,9 @@ export type Database = {
           paid_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          decision_token?: string | null;
+          decision_token_expires_at?: string | null;
+          decision_comment?: string | null;
         };
         Update: {
           id?: string;
@@ -3232,6 +3250,9 @@ export type Database = {
           paid_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          decision_token?: string | null;
+          decision_token_expires_at?: string | null;
+          decision_comment?: string | null;
         };
         Relationships: [
           {
@@ -3626,9 +3647,30 @@ export type Database = {
       };
     };
     Functions: {
+      apply_quote_decision: {
+        Args: {
+          p_quote_id: string;
+          p_decision: Database["public"]["Enums"]["quote_decision"];
+          p_decided_by: string;
+          p_comment?: string;
+          p_user_agent?: string;
+          p_ip_address?: string;
+        };
+        Returns: Database["public"]["Tables"]["supplementary_quotes"]["Row"];
+      };
       current_user_role: {
         Args: Record<PropertyKey, never>;
         Returns: Database["public"]["Enums"]["user_role"];
+      };
+      decide_quote_by_token: {
+        Args: {
+          p_token: string;
+          p_decision: Database["public"]["Enums"]["quote_decision"];
+          p_comment?: string;
+          p_user_agent?: string;
+          p_ip_address?: string;
+        };
+        Returns: Database["public"]["Tables"]["supplementary_quotes"]["Row"];
       };
       decide_supplementary_quote: {
         Args: {
@@ -3636,6 +3678,7 @@ export type Database = {
           p_decision: Database["public"]["Enums"]["quote_decision"];
           p_user_agent?: string;
           p_ip_address?: string;
+          p_comment?: string;
         };
         Returns: Database["public"]["Tables"]["supplementary_quotes"]["Row"];
       };
@@ -3675,7 +3718,7 @@ export type Database = {
       notification_status: "PENDING" | "SENT" | "FAILED" | "SKIPPED";
       order_item_source: "INITIAL" | "QUOTE" | "ADMIN";
       order_item_type: "REPAIR" | "OPTION" | "PACK" | "SHIPPING" | "DIAGNOSTIC_FEE" | "QUOTE_ITEM" | "ADJUSTMENT";
-      order_status: "DRAFT" | "PENDING_PAYMENT" | "PAID" | "AWAITING_SHIPMENT" | "IN_TRANSIT_TO_WORKSHOP" | "RECEIVED" | "RECEPTION_CHECK" | "DIAGNOSIS" | "WAITING_CUSTOMER_APPROVAL" | "APPROVED" | "REPAIRING" | "QUALITY_CONTROL" | "READY_TO_SHIP" | "SHIPPED" | "DELIVERED" | "COMPLETED" | "CANCELLED" | "REFUSED_QUOTE" | "UNREPAIRABLE" | "RETURN_REQUIRED" | "SAV" | "DISPUTED";
+      order_status: "DRAFT" | "QUOTE_REQUESTED" | "PENDING_PAYMENT" | "PAID" | "AWAITING_SHIPMENT" | "IN_TRANSIT_TO_WORKSHOP" | "RECEIVED" | "RECEPTION_CHECK" | "DIAGNOSIS" | "WAITING_CUSTOMER_APPROVAL" | "APPROVED" | "REPAIRING" | "QUALITY_CONTROL" | "READY_TO_SHIP" | "SHIPPED" | "DELIVERED" | "COMPLETED" | "CANCELLED" | "REFUSED_QUOTE" | "UNREPAIRABLE" | "RETURN_REQUIRED" | "SAV" | "DISPUTED";
       payment_purpose: "INITIAL" | "QUOTE" | "OTHER" | "SHOP";
       payment_status: "PENDING" | "SUCCEEDED" | "FAILED" | "REFUNDED" | "PARTIALLY_REFUNDED" | "CANCELLED";
       product_category: "CONSOLE" | "GAME" | "ACCESSORY" | "PART" | "COLLECTIBLE" | "MANGA";

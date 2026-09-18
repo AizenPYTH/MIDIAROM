@@ -57,6 +57,32 @@ export const createOrderSchema = z.object({
   attribution: attributionSchema,
 });
 
+/**
+ * Une demande de devis gratuite.
+ *
+ * Ce n'est pas une commande allégée : il lui manque exactement ce qui fait une
+ * commande — un mode de transport, une adresse de livraison, un paiement. Le
+ * schéma les **omet** plutôt que de les rendre facultatifs : un champ optionnel
+ * est un champ qu'on finit par remplir, et l'on retomberait sur une commande.
+ *
+ * Ce qu'il exige en revanche, et que le tunnel payant n'exigeait pas : une
+ * description de la panne. Sans elle, le réparateur ne peut pas chiffrer, et la
+ * demande lui arrive vide.
+ */
+export const createQuoteRequestSchema = z.object({
+  repairId: z.string().uuid(),
+  customer: customerSchema,
+  description: z.string().trim().min(20, "Décrivez la panne en quelques mots (20 caractères minimum)").max(2000),
+  console_serial_number: z.string().trim().max(60).optional().or(z.literal("")),
+  console_already_opened: z.boolean().default(false),
+  symptoms: z.array(z.string().trim().min(1).max(60)).max(12).default([]),
+  photos: z.array(z.string().max(200)).max(6).default([]),
+  accept_terms: z.literal(true, { message: "Vous devez accepter les conditions générales" }),
+  attribution: attributionSchema,
+});
+
+export type CreateQuoteRequestInput = z.infer<typeof createQuoteRequestSchema>;
+
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type SelectionInput = z.infer<typeof selectionSchema>;
 

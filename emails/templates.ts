@@ -60,6 +60,134 @@ export function diagnosisDone(ctx: OrderEmailContext & { customerSummary: string
   return renderEmail(ctx.brand, subject, html, text);
 }
 
+/**
+ * L'accusé de réception d'une demande de devis gratuite.
+ *
+ * Il dit deux choses, et insiste sur les deux, parce que ce sont celles qu'un
+ * client n'attend pas d'un site de réparation : il n'a rien à payer, et il ne
+ * doit surtout pas envoyer sa console maintenant. Sans cette phrase, la moitié
+ * des demandes arriveraient accompagnées d'un colis non annoncé.
+ */
+export function quoteRequestReceived(ctx: OrderEmailContext & { description: string }): RenderedEmail {
+  const subject = `Demande de devis reçue — ${ctx.orderNumber}`;
+  const html = [
+    paragraph(greet(ctx)),
+    paragraph("Votre demande de devis est bien arrivée à l'atelier. Elle est gratuite et sans engagement."),
+    keyValueTable([...summary(ctx), ["Votre description", ctx.description]]),
+    paragraph("<strong>Gardez votre console chez vous pour le moment.</strong> Un technicien examine votre demande et vous envoie un devis détaillé. Vous déciderez ensuite, en connaissant le prix, si vous souhaitez nous confier votre console."),
+    button("Suivre ma demande", ctx.trackingUrl),
+  ].join("");
+  const text = `${greet(ctx)}\n\nVotre demande de devis (${ctx.orderNumber}) est bien arrivée. Elle est gratuite et sans engagement.\n\nGardez votre console chez vous : nous vous envoyons un devis, et vous déciderez ensuite.\n\nSuivi : ${ctx.trackingUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+/**
+ * Le devis lui-même, pour une demande gratuite : le prix, et deux boutons.
+ *
+ * Le lien porte un jeton — il ouvre la page de décision sans compte ni mot de
+ * passe. Quelqu'un qui demande un devis n'a aucune raison d'avoir créé un mot
+ * de passe, et lui en réclamer un pour répondre « oui » revient à ne pas
+ * recevoir de réponse.
+ */
+export function quoteReady(
+  ctx: OrderEmailContext & { quoteNumber: string; quoteTitle: string; quoteAmountCents: number; quoteMessage: string | null; expiresAt: string | null; quoteUrl: string; lines: { label: string; total: number }[] },
+): RenderedEmail {
+  const subject = `Votre devis ${ctx.quoteNumber} — ${formatPrice(ctx.quoteAmountCents)}`;
+  const html = [
+    paragraph(greet(ctx)),
+    paragraph(`Voici le devis pour la réparation de votre ${ctx.modelName}.`),
+    keyValueTable([
+      ...summary(ctx),
+      ...ctx.lines.map((l) => [l.label, formatPrice(l.total)] as [string, string]),
+      ["Total", formatPrice(ctx.quoteAmountCents)],
+      ...(ctx.expiresAt ? [["Valable jusqu'au", ctx.expiresAt] as [string, string]] : []),
+    ]),
+    ctx.quoteMessage ? paragraph(ctx.quoteMessage) : "",
+    paragraph("Vous décidez librement : aucune intervention, aucun envoi et aucun règlement tant que vous n'avez pas accepté."),
+    button("Voir le devis, accepter ou refuser", ctx.quoteUrl),
+  ].join("");
+  const text = `${greet(ctx)}\n\nDevis ${ctx.quoteNumber} pour votre ${ctx.modelName} : ${formatPrice(ctx.quoteAmountCents)}.\n${ctx.quoteMessage ?? ""}\n\nAccepter ou refuser : ${ctx.quoteUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+/**
+ * Les instructions d'envoi, envoyées **après** l'acceptation — jamais avant.
+ *
+ * C'est le seul e-mail du parcours de devis qui demande au client de faire
+ * partir sa console, et il n'existe qu'à partir du moment où un prix a été
+ * accepté.
+ */
+export function quoteAcceptedSendConsole(
+  ctx: OrderEmailContext & { quoteNumber: string; quoteAmountCents: number; packagingUrl: string; workshopAddress: string },
+): RenderedEmail {
+  const subject = `Devis ${ctx.quoteNumber} accepté — envoyez-nous votre console`;
+  const html = [
+    paragraph(greet(ctx)),
+    paragraph(`Votre accord sur le devis ${ctx.quoteNumber} (${formatPrice(ctx.quoteAmountCents)}) est enregistré. Il ne reste qu'à nous confier votre console.`),
+    keyValueTable([
+      ["Déposer en boutique", ctx.workshopAddress || "à l'atelier, aux horaires d'ouverture"],
+      ["ou l'envoyer à", ctx.workshopAddress || "l'adresse de l'atelier"],
+    ]),
+    paragraph("Emballez-la soigneusement : la page ci-dessous explique comment, et ce qu'il faut joindre ou surtout ne pas joindre."),
+    button("Instructions d'emballage", ctx.packagingUrl),
+    paragraph(`Le règlement se fera à la fin de l'intervention. Vous pouvez suivre l'avancement à tout moment : ${ctx.trackingUrl}`),
+  ].join("");
+  const text = `${greet(ctx)}\n\nDevis ${ctx.quoteNumber} accepté (${formatPrice(ctx.quoteAmountCents)}).\n\nDéposez ou envoyez votre console : ${ctx.workshopAddress}\nEmballage : ${ctx.packagingUrl}\nSuivi : ${ctx.trackingUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+/** Ce que l'atelier reçoit quand une demande de devis arrive. */
+export function workshopQuoteRequest(ctx: {
+  brand: EmailBrand;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string | null;
+  modelName: string;
+  repairName: string;
+  description: string;
+  photos: number;
+  adminUrl: string;
+}): RenderedEmail {
+  const subject = `Demande de devis ${ctx.orderNumber} — ${ctx.modelName}`;
+  const html = [
+    paragraph(`Nouvelle demande de devis de ${ctx.customerName}.`),
+    keyValueTable([
+      ["Dossier", ctx.orderNumber],
+      ["Console", ctx.modelName],
+      ["Panne annoncée", ctx.repairName],
+      ["Description", ctx.description],
+      ["Photos jointes", String(ctx.photos)],
+      ["Client", `${ctx.customerEmail}${ctx.customerPhone ? ` · ${ctx.customerPhone}` : ""}`],
+    ]),
+    button("Ouvrir le dossier et chiffrer", ctx.adminUrl),
+  ].join("");
+  const text = `Demande de devis ${ctx.orderNumber} — ${ctx.modelName} (${ctx.repairName})\n${ctx.customerName} · ${ctx.customerEmail}\n\n${ctx.description}\n\n${ctx.adminUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
+/** Ce que l'atelier reçoit quand le client a tranché. */
+export function workshopQuoteDecision(ctx: {
+  brand: EmailBrand;
+  orderNumber: string;
+  customerName: string;
+  quoteNumber: string;
+  accepted: boolean;
+  amountCents: number;
+  comment: string | null;
+  adminUrl: string;
+}): RenderedEmail {
+  const subject = `Devis ${ctx.quoteNumber} ${ctx.accepted ? "accepté" : "refusé"} — ${ctx.orderNumber}`;
+  const html = [
+    paragraph(`${ctx.customerName} a ${ctx.accepted ? "accepté" : "refusé"} le devis ${ctx.quoteNumber} (${formatPrice(ctx.amountCents)}).`),
+    ctx.comment ? keyValueTable([["Commentaire du client", ctx.comment]]) : "",
+    paragraph(ctx.accepted ? "Le client a reçu les instructions pour déposer ou envoyer sa console." : "Aucune expédition n'a été déclenchée."),
+    button("Ouvrir le dossier", ctx.adminUrl),
+  ].join("");
+  const text = `Devis ${ctx.quoteNumber} ${ctx.accepted ? "accepté" : "refusé"} (${formatPrice(ctx.amountCents)}) — ${ctx.orderNumber}\n${ctx.comment ? `Commentaire : ${ctx.comment}\n` : ""}${ctx.adminUrl}`;
+  return renderEmail(ctx.brand, subject, html, text);
+}
+
 export function quoteSent(ctx: OrderEmailContext & { quoteNumber: string; quoteTitle: string; quoteAmountCents: number; quoteMessage: string | null; expiresAt: string | null; quoteUrl: string }): RenderedEmail {
   const subject = `Une intervention supplémentaire est proposée — ${ctx.orderNumber}`;
   const html = [

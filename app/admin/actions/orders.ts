@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -17,6 +18,7 @@ import { trackServerEvent } from "@/lib/analytics/server";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import { normalizeOrderNumber } from "@/lib/orders/order-number";
 import { getPaymentProvider } from "@/lib/stripe";
+import { ROUTES, SITE_URL } from "@/config/site";
 import type { Json } from "@/types/database";
 
 export type ActionResult = { ok: true; message?: string } | { ok: false; error: string };
@@ -301,19 +303,56 @@ async function sendQuote(user: CurrentUser, quoteId: string): Promise<ActionResu
   if (quote.status !== "DRAFT") return fail("Ce devis a déjà été envoyé.");
   const rules = await getBusinessRules();
   const now = new Date();
+  const expiresAt = quoteExpiryDate(now, rules);
+  const order0 = await getOrderById(quote.order_id);
+
+  /*
+    Le jeton de décision.
+
+    Il n'existe que pour les dossiers nés d'une demande de devis : ce sont les
+    seuls dont le client n'a, le plus souvent, jamais choisi de mot de passe.
+    Un devis complémentaire, lui, arrive sur un dossier déjà suivi depuis
+    l'espace client — inutile d'ouvrir une porte de plus.
+
+    32 octets tirés par `crypto.randomBytes`, encodés en base64url : 256 bits
+    d'entropie, rien de dérivé du dossier, du client ni de la date. Il expire
+    avec le devis et la décision l'efface (voir `apply_quote_decision`).
+  */
+  const jeton = order0.is_quote_request ? randomBytes(32).toString("base64url") : null;
+
   const { data: sent, error } = await db
     .from("supplementary_quotes")
-    .update({ status: "SENT", sent_at: now.toISOString(), expires_at: quoteExpiryDate(now, rules).toISOString() })
+    .update({
+      status: "SENT",
+      sent_at: now.toISOString(),
+      expires_at: expiresAt.toISOString(),
+      decision_token: jeton,
+      decision_token_expires_at: jeton ? expiresAt.toISOString() : null,
+    })
     .eq("id", quoteId)
     .select("*")
     .single();
   if (error || !sent) return fail(error?.message ?? "Envoi impossible");
-  const order = await getOrderById(quote.order_id);
-  if (["DIAGNOSIS", "APPROVED", "REPAIRING"].includes(order.status)) {
+  const order = order0;
+  // `QUOTE_REQUESTED` rejoint la liste : c'est par là qu'une demande de devis
+  // gratuite devient un devis qui attend une réponse.
+  if (["QUOTE_REQUESTED", "DIAGNOSIS", "APPROVED", "REPAIRING"].includes(order.status)) {
     await transitionOrder({ orderId: order.id, to: "WAITING_CUSTOMER_APPROVAL", actor: actorOf(user), publicDescription: `Devis ${sent.quote_number} : ${sent.title}`, notify: false });
   }
   await addOrderEvent({ orderId: order.id, type: "QUOTE_SENT", title: `Devis ${sent.quote_number} envoyé`, description: sent.title, actorId: user.id, metadata: { quote_id: sent.id, amount_cents: sent.total_cents } });
-  await notifyOrderEvent(await getOrderById(order.id), { type: "QUOTE_SENT", quote: sent });
+
+  const frais = await getOrderById(order.id);
+  if (jeton) {
+    const { data: lignes } = await db.from("supplementary_quote_items").select("label, total_cents").eq("quote_id", sent.id);
+    await notifyOrderEvent(frais, {
+      type: "QUOTE_READY",
+      quote: sent,
+      lines: (lignes ?? []).map((l) => ({ label: l.label, total: l.total_cents })),
+      quoteUrl: `${SITE_URL}${ROUTES.quoteDecision}/${jeton}`,
+    });
+  } else {
+    await notifyOrderEvent(frais, { type: "QUOTE_SENT", quote: sent });
+  }
   await audit({ actorId: user.id, actorRole: user.profile.role, action: "quote.sent", resourceType: "supplementary_quotes", resourceId: sent.id, orderId: order.id, newValue: { total_cents: sent.total_cents } });
   await trackServerEvent({ event: ANALYTICS_EVENTS.QUOTE_SENT, orderId: order.id, repairId: order.repair_id, valueCents: sent.total_cents });
   revalidatePath(orderPath(order.id));

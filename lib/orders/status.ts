@@ -5,6 +5,7 @@ export type UserRole = Enums<"user_role">;
 
 export const ORDER_STATUSES: readonly OrderStatus[] = [
   "DRAFT",
+  "QUOTE_REQUESTED",
   "PENDING_PAYMENT",
   "PAID",
   "AWAITING_SHIPMENT",
@@ -30,6 +31,7 @@ export const ORDER_STATUSES: readonly OrderStatus[] = [
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   DRAFT: "Brouillon",
+  QUOTE_REQUESTED: "Demande de devis",
   PENDING_PAYMENT: "En attente de paiement",
   PAID: "Payé",
   AWAITING_SHIPMENT: "Colis attendu",
@@ -54,13 +56,14 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 export const ORDER_STATUS_DESCRIPTIONS: Partial<Record<OrderStatus, string>> = {
+  QUOTE_REQUESTED: "Votre demande est arrivée à l'atelier. Un technicien l'examine et vous envoie un devis — c'est gratuit et sans engagement. Gardez votre console chez vous pour l'instant.",
   PENDING_PAYMENT: "Votre commande est enregistrée mais le paiement n'a pas encore été confirmé.",
   AWAITING_SHIPMENT: "Nous attendons votre console. Suivez les instructions d'emballage et d'envoi.",
   IN_TRANSIT_TO_WORKSHOP: "Votre colis est en route vers l'atelier.",
   RECEIVED: "Votre console est bien arrivée à l'atelier.",
   RECEPTION_CHECK: "Nous documentons l'état de la console et du colis (photos, numéro de série, accessoires).",
   DIAGNOSIS: "Un technicien analyse votre console.",
-  WAITING_CUSTOMER_APPROVAL: "Un devis complémentaire attend votre décision.",
+  WAITING_CUSTOMER_APPROVAL: "Votre devis est prêt : il attend votre décision.",
   APPROVED: "Votre accord est enregistré. La réparation va commencer.",
   REPAIRING: "L'intervention est en cours.",
   QUALITY_CONTROL: "La console passe la checklist de tests.",
@@ -85,6 +88,13 @@ export const CUSTOMER_CANCELLABLE_STATUSES: readonly OrderStatus[] = ["PENDING_P
  */
 const TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   DRAFT: ["PENDING_PAYMENT", "CANCELLED"],
+  /*
+    Une demande de devis gratuite. Elle ne peut aller QUE vers l'envoi du devis
+    — ou vers l'abandon. Aucun chemin ne mène d'ici à AWAITING_SHIPMENT : c'est
+    ce qui garantit qu'une console ne part jamais avant que son prix soit
+    accepté. Le seul passage possible traverse WAITING_CUSTOMER_APPROVAL.
+  */
+  QUOTE_REQUESTED: ["WAITING_CUSTOMER_APPROVAL", "UNREPAIRABLE", "CANCELLED", "DISPUTED"],
   PENDING_PAYMENT: ["PAID", "CANCELLED"],
   PAID: ["AWAITING_SHIPMENT", "CANCELLED"],
   AWAITING_SHIPMENT: ["IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "CANCELLED"],
@@ -92,7 +102,13 @@ const TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   RECEIVED: ["RECEPTION_CHECK", "DIAGNOSIS", "RETURN_REQUIRED", "DISPUTED"],
   RECEPTION_CHECK: ["DIAGNOSIS", "RETURN_REQUIRED", "DISPUTED"],
   DIAGNOSIS: ["WAITING_CUSTOMER_APPROVAL", "APPROVED", "REPAIRING", "UNREPAIRABLE", "RETURN_REQUIRED", "DISPUTED"],
-  WAITING_CUSTOMER_APPROVAL: ["APPROVED", "REFUSED_QUOTE", "REPAIRING", "UNREPAIRABLE", "CANCELLED", "DISPUTED"],
+  /*
+    `AWAITING_SHIPMENT` est nouveau ici, et il n'est atteignable que par ce
+    chemin : le client vient d'accepter un devis sur un dossier dont la console
+    n'a jamais quitté son domicile. C'est le moment — le seul — où « colis
+    attendu » a un sens pour une demande de devis.
+  */
+  WAITING_CUSTOMER_APPROVAL: ["APPROVED", "AWAITING_SHIPMENT", "REFUSED_QUOTE", "REPAIRING", "UNREPAIRABLE", "CANCELLED", "DISPUTED"],
   APPROVED: ["REPAIRING", "WAITING_CUSTOMER_APPROVAL", "UNREPAIRABLE", "DISPUTED"],
   REPAIRING: ["QUALITY_CONTROL", "WAITING_CUSTOMER_APPROVAL", "UNREPAIRABLE", "DISPUTED"],
   QUALITY_CONTROL: ["READY_TO_SHIP", "REPAIRING", "DISPUTED"],
@@ -101,7 +117,7 @@ const TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   DELIVERED: ["COMPLETED", "SAV", "DISPUTED"],
   COMPLETED: ["SAV", "DISPUTED"],
   CANCELLED: [],
-  REFUSED_QUOTE: ["READY_TO_SHIP", "RETURN_REQUIRED", "APPROVED", "DISPUTED"],
+  REFUSED_QUOTE: ["READY_TO_SHIP", "RETURN_REQUIRED", "APPROVED", "AWAITING_SHIPMENT", "DISPUTED"],
   UNREPAIRABLE: ["READY_TO_SHIP", "RETURN_REQUIRED", "DISPUTED"],
   RETURN_REQUIRED: ["READY_TO_SHIP", "SHIPPED", "DISPUTED"],
   SAV: ["RECEIVED", "REPAIRING", "COMPLETED", "DISPUTED"],
@@ -135,6 +151,26 @@ export function canRoleTransition(role: UserRole, from: OrderStatus, to: OrderSt
   if (role === "TECHNICIAN") return !ADMIN_ONLY_TARGETS.includes(to);
   return false;
 }
+
+/**
+ * Le suivi d'une **demande de devis gratuite**.
+ *
+ * Il ne peut pas être celui d'une commande. Une commande commence par un
+ * paiement et enchaîne aussitôt sur « colis attendu » ; une demande de devis
+ * commence par une attente à l'atelier, et la console ne bouge qu'après
+ * l'accord du client. Afficher « Colis attendu » à quelqu'un qui n'a rien
+ * commandé, et qui ne connaît pas encore le prix, est la confusion que ce
+ * parcours existe pour lever.
+ */
+export const QUOTE_TIMELINE_STEPS: readonly { key: string; label: string; statuses: readonly OrderStatus[] }[] = [
+  { key: "request", label: "Demande envoyée", statuses: ["QUOTE_REQUESTED", "DRAFT"] },
+  { key: "quote", label: "Devis reçu", statuses: ["WAITING_CUSTOMER_APPROVAL"] },
+  { key: "awaiting", label: "Console à envoyer", statuses: ["APPROVED", "PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP"] },
+  { key: "received", label: "Console reçue", statuses: ["RECEIVED", "RECEPTION_CHECK", "DIAGNOSIS"] },
+  { key: "repair", label: "Réparation", statuses: ["REPAIRING"] },
+  { key: "tests", label: "Tests", statuses: ["QUALITY_CONTROL", "READY_TO_SHIP"] },
+  { key: "shipping", label: "Retour", statuses: ["SHIPPED", "DELIVERED", "COMPLETED"] },
+];
 
 /** Customer-facing timeline steps (happy path). */
 export const TIMELINE_STEPS: readonly { key: string; label: string; statuses: readonly OrderStatus[] }[] = [
@@ -184,21 +220,32 @@ export function computeWorkshopTimeline(status: OrderStatus): { key: string; lab
 }
 
 const STATUS_ORDER: OrderStatus[] = [
-  "DRAFT", "PENDING_PAYMENT", "PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "RECEPTION_CHECK",
+  "DRAFT", "QUOTE_REQUESTED", "PENDING_PAYMENT", "PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "RECEPTION_CHECK",
   "DIAGNOSIS", "WAITING_CUSTOMER_APPROVAL", "APPROVED", "REPAIRING", "QUALITY_CONTROL", "READY_TO_SHIP", "SHIPPED",
   "DELIVERED", "COMPLETED",
 ];
 
 export type TimelineState = "done" | "current" | "todo";
 
-/** Computes done/current/todo for each timeline step given the current status. */
-export function computeTimeline(status: OrderStatus): { key: string; label: string; state: TimelineState }[] {
+/**
+ * Computes done/current/todo for each timeline step given the current status.
+ *
+ * `isQuoteRequest` choisit la trame : celle d'une commande, ou celle d'une
+ * demande de devis. Le paramètre est optionnel et vaut `false` — les dossiers
+ * historiques, et tous les appels écrits avant ce parcours, gardent le suivi
+ * qu'ils avaient.
+ */
+export function computeTimeline(status: OrderStatus, isQuoteRequest = false): { key: string; label: string; state: TimelineState }[] {
+  const steps = isQuoteRequest ? QUOTE_TIMELINE_STEPS : TIMELINE_STEPS;
   const exceptional = !STATUS_ORDER.includes(status);
-  const currentIndex = TIMELINE_STEPS.findIndex((s) => s.statuses.includes(status));
-  return TIMELINE_STEPS.map((step, index) => {
+  const currentIndex = steps.findIndex((s) => s.statuses.includes(status));
+  return steps.map((step, index) => {
     if (exceptional) {
       // For exceptional states, mark the steps before diagnosis as done if we got that far.
-      const reached = ["REFUSED_QUOTE", "UNREPAIRABLE", "RETURN_REQUIRED", "SAV", "DISPUTED"].includes(status) ? 3 : 0;
+      // Un devis refusé sur une demande gratuite s'arrête à l'étape « devis
+      // reçu » : rien n'a été envoyé, rien n'est à retourner.
+      const arretExceptionnel = ["REFUSED_QUOTE", "UNREPAIRABLE", "RETURN_REQUIRED", "SAV", "DISPUTED"].includes(status);
+      const reached = arretExceptionnel ? (isQuoteRequest ? 2 : 3) : 0;
       return { key: step.key, label: step.label, state: index < reached ? "done" : "todo" };
     }
     if (index < currentIndex) return { key: step.key, label: step.label, state: "done" };

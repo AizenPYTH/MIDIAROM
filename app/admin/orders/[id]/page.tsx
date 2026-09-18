@@ -100,9 +100,47 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
           </form>
         </div>
       </div>
+      {/*
+        Une demande de devis ne ressemble à aucun autre dossier de la liste :
+        rien n'a été payé, la console n'est pas là, et quelqu'un attend un prix.
+        Le dire en tête de fiche, avec la description du client sous les yeux et
+        le chemin vers le chiffrage, évite d'ouvrir six onglets pour comprendre
+        de quoi il retourne.
+      */}
+      {order.is_quote_request && order.status === "QUOTE_REQUESTED" ? (
+        <div className="border-l-2 bg-surface p-4" style={{ borderLeftColor: "var(--brand)" }}>
+          <span className="flex flex-wrap items-baseline justify-between gap-3">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.13em]" style={{ color: "var(--brand)" }}>
+              Demande de devis · à chiffrer
+            </span>
+            <Link href={hrefFor("quotes")} className="font-mono text-[11.5px] text-ink-soft underline hover:text-ink">
+              Chiffrer et envoyer le devis →
+            </Link>
+          </span>
+          <p className="mt-2 whitespace-pre-line text-[15px] leading-[1.5] text-ink">{order.customer_notes ?? "Le client n'a pas laissé de description."}</p>
+          <p className="mt-2 font-mono text-[11.5px] text-ink-muted">
+            Panne annoncée : {order.fault_name} · {mediaOf(["CUSTOMER"]).length} photo(s) jointe(s) · console non reçue, aucun règlement.
+          </p>
+          {mediaOf(["CUSTOMER"]).length ? (
+            <div className="mt-3">
+              <MediaGallery media={mediaOf(["CUSTOMER"])} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <div>
         <span className="mb-2 block font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Avancement</span>
-        <StatusTimeline steps={computeWorkshopTimeline(order.status)} />
+        {/* Le suivi atelier commence à la réception : sur une demande de devis,
+            la console n'est pas encore partie de chez le client, et cette frise
+            n'a donc rien à montrer avant son accord. */}
+        {order.is_quote_request && ["QUOTE_REQUESTED", "WAITING_CUSTOMER_APPROVAL"].includes(order.status) ? (
+          <p className="text-[13.5px] text-ink-muted">
+            {order.status === "QUOTE_REQUESTED" ? "En attente de votre devis. Le suivi atelier démarrera à la réception de la console." : "Devis envoyé : en attente de la décision du client."}
+          </p>
+        ) : (
+          <StatusTimeline steps={computeWorkshopTimeline(order.status)} />
+        )}
       </div>
       <Tabs tabs={TABS.map((t) => (t.key === "quotes" ? { ...t, count: pendingQuotes } : t))} current={tab} hrefFor={hrefFor} />
 
@@ -228,7 +266,7 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
         <div className="space-y-6">
           {(quotes.data ?? []).map((q) => {
             const qItems = q.items as { id: string; label: string; quantity: number; total_cents: number }[];
-            const decisions = q.decisions as { id: string; decision: string; created_at: string; ip_address: string | null; user_agent: string | null }[];
+            const decisions = q.decisions as { id: string; decision: string; created_at: string; ip_address: string | null; user_agent: string | null; comment: string | null }[];
             return (
               <Section key={q.id} title={`${q.quote_number} — ${q.title}`} description={`${QUOTE_STATUS_LABELS[q.status]} · ${formatPrice(q.total_cents)}${q.sent_at ? ` · envoyé le ${formatDateTime(q.sent_at)}` : ""}${q.expires_at ? ` · expire le ${formatDateTime(q.expires_at)}` : ""}`}
                 actions={<div className="flex gap-2">{q.status === "DRAFT" ? <SendQuoteButton quoteId={q.id} /> : null}{["DRAFT", "SENT"].includes(q.status) ? <form action={cancelQuoteAction}><input type="hidden" name="quote_id" value={q.id} /><Button type="submit" size="sm" variant="ghost">Annuler</Button></form> : null}</div>}>
@@ -243,14 +281,30 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
                 </div>
                 {decisions.length ? (
                   <ul className="mt-3 rounded-md bg-surface-muted p-3 text-xs text-ink-soft">
-                    {decisions.map((d) => <li key={d.id}>{d.decision === "ACCEPTED" ? "✔ Accepté" : "✘ Refusé"} le {formatDateTime(d.created_at)}{d.ip_address ? ` · IP ${d.ip_address}` : ""}{d.user_agent ? ` · ${d.user_agent.slice(0, 60)}` : ""}</li>)}
+                    {decisions.map((d) => (
+                      <li key={d.id}>
+                        {d.decision === "ACCEPTED" ? "✔ Accepté" : "✘ Refusé"} le {formatDateTime(d.created_at)}
+                        {d.ip_address ? ` · IP ${d.ip_address}` : ""}
+                        {d.user_agent ? ` · ${d.user_agent.slice(0, 60)}` : ""}
+                        {/* Le motif du refus : la seule information que le
+                            client donne spontanément sur son prix. */}
+                        {d.comment ? <span className="mt-1 block text-ink">« {d.comment} »</span> : null}
+                      </li>
+                    ))}
                   </ul>
                 ) : null}
               </Section>
             );
           })}
-          <Section title="Nouveau devis complémentaire" description="Aucune prestation supplémentaire ne doit être réalisée avant l'accord enregistré du client.">
-            <QuoteForm orderId={order.id} options={options.data ?? []} />
+          <Section
+            title={order.is_quote_request && !order.received_at ? "Chiffrer la demande" : "Nouveau devis complémentaire"}
+            description={
+              order.is_quote_request && !order.received_at
+                ? "Le client attend ce prix pour décider. Dès l'envoi, il reçoit un lien personnel pour accepter ou refuser — sans avoir à créer de compte. Ce n'est qu'après son accord qu'il lui sera demandé de déposer ou d'envoyer sa console."
+                : "Aucune prestation supplémentaire ne doit être réalisée avant l'accord enregistré du client."
+            }
+          >
+            <QuoteForm orderId={order.id} options={options.data ?? []} defaultRequiresPayment={!order.is_quote_request} />
           </Section>
           <Section title="Photos jointes aux devis" actions={<MediaUploader orderId={order.id} kind="QUOTE" captionPrompt />}>
             <MediaGallery media={mediaOf(["QUOTE"])} emptyText="Ajoutez une photo du constat (poussière, oxydation…) : elle est affichée au client avec le devis." />

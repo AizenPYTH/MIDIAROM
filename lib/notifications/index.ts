@@ -15,6 +15,9 @@ import { formatDate } from "@/lib/utils/format";
  * recorded, never thrown to the caller.
  */
 export type NotificationEvent =
+  | { type: "QUOTE_REQUEST_RECEIVED" }
+  | { type: "QUOTE_READY"; quote: Tables<"supplementary_quotes">; lines: { label: string; total: number }[]; quoteUrl: string }
+  | { type: "QUOTE_ACCEPTED_SEND_CONSOLE"; quote: Tables<"supplementary_quotes"> }
   | { type: "ORDER_PAID"; hasLabel: boolean }
   | { type: "LABEL_AVAILABLE"; trackingNumber: string }
   | { type: "PACKAGE_RECEIVED" }
@@ -55,6 +58,31 @@ async function render(order: Order, event: NotificationEvent): Promise<RenderedE
   const brand = await emailBrand();
   const ctx = baseContext(order, brand);
   switch (event.type) {
+    case "QUOTE_REQUEST_RECEIVED":
+      return T.quoteRequestReceived({ ...ctx, description: order.customer_notes ?? "—" });
+    case "QUOTE_READY":
+      return T.quoteReady({
+        ...ctx,
+        quoteNumber: event.quote.quote_number,
+        quoteTitle: event.quote.title,
+        quoteAmountCents: event.quote.total_cents,
+        quoteMessage: event.quote.message,
+        expiresAt: event.quote.expires_at ? formatDate(event.quote.expires_at) : null,
+        // Le lien à jeton quand il existe ; sinon l'espace client, pour les
+        // devis complémentaires d'un dossier déjà en cours.
+        quoteUrl: event.quoteUrl,
+        lines: event.lines,
+      });
+    case "QUOTE_ACCEPTED_SEND_CONSOLE": {
+      const shipping = await getSetting("shipping_info");
+      return T.quoteAcceptedSendConsole({
+        ...ctx,
+        quoteNumber: event.quote.quote_number,
+        quoteAmountCents: event.quote.total_cents,
+        packagingUrl: `${SITE_URL}${ROUTES.packaging}`,
+        workshopAddress: [shipping.workshop_receiving_name, shipping.workshop_receiving_address].filter(Boolean).join(", "),
+      });
+    }
     case "ORDER_PAID": {
       const shipping = await getSetting("shipping_info");
       return T.orderConfirmed({
@@ -153,6 +181,57 @@ export async function notifyOrderEvent(order: Order, event: NotificationEvent): 
       error: String(error),
     });
   }
+}
+
+/**
+ * Prévient l'atelier, pas le client.
+ *
+ * Les notifications du projet partaient toutes vers `order.customer_email` :
+ * aucun chemin n'existait pour joindre le réparateur. Une demande de devis qui
+ * n'arrive que dans une liste du back-office est une demande qu'on découvre le
+ * surlendemain — or c'est le seul parcours où le client attend, sans avoir rien
+ * payé, qu'on lui réponde.
+ *
+ * L'adresse est celle des réglages de l'enseigne. Si elle n'est pas renseignée,
+ * on ne fabrique pas de destinataire : on l'écrit dans le journal, et la
+ * demande reste visible dans le back-office.
+ */
+export async function notifyWorkshop(order: Order, extra: { photos: number; description: string }): Promise<void> {
+  const brand = await getBrandSettings();
+  if (!brand.email) {
+    console.warn("[notifications] aucune adresse d'atelier configurée : demande de devis %s non notifiée", order.order_number);
+    return;
+  }
+  const rendered = T.workshopQuoteRequest({
+    brand: await emailBrand(),
+    orderNumber: order.order_number,
+    customerName: `${order.customer_first_name} ${order.customer_last_name}`.trim(),
+    customerEmail: order.customer_email,
+    customerPhone: order.customer_phone,
+    modelName: order.model_name,
+    repairName: order.repair_name,
+    description: extra.description,
+    photos: extra.photos,
+    adminUrl: `${SITE_URL}/admin/orders/${order.id}`,
+  });
+  await sendCustomerEmail({ to: brand.email, recipientId: null, eventType: "WORKSHOP_QUOTE_REQUEST", rendered });
+}
+
+/** Prévient l'atelier qu'un devis vient d'être accepté ou refusé. */
+export async function notifyWorkshopDecision(order: Order, quote: Tables<"supplementary_quotes">, accepted: boolean): Promise<void> {
+  const brand = await getBrandSettings();
+  if (!brand.email) return;
+  const rendered = T.workshopQuoteDecision({
+    brand: await emailBrand(),
+    orderNumber: order.order_number,
+    customerName: `${order.customer_first_name} ${order.customer_last_name}`.trim(),
+    quoteNumber: quote.quote_number,
+    accepted,
+    amountCents: quote.total_cents,
+    comment: quote.decision_comment,
+    adminUrl: `${SITE_URL}/admin/orders/${order.id}`,
+  });
+  await sendCustomerEmail({ to: brand.email, recipientId: null, eventType: accepted ? "WORKSHOP_QUOTE_ACCEPTED" : "WORKSHOP_QUOTE_REFUSED", rendered });
 }
 
 /** Sends the "set your password" e-mail for accounts created at checkout. */

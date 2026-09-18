@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { StatusTimeline } from "@/components/ui/timeline";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { computeWorkshopTimeline, ORDER_STATUS_DESCRIPTIONS, ORDER_STATUS_LABELS, statusTone, workshopStepIndex } from "@/lib/orders/status";
+import { computeTimeline, computeWorkshopTimeline, ORDER_STATUS_DESCRIPTIONS, ORDER_STATUS_LABELS, statusTone, workshopStepIndex } from "@/lib/orders/status";
 import { formatDateTime } from "@/lib/utils/format";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export default async function TrackingTokenPage({ params }: { params: Promise<{ 
   const { token } = await params;
   if (!/^[a-f0-9]{36}$/.test(token)) notFound();
   const db = createSupabaseAdminClient();
-  const { data: order } = await db.from("repair_orders").select("id, order_number, model_name, repair_name, status, created_at").eq("tracking_token", token).maybeSingle();
+  const { data: order } = await db.from("repair_orders").select("id, order_number, model_name, repair_name, status, created_at, is_quote_request, received_at").eq("tracking_token", token).maybeSingle();
   if (!order) notFound();
   const [{ data: events }, { data: shipments }] = await Promise.all([
     db.from("order_events").select("id, title, description, created_at").eq("order_id", order.id).eq("is_public", true).order("created_at", { ascending: false }).limit(30),
@@ -30,6 +30,16 @@ export default async function TrackingTokenPage({ params }: { params: Promise<{ 
   const returnShipment = shipments?.find((s) => s.direction === "TO_CUSTOMER");
   const outbound = shipments?.find((s) => s.direction === "TO_WORKSHOP");
   const beforeReception = workshopStepIndex(order.status) < 0;
+  /*
+    Une demande de devis suit sa propre trame.
+
+    La frise atelier commence à la réception du colis ; appliquée à une demande
+    de devis, elle affichait « Console attendue à l'atelier » à quelqu'un qui
+    n'a rien commandé et ne connaît pas encore le prix. Tant que la console
+    n'est pas arrivée, on montre donc le parcours du devis — demande, devis,
+    puis envoi seulement après l'accord.
+  */
+  const suitLeDevis = order.is_quote_request && !order.received_at;
 
   return (
     <Container className="max-w-2xl py-10 sm:py-16">
@@ -46,8 +56,20 @@ export default async function TrackingTokenPage({ params }: { params: Promise<{ 
         </div>
         {ORDER_STATUS_DESCRIPTIONS[order.status] ? <p className="mt-3 text-sm text-ink-soft">{ORDER_STATUS_DESCRIPTIONS[order.status]}</p> : null}
         <div className="mt-6">
-          <StatusTimeline steps={computeWorkshopTimeline(order.status)} />
-          {beforeReception ? <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">Console attendue à l&apos;atelier — les étapes démarrent à réception du colis.</p> : null}
+          <StatusTimeline steps={suitLeDevis ? computeTimeline(order.status, true) : computeWorkshopTimeline(order.status)} />
+          {suitLeDevis ? (
+            <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">
+              {order.status === "QUOTE_REQUESTED"
+                ? "Demande gratuite — gardez votre console, nous revenons vers vous avec un prix."
+                : order.status === "WAITING_CUSTOMER_APPROVAL"
+                  ? "Votre devis vous attend : consultez le lien reçu par e-mail."
+                  : order.status === "REFUSED_QUOTE"
+                    ? "Devis refusé. Aucun frais, aucune expédition."
+                    : "Votre accord est enregistré : déposez ou envoyez votre console quand vous voulez."}
+            </p>
+          ) : beforeReception ? (
+            <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.06em] text-ink-muted">Console attendue à l&apos;atelier — les étapes démarrent à réception du colis.</p>
+          ) : null}
         </div>
       </div>
       {outbound?.tracking_number ? (

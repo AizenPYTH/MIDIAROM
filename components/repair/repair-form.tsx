@@ -9,7 +9,7 @@ import { formatPrice, formatPriceDelta, formatRepairPrice } from "@/lib/utils/fo
 import { useAnalytics } from "@/lib/analytics/client";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
 import type { PricingResult } from "@/lib/pricing/engine";
-import { createOrderAction, quoteSelectionAction } from "@/app/(marketing)/commande/[repairId]/actions";
+import { createOrderAction, createQuoteRequestAction, quoteSelectionAction } from "@/app/(marketing)/commande/[repairId]/actions";
 import { loadModelRepairsAction, loadOfferAction } from "@/app/(marketing)/reparation/actions";
 import type { FormAddress, FormConditions, FormCustomer, FormModel, FormOffer, FormPlatform, FormRepair } from "@/components/repair/repair-form-types";
 import { DraftPhotoUploader, type DraftPhoto } from "@/components/customer/draft-photo-uploader";
@@ -97,14 +97,35 @@ const RETRO_KEY = "retro";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
-/** Les six étapes, dans l'ordre, telles que la progression les nomme. */
+/** Les six étapes du parcours à prix fixe, dans l'ordre. */
 const ETAPES = [
-  { n: "01", label: "Console" },
-  { n: "02", label: "Modèle" },
-  { n: "03", label: "Problème" },
-  { n: "04", label: "Options" },
-  { n: "05", label: "Coordonnées" },
-  { n: "06", label: "Confirmation" },
+  { n: "01", label: "Console", s: 1 as Step },
+  { n: "02", label: "Modèle", s: 2 as Step },
+  { n: "03", label: "Problème", s: 3 as Step },
+  { n: "04", label: "Options", s: 4 as Step },
+  { n: "05", label: "Coordonnées", s: 5 as Step },
+  { n: "06", label: "Confirmation", s: 6 as Step },
+] as const;
+
+/**
+ * Les cinq étapes de la demande de devis gratuite.
+ *
+ * Il en manque une, et c'est la démonstration du parcours : sans prix, il n'y
+ * a **rien à chiffrer** — ni options à ajouter au montant, ni transport à
+ * facturer. L'étape « Options » disparaît donc, et l'étape des coordonnées ne
+ * demande plus d'adresse de livraison : on ne sait pas encore si la console
+ * viendra, et si elle vient, ce sera après l'accord, au choix du client entre
+ * le dépôt en boutique et l'envoi.
+ *
+ * Les numéros d'étape restent ceux du parcours complet (`s`) : une seule
+ * machine, deux affichages, plutôt que deux compteurs à garder en phase.
+ */
+const ETAPES_DEVIS = [
+  { n: "01", label: "Console", s: 1 as Step },
+  { n: "02", label: "Modèle", s: 2 as Step },
+  { n: "03", label: "Problème", s: 3 as Step },
+  { n: "04", label: "Coordonnées", s: 5 as Step },
+  { n: "05", label: "Demande", s: 6 as Step },
 ] as const;
 
 /**
@@ -209,6 +230,20 @@ export function RepairForm(props: RepairFormProps) {
   const model = models.find((m) => m.id === modelId) ?? null;
   const repair = repairs.find((r) => r.id === repairId) ?? null;
   const showPrices = props.showPrices ?? true;
+
+  /**
+   * La bascule entre les deux parcours, et la seule.
+   *
+   * `price_is_provisional` ne dit pas « prix à zéro », il dit « pas encore de
+   * prix ». Une prestation dans cet état ne peut pas se commander : elle ouvre
+   * une demande de devis gratuite. Le serveur refait exactement la même lecture
+   * (`create-quote-request.ts`), sur la donnée de la base — ce drapeau-ci ne
+   * fait qu'accorder l'écran avec elle.
+   */
+  const surDevis = Boolean(repair?.priceProvisional);
+  const etapes = surDevis ? ETAPES_DEVIS : ETAPES;
+  const rangEtape = Math.max(0, etapes.findIndex((e) => e.s === step));
+  const etapeCourante = etapes[rangEtape]!;
   const platformModels = useMemo(() => (platform === RETRO_KEY ? models.filter((m) => m.isRetro) : platform ? models.filter((m) => m.brandId === platform) : []), [models, platform]);
   /*
     ── Ce que le client voit d'abord ──────────────────────────────────────────
@@ -296,8 +331,12 @@ export function RepairForm(props: RepairFormProps) {
   */
   const plateforme = platforms.find((p) => p.key === platform) ?? null;
   const descriptionFaite = desc.trim().length >= MIN_DESCRIPTION || symptoms.length > 0;
-  const coordonneesFaites =
-    Boolean(customer.first_name.trim() && customer.last_name.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customer.email.trim()) && address.line1.trim() && /^\d{5}$/.test(address.postal_code.trim()) && address.city.trim());
+  /** Sur devis, la description est obligatoire : c'est la matière du devis. */
+  const descriptionLibreFaite = desc.trim().length >= MIN_DESCRIPTION;
+  const identiteFaite = Boolean(customer.first_name.trim() && customer.last_name.trim() && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customer.email.trim()));
+  const adresseFaite = Boolean(address.line1.trim() && /^\d{5}$/.test(address.postal_code.trim()) && address.city.trim());
+  // Une demande de devis ne livre rien : elle ne réclame pas d'adresse.
+  const coordonneesFaites = identiteFaite && (surDevis || adresseFaite);
 
   /**
    * Ce qui manque, dit par le bouton lui-même.
@@ -310,22 +349,35 @@ export function RepairForm(props: RepairFormProps) {
   const manque: (string | null)[] = [
     platform ? null : "Choisissez votre console",
     modelId ? null : "Choisissez un modèle",
-    !repairId ? "Choisissez une panne" : !descriptionFaite ? "Décrivez la panne" : offer ? null : "Chargement des options…",
+    // Sur devis, la description **fait** le dossier : sans mots, le réparateur
+    // n'a rien à chiffrer. Des symptômes cochés ne suffisent donc plus, et
+    // l'offre (options, transport) n'est pas attendue, puisqu'il n'y en a pas.
+    !repairId
+      ? "Choisissez une panne"
+      : surDevis
+        ? descriptionLibreFaite
+          ? null
+          : "Décrivez la panne en quelques mots"
+        : !descriptionFaite
+          ? "Décrivez la panne"
+          : offer
+            ? null
+            : "Chargement des options…",
     null,
-    !coordonneesFaites ? "Complétez vos coordonnées" : shippingId ? null : "Choisissez un mode d'envoi",
+    !coordonneesFaites ? "Complétez vos coordonnées" : surDevis || shippingId ? null : "Choisissez un mode d'envoi",
     acceptTerms ? null : "Acceptez les conditions",
   ];
   const quiManque = manque[step - 1] ?? null;
   const bloque = Boolean(quiManque);
 
-  const QUESTIONS = ["Quelle console ?", plateforme ? `Quel ${plateforme.label} ?` : "Quel modèle ?", "Que se passe-t-il ?", "À ajouter ?", "Où vous joindre ?", "Vérifiez votre demande"];
+  const QUESTIONS = ["Quelle console ?", plateforme ? `Quel ${plateforme.label} ?` : "Quel modèle ?", "Que se passe-t-il ?", "À ajouter ?", "Où vous joindre ?", surDevis ? "Vérifiez votre demande de devis" : "Vérifiez votre demande"];
   const AIDES = [
     "L'atelier ne répare que des consoles — ni téléphones, ni ordinateurs.",
     "Le modèle exact : les interventions et les pièces en dépendent.",
     "Choisissez la panne la plus proche, puis dites-nous ce que vous constatez.",
     "Facultatif. Ce qui est déjà compris dans l'intervention n'apparaît pas ici.",
     "Le devis et le suivi partent sur ces coordonnées.",
-    "Rien n'est prélevé au-delà de ce montant sans votre accord écrit.",
+    surDevis ? "Votre demande est gratuite : vérifiez, puis envoyez." : "Rien n'est prélevé au-delà de ce montant sans votre accord écrit.",
   ];
 
   /** Le fil des choix déjà faits, cliquable pour y revenir. */
@@ -459,15 +511,60 @@ export function RepairForm(props: RepairFormProps) {
   const next = () => {
     setError(null);
     if (quiManque) return setError(quiManque);
-    if (step === 3 && !offer) return setError("Chargement des options en cours…");
-    setStep((v) => Math.min(6, v + 1) as Step);
+    if (step === 3 && !surDevis && !offer) return setError("Chargement des options en cours…");
+    // On avance dans la trame du parcours courant : sur devis, l'étape des
+    // options n'existe pas, donc 03 mène directement aux coordonnées.
+    const suivante = etapes[rangEtape + 1];
+    setStep(suivante ? suivante.s : step);
   };
   const back = () => {
     setError(null);
-    setStep((v) => Math.max(1, v - 1) as Step);
+    const precedente = etapes[rangEtape - 1];
+    setStep(precedente ? precedente.s : step);
+  };
+
+  /**
+   * Envoyer une demande de devis. Gratuitement.
+   *
+   * Action serveur distincte, schéma distinct : rien ici ne touche au prix, au
+   * transport ni au paiement. C'est le point où les deux parcours cessent
+   * définitivement de se ressembler.
+   */
+  const submitDevis = async () => {
+    setError(null);
+    if (!repairId) return setError("Choisissez une panne.");
+    const errors: Record<string, string> = {};
+    if (!customer.first_name.trim()) errors["customer.first_name"] = "Prénom requis";
+    if (!customer.last_name.trim()) errors["customer.last_name"] = "Nom requis";
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(customer.email.trim())) errors["customer.email"] = "E-mail invalide";
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) return setError("Merci de corriger les champs signalés.");
+    if (desc.trim().length < MIN_DESCRIPTION) return setError("Décrivez la panne en quelques mots : c'est ce qui permet de chiffrer.");
+    if (!acceptTerms) return setError("Vous devez accepter les conditions générales de vente pour continuer.");
+    setSubmitting(true);
+    const result = await createQuoteRequestAction({
+      repairId,
+      customer: { ...customer, email: customer.email.trim(), phone: customer.phone.trim() },
+      description: desc.trim(),
+      console_serial_number: serial.trim(),
+      console_already_opened: alreadyOpened,
+      accept_terms: true,
+      attribution,
+      symptoms,
+      photos: photos.map((p) => p.path),
+    });
+    if (result.ok) {
+      track(ANALYTICS_EVENTS.QUOTE_REQUESTED, { repair_id: repairId, order_number: result.orderNumber });
+      window.location.assign(result.trackingUrl);
+      return;
+    }
+    setSubmitting(false);
+    setError(result.error);
+    setFieldErrors(result.fieldErrors ?? {});
   };
 
   const submit = async () => {
+    if (surDevis) return submitDevis();
     setError(null);
     if (!repairId || !shippingId) return setError("Choisissez un mode d'envoi.");
     const errors: Record<string, string> = {};
@@ -518,23 +615,28 @@ export function RepairForm(props: RepairFormProps) {
    * prestation qu'on n'a pas encore chiffrée. Le chiffre lui-même vient du
    * serveur (`quoteSelectionAction`) ; on ne fait que le refléter.
    */
-  const surDevis = Boolean(repair?.priceProvisional);
-  const totalLabel = surDevis ? "À payer maintenant" : "Total";
-  const totalText = !repairId || !showPrices
-    ? "—"
-    : total === null
-      ? "calcul…"
-      : total > 0
-        ? formatPrice(total)
-        // Zéro ne veut pas dire zéro euro. Sur une prestation à chiffrer, tant
-        // que rien de facturable n'est choisi, le total est **inconnu** : il
-        // s'écrit « — ». Afficher « 0,00 € » promettrait la gratuité d'une
-        // réparation dont le devis n'est pas encore fait — c'est la règle que
-        // le catalogue applique déjà ligne par ligne.
-        : surDevis
-          ? "—"
+  /*
+    Le total, et son intitulé.
+
+    Sur devis, ce qui est annoncé n'est pas le prix de la réparation — il
+    n'existe pas encore — mais ce que **la demande** coûte : rien. Écrire
+    « Gratuit » sous l'intitulé « Votre demande » est exact et lève l'ambiguïté
+    du tiret, qui laissait croire à un montant inconnu et donc peut-être dû.
+
+    Hors devis, la règle d'origine tient : jamais « 0,00 € » pour une
+    prestation non chiffrée.
+  */
+  const totalLabel = surDevis ? "Votre demande" : "Total";
+  const totalText = surDevis
+    ? "Gratuit"
+    : !repairId || !showPrices
+      ? "—"
+      : total === null
+        ? "calcul…"
+        : total > 0
+          ? formatPrice(total)
           : "Gratuit";
-  const nextLabel = step === 6 ? "Envoyer la demande" : (quiManque ?? "Continuer");
+  const nextLabel = step === 6 ? (surDevis ? "Demander un devis gratuit" : "Envoyer la demande") : (quiManque ?? "Continuer");
 
   /** Les lignes du résumé : ce qui est choisi, et rien d'autre. */
   const resume: { k: string; v: string; p?: string }[] = [];
@@ -567,17 +669,16 @@ export function RepairForm(props: RepairFormProps) {
           cliquables, les suivantes non : on ne saute pas une question dont la
           réponse conditionne la suivante. */}
       <ol data-etapes="1" className="m-0 hidden list-none p-0">
-        {ETAPES.map((e, i) => {
-          const rang = (i + 1) as Step;
-          const etat = rang < step ? "done" : rang === step ? "now" : "next";
-          const atteignable = rang < step;
+        {etapes.map((e, i) => {
+          const etat = i < rangEtape ? "done" : i === rangEtape ? "now" : "next";
+          const atteignable = i < rangEtape;
           return (
             <li key={e.n} className="min-w-0">
               <button
                 type="button"
                 data-etape={etat}
                 disabled={!atteignable}
-                onClick={() => atteignable && setStep(rang)}
+                onClick={() => atteignable && setStep(e.s)}
                 className="flex w-full flex-col gap-[3px] bg-surface px-3.5 py-3 text-left disabled:cursor-default"
               >
                 <span className="font-mono text-[10px] tracking-[0.13em]">{e.n}</span>
@@ -590,14 +691,14 @@ export function RepairForm(props: RepairFormProps) {
 
       <div data-etape-mini="1" className="hidden flex-col gap-[9px] bg-surface px-3.5 py-3">
         <span className="flex items-baseline justify-between gap-3">
-          <span className="text-[16px] font-semibold tracking-[-0.018em] text-ink">{ETAPES[step - 1]!.label}</span>
+          <span className="text-[16px] font-semibold tracking-[-0.018em] text-ink">{etapeCourante.label}</span>
           <span className="whitespace-nowrap font-mono text-[11.5px] text-ink-muted">
-            Étape {ETAPES[step - 1]!.n} / 06
+            Étape {etapeCourante.n} / {String(etapes.length).padStart(2, "0")}
           </span>
         </span>
         <span className="block h-0.5 bg-border">
           {/* Longhand seule : `width` pilotée par l'état, jamais un raccourci. */}
-          <span data-barre-etape="1" className="block h-0.5" style={{ width: `${(step / 6) * 100}%`, background: "var(--brand-gradient)" }} />
+          <span data-barre-etape="1" className="block h-0.5" style={{ width: `${((rangEtape + 1) / etapes.length) * 100}%`, background: "var(--brand-gradient)" }} />
         </span>
       </div>
 
@@ -625,7 +726,7 @@ export function RepairForm(props: RepairFormProps) {
 
           <div data-ecran={step} className="min-w-0">
             <span className="block font-mono text-[10px] uppercase tracking-[0.19em] text-ink-faint">
-              {ETAPES[step - 1]!.n} — {ETAPES[step - 1]!.label}
+              {etapeCourante.n} — {etapeCourante.label}
             </span>
             <h2 className="m-0 mb-1 mt-2.5 text-[clamp(21px,2.1vw,28px)] font-extrabold tracking-[-0.034em] text-ink">{QUESTIONS[step - 1]}</h2>
             <p className="m-0 mb-[18px] text-[15.5px] leading-[1.5] text-ink-soft">{AIDES[step - 1]}</p>
@@ -743,22 +844,31 @@ export function RepairForm(props: RepairFormProps) {
                   </p>
                 ) : null}
 
-                {/* Ce que le devis exige d'expliquer, et seulement quand il
-                    l'exige : les trois issues possibles, dites avant la
-                    commande et non découvertes après. */}
+                {/*
+                  Ce qui va se passer, dit avant plutôt que découvert après.
+
+                  Cet encart annonçait auparavant un diagnostic facturé et une
+                  console à retourner — des conséquences qui n'existent que
+                  lorsqu'une réparation a été commandée et la console envoyée.
+                  Sur une demande de devis, rien de tout cela n'est engagé : le
+                  dire autrement, c'était faire renoncer des clients à une
+                  démarche gratuite.
+                */}
                 {surDevis ? (
                   <div className="mt-[22px] bg-ink-900 p-[18px] text-on-dark">
                     <span className="flex items-baseline justify-between gap-3">
                       <span className="font-mono text-[10.5px] uppercase tracking-[0.13em]" style={{ color: "var(--brand-mint)" }}>
-                        Diagnostic
+                        Votre demande
                       </span>
-                      <span className="text-[19px] font-bold tracking-[-0.03em]">{conditions.refusalFeeCents ? formatPrice(conditions.refusalFeeCents) : "—"}</span>
+                      <span className="text-[19px] font-bold tracking-[-0.03em]">Gratuite</span>
                     </span>
-                    <p className="m-0 mt-2 text-[14.5px] leading-[1.5] text-on-dark-2">Cette panne ne se chiffre pas à l&apos;aveugle : la console passe au banc de test avant tout devis.</p>
+                    <p className="m-0 mt-2 text-[14.5px] leading-[1.5] text-on-dark-2">
+                      Cette panne se chiffre après examen. Décrivez-la, joignez des photos si vous le pouvez : l&apos;atelier vous envoie un devis, et vous déciderez ensuite.
+                    </p>
                     <div data-g3="1" className="mt-3.5 grid gap-0.5">
-                      <IssueDevis k="Réparable" v="Devis détaillé. Le diagnostic est déduit du montant." />
-                      <IssueDevis k="Irréparable" v={conditions.unrepairableFeeCents ? `Le diagnostic reste dû (${formatPrice(conditions.unrepairableFeeCents)}), la console vous est retournée.` : "La console vous est retournée."} />
-                      <IssueDevis k="Devis refusé" v={conditions.refusalExplanation || "Aucune intervention. Diagnostic et port seuls dus."} />
+                      <IssueDevis k="Aujourd'hui" v="Vous envoyez votre demande. Rien à payer, et vous gardez votre console." />
+                      <IssueDevis k="Sous 48 h" v="Vous recevez un devis détaillé : réparation, options éventuelles, total." />
+                      <IssueDevis k="Ensuite" v="Vous acceptez ou refusez. Ce n'est qu'en cas d'accord que la console nous rejoint." />
                     </div>
                   </div>
                 ) : null}
@@ -854,12 +964,12 @@ export function RepairForm(props: RepairFormProps) {
               </div>
             ) : null}
 
-            {/* ── 05 · coordonnées et transport ──────────────────────────── */}
+            {/* ── 05 · coordonnées (et transport, hors devis) ─────────────── */}
             {step === 5 ? (
               <div>
                 {!props.isLoggedIn ? (
                   <p className="m-0 mb-[18px] text-[14.5px] leading-[1.5] text-ink-soft">
-                    Un espace client est créé avec votre adresse pour suivre le dossier.{" "}
+                    {surDevis ? "C'est à cette adresse que votre devis sera envoyé." : "Un espace client est créé avec votre adresse pour suivre le dossier."}{" "}
                     <Link href={ROUTES.login} className="text-accent underline">
                       Déjà client ? Connectez-vous
                     </Link>
@@ -871,19 +981,37 @@ export function RepairForm(props: RepairFormProps) {
                   <TextInput label="Nom" autoComplete="family-name" value={customer.last_name} onChange={(v) => setCustomer({ ...customer, last_name: v })} error={fieldErrors["customer.last_name"]} />
                   <TextInput label="Courriel" type="email" autoComplete="email" placeholder="vous@exemple.fr" value={customer.email} onChange={(v) => setCustomer({ ...customer, email: v })} error={fieldErrors["customer.email"]} />
                   <TextInput label="Téléphone" type="tel" autoComplete="tel" placeholder="06 12 34 56 78" value={customer.phone} onChange={(v) => setCustomer({ ...customer, phone: v })} error={fieldErrors["customer.phone"]} />
-                  <TextInput label="Adresse de retour" autoComplete="address-line1" value={address.line1} onChange={(v) => setAddress({ ...address, line1: v })} error={fieldErrors["address.line1"]} />
-                  <TextInput label="Complément d'adresse" autoComplete="address-line2" placeholder="Facultatif" value={address.line2} onChange={(v) => setAddress({ ...address, line2: v })} />
-                  <TextInput label="Code postal" autoComplete="postal-code" inputMode="numeric" value={address.postal_code} onChange={(v) => setAddress({ ...address, postal_code: v })} error={fieldErrors["address.postal_code"]} />
-                  <TextInput label="Ville" autoComplete="address-level2" value={address.city} onChange={(v) => setAddress({ ...address, city: v })} error={fieldErrors["address.city"]} />
+                  {/*
+                    Adresse et transport : demandés seulement quand un colis
+                    part. Une demande de devis ne déclenche aucun envoi — réclamer
+                    ici une adresse de livraison ferait croire le contraire, et
+                    c'est exactement la confusion qu'on lève.
+                  */}
+                  {surDevis ? null : (
+                    <>
+                      <TextInput label="Adresse de retour" autoComplete="address-line1" value={address.line1} onChange={(v) => setAddress({ ...address, line1: v })} error={fieldErrors["address.line1"]} />
+                      <TextInput label="Complément d'adresse" autoComplete="address-line2" placeholder="Facultatif" value={address.line2} onChange={(v) => setAddress({ ...address, line2: v })} />
+                      <TextInput label="Code postal" autoComplete="postal-code" inputMode="numeric" value={address.postal_code} onChange={(v) => setAddress({ ...address, postal_code: v })} error={fieldErrors["address.postal_code"]} />
+                      <TextInput label="Ville" autoComplete="address-level2" value={address.city} onChange={(v) => setAddress({ ...address, city: v })} error={fieldErrors["address.city"]} />
+                    </>
+                  )}
                 </div>
 
-                <span className="mb-2.5 mt-[26px] block font-mono text-[10.5px] uppercase tracking-[0.13em] text-ink-faint">Comment nous l&apos;envoyer</span>
-                <div className="flex flex-col" role="radiogroup" aria-label="Mode d'envoi">
-                  {offer?.shippingMethods.map((m) => (
-                    <LigneCoche key={m.id} role="radio" selected={shippingId === m.id} onPick={() => setShippingId(m.id)} label={m.name} note={m.note} price={formatPriceDelta(m.priceCents)} />
-                  ))}
-                  <span aria-hidden="true" className="block border-t border-border-hairline" />
-                </div>
+                {surDevis ? (
+                  <p className="m-0 mt-[22px] border-l-2 bg-surface p-3.5 text-[14.5px] leading-[1.5] text-ink-soft" style={{ borderLeftColor: "var(--brand)" }}>
+                    Pas d&apos;adresse à saisir : votre console reste chez vous. Si vous acceptez le devis, vous choisirez alors de la déposer en boutique ou de nous l&apos;envoyer.
+                  </p>
+                ) : (
+                  <>
+                    <span className="mb-2.5 mt-[26px] block font-mono text-[10.5px] uppercase tracking-[0.13em] text-ink-faint">Comment nous l&apos;envoyer</span>
+                    <div className="flex flex-col" role="radiogroup" aria-label="Mode d'envoi">
+                      {offer?.shippingMethods.map((m) => (
+                        <LigneCoche key={m.id} role="radio" selected={shippingId === m.id} onPick={() => setShippingId(m.id)} label={m.name} note={m.note} price={formatPriceDelta(m.priceCents)} />
+                      ))}
+                      <span aria-hidden="true" className="block border-t border-border-hairline" />
+                    </div>
+                  </>
+                )}
               </div>
             ) : null}
 
@@ -904,7 +1032,7 @@ export function RepairForm(props: RepairFormProps) {
 
                 <p className="m-0 mt-3.5 text-[13.5px] leading-[1.5] text-ink-soft">
                   {surDevis
-                    ? "Cette intervention se chiffre après diagnostic. Vous ne payez aujourd'hui que le diagnostic et le transport ; la réparation suit un devis que vous acceptez ou refusez."
+                    ? "Vous envoyez une demande de devis : rien ne vous est facturé, aucune réparation n'est commandée et votre console reste chez vous. L'atelier vous répond avec un prix détaillé, que vous serez libre d'accepter ou de refuser."
                     : "Le montant est celui du catalogue au moment de la commande. Toute intervention supplémentaire passe par un devis."}
                 </p>
 

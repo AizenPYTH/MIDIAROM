@@ -24,6 +24,9 @@ export async function priceSelection(
       name: offer.repair.name,
       priceCents: offer.repair.price_cents,
       estimatedCostCents: offer.repair.estimated_cost_cents,
+      // La colonne qui départage « offert » de « sur devis ». Sans elle, le
+      // moteur ne peut pas faire la différence et empile un zéro payable.
+      isProvisional: offer.repair.price_is_provisional,
     },
     availableOptions: offer.options.map((o) => ({
       id: o.id,

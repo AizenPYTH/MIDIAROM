@@ -11,9 +11,7 @@ import type { MediaKind } from "@/lib/security/upload";
 import { addOrderEvent, getOrderById, transitionOrder } from "@/lib/orders/service";
 import { CUSTOMER_CANCELLABLE_STATUSES } from "@/lib/orders/status";
 import { createQuoteCheckout } from "@/lib/orders/payments";
-import { notifyOrderEvent } from "@/lib/notifications";
-import { consequenceForOutcome } from "@/lib/quotes/rules";
-import { getBusinessRules } from "@/lib/settings";
+import { afterQuoteDecision } from "@/lib/quotes/decision";
 import { audit, requestMeta } from "@/lib/security/audit";
 import { trackServerEvent } from "@/lib/analytics/server";
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
@@ -191,26 +189,27 @@ export async function decideQuoteAction(_prev: ActionResult | null, formData: Fo
   const user = await getCurrentUser();
   if (!user) return fail("Session expirée");
   const meta = await requestMeta();
+  // Le commentaire est facultatif et n'est demandé qu'au refus. Il est
+  // tronqué ici, pas seulement dans le navigateur.
+  const commentaire = String(formData.get("comment") ?? "").trim().slice(0, 1000) || null;
   const supabase = await createSupabaseServerClient();
-  const { data: quote, error } = await supabase.rpc("decide_supplementary_quote", { p_quote_id: quoteId, p_decision: decision, p_user_agent: meta.userAgent ?? undefined, p_ip_address: meta.ip ?? undefined });
+  const { data: quote, error } = await supabase.rpc("decide_supplementary_quote", {
+    p_quote_id: quoteId,
+    p_decision: decision,
+    p_user_agent: meta.userAgent ?? undefined,
+    p_ip_address: meta.ip ?? undefined,
+    p_comment: commentaire ?? undefined,
+  });
   if (error || !quote) return fail(error?.message.includes("expired") ? "Ce devis a expiré. Contactez-nous depuis la messagerie." : "Décision impossible : le devis n'est peut-être plus en attente.");
 
   const order = await getOrderById(quote.order_id);
-  if (decision === "ACCEPTED") {
-    await notifyOrderEvent(order, { type: "QUOTE_ACCEPTED", quote });
-    await trackServerEvent({ event: ANALYTICS_EVENTS.QUOTE_ACCEPTED, orderId: order.id, repairId: order.repair_id, userId: user.id, valueCents: quote.total_cents });
-    if (quote.requires_payment && quote.total_cents > 0) {
-      const { redirectUrl } = await createQuoteCheckout(quote.id, user.id);
-      redirect(redirectUrl);
-    }
-  } else {
-    const rules = await getBusinessRules();
-    const consequence = consequenceForOutcome("QUOTE_REFUSED", rules, false);
-    await notifyOrderEvent(order, { type: "QUOTE_REFUSED", quote, consequence: quote.is_required_for_repair ? consequence.explanation : "La réparation initialement commandée se poursuit normalement." });
-    await trackServerEvent({ event: ANALYTICS_EVENTS.QUOTE_REFUSED, orderId: order.id, repairId: order.repair_id, userId: user.id, valueCents: quote.total_cents });
+  await afterQuoteDecision(quote, decision === "ACCEPTED", user.id);
+  if (decision === "ACCEPTED" && quote.requires_payment && quote.total_cents > 0) {
+    const { redirectUrl } = await createQuoteCheckout(quote.id, user.id);
+    redirect(redirectUrl);
   }
   revalidatePath(`${ROUTES.accountOrders}/${order.id}`);
-  return { ok: true, message: decision === "ACCEPTED" ? `Vous avez accepté le devis complémentaire.` : "Votre refus est enregistré." };
+  return { ok: true, message: decision === "ACCEPTED" ? "Votre accord est enregistré." : "Votre refus est enregistré." };
 }
 
 export async function payQuoteAction(formData: FormData): Promise<void> {

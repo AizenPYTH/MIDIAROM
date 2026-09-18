@@ -8,6 +8,8 @@ export const ROUTES = {
   faq: "/faq",
   tracking: "/suivi",
   packaging: "/emballage",
+  /* La page publique où un devis se lit et se décide, avec son jeton. */
+  quoteDecision: "/devis",
   contact: "/contact",
   cgv: "/cgv",
   privacy: "/confidentialite",

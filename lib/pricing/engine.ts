@@ -8,6 +8,14 @@ export interface PricingRepair {
   name: string;
   priceCents: number;
   estimatedCostCents?: number;
+  /**
+   * `repairs.price_is_provisional` — le prix n'a pas été arbitré.
+   *
+   * Ce n'est pas « le prix vaut zéro », c'est « il n'y a pas de prix ». La
+   * distinction décide de tout : une prestation provisoire n'est pas payable,
+   * donc pas commandable, donc elle ouvre une demande de devis gratuite.
+   */
+  isProvisional?: boolean;
 }
 
 export interface PricingOption {
@@ -61,6 +69,16 @@ export interface PriceLine {
 
 export interface PricingResult {
   lines: PriceLine[];
+  /**
+   * La prestation choisie n'a pas de prix ferme : rien n'est payable, et le
+   * parcours qui s'ouvre est la demande de devis gratuite.
+   *
+   * Quand ce drapeau est levé, tous les montants du résultat valent zéro —
+   * ce n'est pas une gratuité, c'est l'absence de montant. Le reste du code
+   * doit lire ce booléen, jamais `totalCents === 0`, pour faire la différence
+   * entre « offert » et « à devis ».
+   */
+  requiresQuote: boolean;
   subtotalCents: number;
   shippingCents: number;
   totalCents: number;
@@ -135,6 +153,43 @@ export function computePrice(input: PricingInput): PricingResult {
     selectedOptions.push(option);
   }
 
+  /*
+    Prestation sur devis : plus rien n'est facturable, on s'arrête là.
+
+    Le moteur empilait jusqu'ici `repair.priceCents` sans regarder ce drapeau.
+    Comme le catalogue crée toutes les prestations à `price_cents = 0` et
+    `price_is_provisional = true`, un dossier « sur devis » repartait avec un
+    total égal aux seuls frais de port — payable, donc payé, donc traité comme
+    une réparation commandée. Le client envoyait sa console sans qu'un prix ait
+    jamais été fixé.
+
+    **Cette sortie vient après les validations, et non avant.** Court-circuiter
+    en tête de fonction faisait bien tomber le total à zéro, mais cessait du
+    même coup de refuser une option incompatible, inconnue ou désactivée : une
+    garantie du parcours payant disparaissait par effet de bord sur l'autre.
+    Ici, une sélection trafiquée est toujours rejetée ; une sélection valable
+    est simplement non facturée, et le client est prévenu que l'atelier la
+    chiffrera dans le devis.
+  */
+  if (input.repair.isProvisional) {
+    if (selectedOptions.length || selectedPacks.length) {
+      warnings.push("Les options seront chiffrées par l'atelier dans le devis.");
+    }
+    return {
+      lines: [
+        { type: "REPAIR", referenceId: input.repair.id, label: input.repair.name, quantity: 1, unitPriceCents: 0, totalCents: 0, estimatedCostCents: 0 },
+      ],
+      requiresQuote: true,
+      subtotalCents: 0,
+      shippingCents: 0,
+      totalCents: 0,
+      vatCents: 0,
+      vatRateBp: input.vatRateBp,
+      packSavingsCents: 0,
+      warnings,
+    };
+  }
+
   const lines: PriceLine[] = [];
   lines.push({
     type: "REPAIR",
@@ -195,6 +250,7 @@ export function computePrice(input: PricingInput): PricingResult {
   const totalCents = subtotalCents + shippingCents;
   return {
     lines,
+    requiresQuote: false,
     subtotalCents,
     shippingCents,
     totalCents,

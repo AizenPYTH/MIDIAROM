@@ -12,6 +12,10 @@ export const ANALYTICS_EVENTS = {
   SELECT_SHIPPING: "select_shipping",
   START_PAYMENT: "start_payment",
   PURCHASE: "purchase",
+  /* Une demande de devis gratuite part du tunnel public : c'est le point de
+     conversion du second parcours, l'équivalent de START_PAYMENT pour le
+     premier. Il se mesure donc à part. */
+  QUOTE_REQUESTED: "quote_requested",
   QUOTE_SENT: "quote_sent",
   QUOTE_ACCEPTED: "quote_accepted",
   QUOTE_REFUSED: "quote_refused",

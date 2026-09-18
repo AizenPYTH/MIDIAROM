@@ -14,8 +14,24 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const { status, q, page: pageRaw } = await searchParams;
   const page = Math.max(1, Number.parseInt(pageRaw ?? "1", 10) || 1);
   const db = createSupabaseAdminClient();
-  let query = db.from("repair_orders").select("id, order_number, model_name, repair_name, status, total_cents, created_at, customer_first_name, customer_last_name, customer_email", { count: "exact" }).order("created_at", { ascending: false });
+  let query = db
+    .from("repair_orders")
+    .select("id, order_number, model_name, repair_name, status, total_cents, created_at, customer_first_name, customer_last_name, customer_email, is_quote_request", { count: "exact" })
+    .order("created_at", { ascending: false });
   if (status && ORDER_STATUSES.includes(status as OrderStatus)) query = query.eq("status", status as OrderStatus);
+
+  /*
+    Le compteur des demandes à chiffrer.
+
+    Une demande de devis est la seule pièce du back-office où quelqu'un attend
+    une réponse sans avoir rien payé : elle ne doit pas se perdre entre deux
+    pages de dossiers. D'où ce raccourci permanent, hors du filtre, qui dit
+    combien il en reste et y mène d'un clic.
+  */
+  const { count: aChiffrer } = await db
+    .from("repair_orders")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "QUOTE_REQUESTED");
   if (q) {
     const term = q.trim().replace(/[%,]/g, "");
     query = query.or(`order_number.ilike.%${term}%,customer_email.ilike.%${term}%,customer_last_name.ilike.%${term}%,model_name.ilike.%${term}%`);
@@ -29,6 +45,24 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-muted">Dossiers</span>
         <h1 className="mt-1 text-[22px] font-extrabold tracking-[-0.02em] text-ink">Toutes les réparations</h1>
       </div>
+
+      {aChiffrer ? (
+        <Link
+          href="/admin/orders?status=QUOTE_REQUESTED"
+          className="flex items-center justify-between gap-3 border-l-2 bg-surface px-4 py-3 hover:bg-surface-muted"
+          style={{ borderLeftColor: "var(--brand)" }}
+        >
+          <span>
+            <span className="block text-[15px] font-semibold text-ink">
+              {aChiffrer} demande{aChiffrer > 1 ? "s" : ""} de devis à chiffrer
+            </span>
+            <span className="block text-[13px] text-ink-muted">Le client attend un prix. Sa console est encore chez lui.</span>
+          </span>
+          <span aria-hidden="true" className="font-mono text-[13px] text-ink-soft">
+            →
+          </span>
+        </Link>
+      ) : null}
       <form className="flex flex-wrap items-center gap-2" method="get">
         <input id="q" name="q" defaultValue={q ?? ""} placeholder="Rechercher n° de dossier / client / console" aria-label="Recherche" className="min-w-0 flex-[1_1_220px] rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[14px]" />
         <Select id="status" name="status" defaultValue={status ?? ""} aria-label="Statut" className="w-auto min-w-[200px] py-2.5">
@@ -71,10 +105,12 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
               <Td className="text-ink-faint">
                 {o.model_name} — {o.repair_name}
               </Td>
-              <Td className="whitespace-nowrap text-right font-mono">{formatPrice(o.total_cents)}</Td>
+              {/* Un dossier de devis n'a pas de total tant qu'il n'a pas été
+                  chiffré : « 0,00 € » laisserait croire à une commande offerte. */}
+              <Td className="whitespace-nowrap text-right font-mono">{o.is_quote_request && o.total_cents === 0 ? "—" : formatPrice(o.total_cents)}</Td>
               <Td className="text-[13px] text-ink-faint">{formatDateTime(o.created_at)}</Td>
               <Td>
-                <Badge tone={statusTone(o.status)}>{ORDER_STATUS_LABELS[o.status]}</Badge>
+                <Badge tone={o.status === "QUOTE_REQUESTED" ? "warning" : statusTone(o.status)}>{ORDER_STATUS_LABELS[o.status]}</Badge>
               </Td>
             </tr>
           ))}

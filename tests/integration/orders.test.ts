@@ -24,24 +24,28 @@ d("server-side pricing and compatibility guards", () => {
   let createOrderAndCheckout: typeof import("@/lib/orders/create-order").createOrderAndCheckout;
 
   /**
-   * Résout une prestation par (modèle, panne) plutôt que par identifiant.
+   * Résout une prestation par (modèle, famille de pannes).
    *
-   * Les prestations de démonstration du seed (46000000-…) ne survivent pas à
-   * supabase/cleanup-strict-pdf.sql : après remise au périmètre du catalogue
-   * client, seules restent les prestations du document et celles de la gamme
-   * PS5. Figer leurs identifiants faisait échouer ces tests sur toute base
-   * réellement à jour.
+   * Ni identifiant ni slug figés. Les identifiants du seed ne survivent pas à
+   * `cleanup-strict-pdf.sql`, et les **slugs** ne survivent pas au regroupement
+   * du catalogue (`20260918000003_repairs_catalogue_reduit`), qui ne garde
+   * qu'une prestation par famille : `port-hdmi-endommage` a cédé la place à
+   * `aucun-signal-hdmi`, et le test échouait sur un catalogue à jour alors que
+   * la panne existe toujours.
+   *
+   * On cherche donc ce qu'on veut vraiment — « la prestation d'image de la PS5 »
+   * — par n'importe lequel de ses slugs plausibles.
    */
-  async function repairIdFor(modelSlug: string, faultSlug: string): Promise<string> {
+  async function repairIdFor(modelSlug: string, slugs: string[]): Promise<string> {
     const { data } = await admin()
       .from("repairs")
       .select("id, model:console_models!inner(slug), fault:faults!inner(slug)")
       .eq("is_active", true)
       .eq("console_models.slug", modelSlug)
-      .eq("faults.slug", faultSlug)
+      .in("faults.slug", slugs)
       .limit(1)
       .maybeSingle();
-    if (!data?.id) throw new Error(`Prestation introuvable au catalogue : ${modelSlug} / ${faultSlug}`);
+    if (!data?.id) throw new Error(`Prestation introuvable au catalogue : ${modelSlug} / ${slugs.join(" | ")}`);
     return data.id;
   }
 
@@ -57,8 +61,8 @@ d("server-side pricing and compatibility guards", () => {
       .limit(1)
       .maybeSingle();
     switchRepairId = data?.id ?? "";
-    ps5HdmiId = await repairIdFor("ps5", "port-hdmi-endommage");
-    ps5ThermalId = await repairIdFor("ps5", "surchauffe");
+    ps5HdmiId = await repairIdFor("ps5", ["aucun-signal-hdmi", "port-hdmi-endommage", "changement-du-port-hdmi", "pas-dimage"]);
+    ps5ThermalId = await repairIdFor("ps5", ["surchauffe", "console-qui-chauffe-anormalement", "ventilateur-bruyant"]);
   });
 
   // Le catalogue de réparation du client (PDF) fait foi pour la Switch : la

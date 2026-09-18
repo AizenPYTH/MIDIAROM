@@ -220,7 +220,22 @@ export function DiagnosticForm({ orderId, diagnostic, declaredFault, canStartRep
   );
 }
 
-export function QuoteForm({ orderId, options }: { orderId: string; options: { id: string; name: string; price_cents: number; estimated_cost_cents: number }[] }) {
+export function QuoteForm({
+  orderId,
+  options,
+  defaultRequiresPayment = true,
+}: {
+  orderId: string;
+  options: { id: string; name: string; price_cents: number; estimated_cost_cents: number }[];
+  /**
+   * Un devis complémentaire se règle d'avance : la console est à l'atelier, et
+   * l'intervention démarre dès l'accord. Le devis initial d'une demande
+   * gratuite, non — le client n'a même pas encore expédié sa console, et lui
+   * réclamer un paiement pour qu'on veuille bien la recevoir ferait fuir. Le
+   * réparateur peut toujours cocher la case s'il le souhaite.
+   */
+  defaultRequiresPayment?: boolean;
+}) {
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(createQuoteAction, null);
   useRefresh(state);
   const [rows, setRows] = useState([0]);
@@ -251,10 +266,10 @@ export function QuoteForm({ orderId, options }: { orderId: string; options: { id
       </div>
       <div className="flex flex-col gap-2 text-sm text-ink-soft">
         <label className="flex items-center gap-2">
-          <Checkbox name="is_required_for_repair" /> Cette intervention est nécessaire pour réaliser la réparation commandée (un refus bloque la réparation)
+          <Checkbox name="is_required_for_repair" defaultChecked={!defaultRequiresPayment} /> Cette intervention est nécessaire pour réaliser la réparation commandée (un refus bloque la réparation)
         </label>
         <label className="flex items-center gap-2">
-          <Checkbox name="requires_payment" value="on" defaultChecked /> Paiement en ligne requis avant intervention
+          <Checkbox name="requires_payment" value="on" defaultChecked={defaultRequiresPayment} /> Paiement en ligne requis avant intervention
         </label>
         <label className="flex items-center gap-2">
           <Checkbox name="send_now" defaultChecked /> Envoyer immédiatement au client
