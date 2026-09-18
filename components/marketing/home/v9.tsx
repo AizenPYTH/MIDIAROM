@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/site";
 import { HomeVisual } from "@/components/marketing/home/visual";
-import { HOME_VISUALS, PLATFORM_VISUALS } from "@/lib/content/assets";
+import { HOME_VISUAL_ALTS, HOME_VISUALS, PLATFORM_VISUALS } from "@/lib/content/assets";
 import { RayonV9 } from "@/components/marketing/home/rayon-v9";
 import type { Rayon } from "@/lib/shop/rayons";
 import type { Product } from "@/lib/shop/catalog";
@@ -136,25 +136,33 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
       </div>
 
       {/*
-        Le format **exact** du fichier : 1372 × 1147.
-        Le handoff proposait `7/6` en approximation et annonçait lui-même 2 % de
-        rognage ; mesuré dans le navigateur, il en coûtait 3 %, et cela se voit —
-        la scène est amputée en haut et en bas. Puisque la règle du handoff est
-        « chaque cadre reprend le format de sa source », on prend le vrai
-        rapport : le recadrage tombe à zéro et l'établi est entier.
+        Le format **exact** du fichier : 1254 × 1254, soit 1/1.
+        La règle du handoff — « chaque cadre reprend le format de sa source » —
+        n'a pas changé, seule la source a : le visuel déposé est carré, donc le
+        cadre l'est aussi. Le recadrage reste nul et rien n'est étiré.
+
+        Le carré est en revanche un format **haut** : à la largeur de colonne du
+        hero (≈ 650 px à 1440), il aurait mesuré 650 px de haut là où l'ancien
+        visuel en faisait 543. On borne donc le cadre à 520 px — le visuel reste
+        compact et le texte de gauche n'est pas dominé par lui.
+
+        Ce qui reste de la colonne se met à gauche du cadre, pas autour : le
+        bord droit du visuel retrouve ainsi la gouttière de la page, exactement
+        là où le cadre pleine colonne le posait. Sous 900 px il n'y a plus de
+        colonne, et le cadre se centre.
       */}
       {/* Au doigt, la photographie reste dans la marge de 16 px du handoff : le
           retrait est porté par l'enveloppe, jamais par le cadre — un `padding`
           sur une boîte en `aspect-ratio` fausserait le rapport. Dès 900 px,
           elle va au bord et la colonne de droite est pleine. */}
       <div data-hero-img="1" className={`min-w-0 ${PAD} pt-[18px] min-[900px]:p-0`}>
-        <div data-frame="1" className="relative min-w-0 self-start overflow-hidden bg-surface-strong" style={{ aspectRatio: "1372 / 1147" }}>
+        <div data-frame="1" className="relative mx-auto min-w-0 max-w-[520px] self-start overflow-hidden bg-surface-strong min-[900px]:mr-0" style={{ aspectRatio: "1 / 1" }}>
           <HomeVisual
             src={HOME_VISUALS.hero}
-            alt="PlayStation 5, Nintendo Switch et Xbox Series X sur l'établi de l'atelier"
+            alt={HOME_VISUAL_ALTS.hero}
             label="Atelier"
             priority
-            sizes="(max-width: 700px) 100vw, 50vw"
+            sizes="(max-width: 552px) 100vw, 520px"
           />
           {/* Le balayage de diagnostic : le trait rouge est déjà un signe de la
             marque dans vos propres photographies. */}
@@ -168,13 +176,13 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
           />
           {/*
           Pas de pastille « Diagnostic en cours » ici, et c'est délibéré.
-          Le handoff en pose une en bas à gauche — mais cette photographie
-          porte **déjà**, exactement à cet endroit, son propre cartouche noir
-          « ■ ATELIER 207 MÉDI@ROM · PASSION · EXPERTISE · CONFIANCE », incrusté
-          dans le fichier. Les deux se superposaient. La règle la plus ferme du
-          handoff sur les images est de ne pas recouvrir la typographie
-          incrustée de vos posters : elle l'emporte sur l'ornement qui la
-          contredit. Le carré rouge clignotant reste, lui, dans la pastille
+          Le handoff en pose une en bas à gauche — mais ce visuel porte **déjà**,
+          exactement à cet endroit, sa propre pancarte « GOOD GAMES BETTER
+          DAYS », et en haut le bloc « 207 MÉDI@ROM · JEUX · CONSOLES ·
+          RÉPARATION », tous deux incrustés dans le fichier. La règle la plus
+          ferme du handoff sur les images est de ne pas recouvrir la
+          typographie incrustée de vos posters : elle l'emporte sur l'ornement
+          qui la contredit. Le carré clignotant reste, lui, dans la pastille
           « Atelier ouvert » de la colonne de gauche.
         */}
         </div>

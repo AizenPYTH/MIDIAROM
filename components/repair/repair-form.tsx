@@ -828,9 +828,20 @@ export function RepairForm(props: RepairFormProps) {
                     aria-label="Décrivez la panne"
                     className="w-full resize-none border border-border-strong bg-field p-3.5 text-[16px] leading-[1.45] text-ink outline-none placeholder:text-ink-faint focus:border-accent"
                   />
+                  {/*
+                    Le compteur dit la règle de **ce** parcours, et pas celle
+                    de l'autre.
+
+                    À prix ferme, cocher un symptôme suffit à franchir l'étape :
+                    le prix est déjà connu, la description n'est qu'un appoint.
+                    Sur devis, elle est la matière même du chiffrage — un
+                    symptôme coché ne la remplace pas. Annoncer « ou cochez un
+                    symptôme » ici laissait le client devant un bouton éteint
+                    après avoir fait ce que l'écran lui demandait.
+                  */}
                   <span className="mb-[18px] mt-[7px] block font-mono text-[10.5px] tracking-[0.05em] text-ink-faint">
-                    {MIN_DESCRIPTION - desc.trim().length > 0 && !symptoms.length
-                      ? `Encore ${MIN_DESCRIPTION - desc.trim().length} caractère${MIN_DESCRIPTION - desc.trim().length > 1 ? "s" : ""}, ou cochez un symptôme`
+                    {MIN_DESCRIPTION - desc.trim().length > 0 && (surDevis || !symptoms.length)
+                      ? `Encore ${MIN_DESCRIPTION - desc.trim().length} caractère${MIN_DESCRIPTION - desc.trim().length > 1 ? "s" : ""}${surDevis ? " pour que l'atelier puisse chiffrer" : ", ou cochez un symptôme"}`
                       : `${desc.trim().length} caractères`}
                   </span>
 

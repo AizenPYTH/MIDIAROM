@@ -32,8 +32,15 @@ import "server-only";
 type HomeVisualKey = "hero" | "atelier" | "jeux" | "consoles" | "figurines" | "magasin";
 
 export const HOME_VISUALS: Record<HomeVisualKey, string | null> = {
-  /** Cadre 5/4 du hero. PS5, Xbox Series X et Switch sur fond blanc. */
-  hero: "/images/home/réparation des consoles.png",
+  /**
+   * Cadre carré du hero. Le visuel déposé le 18/09, 1254 × 1254.
+   *
+   * Il remplace « réparation des consoles.png », qui était en 1372 × 1147 :
+   * c'est pour cela que le cadre du hero passe de ce rapport-là au carré, dans
+   * `HeroV9`. Le format du cadre suit toujours celui du fichier — c'est la
+   * seule façon de n'avoir ni déformation ni recadrage.
+   */
+  hero: "/images/home/reparation gaming luffy.png",
   /**
    * Cadre 16/9 de « Dans l'atelier ». Sert aussi d'affiche à la vidéo.
    *
@@ -84,7 +91,7 @@ export const HOME_VISUAL_FOCUS = {
  * un titre « Jeux vidéo » n'apprend rien à personne.
  */
 export const HOME_VISUAL_ALTS = {
-  hero: "PlayStation 5, Xbox Series X et Nintendo Switch avec une manette DualSense, sur fond blanc",
+  hero: "Une PlayStation 5 avec sa manette DualSense, le jeu Elden Ring et une figurine de Luffy, sur le comptoir du 207 MÉDI@ROM",
   atelier: "L'établi de l'atelier : console ouverte, outillage de précision et pièces détachées",
   jeux: "Boîtiers de jeux PS5 et Nintendo Switch empilés devant une PlayStation 5 et une Switch",
   consoles: "Xbox Series X, PlayStation 5, Nintendo Switch et Steam Deck alignées sur l'établi",
@@ -116,7 +123,7 @@ export const WORKSHOP_VIDEO: { src: string; poster?: string } | undefined = unde
  * attendue.
  */
 export const MISSING_ASSETS = [
-  { role: "Hero", need: "Composition à plat : console ouverte, manette, composants, tournevis. Fond clair, cadrage net. 5/4, 1600 px." },
+  { role: "Hero", need: "Livré : « reparation gaming luffy.png », carré 1254 px, composition PS5 / Elden Ring / figurine Luffy aux couleurs de l'enseigne." },
   { role: "Plateformes — quatre cartes", need: "Livrées. PlayStation · Nintendo Switch · Xbox · consoles rétro, sur l'établi." },
   { role: "Atelier — image d'attente", need: "Plan d'atelier, sert de poster à la vidéo. 16/9, 1920 px. ⚠︎ Le fichier « dasn l'atelier.png » livré est un doublon de l'affiche « jeux video.png » : l'emplacement attend toujours sa vraie photo." },
   { role: "Atelier — vidéo", need: "MP4 + WebM, 1920×1080, 20 à 40 s, moins de 6 Mo, sans son. À renseigner dans WORKSHOP_VIDEO." },

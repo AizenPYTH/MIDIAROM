@@ -18,11 +18,20 @@ export interface CarteUnivers {
   legende: string;
   href: string;
   /**
-   * Le fichier tel qu'il a été déposé dans `public/images/univers/`.
+   * Le fichier servi, dans `public/images/univers/`.
    *
-   * Écrit en toutes lettres, espaces et coquille comprises (`plasyation.jpg`) :
-   * ce sont les fichiers du client, on ne les renomme pas pour faire joli. La
-   * carte s'adapte au fichier, jamais l'inverse.
+   * Les neuf logos déposés par le client sont des **captures** de logos
+   * transparents : le damier de transparence de l'éditeur y est cuit dans les
+   * pixels (des carreaux alternant 255 et 235), avec des bandes blanches
+   * autour. Affichés tels quels, ils montraient un damier sur la carte blanche
+   * et le mark n'occupait qu'un cinquième du cadre.
+   *
+   * Chaque fichier a donc un jumeau `-net.png` : fond redevenu transparent
+   * (remplissage par diffusion depuis les **bords** seulement, pour que le
+   * blanc *intérieur* — les lettres de Nintendo, le crâne de One Piece —
+   * survive) puis cadre retaillé au plus juste du mark. C'est ce jumeau qu'on
+   * sert. Les originaux restent à côté, intacts : aucun fichier du client
+   * n'est écrasé.
    */
   fichier: string;
 }
@@ -47,18 +56,18 @@ export interface CarteUnivers {
   déjà de son propre filtre.
 */
 export const PLATEFORMES: CarteUnivers[] = [
-  { nom: "PlayStation", legende: "PS5 · PS4 · rétro", href: "/boutique?plateforme=PlayStation*", fichier: "plasyation.jpg" },
-  { nom: "Nintendo", legende: "Switch · Switch 2 · rétro", href: "/boutique?plateforme=Nintendo*", fichier: "nintendo.png" },
-  { nom: "Xbox", legende: "Series · One", href: "/boutique?plateforme=Xbox*", fichier: "Xbox-logo.png" },
-  { nom: "Rétro", legende: "N64 · SNES · Mega Drive", href: "/boutique?retro=1", fichier: "retro.jfif" },
+  { nom: "PlayStation", legende: "PS5 · PS4 · rétro", href: "/boutique?plateforme=PlayStation*", fichier: "plasyation-net.png" },
+  { nom: "Nintendo", legende: "Switch · Switch 2 · rétro", href: "/boutique?plateforme=Nintendo*", fichier: "nintendo-net.png" },
+  { nom: "Xbox", legende: "Series · One", href: "/boutique?plateforme=Xbox*", fichier: "Xbox-logo-net.png" },
+  { nom: "Rétro", legende: "N64 · SNES · Mega Drive", href: "/boutique?retro=1", fichier: "retro-net.png" },
 ];
 
 export const LICENCES: CarteUnivers[] = [
-  { nom: "One Piece", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=One Piece", fichier: "one piece.jpg" },
-  { nom: "Naruto", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Naruto*", fichier: "naruto.png" },
-  { nom: "Dragon Ball", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Dragon Ball*", fichier: "dragon ball.png" },
-  { nom: "Jujutsu Kaisen", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Jujutsu Kaisen", fichier: "jujutsu kaisen.png" },
-  { nom: "Demon Slayer", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Demon Slayer", fichier: "demon slayer.png" },
+  { nom: "One Piece", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=One Piece", fichier: "one piece-net.png" },
+  { nom: "Naruto", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Naruto*", fichier: "naruto-net.png" },
+  { nom: "Dragon Ball", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Dragon Ball*", fichier: "dragon ball-net.png" },
+  { nom: "Jujutsu Kaisen", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Jujutsu Kaisen", fichier: "jujutsu kaisen-net.png" },
+  { nom: "Demon Slayer", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Demon Slayer", fichier: "demon slayer-net.png" },
 ];
 
 /**
@@ -99,11 +108,10 @@ function Carte({ carte }: { carte: CarteUnivers }) {
           239×239) c'est encore la hauteur, et le mark n'occupe que 44×44 —
           presque moitié moins de surface pour la même carte.
 
-          Plusieurs de ces fichiers portent en plus une marge blanche dans
-          l'image elle-même, qu'aucune règle CSS ne peut retirer sans rogner.
-          Relever la boîte à 54 px rattrape l'essentiel de l'écart ; la largeur
-          reste bornée, donc les logos larges ne débordent pas. `contain` fait
-          le reste : rien n'est jamais étiré.
+          Les fichiers servis sont détourés et recadrés au plus juste (voir
+          `CarteUnivers.fichier`), donc ces 54 px sont bien 54 px de mark et
+          non de marge. La largeur reste bornée, donc les logos larges ne
+          débordent pas, et `contain` fait le reste : rien n'est jamais étiré.
         */
         <span className="relative block h-[54px] w-[66%]">
           <Image src={logo} alt={carte.nom} fill sizes="240px" className="object-contain opacity-[0.82] transition-opacity duration-200 group-hover:opacity-100" />
