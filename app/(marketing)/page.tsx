@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/config/site";
 import { BoutiqueV9, HeroV9, MachinesV9, MagasinV9, PannesV9, ParcoursV9 } from "@/components/marketing/home/v9";
 import { RayonV9, type RayonProduit } from "@/components/marketing/home/rayon-v9";
+import { BANNIERES, BanniereEditoriale } from "@/components/marketing/home/banniere";
+import { UniversV9 } from "@/components/marketing/home/univers";
 import { getProductCategoryCounts, getProducts } from "@/lib/shop/catalog";
 import { getVitrineReparation } from "@/lib/repair/vitrine";
 import { getRayons } from "@/lib/shop/categories";
@@ -87,7 +89,37 @@ export default async function HomePage() {
       <PannesV9 pannes={vitrine.pannes} />
       <ParcoursV9 />
       <BoutiqueV9 rayons={publics} />
+
+      {/*
+        Bannière 1 — les tuiles viennent d'annoncer les rayons, l'affiche montre
+        ce qu'il y a dedans. C'est l'affiche de vitrine placée juste derrière la
+        porte : on a lu l'enseigne, on voit maintenant la campagne.
+
+        Aucune bannière n'apparaît avant la réparation : le visiteur comprend le
+        service avant de voir une affiche de jeu. La moitié haute de l'accueil
+        ne change pas d'un pixel.
+      */}
+      <div className="mx-auto mt-[30px] w-full max-w-[var(--page-max)] px-[clamp(16px,4.08vw,51px)]">
+        <BanniereEditoriale {...BANNIERES.eldenRing} />
+      </div>
+
+      {/* Bannière 2 : elle n'est pas rendue ici mais **dans** la grille de
+          produits, à l'index 4 — voir `RayonV9`. L'éditorial n'est pas à côté
+          du catalogue, il est dedans. */}
       <RayonV9 produits={produits} total={total} rayons={publics} />
+
+      <UniversV9 />
+
+      {/*
+        Bannière 3 — elle referme la boutique et fait la transition vers le
+        physique : « jouer ensemble » mène au comptoir de la rue de Rome. La
+        plus grand public des trois est aussi la mieux placée juste avant
+        l'adresse et le téléphone.
+      */}
+      <div className="mx-auto mt-[clamp(40px,5.36vw,67px)] w-full max-w-[var(--page-max)] px-[clamp(16px,4.08vw,51px)]">
+        <BanniereEditoriale {...BANNIERES.eaFc} />
+      </div>
+
       <MagasinV9 brand={brand} />
     </>
   );

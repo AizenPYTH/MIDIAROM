@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ROUTES } from "@/config/site";
 import { publicMediaUrl } from "@/components/marketing/gallery";
 import { AddToCartButton } from "@/components/shop/cart-widgets";
 import { CONDITION_SHORT, stockLabel, type ProductCondition } from "@/lib/shop/status";
 import { libelleDe, type Rayon } from "@/lib/shop/rayons";
 import { formatPrice } from "@/lib/utils/format";
+import { BANNIERES, BanniereEditoriale } from "@/components/marketing/home/banniere";
 
 /**
  * « En rayon cette semaine » — les quatre filtres et le mur de produits.
@@ -166,9 +167,29 @@ export function RayonV9({ produits, total, rayons }: { produits: RayonProduit[];
       </div>
 
       {montres.length ? (
+        /*
+          La bannière 2 est **dans** la grille, pas à côté.
+
+          C'est le geste qui distingue une vraie boutique d'un site avec des
+          publicités : le lecteur parcourt quatre produits, rencontre une
+          campagne, puis reprend sa lecture. La grille garde son rythme de part
+          et d'autre, donc l'affiche ne peut pas se lire comme un encart ajouté.
+
+          Elle est injectée à l'index 4 — une rangée sur grand écran, deux
+          rangées sur téléphone où la grille est à deux colonnes : dans les deux
+          cas, après quelque chose à lire, jamais en ouverture. Elle prend toute
+          la largeur de la grille (`grid-column: 1 / -1`) et garde son 3/1.
+        */
         <div data-g-prod="1">
-          {montres.map((p) => (
-            <Carte key={p.id} produit={p} rayons={rayons} />
+          {montres.map((p, i) => (
+            <Fragment key={p.id}>
+              {i === 4 ? (
+                <div style={{ gridColumn: "1 / -1" }} className="py-[22px]">
+                  <BanniereEditoriale {...BANNIERES.callOfDuty} />
+                </div>
+              ) : null}
+              <Carte produit={p} rayons={rayons} />
+            </Fragment>
           ))}
         </div>
       ) : (

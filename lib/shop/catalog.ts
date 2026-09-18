@@ -30,7 +30,19 @@ export const getProducts = cache(async (filters: ProductFilters = {}, limit = 20
   // doit être filtrable dès sa création, sans redéploiement.
   const category = codeDuSlug(await getRayons(), filters.category);
   if (category) query = query.eq("category", category);
-  if (filters.platform) query = query.ilike("platform", filters.platform);
+  /*
+    Une famille, pas seulement une valeur exacte.
+
+    `products.platform` porte des valeurs fines — « PlayStation 4 » et
+    « PlayStation 5 », « Dragon Ball Z » et « Dragon Ball Super ». Une carte
+    « PlayStation » doit ouvrir les deux. L'astérisque de l'adresse devient le
+    joker de `ilike`, et c'est la seule traduction : un `%` saisi à la main
+    reste littéral, échappé, donc personne ne construit de motif depuis l'URL.
+  */
+  if (filters.platform) {
+    const motif = filters.platform.includes("*") ? filters.platform.replace(/%/g, "\\%").replace(/\*/g, "%") : filters.platform;
+    query = query.ilike("platform", motif);
+  }
   if (filters.modelId) query = query.eq("model_id", filters.modelId);
   if (filters.condition === "neuf") query = query.eq("condition", "NEW");
   if (filters.condition === "revise") query = query.eq("condition", "REFURBISHED");
