@@ -79,11 +79,14 @@ export function MobileNav({ items, brand }: { items: { href: string; label: stri
         aria-expanded={open}
         aria-controls="mobile-nav"
         aria-label="Ouvrir le menu"
-        className="flex h-11 w-11 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 border border-border-strong bg-surface"
+        /* Le carré vit sur la bande dégradée : filet et surface en blancs
+           translucides, traits blancs. Le contour d'encre sur fond clair y
+           disparaissait. */
+        className="flex h-11 w-11 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 border border-on-brand-line bg-on-brand-surface"
       >
-        <span aria-hidden="true" className="block h-[1.5px] w-[17px] bg-ink" />
-        <span aria-hidden="true" className="block h-[1.5px] w-[17px] bg-ink" />
-        <span aria-hidden="true" className="block h-[1.5px] w-[17px] bg-ink" />
+        <span aria-hidden="true" className="block h-[1.5px] w-[17px] bg-on-brand" />
+        <span aria-hidden="true" className="block h-[1.5px] w-[17px] bg-on-brand" />
+        <span aria-hidden="true" className="block h-[1.5px] w-[17px] bg-on-brand" />
       </button>
       {open ? (
         <div
@@ -308,7 +311,9 @@ export function NavList({ items, courant }: { items: EntreeNav[]; courant: strin
             aria-haspopup={item.volet ? true : undefined}
             // Le clic mène au rayon : le volet a fait son office, il se ferme.
             onClick={item.volet ? fermer : undefined}
-            className={`whitespace-nowrap border-b-2 pb-[3px] text-ink transition-colors ${actif ? "border-brand" : "border-transparent hover:border-border-strong"}`}
+            /* Sur la bande, l'onglet actif se souligne de menthe : le bleu de
+               l'accent s'y confondrait avec le fond. */
+            className={`whitespace-nowrap border-b-2 pb-[3px] text-on-brand transition-colors ${actif ? "border-brand-mint" : "border-transparent hover:border-on-brand-line"}`}
           >
             {item.label}
           </Link>
@@ -333,7 +338,7 @@ export function NavList({ items, courant }: { items: EntreeNav[]; courant: strin
 }
 
 /**
- * L'onglet actif, souligné de 2 px de rouge — l'un des six emplois autorisés de
+ * L'onglet actif, souligné de 2 px de menthe — l'un des six emplois autorisés de
  * l'accent. Il se déduit du chemin **et** du paramètre `cat` : sans lui,
  * « Jeux vidéo » et « Consoles » pointent tous deux sur /boutique et
  * s'allumeraient ensemble.
@@ -360,9 +365,9 @@ export function SearchField() {
       // Sous lg, la recherche prend sa ligne entière, sous le logo : c'est le
       // premier geste d'un visiteur de boutique, elle ne partage pas sa ligne
       // avec le panier et le bouton menu.
-      className="order-3 flex w-full min-w-0 max-w-none flex-[1_1_100%] items-center gap-2 border border-border-strong bg-surface px-3 py-[11px] lg:order-none lg:w-auto lg:flex-[1_1_130px] lg:px-[11px] lg:py-2.5 min-[1280px]:max-w-[340px] min-[1560px]:px-[13px]"
+      className="order-3 flex w-full min-w-0 max-w-none flex-[1_1_100%] items-center gap-2 border border-on-brand-line bg-on-brand-surface px-3 py-[11px] transition-colors focus-within:border-brand-mint lg:order-none lg:w-auto lg:flex-[1_1_130px] lg:px-[11px] lg:py-2.5 min-[1280px]:max-w-[340px] min-[1560px]:px-[13px]"
     >
-      <span aria-hidden="true" className="font-mono text-[12px] text-ink-faint">
+      <span aria-hidden="true" className="font-mono text-[12px] text-on-brand-2">
         ⌕
       </span>
       <input
@@ -371,7 +376,9 @@ export function SearchField() {
         id="recherche-boutique"
         placeholder="Rechercher un jeu, une figurine"
         aria-label="Rechercher dans la boutique"
-        className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-faint lg:text-[14.5px]"
+        /* `text-[16px]` sous lg reste obligatoire : en dessous, iOS zoome à la
+           mise au point et casse la largeur de la page. */
+        className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-on-brand caret-white outline-none placeholder:text-on-brand-2 lg:text-[14.5px]"
       />
     </form>
   );

@@ -1137,8 +1137,8 @@ function LigneCoche({
         aria-hidden="true"
         className="mt-[3px] flex h-5 w-5 flex-none items-center justify-center border text-[11px] font-bold"
         style={{
-          backgroundColor: selected ? "var(--red)" : "transparent",
-          borderColor: selected ? "var(--red)" : "var(--stroke-strong)",
+          backgroundColor: selected ? "var(--brand)" : "transparent",
+          borderColor: selected ? "var(--brand)" : "var(--stroke-strong)",
           color: selected ? "#ffffff" : "transparent",
         }}
       >

@@ -72,6 +72,22 @@
   /* Les deux dégradés de la charte, et les seuls. */
   --brand-gradient: linear-gradient(105deg, #0f5ed7, #0b7f63);
   --brand-gradient-bar: linear-gradient(92deg, #08286a 0%, #0d4fb8 52%, #0f5ed7 76%, #0b7f63 100%);
+  /* Le bleu nuit d'où part la bande : le bandeau utilitaire le reprend, pour
+     que les deux lignes du haut fassent un seul bloc et non deux bandes. */
+  --brand-night: #08286a;
+
+  /*
+    Ce qui se pose SUR la bande dégradée.
+
+    Le blanc pour ce qui décide, le bleu pâle pour ce qui accompagne — 8,9:1 sur
+    le bleu le plus clair du dégradé, il reste lisible sur toute sa longueur. Le
+    filet et la surface sont des blancs translucides : posés sur un dégradé, une
+    couleur pleine se décalerait de la bande à un bout ou à l'autre.
+  */
+  --on-brand: #ffffff;
+  --on-brand-2: #dbe6ff;
+  --on-brand-line: rgba(255, 255, 255, 0.24);
+  --on-brand-surface: rgba(255, 255, 255, 0.1);
 
   /* Filets. Quatre valeurs, quatre rôles. */
   --hairline: #eeeef0;
@@ -213,6 +229,11 @@
   --color-brand-deep: var(--brand-deep);
   --color-brand-vivid: var(--brand-vivid);
   --color-brand-mint: var(--brand-mint);
+  --color-brand-night: var(--brand-night);
+  --color-on-brand: var(--on-brand);
+  --color-on-brand-2: var(--on-brand-2);
+  --color-on-brand-line: var(--on-brand-line);
+  --color-on-brand-surface: var(--on-brand-surface);
   --color-on-dark: var(--on-dark);
   --color-on-dark-2: var(--on-dark-2);
   --color-on-dark-3: var(--on-dark-3);

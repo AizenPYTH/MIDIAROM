@@ -104,16 +104,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         au-dessus d'un back-office blanc, donnait un gris moyen changeant au fil
         du défilement. Les encres de la charte sont faites pour le fond clair
         (#0f0f11, #6e6e73) : sur ce gris elles perdaient leur contraste, et les
-        éléments clairs — les initiales, le rouge — disparaissaient.
+        éléments clairs — les initiales, l'accent — disparaissaient.
         Le fond est désormais franc, et les textes prennent les encres « sur
         fond noir » déjà définies (--on-dark, --on-dark-2). Le survol passe par
-        --red-on-dark : le rouge de marque ne tient que 3,3:1 sur du noir.
+        --brand-on-dark : le bleu de marque ne tient que 3,3:1 sur du noir.
       */}
       <header
         className="sticky top-0 z-40 flex flex-wrap items-center gap-x-5 gap-y-3 border-b px-4 py-3 backdrop-blur-[14px] sm:px-[30px]"
         style={{ background: "#0d0d10", borderBottomColor: "rgba(255,255,255,0.12)" }}
       >
-        <Link href={ROUTES.admin} className="flex items-center gap-2.5 whitespace-nowrap text-[var(--on-dark)] transition-colors hover:text-[var(--red-on-dark)]">
+        <Link href={ROUTES.admin} className="flex items-center gap-2.5 whitespace-nowrap text-[var(--on-dark)] transition-colors hover:text-brand-on-dark">
           {/* La même croix directionnelle que le site, bras éclaircis pour
               tenir sur la bande noire. Une seule marque, deux fonds. */}
           <DPad arms="var(--on-dark-3)" />
@@ -123,17 +123,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <span className="flex-1" />
         <span className="hidden whitespace-nowrap font-mono text-[11.5px] text-[var(--on-dark-2)] sm:inline">{todayLabel()}</span>
         <span className="flex items-center gap-2.5 whitespace-nowrap">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full font-mono text-[11px] font-semibold text-white" style={{ background: "var(--red)" }} aria-hidden="true">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full font-mono text-[11px] font-semibold text-white" style={{ background: "var(--brand)" }} aria-hidden="true">
             {initials}
           </span>
           <span className="hidden text-[14px] text-[var(--on-dark)] sm:inline">{user.profile.first_name}</span>
         </span>
         <span className="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--on-dark-2)]">
-          <Link href={ROUTES.home} className="min-h-[44px] items-center transition-colors hover:text-[var(--red-on-dark)] sm:min-h-0 inline-flex">
+          <Link href={ROUTES.home} className="min-h-[44px] items-center transition-colors hover:text-brand-on-dark sm:min-h-0 inline-flex">
             Site
           </Link>
           <form action={logoutAction}>
-            <button type="submit" className="inline-flex min-h-[44px] cursor-pointer items-center transition-colors hover:text-[var(--red-on-dark)] sm:min-h-0">
+            <button type="submit" className="inline-flex min-h-[44px] cursor-pointer items-center transition-colors hover:text-brand-on-dark sm:min-h-0">
               Sortir
             </button>
           </form>

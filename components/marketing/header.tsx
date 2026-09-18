@@ -53,15 +53,16 @@ function navDe(rayons: readonly Rayon[], tags: readonly TagProduit[]): EntreeNav
  * La croix directionnelle : cinq carrés de 5 px, le centre en rouge.
  *
  * C'est la marque du handoff — une manette lue en un coup d'œil, dessinée en
- * CSS, sans image ni police d'icônes. Le rouge du centre est l'un des rares
- * emplois autorisés de l'accent.
+ * CSS, sans image ni police d'icônes. Le centre porte l'accent : le bleu sur
+ * fond clair, la menthe sur la bande dégradée de l'en-tête, où le bleu
+ * disparaîtrait dans le fond.
  */
-export function DPad({ arms = "#c9c9ce" }: { arms?: string }) {
+export function DPad({ arms = "#c9c9ce", centre = "var(--brand)" }: { arms?: string; centre?: string }) {
   return (
     <span aria-hidden="true" className="grid shrink-0" style={{ gridTemplateColumns: "5px 5px 5px", gridTemplateRows: "5px 5px 5px", gap: "2px" }}>
       <span style={{ gridArea: "1/2", backgroundColor: arms }} />
       <span style={{ gridArea: "2/1", backgroundColor: arms }} />
-      <span style={{ gridArea: "2/2", backgroundColor: "var(--red)" }} />
+      <span style={{ gridArea: "2/2", backgroundColor: centre }} />
       <span style={{ gridArea: "2/3", backgroundColor: arms }} />
       <span style={{ gridArea: "3/2", backgroundColor: arms }} />
     </span>
@@ -75,10 +76,33 @@ export function DPad({ arms = "#c9c9ce" }: { arms?: string }) {
  * rend le carré rouge plein : c'est ce que le handoff garde là où la croix
  * serait illisible, dans le pied de page et sur la ligne serrée du téléphone.
  */
-export function BrandMark({ name, size = "md", mark = "square" }: { name: string; inverted?: boolean; size?: "md" | "sm"; mark?: "square" | "dpad" }) {
+export function BrandMark({
+  name,
+  size = "md",
+  mark = "square",
+  accent,
+  bras,
+}: {
+  name: string;
+  inverted?: boolean;
+  size?: "md" | "sm";
+  mark?: "square" | "dpad";
+  /** La couleur du repère — menthe sur la bande de l'en-tête, bleu ailleurs. */
+  accent?: string;
+  /** Les branches de la croix, éclaircies sur fond sombre. */
+  bras?: string;
+}) {
   return (
     <span className="flex items-center gap-[9px] whitespace-nowrap">
-      {mark === "dpad" ? <DPad /> : <span aria-hidden="true" className={`block shrink-0 bg-brand ${size === "sm" ? "h-[11px] w-[11px]" : "h-3 w-3"}`} />}
+      {mark === "dpad" ? (
+        <DPad arms={bras ?? "#c9c9ce"} centre={accent ?? "var(--brand)"} />
+      ) : (
+        <span
+          aria-hidden="true"
+          className={`block shrink-0 ${size === "sm" ? "h-[11px] w-[11px]" : "h-3 w-3"}`}
+          style={{ backgroundColor: accent ?? "var(--brand)" }}
+        />
+      )}
       <span className={`font-display font-extrabold uppercase tracking-[-0.026em] ${size === "sm" ? "text-[17.5px]" : "text-[16.5px] lg:text-[19px]"}`}>{name}</span>
     </span>
   );
@@ -103,33 +127,48 @@ export function SiteHeader({ brand, rayons, tags }: { brand: BrandSettings; rayo
         la promesse la plus forte, celle qui décide : diagnostic sous 48 h,
         devis avant intervention. Les trois se repliaient sur deux lignes dès
         768 px, soit 52 px de bande noire pour dire ce qu'une phrase dit.
+
+        Il porte le bleu nuit d'où part le dégradé de l'en-tête, et non plus
+        l'encre : deux bandes de familles différentes empilées donnaient un haut
+        de page en deux morceaux.
       */}
-      <div className="bg-ink px-4 py-2 text-center font-mono text-[10.5px] tracking-[0.05em] text-on-dark-2 lg:hidden">{UTILITY_BAR[1]}</div>
+      <div className="bg-brand-night px-4 py-2 text-center font-mono text-[10.5px] tracking-[0.05em] text-on-brand-2 lg:hidden">{UTILITY_BAR[1]}</div>
 
       {/*
         z-40, au-dessus de la barre d'onglets basse (z-30) : l'en-tête pose un
         contexte d'empilement, et le tiroir du menu, qui vit à l'intérieur, ne
         peut pas le dépasser — il passerait sous la barre.
 
-        Le fond est translucide et flouté : le contenu qui défile dessous reste
-        deviné sans jamais gêner la lecture. Le repli opaque est posé d'abord,
-        pour les navigateurs sans `backdrop-filter`.
+        **La bande dégradée du handoff** : bleu nuit à gauche, bleu de marque au
+        trois quarts, vert foncé au bord droit. Elle remplace le gris translucide
+        et flouté qui tenait la place — un en-tête gris sur un fond gris ne
+        signait rien, et le jeton du dégradé existait sans être posé nulle part.
+
+        Le dégradé est **opaque** : un fond translucide et flouté sur une bande
+        colorée laisse remonter la teinte de ce qui défile dessous, et la bande
+        change de couleur au fil de la page. Le seul flou conservé est celui du
+        filet du bas.
+
+        Le dégradé s'arrête à `--brand-deep` (#0b7f63) et non au vert vif : la
+        fin de la bande porte du texte blanc, et le vert vif y tombe à 2,1:1.
       */}
       <header
         /* Repère lu par la fiche de réparation du téléphone : elle remonte en
            haut de l'écran à chaque étape, et doit s'arrêter juste sous cet
            en-tête plutôt que dessous. */
         data-entete-site="1"
-        className="sticky top-0 z-40 border-b border-border-section bg-bg px-4 py-3 lg:px-[18px] lg:py-[14px] min-[1560px]:px-[26px]"
-        style={{ backgroundColor: "var(--bg-blur)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}
+        className="sticky top-0 z-40 border-b border-on-brand-line px-4 py-3 text-on-brand lg:px-[18px] lg:py-[14px] min-[1560px]:px-[26px]"
+        style={{ background: "var(--brand-gradient-bar)" }}
       >
         <div className="page-wrap flex flex-wrap items-center gap-x-3 gap-y-3 lg:gap-x-[14px] min-[1560px]:gap-x-[26px]">
-          <Link href={ROUTES.home} aria-label={`${brand.name} — accueil`} className="flex min-h-[44px] min-w-0 flex-1 items-center text-ink lg:min-h-0 lg:flex-none">
+          {/* Sur la bande, la croix passe en blancs translucides et son centre
+              en menthe — le bleu de l'accent se fondrait dans le fond. */}
+          <Link href={ROUTES.home} aria-label={`${brand.name} — accueil`} className="flex min-h-[44px] min-w-0 flex-1 items-center text-on-brand lg:min-h-0 lg:flex-none">
             <span className="hidden lg:block">
-              <BrandMark name={brand.name} mark="dpad" />
+              <BrandMark name={brand.name} mark="dpad" bras="rgba(255,255,255,0.55)" accent="var(--brand-mint)" />
             </span>
             <span className="lg:hidden">
-              <BrandMark name={brand.name} />
+              <BrandMark name={brand.name} accent="var(--brand-mint)" />
             </span>
           </Link>
 
@@ -159,11 +198,11 @@ export function SiteHeader({ brand, rayons, tags }: { brand: BrandSettings; rayo
           <SearchField />
 
           <div className="order-1 flex min-w-0 items-center gap-[18px] whitespace-nowrap lg:order-none lg:gap-3 min-[1560px]:gap-[18px]">
-            <Link href={ROUTES.tracking} className="hidden font-mono text-[11px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-brand lg:inline">
+            <Link href={ROUTES.tracking} className="hidden font-mono text-[11px] uppercase tracking-[0.07em] text-on-brand-2 transition-colors hover:text-on-brand lg:inline">
               Suivi
             </Link>
-            <AccountLink className="hidden font-mono text-[11px] uppercase tracking-[0.07em] text-ink-soft transition-colors hover:text-brand lg:inline" />
-            <CartLink className="lg:text-[11px] lg:tracking-[0.07em]" />
+            <AccountLink className="hidden font-mono text-[11px] uppercase tracking-[0.07em] text-on-brand-2 transition-colors hover:text-on-brand lg:inline" />
+            <CartLink className="text-on-brand-2 hover:text-on-brand lg:text-[11px] lg:tracking-[0.07em]" />
           </div>
 
           <Link
@@ -172,7 +211,11 @@ export function SiteHeader({ brand, rayons, tags }: { brand: BrandSettings; rayo
                bord de la colonne quand la recherche est à son plafond ; sur
                deux lignes il évite le trou de 180 px qui s'ouvrait à sa droite
                et donnait un en-tête qui semble s'arrêter au milieu. */
-            className="hidden whitespace-nowrap bg-brand px-[17px] py-[13px] text-[14.5px] font-semibold text-white transition-colors duration-200 hover:bg-ink lg:ml-auto lg:inline-block min-[1560px]:px-5"
+            /* Blanc plein, texte bleu : sur la bande, le bouton bleu de la
+               version claire se confondait avec son fond. Au survol il passe à
+               la menthe avec du texte encre — le seul autre couple qui garde
+               son contraste d'un bout à l'autre du dégradé. */
+            className="hidden whitespace-nowrap bg-white px-[17px] py-[13px] text-[14.5px] font-semibold text-brand transition-colors duration-200 hover:bg-brand-mint hover:text-ink lg:ml-auto lg:inline-block min-[1560px]:px-5"
           >
             Demander un diagnostic
           </Link>

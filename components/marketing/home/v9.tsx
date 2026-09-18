@@ -36,9 +36,9 @@ import { formatPrice } from "@/lib/utils/format";
 const SHELL = "mx-auto w-full max-w-[1560px]";
 const PAD = "px-[clamp(16px,4vw,64px)]";
 
-/** Le numéro de section, en mono rouge — la ponctuation de la page. */
+/** Le numéro de section, en mono bleu — la ponctuation de la page. */
 function Numero({ children, onDark = false }: { children: React.ReactNode; onDark?: boolean }) {
-  return <span className={`font-mono text-[11px] uppercase tracking-[0.16em] ${onDark ? "text-[var(--red-on-dark)]" : "text-brand"}`}>{children}</span>;
+  return <span className={`font-mono text-[11px] uppercase tracking-[0.16em] ${onDark ? "text-brand-on-dark" : "text-brand"}`}>{children}</span>;
 }
 
 function H2({ children }: { children: React.ReactNode }) {
@@ -421,7 +421,7 @@ export function ParcoursV9() {
           {ETAPES.map((s) => (
             <div key={s.n} className="flex flex-col gap-2.5">
               <span aria-hidden="true" className="block h-0.5 w-[34px] bg-brand" />
-              <span className="font-mono text-[11.5px] tracking-[0.08em] text-[var(--red-on-dark)]">{s.n}</span>
+              <span className="font-mono text-[11.5px] tracking-[0.08em] text-brand-on-dark">{s.n}</span>
               <strong className="text-[19px] font-semibold tracking-[-0.022em]">{s.t}</strong>
               <span className="text-[15px] leading-[1.55] text-on-dark-2">{s.b}</span>
             </div>
