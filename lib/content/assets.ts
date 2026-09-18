@@ -33,14 +33,15 @@ type HomeVisualKey = "hero" | "atelier" | "jeux" | "consoles" | "figurines" | "m
 
 export const HOME_VISUALS: Record<HomeVisualKey, string | null> = {
   /**
-   * Cadre carré du hero. Le visuel déposé le 18/09, 1254 × 1254.
+   * La bande du hero. Le visuel déposé le 18/09, 2048 × 768, soit 8/3.
    *
-   * Il remplace « réparation des consoles.png », qui était en 1372 × 1147 :
-   * c'est pour cela que le cadre du hero passe de ce rapport-là au carré, dans
-   * `HeroV9`. Le format du cadre suit toujours celui du fichier — c'est la
-   * seule façon de n'avoir ni déformation ni recadrage.
+   * Il est composé pour cet emploi : mur clair à gauche, scène à droite. Ce
+   * n'est pas une photographie à poser à côté du texte, c'est un **fond** —
+   * et `HeroV9` le traite comme tel, en pleine largeur, le texte du site posé
+   * dessus en HTML. Le format du cadre suit celui du fichier, comme toujours :
+   * c'est la seule façon de n'avoir ni déformation ni recadrage.
    */
-  hero: "/images/home/reparation gaming luffy.png",
+  hero: "/images/home/page123.png",
   /**
    * Cadre 16/9 de « Dans l'atelier ». Sert aussi d'affiche à la vidéo.
    *
@@ -78,7 +79,9 @@ export { PLATFORM_VISUALS } from "@/lib/content/platform-visuals";
  * est recadré et il n'y a aucun point focal à choisir.
  */
 export const HOME_VISUAL_FOCUS = {
-  hero: { position: "50% 50%", mobile: "50% 45%" },
+  // Le hero pose son cadrage dans `globals.css` : il change de format entre le
+  // téléphone et l'ordinateur, ce qu'une valeur figée ici ne saurait dire.
+  hero: { position: "50% 50%", mobile: "100% 50%" },
   atelier: { position: "50% 50%", mobile: "55% 50%" },
 } as const;
 
@@ -91,7 +94,7 @@ export const HOME_VISUAL_FOCUS = {
  * un titre « Jeux vidéo » n'apprend rien à personne.
  */
 export const HOME_VISUAL_ALTS = {
-  hero: "Une PlayStation 5 avec sa manette DualSense, le jeu Elden Ring et une figurine de Luffy, sur le comptoir du 207 MÉDI@ROM",
+  hero: "Le comptoir du 207 MÉDI@ROM : une PlayStation 5 avec sa manette DualSense, le jeu Elden Ring, une figurine de Luffy et des boîtiers de jeux",
   atelier: "L'établi de l'atelier : console ouverte, outillage de précision et pièces détachées",
   jeux: "Boîtiers de jeux PS5 et Nintendo Switch empilés devant une PlayStation 5 et une Switch",
   consoles: "Xbox Series X, PlayStation 5, Nintendo Switch et Steam Deck alignées sur l'établi",
@@ -123,7 +126,7 @@ export const WORKSHOP_VIDEO: { src: string; poster?: string } | undefined = unde
  * attendue.
  */
 export const MISSING_ASSETS = [
-  { role: "Hero", need: "Livré : « reparation gaming luffy.png », carré 1254 px, composition PS5 / Elden Ring / figurine Luffy aux couleurs de l'enseigne." },
+  { role: "Hero", need: "Livré : « page123.png », 2048 × 768 (8/3), mur clair à gauche pour porter le texte, scène PS5 / Elden Ring / figurine Luffy à droite." },
   { role: "Plateformes — quatre cartes", need: "Livrées. PlayStation · Nintendo Switch · Xbox · consoles rétro, sur l'établi." },
   { role: "Atelier — image d'attente", need: "Plan d'atelier, sert de poster à la vidéo. 16/9, 1920 px. ⚠︎ Le fichier « dasn l'atelier.png » livré est un doublon de l'affiche « jeux video.png » : l'emplacement attend toujours sa vraie photo." },
   { role: "Atelier — vidéo", need: "MP4 + WebM, 1920×1080, 20 à 40 s, moins de 6 Mo, sans son. À renseigner dans WORKSHOP_VIDEO." },

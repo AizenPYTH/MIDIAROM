@@ -1145,22 +1145,38 @@ body {
 }
 [data-g-step] { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; }
 [data-g-fault] { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 34px; }
-/* Le hero, et son inversion d'ordre.
-   Au doigt : une colonne, et la photographie s'intercale entre le paragraphe
-   et les boutons — on montre les machines avant de demander un geste.
-   Dès 900 px : deux colonnes, le texte à gauche en deux rangées (A au-dessus,
-   B en dessous), la photographie à droite sur les deux rangées. `align-content`
-   centre le groupe de rangées : sans lui, le texte se collait en haut d'une
-   colonne aussi haute que la photo. */
-[data-hero-v9] { display: grid; grid-template-columns: 1fr; gap: 0; }
+/* Le hero : une bande, et deux façons de la lire.
+
+   Au doigt, pas de superposition. Le visuel est en 8/3 ; sur 390 px il ferait
+   146 px de haut, où plus rien ne se distingue. Le texte reprend donc le fil
+   normal, et la scène passe dessous dans un cadre 3/2 cadré à droite — c'est
+   là que sont la console, la manette et la figurine. Le mur clair de gauche,
+   qui ne sert qu'à porter du texte, est le seul morceau qu'on laisse sortir du
+   cadre : recadrer un fond n'est pas recadrer un sujet.
+
+   Dès 900 px, le texte se pose sur le visuel. Le cadre reprend le format exact
+   du fichier (2048/768), donc `cover` n'y rogne rien : la bande montre l'image
+   entière, d'un bord de la fenêtre à l'autre, et son dégradé clair touche les
+   bords — aucun rectangle ne se voit autour. La colonne de texte reste dans
+   les 42 % de gauche, mesurés dans le fichier, où le mur est franchement
+   clair. */
+[data-hero-photo] { position: relative; aspect-ratio: 3 / 2; }
+[data-hero-photo] [data-visual] { object-position: 100% 50%; }
 @media (min-width: 900px) {
-  [data-hero-v9] {
-    grid-template-columns: minmax(340px, 1fr) minmax(340px, 1fr);
-    align-content: center;
+  [data-hero-bande] { position: relative; }
+  [data-hero-photo] { aspect-ratio: 2048 / 768; }
+  [data-hero-photo] [data-visual] { object-position: 50% 50%; }
+  [data-hero-texte] {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    pointer-events: none;
   }
-  [data-hero-v9] > [data-hero-a]   { grid-column: 1; grid-row: 1; align-self: end; }
-  [data-hero-v9] > [data-hero-b]   { grid-column: 1; grid-row: 2; align-self: start; }
-  [data-hero-v9] > [data-hero-img] { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  /* La superposition ne prend pas le clic : seuls ses contenus le prennent,
+     sinon la bande entière deviendrait une zone morte au-dessus de l'image. */
+  [data-hero-texte] > * { pointer-events: auto; }
 }
 [data-store-v9] { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2px; }
 

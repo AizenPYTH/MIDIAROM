@@ -78,162 +78,162 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
   // que d'annoncer « 0 € ».
   const promesses = PROMESSES.map((p) => (p.v.startsWith("Offert si") && diagnostic ? { ...p, k: diagnostic } : p)).filter((p) => !(p.v.startsWith("Offert si") && !diagnostic));
 
+  /*
+    ── Une bande, et le texte posé dessus ────────────────────────────────────
+
+    Le visuel livré (`page123.png`, 2048 × 768) est composé pour cet emploi :
+    sa moitié gauche est un mur clair, sa moitié droite la scène. Ce n'est donc
+    pas une photographie à poser à côté du texte, c'est un **fond** — et le
+    traiter autrement reviendrait à jeter ce que la composition offre.
+
+    Mesuré colonne par colonne dans le fichier, le mur reste franchement clair
+    jusqu'à 42 % de la largeur (93 % de pixels clairs sur la hauteur à cette
+    abscisse, 100 % jusqu'à 40 %). C'est la limite que la colonne de texte ne
+    franchit pas.
+
+    Le cadre porte le format exact du fichier, 2048/768 : `cover` et `contain`
+    y rendent alors la même image, au pixel près. Rien n'est rogné, rien n'est
+    étiré, et comme la bande va d'un bord à l'autre, le dégradé clair du
+    fichier touche les bords de la fenêtre — aucun rectangle ne se voit autour.
+
+    La largeur suit la fenêtre, sans colonne centrale : à 1920 la bande fait
+    1920 de large et 720 de haut, à 1280 elle en fait 1280 sur 480. Elle ne
+    s'arrête qu'à 2048, la largeur native du fichier — au-delà on n'agrandirait
+    plus que des pixels inventés.
+
+    Sous 900 px, plus de superposition : le texte reprend le fil normal et la
+    scène passe dessous, cadrée sur sa moitié droite. Une bande de 8/3 sur un
+    téléphone de 390 px ne ferait que 146 px de haut, où l'on ne verrait plus
+    rien. La règle est dans `globals.css`, avec le reste de la bascule.
+  */
   return (
     <section id="top" data-hero-v9="1" className="border-b border-border-section bg-surface">
-      {/*
-        Trois blocs, et non deux, pour une raison de lecture.
-        Sur ordinateur, le texte est à gauche et la photographie à droite. Sur
-        téléphone, le handoff intercale la photographie **entre le paragraphe et
-        les boutons** : on montre les machines avant de demander un geste. Avec
-        deux blocs seulement, la photo ne pouvait que passer après tout le
-        texte. La grille de `globals.css` remet A et B dans la colonne de gauche
-        dès 900 px ; ici, l'ordre du balisage est celui du téléphone.
-      */}
-      <div data-hero-a="1" className="gouttiere-page flex min-w-0 flex-col gap-[22px] pt-[clamp(22px,4.88vw,61px)]">
-        <span data-up="1" className="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-brand">
-          <span data-blip="1" aria-hidden="true" className="block h-[7px] w-[7px] bg-brand" />
-          Atelier ouvert · Marseille · depuis 1997
-        </span>
+      <div data-hero-bande="1" className="relative mx-auto w-full max-w-[2048px]">
+        <div data-hero-photo="1" className="relative min-w-0 overflow-hidden bg-surface-strong">
+          {/*
+            `180vw` sous 900 px, et ce n'est pas une faute de frappe.
 
-        <h1 data-up="1" className="m-0 text-[clamp(36px,5.92vw,74px)] font-extrabold leading-[0.93] tracking-[-0.045em]">
-          Réparation
-          <br />
-          de consoles
-        </h1>
-
-        <p data-up="2" className="m-0 max-w-[46ch] text-[16.5px] leading-[1.5] text-ink-soft">
-          Vous décrivez la panne, on diagnostique, vous recevez un devis avant toute intervention.
-        </p>
-
-        {/*
-          Le choix de la console, dans le premier écran du téléphone.
-          Sur ordinateur, les tuiles de la section « 01 » sont déjà sous le pli
-          à 1440 px : rien à remonter. Au doigt, elles arrivaient à 970 px — un
-          écran et demi de défilement avant la première vraie question, alors
-          que c'est **la** question du site. Trois boutons de 48 px la posent
-          tout de suite ; les tuiles illustrées restent en dessous, pour qui
-          fait défiler.
-
-          Les familles viennent du catalogue : celle qu'on n'a pas en atelier
-          ne s'affiche pas, et l'atelier n'annonce pas ce qu'il ne répare pas.
-        */}
-        {familles.length ? (
-          <div data-up="2" className="flex flex-col gap-2.5 sm:hidden">
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.13em] text-ink-faint">Réparez votre console</span>
-            <div className="flex flex-wrap gap-0.5">
-              {familles.map((f) => (
-                <Link
-                  key={f.cle}
-                  href={f.href}
-                  className="flex min-h-[50px] flex-1 basis-[calc(50%-2px)] items-center justify-center whitespace-nowrap border border-ink bg-surface px-3 text-[15.5px] font-semibold text-ink"
-                >
-                  {f.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
-
-      {/*
-        Le format **exact** du fichier : 1254 × 1254, soit 1/1.
-        La règle du handoff — « chaque cadre reprend le format de sa source » —
-        n'a pas changé, seule la source a : le visuel déposé est carré, donc le
-        cadre l'est aussi. Le recadrage reste nul et rien n'est étiré.
-
-        Le carré est en revanche un format **haut** : à la largeur de colonne du
-        hero (≈ 650 px à 1440), il aurait mesuré 650 px de haut là où l'ancien
-        visuel en faisait 543. On borne donc le cadre à 520 px — le visuel reste
-        compact et le texte de gauche n'est pas dominé par lui.
-
-        Ce qui reste de la colonne se met à gauche du cadre, pas autour : le
-        bord droit du visuel retrouve ainsi la gouttière de la page, exactement
-        là où le cadre pleine colonne le posait. Sous 900 px il n'y a plus de
-        colonne, et le cadre se centre.
-      */}
-      {/* Au doigt, la photographie reste dans la marge de 16 px du handoff : le
-          retrait est porté par l'enveloppe, jamais par le cadre — un `padding`
-          sur une boîte en `aspect-ratio` fausserait le rapport. Dès 900 px,
-          elle va au bord et la colonne de droite est pleine. */}
-      <div data-hero-img="1" className={`min-w-0 ${PAD} pt-[18px] min-[900px]:p-0`}>
-        <div data-frame="1" className="relative mx-auto min-w-0 max-w-[520px] self-start overflow-hidden bg-surface-strong min-[900px]:mr-0" style={{ aspectRatio: "1 / 1" }}>
-          <HomeVisual
-            src={HOME_VISUALS.hero}
-            alt={HOME_VISUAL_ALTS.hero}
-            label="Atelier"
-            priority
-            sizes="(max-width: 552px) 100vw, 520px"
-          />
-          {/* Le balayage de diagnostic : le trait rouge est déjà un signe de la
-            marque dans vos propres photographies. */}
+            Le cadre y est en 3/2 alors que le fichier est en 8/3 : `cover`
+            agrandit donc l'image jusqu'à ce que sa hauteur remplisse le cadre,
+            et il en montre 1,78 fois moins en largeur. Demander `100vw`
+            revenait à faire agrandir de 78 % un fichier servi à la largeur
+            exacte de l'écran — la scène sortait floue sur tous les téléphones.
+            Au-delà de 900 px la bande reprend le format du fichier, et `100vw`
+            redevient la bonne mesure.
+          */}
+          <HomeVisual src={HOME_VISUALS.hero} alt={HOME_VISUAL_ALTS.hero} label="Atelier" priority sizes="(max-width: 899px) 180vw, (max-width: 2048px) 100vw, 2048px" quality={92} />
+          {/* Le balayage de diagnostic, sur le bord haut de la bande. */}
           <span
             data-scan="1"
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-0 h-0.5"
-            style={{
-              background: "linear-gradient(90deg, rgba(15,94,215,0) 0%, #0f5ed7 20%, #0b7f63 80%, rgba(11,127,99,0) 100%)",
-            }}
+            style={{ background: "linear-gradient(90deg, rgba(15,94,215,0) 0%, #0f5ed7 20%, #0b7f63 80%, rgba(11,127,99,0) 100%)" }}
           />
-          {/*
-          Pas de pastille « Diagnostic en cours » ici, et c'est délibéré.
-          Le handoff en pose une en bas à gauche — mais ce visuel porte **déjà**,
-          exactement à cet endroit, sa propre pancarte « GOOD GAMES BETTER
-          DAYS », et en haut le bloc « 207 MÉDI@ROM · JEUX · CONSOLES ·
-          RÉPARATION », tous deux incrustés dans le fichier. La règle la plus
-          ferme du handoff sur les images est de ne pas recouvrir la
-          typographie incrustée de vos posters : elle l'emporte sur l'ornement
-          qui la contredit. Le carré clignotant reste, lui, dans la pastille
-          « Atelier ouvert » de la colonne de gauche.
-        */}
-        </div>
-      </div>
-
-      {/* Bloc B : ce qu'on demande au visiteur, et ce qu'on lui promet. */}
-      <div data-hero-b="1" className="gouttiere-page flex min-w-0 flex-col gap-[22px] pb-[clamp(26px,4.88vw,61px)] pt-[18px] sm:pt-[22px]">
-        {/*
-          Pleine largeur au doigt, côte à côte dès qu'il y a la place.
-          Deux boutons de 17 px empilés à leur largeur de texte laissaient une
-          colonne dentelée sur 390 px ; le handoff mobile les met l'un sous
-          l'autre, pleine largeur, séparés des mêmes 2 px que le reste de la
-          page.
-        */}
-        <div data-up="3" className="flex flex-col gap-0.5 sm:flex-row sm:flex-wrap sm:gap-[11px]">
-          <Link href={ROUTES.repair} data-btn="1" className="block bg-brand px-[26px] py-[15px] text-center text-[15.5px] font-semibold text-white hover:bg-ink sm:inline-block sm:w-auto">
-            Demander un diagnostic
-          </Link>
-          <Link
-            href="#pannes"
-            data-btn="1"
-            className="block border border-ink px-[24px] py-[14px] text-center text-[15.5px] font-semibold text-ink hover:bg-ink hover:text-white sm:inline-block sm:w-auto"
-          >
-            Voir les tarifs
-          </Link>
         </div>
 
-        {/* Les quatre promesses chiffrées. Rail qui glisse au doigt sous `sm` :
-            empilées, elles repoussaient la première section d'un écran. */}
         {/*
-          Les quatre promesses restent sur **une** ligne à partir de `sm`.
-          En `flex-wrap`, le navigateur préfère renvoyer « 1997 · Atelier ouvert
-          depuis » à la ligne plutôt que de rétrécir les cellules : sur un écran
-          de 1152 px, la quatrième promesse tombait seule sous les trois autres,
-          avec un trou au-dessus. En `nowrap` avec des cellules qui peuvent
-          rétrécir (`min-w-0`), c'est l'étiquette en petites capitales qui passe
-          sur deux lignes — et une étiquette sur deux lignes se lit, une
-          promesse orpheline non. Le chiffre, lui, ne se coupe jamais.
+          Le texte du site, en HTML, par-dessus le mur clair.
+
+          Rien n'est écrit dans le fichier : le titre, la phrase, les deux
+          boutons et les quatre promesses restent du texte — sélectionnable,
+          traduisible, lu par un lecteur d'écran, et modifiable sans rouvrir
+          un éditeur d'images.
+
+          `max-w-[480px]` : à 1280 la gouttière vaut 51 px, donc la colonne
+          s'arrête à 531 px, soit 41 % de la bande ; à 1920 la gouttière vaut
+          260 px et la colonne s'arrête à 740 px, soit 39 %. Dans les deux cas
+          on reste sous les 42 % mesurés dans le fichier — y compris le filet
+          qui sépare les quatre promesses, qui est la pièce la plus large du
+          bloc et la plus basse, donc celle qui frôlait la pile de boîtiers.
+          La colonne suit la gouttière du reste du site : elle s'aligne sur le
+          logo de l'en-tête, à toutes les largeurs.
         */}
-        <ul
-          data-up="4"
-          data-rail="1"
-          className="-mx-[clamp(16px,4.08vw,51px)] mt-2.5 flex list-none gap-[26px] overflow-x-auto border-t border-border px-[clamp(16px,4.08vw,51px)] pt-[22px] sm:mx-0 sm:flex-nowrap sm:gap-[18px] sm:overflow-visible sm:px-0 min-[1560px]:gap-[26px]"
-        >
-          {promesses.map((p) => (
-            <li key={p.v} className="flex shrink-0 flex-col gap-px sm:min-w-0 sm:shrink">
-              <span className="whitespace-nowrap text-[21px] font-bold tracking-[-0.03em]">{p.k}</span>
-              <span className="font-mono text-[10px] uppercase leading-[1.35] tracking-[0.1em] text-ink-faint">{p.v}</span>
-            </li>
-          ))}
-        </ul>
+        <div data-hero-texte="1" className="gouttiere-page">
+          <div className="flex w-full max-w-[480px] flex-col gap-[clamp(14px,1.4vw,22px)] py-[clamp(20px,2.4vw,40px)]">
+            <span data-up="1" className="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-brand">
+              <span data-blip="1" aria-hidden="true" className="block h-[7px] w-[7px] bg-brand" />
+              Atelier ouvert · Marseille · depuis 1997
+            </span>
+
+            <h1 data-up="1" className="m-0 text-[clamp(36px,5.92vw,74px)] font-extrabold leading-[0.93] tracking-[-0.045em]">
+              Réparation
+              <br />
+              de consoles
+            </h1>
+
+            <p data-up="2" className="m-0 max-w-[46ch] text-[16.5px] leading-[1.5] text-ink-soft">
+              Vous décrivez la panne, on diagnostique, vous recevez un devis avant toute intervention.
+            </p>
+
+            {/*
+              Le choix de la console, dans le premier écran du téléphone.
+              Sur ordinateur, les tuiles de la section « 01 » sont déjà sous le
+              pli à 1440 px : rien à remonter. Au doigt, elles arrivaient à
+              970 px — un écran et demi de défilement avant la première vraie
+              question, alors que c'est **la** question du site.
+
+              Les familles viennent du catalogue : celle qu'on n'a pas en
+              atelier ne s'affiche pas.
+            */}
+            {familles.length ? (
+              <div data-up="2" className="flex flex-col gap-2.5 sm:hidden">
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.13em] text-ink-faint">Réparez votre console</span>
+                <div className="flex flex-wrap gap-0.5">
+                  {familles.map((f) => (
+                    <Link
+                      key={f.cle}
+                      href={f.href}
+                      className="flex min-h-[50px] flex-1 basis-[calc(50%-2px)] items-center justify-center whitespace-nowrap border border-ink bg-surface px-3 text-[15.5px] font-semibold text-ink"
+                    >
+                      {f.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/*
+              Pleine largeur au doigt, côte à côte dès qu'il y a la place.
+              Deux boutons empilés à leur largeur de texte laissaient une
+              colonne dentelée sur 390 px.
+            */}
+            <div data-up="3" className="flex flex-col gap-0.5 sm:flex-row sm:flex-wrap sm:gap-[11px]">
+              <Link href={ROUTES.repair} data-btn="1" className="block bg-brand px-[26px] py-[15px] text-center text-[15.5px] font-semibold text-white hover:bg-ink sm:inline-block sm:w-auto">
+                Demander un diagnostic
+              </Link>
+              <Link
+                href="#pannes"
+                data-btn="1"
+                className="block border border-ink px-[24px] py-[14px] text-center text-[15.5px] font-semibold text-ink hover:bg-ink hover:text-white sm:inline-block sm:w-auto"
+              >
+                Voir les tarifs
+              </Link>
+            </div>
+
+            {/*
+              Les quatre promesses restent sur **une** ligne à partir de `sm`.
+              En `flex-wrap`, le navigateur préfère renvoyer « 1997 · Atelier
+              ouvert depuis » à la ligne plutôt que de rétrécir les cellules :
+              la quatrième promesse tombait seule sous les trois autres, avec un
+              trou au-dessus. En `nowrap` avec des cellules qui peuvent rétrécir
+              (`min-w-0`), c'est l'étiquette en petites capitales qui passe sur
+              deux lignes — et une étiquette sur deux lignes se lit, une
+              promesse orpheline non. Le chiffre ne se coupe jamais.
+            */}
+            <ul
+              data-up="4"
+              data-rail="1"
+              className="mt-1 flex list-none gap-[26px] overflow-x-auto border-t border-border pt-[18px] sm:flex-nowrap sm:gap-[18px] sm:overflow-visible"
+            >
+              {promesses.map((p) => (
+                <li key={p.v} className="flex shrink-0 flex-col gap-px sm:min-w-0 sm:shrink">
+                  <span className="whitespace-nowrap text-[21px] font-bold tracking-[-0.03em]">{p.k}</span>
+                  <span className="font-mono text-[10px] uppercase leading-[1.35] tracking-[0.1em] text-ink-faint">{p.v}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
   );

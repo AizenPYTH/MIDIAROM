@@ -29,6 +29,7 @@ export function HomeVisual({
   position = "center",
   positionMobile,
   fit = "cover",
+  quality,
 }: {
   src: string | null;
   alt: string;
@@ -51,6 +52,12 @@ export function HomeVisual({
    * pas dans une bande sans qu'on en perde la moitié.
    */
   fit?: "cover" | "contain";
+  /**
+   * La qualité d'encodage, quand la valeur par défaut de Next (75) ne suffit
+   * pas — un grand visuel qui occupe toute la largeur du hero montre ses
+   * dégradés, là où une vignette de rayon ne montre rien.
+   */
+  quality?: number;
 }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) return <PhotoSlot label={label} />;
@@ -66,6 +73,7 @@ export function HomeVisual({
       // `eager` côté serveur et `undefined` côté client, donc un avertissement
       // d'hydratation à chaque chargement de l'accueil.
       priority={priority}
+      quality={quality}
       onError={() => setFailed(true)}
       data-visual="1"
       className={fit === "contain" ? "object-contain" : "object-cover"}
