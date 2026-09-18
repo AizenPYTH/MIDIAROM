@@ -40,11 +40,11 @@ import { UTILITY_BAR } from "@/components/marketing/home/content";
  * gouvernent — combien d'entrées, dans quel ordre, avec quel mot — vivent dans
  * ce module pur, où elles se testent.
  */
-function navDe(rayons: readonly Rayon[], tags: readonly TagProduit[], comptes: Record<string, number>): EntreeNav[] {
+function navDe(rayons: readonly Rayon[], tags: readonly TagProduit[]): EntreeNav[] {
   return [
     { href: ROUTES.repair, label: "Réparation" },
     { href: ROUTES.shop, label: "Boutique" },
-    ...entreesDesRayons(rayons, tags, comptes),
+    ...entreesDesRayons(rayons, tags),
     { href: ROUTES.contact, label: "Magasin" },
   ];
 }
@@ -84,8 +84,8 @@ export function BrandMark({ name, size = "md", mark = "square" }: { name: string
   );
 }
 
-export function SiteHeader({ brand, rayons, tags, comptes }: { brand: BrandSettings; rayons: Rayon[]; tags: TagProduit[]; comptes: Record<string, number> }) {
-  const NAV = navDe(rayons, tags, comptes);
+export function SiteHeader({ brand, rayons, tags }: { brand: BrandSettings; rayons: Rayon[]; tags: TagProduit[] }) {
+  const NAV = navDe(rayons, tags);
   // Le tiroir du téléphone porte toute la navigation : il rouvre donc l'accueil,
   // que le logo assure sur grand écran mais qu'un menu ouvert masque. Sans
   // volet : un téléphone n'a pas de survol, et déplier trois sous-listes

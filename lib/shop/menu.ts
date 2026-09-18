@@ -38,9 +38,20 @@ export interface VoletRayon {
   /** Ce que la colonne annonce : « plateformes », « licences ». */
   intitule: string;
   liens: { href: string; label: string }[];
-  /** Le lien du bas : « Voir les 9 consoles ». */
+  /** Le lien du bas, vers le rayon entier. */
   plus: { href: string; label: string };
 }
+
+/**
+ * Le lien du bas de chaque volet.
+ *
+ * Deux mots, les mêmes partout. Il a d'abord porté le compte du rayon — « Voir
+ * les 9 consoles » — ce qui était juste et se mettait à jour tout seul, mais
+ * n'aurait plus rien voulu dire avec trois cents références : personne ne
+ * clique sur « Voir les 312 jeux vidéo » pour savoir ce qu'il y a derrière. Le
+ * volet montre déjà ce qui compte ; ce lien dit seulement qu'il y a la suite.
+ */
+export const LIBELLE_PLUS = "Voir plus";
 
 export interface EntreeRayon {
   href: string;
@@ -64,11 +75,10 @@ export interface EntreeRayon {
  *
  * Un rayon sans article n'ouvre pas de volet vide : il reste un lien simple.
  */
-export function entreesDesRayons(rayons: readonly Rayon[], tags: readonly TagRayon[], comptes: Record<string, number>): EntreeRayon[] {
+export function entreesDesRayons(rayons: readonly Rayon[], tags: readonly TagRayon[]): EntreeRayon[] {
   return rayons.map((r) => {
     const href = `${ROUTES.shop}?cat=${r.slug}`;
     const siens = tags.filter((t) => t.rayon === r.code).sort((a, b) => b.nombre - a.nombre || a.valeur.localeCompare(b.valeur, "fr"));
-    const total = comptes[r.code] ?? 0;
     return {
       href,
       label: courtLabel(r.label),
@@ -76,11 +86,7 @@ export function entreesDesRayons(rayons: readonly Rayon[], tags: readonly TagRay
         ? {
             intitule: `${motDuTag(rayons, r.code)}s`,
             liens: siens.slice(0, MAX_VOLET).map((t) => ({ href: `${href}&plateforme=${encodeURIComponent(t.valeur)}`, label: t.valeur })),
-            // Le libellé du rayon plutôt qu'un singulier accordé à la main :
-            // « Jeu » ne se met pas au pluriel en « Jeus ». Le vendeur a déjà
-            // écrit « Jeux vidéo », on s'en sert. Sous deux articles, le compte
-            // n'apprend rien et se lirait « Voir les 1 console ».
-            plus: { href, label: total > 1 ? `Voir les ${total} ${courtLabel(r.label).toLocaleLowerCase("fr")}` : "Voir le rayon" },
+            plus: { href, label: LIBELLE_PLUS },
           }
         : undefined,
     };

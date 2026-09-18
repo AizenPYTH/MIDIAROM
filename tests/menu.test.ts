@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_VOLET, entreesDesRayons, type TagRayon } from "@/lib/shop/menu";
+import { LIBELLE_PLUS, MAX_VOLET, entreesDesRayons, type TagRayon } from "@/lib/shop/menu";
 import { RAYONS_PAR_DEFAUT, rayonsPublics, type Rayon } from "@/lib/shop/rayons";
 
 /**
@@ -7,7 +7,7 @@ import { RAYONS_PAR_DEFAUT, rayonsPublics, type Rayon } from "@/lib/shop/rayons"
  *
  * Ce qu'on protège ici : qu'il dise le mot du rayon et non « plateforme » par
  * défaut, qu'il montre ce que le magasin a réellement en stock plutôt que le
- * début de l'alphabet, et qu'il n'invente pas de pluriel.
+ * début de l'alphabet, et qu'il s'arrête avant de refaire la page.
  */
 
 const PUBLICS = rayonsPublics(RAYONS_PAR_DEFAUT);
@@ -24,10 +24,8 @@ const CATALOGUE: TagRayon[] = [
   tag("COLLECTIBLE", "Naruto Shippuden", 2),
 ];
 
-const COMPTES = { GAME: 10, CONSOLE: 9, COLLECTIBLE: 10 };
-
-function volet(code: string, tags = CATALOGUE, comptes: Record<string, number> = COMPTES) {
-  const entree = entreesDesRayons(PUBLICS, tags, comptes).find((e) => e.href.endsWith(`cat=${PUBLICS.find((r) => r.code === code)!.slug}`));
+function volet(code: string, tags = CATALOGUE) {
+  const entree = entreesDesRayons(PUBLICS, tags).find((e) => e.href.endsWith(`cat=${PUBLICS.find((r) => r.code === code)!.slug}`));
   return entree?.volet;
 }
 
@@ -59,24 +57,20 @@ describe("ce qu'un rayon déplie", () => {
 });
 
 describe("le lien « voir plus »", () => {
-  it("compte les articles du rayon et reprend le libellé du vendeur", () => {
-    // Surtout pas un singulier accordé à la main : « Jeu » ne fait pas « Jeus ».
-    expect(volet("GAME")?.plus).toEqual({ href: "/boutique?cat=jeux", label: "Voir les 10 jeux vidéo" });
-    expect(volet("CONSOLE")?.plus.label).toBe("Voir les 9 consoles");
-    // Le libellé long est abrégé comme dans la barre de navigation.
-    expect(volet("COLLECTIBLE")?.plus.label).toBe("Voir les 10 figurines");
-  });
-
-  it("ne compte pas quand il n'y a rien à compter", () => {
-    expect(volet("CONSOLE", CATALOGUE, { ...COMPTES, CONSOLE: 1 })?.plus.label).toBe("Voir le rayon");
-    expect(volet("CONSOLE", CATALOGUE, {})?.plus.label).toBe("Voir le rayon");
+  it("mène au rayon, et dit la même chose dans tous les rayons", () => {
+    // Il a d'abord porté le compte — « Voir les 9 consoles ». Un compte reste
+    // juste, mais n'apprend plus rien passé quelques dizaines de références :
+    // « Voir les 312 jeux vidéo » ne se lit pas, il se subit.
+    expect(volet("GAME")?.plus).toEqual({ href: "/boutique?cat=jeux", label: LIBELLE_PLUS });
+    expect(volet("CONSOLE")?.plus).toEqual({ href: "/boutique?cat=consoles", label: LIBELLE_PLUS });
+    expect(volet("COLLECTIBLE")?.plus).toEqual({ href: "/boutique?cat=figurines", label: LIBELLE_PLUS });
   });
 });
 
 describe("ce que le volet ne fait pas", () => {
   it("ne s'ouvre pas sur un rayon sans article", () => {
     expect(volet("CONSOLE", [])).toBeUndefined();
-    expect(entreesDesRayons(PUBLICS, [], COMPTES).every((e) => !e.volet)).toBe(true);
+    expect(entreesDesRayons(PUBLICS, []).every((e) => !e.volet)).toBe(true);
   });
 
   it("ne déroule pas tout le catalogue : le reste est derrière le lien du bas", () => {
@@ -88,10 +82,10 @@ describe("ce que le volet ne fait pas", () => {
 
   it("suit un rayon créé après coup, sans rien redéployer", () => {
     const goodies: Rayon = { code: "GOODIES", label: "Goodies et porte-clés", short: "Goodie", slug: "goodies", position: 25, isPublic: true, tagLabel: "licence" };
-    const entrees = entreesDesRayons([...PUBLICS, goodies], [tag("GOODIES", "Zelda", 3)], { GOODIES: 3 });
+    const entrees = entreesDesRayons([...PUBLICS, goodies], [tag("GOODIES", "Zelda", 3)]);
     const neuf = entrees.find((e) => e.href === "/boutique?cat=goodies");
     expect(neuf?.label).toBe("Goodies");
     expect(neuf?.volet?.intitule).toBe("licences");
-    expect(neuf?.volet?.plus.label).toBe("Voir les 3 goodies");
+    expect(neuf?.volet?.liens.map((l) => l.label)).toEqual(["Zelda"]);
   });
 });

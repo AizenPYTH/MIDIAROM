@@ -179,8 +179,8 @@ Manga / Anime », parce que six entrées doivent tenir sur une ligne de 1440 px.
 
 **Au survol, un rayon montre ce qu'il contient.** « Consoles » déplie les
 consoles en vente, « Jeux vidéo » leurs plateformes, « Figurines » leurs
-licences, puis un lien vers le rayon entier — « Voir les 9 consoles ». Trois
-règles le gouvernent :
+licences, puis un « Voir plus » vers le rayon entier. Trois règles le
+gouvernent :
 
 - **Ce qu'il montre vient du catalogue**, jamais d'une liste écrite en dur :
   c'est `products.platform`, comptée par rayon (`getProductTags`). Une console
@@ -194,6 +194,12 @@ règles le gouvernent :
 - **Huit entrées au plus**, les mieux fournies d'abord, puis le lien vers le
   rayon. Un menu qui déroule quarante licences ne raccourcit plus rien : il
   refait la page qu'il est censé remplacer. Un rayon vide n'ouvre pas de volet.
+- **Le lien du bas dit « Voir plus », partout.** Il a d'abord porté le compte
+  du rayon — « Voir les 9 consoles » — ce qui était juste et se mettait à jour
+  tout seul, mais n'apprend plus rien passé quelques dizaines de références :
+  « Voir les 312 jeux vidéo » ne se lit pas, il se subit. Le volet montre déjà
+  ce qui compte ; ce lien dit seulement qu'il y a la suite. L'en-tête n'a donc
+  plus besoin des compteurs de rayon — une requête de moins sur chaque page.
 
 Le volet s'ouvre au survol **et au clavier** — la tabulation sur un rayon le
 déplie et entre dans ses liens ; Échap referme et rend le focus au rayon. La
