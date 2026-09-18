@@ -103,7 +103,18 @@ export default async function QuoteByTokenPage({ params }: { params: Promise<{ t
         <br />
         voici votre devis.
       </h1>
-      <p className="mt-4 text-[16px] leading-[1.6] text-ink-soft">
+      {/* Le montant, dit en toutes lettres avant le détail. Un client qui
+          ouvre ce lien cherche un chiffre ; il ne doit pas avoir à parcourir
+          un tableau pour le trouver. Le détail reste dessous, pour qui veut
+          savoir ce qu'il paie. */}
+      <p className="mt-4 text-[18px] leading-[1.5] text-ink">
+        Votre réparation est estimée à{" "}
+        <strong className="font-extrabold" style={{ color: "var(--brand)" }}>
+          {formatPrice(quote.total_cents)}
+        </strong>
+        .
+      </p>
+      <p className="mt-2 text-[16px] leading-[1.6] text-ink-soft">
         Pour votre <strong className="text-ink">{libelleConsole(order.brand_name, order.model_name)}</strong>, dossier {order.order_number}. Vous décidez librement : aucune intervention,
         aucun envoi et aucun règlement tant que vous n&apos;avez pas accepté.
       </p>

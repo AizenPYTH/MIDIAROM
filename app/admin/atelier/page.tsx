@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MediaGallery } from "@/components/customer/media-gallery";
-import { NoteForm, SendQuoteButton } from "@/components/admin/order-forms";
+import { DevisSimpleForm, NoteForm, SendQuoteButton } from "@/components/admin/order-forms";
 import { advanceStatusAction } from "@/app/admin/actions/orders";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireStaffOrRedirect } from "@/lib/security/auth";
@@ -372,6 +372,21 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                   </div>
                 ))}
               </div>
+
+              {/*
+                Chiffrer sans changer d'écran.
+
+                Le réparateur vient de lire la description du client et de
+                regarder ses photos, juste au-dessus. Le prix se pose ici, et
+                l'envoi part d'ici : l'onglet « Devis » de la fiche complète
+                reste pour le devis à plusieurs lignes.
+              */}
+              {selected.is_quote_request && selected.status === "QUOTE_REQUESTED" ? (
+                <div className="flex flex-col gap-3 border-t border-border pt-6">
+                  <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">Prix du devis</span>
+                  <DevisSimpleForm orderId={selected.id} libelle={selected.repair_name ?? selected.fault_name ?? "Réparation"} />
+                </div>
+              ) : null}
 
               <NoteForm orderId={selected.id} compact />
 

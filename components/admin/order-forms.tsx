@@ -220,6 +220,62 @@ export function DiagnosticForm({ orderId, diagnostic, declaredFault, canStartRep
   );
 }
 
+/**
+ * Chiffrer une demande de devis : un prix, un bouton.
+ *
+ * Le formulaire complet en dessous (`QuoteForm`) sert à composer un devis
+ * **complémentaire** : plusieurs lignes, options du catalogue, coûts internes,
+ * paiement en ligne, brouillon ou envoi. Tout cela a un sens quand la console
+ * est ouverte sur l'établi et qu'on découvre une pièce à changer.
+ *
+ * Une demande de devis gratuite n'est pas ce cas. Le réparateur a sous les yeux
+ * une console, une panne annoncée, une description et des photos ; ce qu'on lui
+ * demande, c'est un montant. Lui faire remplir un titre, un constat, un
+ * message, une ligne avec son coût estimé et trois cases à cocher pour poser un
+ * nombre, c'est neuf champs pour une décision.
+ *
+ * Ce formulaire pose donc le reste à sa place et n'en montre qu'un :
+ *
+ * - le **titre** reprend la panne annoncée — c'est ce que le client a demandé ;
+ * - la **ligne** du devis porte ce même libellé, en quantité 1 ;
+ * - `is_required_for_repair` est vrai : ce devis **est** la réparation, un
+ *   refus la clôt ;
+ * - `requires_payment` est faux : le client n'a pas encore envoyé sa console,
+ *   et lui réclamer un règlement pour qu'on veuille bien la recevoir ferait
+ *   fuir. Le paiement se pose après l'accord ;
+ * - `send_now` est vrai : il n'y a pas de brouillon à garder pour un prix.
+ *
+ * L'action appelée est `createQuoteAction`, la même que le formulaire complet.
+ * Rien n'est contourné : même validation, même jeton de décision, mêmes
+ * notifications, même transition de statut.
+ */
+export function DevisSimpleForm({ orderId, libelle, className }: { orderId: string; libelle: string; className?: string }) {
+  const [state, action, pending] = useActionState<ActionResult | null, FormData>(createQuoteAction, null);
+  useRefresh(state);
+  return (
+    <form action={action} className={className ?? "flex flex-col gap-3"} key={state?.ok ? "sent" : "draft"}>
+      <input type="hidden" name="order_id" value={orderId} />
+      <input type="hidden" name="title" value={libelle} />
+      <input type="hidden" name="item_label_0" value={libelle} />
+      <input type="hidden" name="item_quantity_0" value="1" />
+      <input type="hidden" name="is_required_for_repair" value="on" />
+      <input type="hidden" name="send_now" value="on" />
+      <div className="flex flex-wrap items-end gap-3">
+        <Field label="Prix du devis" htmlFor={`prix-${orderId}`} className="min-w-[160px] flex-[0_1_200px]">
+          <Input id={`prix-${orderId}`} name="item_price_0" inputMode="decimal" required placeholder="89,00" aria-describedby={`prix-aide-${orderId}`} />
+        </Field>
+        <Button type="submit" loading={pending}>
+          Envoyer le devis
+        </Button>
+      </div>
+      <p id={`prix-aide-${orderId}`} className="text-[12.5px] text-ink-muted">
+        Prix TTC, tout compris. À l&apos;envoi, le client reçoit « Votre réparation est estimée à ce montant » et deux boutons : accepter ou refuser.
+      </p>
+      <Feedback state={state} />
+    </form>
+  );
+}
+
 export function QuoteForm({
   orderId,
   options,

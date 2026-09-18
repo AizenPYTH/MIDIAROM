@@ -8,7 +8,7 @@ import { StatusTimeline } from "@/components/ui/timeline";
 import { Section, Tabs, Table, Th, Td } from "@/components/admin/ui";
 import { MediaGallery } from "@/components/customer/media-gallery";
 import { MediaUploader } from "@/components/customer/media-uploader";
-import { DiagnosticForm, ManualShipmentForm, MarkShippedForm, NoteForm, PartForm, QuoteForm, ReceptionForm, RefundForm, ReturnLabelForm, SendQuoteButton, StatusForm, TestResultsForm, WorkLogForm } from "@/components/admin/order-forms";
+import { DiagnosticForm, ManualShipmentForm, MarkShippedForm, NoteForm, PartForm, DevisSimpleForm, QuoteForm, ReceptionForm, RefundForm, ReturnLabelForm, SendQuoteButton, StatusForm, TestResultsForm, WorkLogForm } from "@/components/admin/order-forms";
 import { assignTechnicianAction, cancelQuoteAction, deleteMediaAction, deletePartAction, markDeliveredAction, startTestsAction, toggleMediaVisibilityAction } from "@/app/admin/actions/orders";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireStaffOrRedirect } from "@/lib/security/auth";
@@ -75,6 +75,16 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
   const shippingCost = (shipments.data ?? []).reduce((s, sh) => s + sh.cost_cents, 0);
   const estimatedCost = (items.data ?? []).reduce((s, i) => s + i.estimated_cost_cents, 0);
   const pendingQuotes = (quotes.data ?? []).filter((q) => q.status === "SENT").length;
+  /*
+    Le devis en cours d'une demande, et la décision qui lui a répondu.
+
+    Les devis sont déjà triés du plus récent au plus ancien : le premier est
+    celui qui porte le prix qu'on a annoncé au client. Sa décision, s'il en a
+    reçu une, est celle qu'il faut montrer au réparateur — avec le motif, la
+    seule chose que le client dise spontanément sur un prix qu'il refuse.
+  */
+  const dernierDevis = (quotes.data ?? []).find((q) => ["SENT", "ACCEPTED", "REFUSED"].includes(q.status)) ?? null;
+  const derniereDecision = (dernierDevis?.decisions as { comment: string | null; created_at: string }[] | undefined)?.[0] ?? null;
 
   return (
     <div className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
@@ -126,6 +136,46 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
               <MediaGallery media={mediaOf(["CUSTOMER"])} />
             </div>
           ) : null}
+          {/*
+            Le chiffrage, ici même.
+
+            Le réparateur vient de lire la description et de regarder les
+            photos ; ce qu'on lui demande tient en un nombre. L'envoyer depuis
+            l'onglet « Devis » l'obligeait à quitter l'écran où il avait le
+            dossier sous les yeux, pour y retrouver un formulaire de neuf
+            champs. Le formulaire complet reste disponible sous l'onglet, pour
+            le devis qui a besoin de plusieurs lignes.
+          */}
+          <div className="mt-4 border-t border-border pt-4">
+            <DevisSimpleForm orderId={order.id} libelle={order.repair_name ?? order.fault_name ?? "Réparation"} />
+          </div>
+        </div>
+      ) : null}
+
+      {/*
+        Après l'envoi : où en est le client.
+
+        Trois états, et un seul se lit d'un coup d'œil — c'est tout ce que le
+        réparateur a besoin de savoir avant de décider s'il relance ou s'il
+        passe à autre chose.
+      */}
+      {order.is_quote_request && order.status !== "QUOTE_REQUESTED" && dernierDevis ? (
+        <div
+          className="border-l-2 bg-surface p-4"
+          style={{ borderLeftColor: dernierDevis.status === "ACCEPTED" ? "var(--ok, #0b7f63)" : dernierDevis.status === "REFUSED" ? "var(--danger)" : "var(--brand)" }}
+        >
+          <span className="text-[15px] font-semibold text-ink">
+            {dernierDevis.status === "ACCEPTED" ? "✓ " : dernierDevis.status === "REFUSED" ? "✕ " : "⏳ "}
+            Devis envoyé — {formatPrice(dernierDevis.total_cents)}
+          </span>
+          <p className="mt-1 text-[13.5px] text-ink-soft">
+            {dernierDevis.status === "ACCEPTED"
+              ? "Le client a accepté. Il a reçu les instructions pour déposer ou envoyer sa console."
+              : dernierDevis.status === "REFUSED"
+                ? "Le client a refusé. Aucun frais ne lui a été facturé et sa console est restée chez lui."
+                : "En attente de la réponse du client."}
+          </p>
+          {derniereDecision?.comment ? <p className="mt-2 text-[13.5px] text-ink">« {derniereDecision.comment} »</p> : null}
         </div>
       ) : null}
 
@@ -146,9 +196,21 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
 
       {tab === "overview" ? (
         <div className="grid gap-6 lg:grid-cols-2">
-          <Section title="Statut">
-            <StatusForm orderId={order.id} current={order.status} role={user.profile.role} />
-          </Section>
+          {/*
+            Pendant le devis, le statut n'est pas une décision du réparateur.
+
+            Il suit l'envoi du devis puis la réponse du client : demande reçue →
+            devis envoyé → accepté ou refusé. Offrir ici un menu déroulant
+            revenait à proposer de le devancer — annoncer « devis envoyé » sans
+            devis, ou « accepté » à la place du client. Le menu revient dès que
+            la console est à l'atelier, où c'est bien le réparateur qui fait
+            avancer le dossier.
+          */}
+          {order.is_quote_request && ["QUOTE_REQUESTED", "WAITING_CUSTOMER_APPROVAL"].includes(order.status) ? null : (
+            <Section title="Statut">
+              <StatusForm orderId={order.id} current={order.status} role={user.profile.role} />
+            </Section>
+          )}
           <Section title="Commande">
             <ul className="divide-y divide-border text-sm">
               {(items.data ?? []).map((i) => (
@@ -160,7 +222,18 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
             </ul>
             <div className="mt-2 flex justify-between border-t border-border pt-2 text-sm font-semibold"><span>Total</span><span>{formatPrice(order.total_cents)}</span></div>
             <div className="flex justify-between text-xs text-ink-muted"><span>Encaissé</span><span>{formatPrice(order.paid_cents)}</span></div>
-            {admin ? (
+            {/*
+              Le bloc comptable ne s'affiche pas pendant le devis.
+
+              Coût des pièces, coût catalogue, transport, temps technicien,
+              marge : sur une demande de devis, ces cinq lignes valent toutes
+              zéro — la console n'est pas arrivée, rien n'a été commandé,
+              personne n'a encore ouvert quoi que ce soit. Elles n'apprennent
+              donc rien et occupent le tiers de l'écran sur lequel le
+              réparateur doit poser un prix. Elles reviennent dès que le
+              dossier entre à l'atelier, où elles ont enfin un contenu.
+            */}
+            {admin && !(order.is_quote_request && ["QUOTE_REQUESTED", "WAITING_CUSTOMER_APPROVAL"].includes(order.status)) ? (
               <dl className="mt-3 grid grid-cols-2 gap-1 rounded-md bg-surface-muted p-3 text-xs">
                 <dt className="text-ink-muted">Coût pièces (réel)</dt><dd className="text-right">{formatPrice(partsCost)}</dd>
                 <dt className="text-ink-muted">Coût estimé catalogue</dt><dd className="text-right">{formatPrice(estimatedCost)}</dd>
@@ -304,7 +377,25 @@ export default async function AdminOrderPage({ params, searchParams }: { params:
                 : "Aucune prestation supplémentaire ne doit être réalisée avant l'accord enregistré du client."
             }
           >
-            <QuoteForm orderId={order.id} options={options.data ?? []} defaultRequiresPayment={!order.is_quote_request} />
+            {order.is_quote_request && !order.received_at ? (
+              <>
+                <DevisSimpleForm orderId={order.id} libelle={order.repair_name ?? order.fault_name ?? "Réparation"} />
+                {/*
+                  Le formulaire complet ne disparaît pas, il se replie. Un devis
+                  à plusieurs lignes reste possible — c'est simplement ce qu'on
+                  ouvre quand on en a besoin, et non ce qu'on traverse chaque
+                  fois qu'on veut poser un prix.
+                */}
+                <details className="mt-6 border-t border-border pt-4">
+                  <summary className="cursor-pointer text-[13.5px] text-ink-muted hover:text-ink">Devis détaillé — plusieurs lignes, options du catalogue, paiement en ligne</summary>
+                  <div className="mt-4">
+                    <QuoteForm orderId={order.id} options={options.data ?? []} defaultRequiresPayment={false} />
+                  </div>
+                </details>
+              </>
+            ) : (
+              <QuoteForm orderId={order.id} options={options.data ?? []} defaultRequiresPayment={!order.is_quote_request} />
+            )}
           </Section>
           <Section title="Photos jointes aux devis" actions={<MediaUploader orderId={order.id} kind="QUOTE" captionPrompt />}>
             <MediaGallery media={mediaOf(["QUOTE"])} emptyText="Ajoutez une photo du constat (poussière, oxydation…) : elle est affichée au client avec le devis." />
