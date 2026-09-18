@@ -24,9 +24,30 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}${ROUTES.repair}` },
 };
 
-export default async function RepairIndexPage() {
-  const [brands, models, form, repairBlock] = await Promise.all([getActiveBrands(), getActiveModels(), getRepairFormBase(), getContentBlock("homepage.repair")]);
+/**
+ * `?console=playstation` — la console déjà choisie depuis l'accueil.
+ *
+ * Le paramètre porte le **slug** de la marque, lisible et stable, pas son
+ * identifiant : une adresse partagée doit rester compréhensible. Il est résolu
+ * ici, côté serveur, contre les marques actives ; inconnu, il est ignoré et le
+ * parcours reprend à la première question.
+ */
+function plateformeDemandee(brands: { id: string; slug: string }[], demande: string | undefined): string | null {
+  if (!demande) return null;
+  if (demande === "retro") return "retro";
+  return brands.find((b) => b.slug === demande)?.id ?? null;
+}
+
+export default async function RepairIndexPage({ searchParams }: { searchParams: Promise<{ console?: string }> }) {
+  const [sp, brands, models, form, repairBlock] = await Promise.all([
+    searchParams,
+    getActiveBrands(),
+    getActiveModels(),
+    getRepairFormBase(),
+    getContentBlock("homepage.repair"),
+  ]);
   const howto = blockData(repairBlock, { howto: [] as { title: string; text: string }[] }).howto;
+  const plateforme = plateformeDemandee(brands, sp.console);
   return (
     <>
       {/*
@@ -57,7 +78,7 @@ export default async function RepairIndexPage() {
               </Link>
             </p>
           </div>
-          <RepairForm models={form.models} conditions={form.conditions} initialCustomer={null} initialAddress={null} isLoggedIn={false} catalogueCount={models.length} />
+          <RepairForm models={form.models} conditions={form.conditions} initialPlatform={plateforme} initialCustomer={null} initialAddress={null} isLoggedIn={false} catalogueCount={models.length} />
         </div>
       </section>
       {/*

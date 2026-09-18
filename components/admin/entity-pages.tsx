@@ -15,11 +15,12 @@ import { formatPrice } from "@/lib/utils/format";
 /** Loads the options for select fields (brands, models, faults, categories). */
 export async function loadSelectOptions(): Promise<SelectOptions> {
   const db = createSupabaseAdminClient();
-  const [brands, models, faults, cats, rayons] = await Promise.all([
+  const [brands, models, faults, cats, familles, rayons] = await Promise.all([
     db.from("brands").select("id, name").order("display_order"),
     db.from("console_models").select("id, name, brand:brands(name)").order("display_order"),
     db.from("faults").select("id, name").order("display_order"),
     db.from("option_categories").select("id, name").order("display_order"),
+    db.from("repair_categories").select("id, name").eq("is_active", true).order("display_order"),
     getRayons(),
   ]);
   return {
@@ -27,6 +28,10 @@ export async function loadSelectOptions(): Promise<SelectOptions> {
     models: (models.data ?? []).map((m) => ({ value: m.id, label: `${(m.brand as { name: string } | null)?.name ?? ""} ${m.name}`.trim() })),
     faults: (faults.data ?? []).map((f) => ({ value: f.id, label: f.name })),
     option_categories: (cats.data ?? []).map((c) => ({ value: c.id, label: c.name })),
+    // Les familles de pannes (« Image & HDMI », « Charge & USB-C »…). Elles
+    // groupent le catalogue derrière « Autre problème » : une prestation sans
+    // famille y atterrit dans « Autres prestations ».
+    repair_categories: (familles.data ?? []).map((c) => ({ value: c.id, label: c.name })),
     // Les rayons de la boutique, y compris ceux ouverts par le vendeur. Le
     // libellé au singulier : on choisit **un** rayon pour **un** article.
     rayons: rayons.map((r) => ({ value: r.code, label: r.short })),
@@ -44,6 +49,7 @@ function cell(column: string, value: unknown, options: SelectOptions): React.Rea
   if (column === "brand_id") return options.brands?.find((o) => o.value === value)?.label ?? "—";
   if (column === "model_id") return options.models?.find((o) => o.value === value)?.label ?? "Générique";
   if (column === "fault_id") return options.faults?.find((o) => o.value === value)?.label ?? "—";
+  if (column === "category_id") return options.repair_categories?.find((o) => o.value === value)?.label ?? options.option_categories?.find((o) => o.value === value)?.label ?? "—";
   if (column === "condition" && typeof value === "string") return ({ NEW: "Neuf", REFURBISHED: "Révisé", USED_A: "Occasion A", USED_B: "Occasion B", USED_C: "Occasion C" } as Record<string, string>)[value] ?? value;
   if (column === "quantity") return <span className={Number(value) === 0 ? "font-mono text-danger" : "font-mono"}>{String(value)}</span>;
   if (value == null || value === "") return "—";
@@ -51,7 +57,7 @@ function cell(column: string, value: unknown, options: SelectOptions): React.Rea
 }
 
 const COLUMN_LABELS: Record<string, string> = {
-  name: "Nom", slug: "Slug", display_order: "Ordre", is_active: "Actif", brand_id: "Marque", model_id: "Modèle", fault_id: "Panne", price_cents: "Prix", is_seo_published: "SEO", applies_to_all: "Universelle", is_recommended: "Recommandée", code: "Code", provider_code: "Transporteur", includes_outbound: "Aller", includes_return: "Retour", question: "Question", category: "Catégorie", title: "Titre", image_path: "Image", is_published: "Publié", version: "Version", is_current: "En vigueur", path: "Chemin", no_index: "No-index", key: "Clé", sku: "SKU", platform: "Plateforme / licence", condition: "État", quantity: "Stock", family: "Famille", source: "Source", campaign: "Campagne", period_start: "Début", period_end: "Fin", amount_cents: "Montant", label: "Nom", label_singular: "Au singulier", position: "Ordre", is_public: "En boutique", tag_label: "Ligne du dessus",
+  name: "Nom", slug: "Slug", display_order: "Ordre", is_active: "Actif", brand_id: "Marque", model_id: "Modèle", fault_id: "Panne", price_cents: "Prix", is_seo_published: "SEO", applies_to_all: "Universelle", is_recommended: "Recommandée", code: "Code", provider_code: "Transporteur", includes_outbound: "Aller", includes_return: "Retour", question: "Question", category: "Catégorie", title: "Titre", image_path: "Image", is_published: "Publié", version: "Version", is_current: "En vigueur", path: "Chemin", no_index: "No-index", key: "Clé", sku: "SKU", platform: "Plateforme / licence", condition: "État", quantity: "Stock", family: "Famille", source: "Source", campaign: "Campagne", period_start: "Début", period_end: "Fin", amount_cents: "Montant", label: "Nom", label_singular: "Au singulier", position: "Ordre", is_public: "En boutique", tag_label: "Ligne du dessus", is_featured: "Fréquent", featured_order: "Rang", category_id: "Famille",
 };
 
 export async function EntityListPage({ entityKey, title, description, extra }: { entityKey: string; title?: string; description?: string; extra?: React.ReactNode }) {

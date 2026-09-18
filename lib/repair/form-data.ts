@@ -32,6 +32,12 @@ export function toFormRepair(r: Repair & { fault: Fault; category?: RepairCatego
     priceCents: r.price_cents,
     categoryName: r.category?.name ?? null,
     categoryOrder: r.category?.display_order ?? 999,
+    // `?? false` et non `r.is_featured` : sur une base où la migration
+    // `repairs_featured` n'est pas encore jouée, la colonne est absente de la
+    // ligne rendue par PostgREST et vaudrait `undefined`.
+    isFeatured: r.is_featured ?? false,
+    featuredOrder: r.featured_order ?? 0,
+    displayOrder: r.display_order,
     priceProvisional: r.price_is_provisional,
     isDiagnosticOnly: r.is_diagnostic_only,
     warrantyMonths: r.warranty_months,

@@ -14,7 +14,7 @@ export interface FieldDef {
   type: FieldType;
   required?: boolean;
   hint?: string;
-  options?: { value: string; label: string }[] | "brands" | "models" | "faults" | "option_categories" | "rayons";
+  options?: { value: string; label: string }[] | "brands" | "models" | "faults" | "option_categories" | "repair_categories" | "rayons";
   width?: "full" | "half";
 
   // ── Ce qui suit ne sert qu'au formulaire : rien n'atteint la base ──────────
@@ -184,12 +184,13 @@ export const ENTITIES: Record<string, EntityDef> = {
     label: "Réparation",
     labelPlural: "Réparations",
     basePath: "/admin/catalog/repairs",
-    listColumns: ["name", "model_id", "fault_id", "price_cents", "is_active", "is_seo_published"],
+    listColumns: ["name", "model_id", "fault_id", "price_cents", "is_featured", "is_active"],
     fields: [
       { name: "model_id", label: "Modèle", type: "select", options: "models", required: true, width: "half" },
       { name: "fault_id", label: "Panne", type: "select", options: "faults", required: true, width: "half" },
       { name: "name", label: "Nom de la prestation", type: "text", required: true, width: "half" },
       { name: "slug", label: "Slug (fiche)", type: "slug", required: true, width: "half" },
+      { name: "category_id", label: "Famille de pannes (groupe « Autre problème »)", type: "select", options: "repair_categories", width: "half" },
       { name: "summary", label: "Résumé (une phrase)", type: "text" },
       { name: "description", label: "Description (markdown)", type: "markdown" },
       { name: "price_cents", label: "Tarification", type: "pricing", required: true },
@@ -205,6 +206,14 @@ export const ENTITIES: Record<string, EntityDef> = {
       { name: "important_notes", label: "Informations importantes (avant commande)", type: "textarea" },
       { name: "is_diagnostic_only", label: "Prestation de diagnostic uniquement", type: "checkbox", width: "half" },
       { name: "is_active", label: "Active (commandable)", type: "checkbox", width: "half" },
+      {
+        name: "is_featured",
+        label: "Problème fréquent (proposé d'emblée au client)",
+        type: "checkbox",
+        width: "half",
+        hint: "Décoché, la prestation reste commandable : elle passe derrière « Autre problème ». Sept à neuf par modèle.",
+      },
+      { name: "featured_order", label: "Rang dans les problèmes fréquents", type: "number", width: "half", hint: "1 en premier. Ex æquo départagés par l'ordre puis le nom." },
       { name: "is_seo_published", label: "Page SEO publiée (/reparation/modèle/panne indexée + sitemap)", type: "checkbox" },
       { name: "seo_title", label: "SEO — title", type: "text" },
       { name: "seo_description", label: "SEO — meta description", type: "textarea" },
@@ -218,6 +227,7 @@ export const ENTITIES: Record<string, EntityDef> = {
     schema: z.object({
       model_id: z.string().uuid(),
       fault_id: z.string().uuid(),
+      category_id: nullableUuid,
       name: text(120).min(1),
       slug,
       summary: optText(300),
@@ -236,6 +246,8 @@ export const ENTITIES: Record<string, EntityDef> = {
       important_notes: optText(2000),
       is_diagnostic_only: bool.default(false),
       is_active: bool.default(true),
+      is_featured: bool.default(false),
+      featured_order: int.min(0).default(0),
       is_seo_published: bool.default(false),
       seo_title: optText(200),
       seo_description: optText(400),

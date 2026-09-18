@@ -135,6 +135,33 @@ pas.
 **L'article n'est pas en ligne par défaut.** Une case permet de publier
 immédiatement : c'est le magasin qui décide.
 
+## Choisir les problèmes fréquents
+
+Le client ne voit pas les 1 189 prestations : il en voit sept à neuf par
+modèle, puis un bouton « Autre problème » qui ouvre le reste avec sa recherche.
+Cette liste courte se compose depuis **Catalogue → Réparations**, sur la fiche
+de chaque prestation :
+
+- **Problème fréquent (proposé d'emblée au client)** — la case qui décide.
+  Décochée, la prestation ne disparaît pas : elle passe derrière « Autre
+  problème ». Pour la retirer vraiment du catalogue, c'est **Active** qu'il faut
+  décocher, et cela la retire aussi de la recherche et des pages de panne.
+- **Rang dans les problèmes fréquents** — 1 en premier.
+- **Famille de pannes** — le groupe sous lequel la prestation apparaît derrière
+  « Autre problème » (« Image & HDMI », « Charge & USB-C »…). Sans famille, elle
+  atterrit dans « Autres prestations ».
+
+La colonne « Fréquent » de la liste dit d'un coup d'œil ce que le client verra.
+
+Sept à neuf, et pas davantage : au-delà, la liste redevient le mur qu'on essaie
+de quitter, et l'application s'arrête de toute façon à neuf. En dessous de six,
+une console large — une Switch a dix familles de pannes — perd une catégorie
+entière de clients.
+
+Une prestation ajoutée demain se comporte comme les autres : cochée, elle entre
+dans la liste courte du modèle ; décochée, elle reste commandable derrière
+« Autre problème ».
+
 ## Où va le reste
 
 | Écran | Pour |

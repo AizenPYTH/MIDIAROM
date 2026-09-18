@@ -28,6 +28,16 @@ export interface FormRepair {
   /** Catégorie du catalogue client (« Image & HDMI », « Charge & USB-C »…). */
   categoryName: string | null;
   categoryOrder: number;
+  /**
+   * Paraît dans la liste courte proposée d'emblée (`repairs.is_featured`).
+   *
+   * Optionnelles, et c'est volontaire : les deux colonnes arrivent par une
+   * migration appliquée à la main sur Supabase, et le code peut tourner avant
+   * elle. `listeCourte` sait quoi faire de leur absence.
+   */
+  isFeatured?: boolean;
+  featuredOrder?: number;
+  displayOrder?: number;
   /** Le catalogue fourni ne comporte pas de prix : la prestation est annoncée sur devis. */
   priceProvisional: boolean;
   isDiagnosticOnly: boolean;

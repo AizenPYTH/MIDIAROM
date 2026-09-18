@@ -169,6 +169,39 @@ photos client, fiches consoles.
    réelles, récapitulatif (prix et TVA vérifiés par le serveur), conditions, CGV.
    « Envoyer ma demande » crée le dossier puis redirige vers le paiement.
 
+## Le parcours de réparation, du plus simple au plus complet
+
+Quatre écrans, jamais plus : **console → modèle → problème → panne**. C'est le
+troisième qui portait toute la difficulté — l'atelier publie jusqu'à
+quatre-vingt-neuf prestations pour une console, et les afficher revenait à
+poser au client une question à laquelle il ne pouvait pas répondre.
+
+Il se lit désormais en deux temps :
+
+1. **Sept à neuf problèmes fréquents**, ceux que le back-office met en avant
+   pour ce modèle précis. Nom, tarif ou « Nécessite un devis », rien d'autre.
+   Le libellé est celui du catalogue, donc celui que l'atelier emploie —
+   « Aucun signal HDMI » plutôt que « Remplacement du circuit TMDS ».
+2. **« Autre problème »**, qui ouvre le reste du catalogue du modèle, groupé par
+   famille de pannes, avec une recherche. La recherche ne vit **que** là : elle
+   n'a rien à filtrer dans une liste de neuf lignes.
+
+Un retour « ← Revenir aux problèmes fréquents » referme le second écran, sauf
+quand la prestation choisie s'y trouve : on ne referme pas sous les pieds du
+client la liste où vit sa sélection. Symétriquement, arriver avec une
+prestation déjà choisie — retour en arrière, lien vers une page de panne —
+ouvre le second écran de lui-même.
+
+**Ce qui n'a pas changé** : la tarification (prix ferme, gratuit, devis), le
+calcul serveur, la création de commande, le paiement, les pages
+`/reparation/<modèle>` et `/reparation/<modèle>/<panne>`. La simplification est
+une affaire d'affichage ; le catalogue et le back-office gardent leurs 1 189
+lignes.
+
+Le même partage tient la page d'un modèle : son sommaire des pannes ouvre sur
+les fréquentes et replie les autres dans un `<details>`, ce qui garde tous les
+liens dans le HTML — indexables, et atteignables sans JavaScript.
+
 ## L'en-tête et ses volets
 
 Une seule ligne au-dessus de 1280 px : logo, six rayons, recherche, les trois

@@ -8,6 +8,8 @@ import { ConsolePhoto } from "@/components/repair/console-photo";
 import { publicMediaUrl } from "@/components/marketing/gallery";
 import { getActiveModels, getModelBySlug, getRepairsForModel } from "@/lib/repair/catalog";
 import { getRepairFormBase, toFormRepair } from "@/lib/repair/form-data";
+import { listeCourte, listeLongue } from "@/lib/repair/selection";
+import type { FormRepair } from "@/components/repair/repair-form-types";
 import { formatRepairPrice } from "@/lib/utils/format";
 import { getBrandSettings } from "@/lib/settings";
 
@@ -37,6 +39,11 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
   const model = await getModelBySlug(slug);
   if (!model) notFound();
   const [repairs, brand, form] = await Promise.all([getRepairsForModel(model.id), getBrandSettings(), getRepairFormBase()]);
+  // La même coupure que la fiche, pour que la page ne raconte pas deux
+  // histoires : les pannes fréquentes d'abord, le reste replié.
+  const formulaire = repairs.map(toFormRepair);
+  const frequentes = listeCourte(formulaire);
+  const rares = listeLongue(formulaire, frequentes);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -87,19 +94,32 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
               <p className="mt-3.5 max-w-[42ch] text-[16.5px] leading-[1.55] text-[#c4bdae]">{model.seo_intro ?? `Sélectionnez le symptôme qui correspond le mieux à votre ${model.name}. En cas de doute, choisissez « Autre panne » : nous diagnostiquons.`}</p>
             </div>
             {repairs.length ? (
+              /*
+                Les pannes fréquentes, et les autres repliées.
+                Cette liste servait de sommaire indexable et montrait les
+                cinquante-cinq prestations d'un coup — le mur que la fiche, à
+                droite, vient précisément de remplacer par neuf lignes. Un
+                `<details>` réconcilie les deux : tous les liens restent dans le
+                HTML, donc indexables et atteignables sans JavaScript, mais la
+                page s'ouvre sur ce qui se lit.
+              */
               <div className="border border-ink-650 p-[18px]">
                 <span className="font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted">Pannes prises en charge — {model.name}</span>
                 <ul className="mt-3 flex flex-col gap-[9px]">
-                  {repairs.map((r) => (
-                    <li key={r.id} className="flex justify-between gap-4 border-b border-dotted border-[#3a3529] pb-[7px] text-[14.5px]">
-                      <Link href={`${ROUTES.repair}/${model.slug}/${r.fault.slug}`} className="hover:text-accent-light">
-                        {r.fault.name}
-                        {r.summary ? <span className="block text-[13px] text-[#a39c8c]">{r.summary}</span> : null}
-                      </Link>
-                      <span className="whitespace-nowrap font-mono text-ink">{r.is_diagnostic_only ? `Diagnostic ${formatRepairPrice(r.price_cents, r.price_is_provisional)}` : formatRepairPrice(r.price_cents, r.price_is_provisional)}</span>
-                    </li>
+                  {frequentes.map((r) => (
+                    <LignePanne key={r.id} modelSlug={model.slug} repair={r} />
                   ))}
                 </ul>
+                {rares.length ? (
+                  <details className="mt-3 border-t border-dotted border-[#3a3529] pt-3">
+                    <summary className="cursor-pointer font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted hover:text-accent-light">{rares.length} autres pannes prises en charge</summary>
+                    <ul className="mt-3 flex flex-col gap-[9px]">
+                      {rares.map((r) => (
+                        <LignePanne key={r.id} modelSlug={model.slug} repair={r} />
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
               </div>
             ) : (
               <p className="border border-ink-650 p-[18px] text-[14.5px] text-[#c4bdae]">
@@ -111,7 +131,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
               </p>
             )}
           </div>
-          <RepairForm models={form.models} conditions={form.conditions} initialModelId={model.id} initialRepairs={repairs.map(toFormRepair)} initialStep={2} initialCustomer={null} initialAddress={null} isLoggedIn={false} />
+          <RepairForm models={form.models} conditions={form.conditions} initialModelId={model.id} initialRepairs={formulaire} initialStep={2} initialCustomer={null} initialAddress={null} isLoggedIn={false} />
         </div>
       </section>
       <Container className="py-10">
@@ -122,5 +142,25 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
         </p>
       </Container>
     </>
+  );
+}
+
+/**
+ * Une ligne du sommaire des pannes : le nom, son résumé, son tarif.
+ *
+ * Le tarif suit la règle du catalogue au mot près — « Nécessite un devis »,
+ * « Gratuit » ou le montant. Aucun « 0,00 € » ne passe pour un prix qui n'a pas
+ * été arbitré, ici comme dans la fiche.
+ */
+function LignePanne({ modelSlug, repair }: { modelSlug: string; repair: FormRepair }) {
+  const prix = formatRepairPrice(repair.priceCents, repair.priceProvisional);
+  return (
+    <li className="flex justify-between gap-4 border-b border-dotted border-[#3a3529] pb-[7px] text-[14.5px]">
+      <Link href={`${ROUTES.repair}/${modelSlug}/${repair.faultSlug}`} className="hover:text-accent-light">
+        {repair.faultName}
+        {repair.note ? <span className="block text-[13px] text-[#a39c8c]">{repair.note}</span> : null}
+      </Link>
+      <span className="whitespace-nowrap font-mono text-ink">{repair.isDiagnosticOnly ? `Diagnostic ${prix}` : prix}</span>
+    </li>
   );
 }

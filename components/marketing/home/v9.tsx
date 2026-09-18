@@ -6,6 +6,8 @@ import { RayonV9 } from "@/components/marketing/home/rayon-v9";
 import type { Rayon } from "@/lib/shop/rayons";
 import type { Product } from "@/lib/shop/catalog";
 import type { BrandSettings } from "@/config/brand";
+import type { FamilleVitrine, PanneVitrine } from "@/lib/repair/vitrine";
+import { formatPrice } from "@/lib/utils/format";
 
 /**
  * L'accueil, direction « 207 MÉDI@ROME final ».
@@ -49,9 +51,9 @@ function H2({ children }: { children: React.ReactNode }) {
  * `items-end` et non `items-center` : les deux blocs n'ont pas la même hauteur,
  * et c'est leur ligne de base commune qui tient la composition.
  */
-function TeteDeSection({ numero, titre, aside }: { numero: string; titre: React.ReactNode; aside?: React.ReactNode }) {
+function TeteDeSection({ numero, titre, aside, serre = false }: { numero: string; titre: React.ReactNode; aside?: React.ReactNode; serre?: boolean }) {
   return (
-    <div className="mb-7 flex flex-wrap items-end justify-between gap-6">
+    <div className={`${serre ? "mb-[18px]" : "mb-7"} flex flex-wrap items-end justify-between gap-6`}>
       <div className="min-w-0">
         <Numero>{numero}</Numero>
         <H2>{titre}</H2>
@@ -70,7 +72,7 @@ const PROMESSES = [
   { k: "1997", v: "Atelier ouvert depuis" },
 ] as const;
 
-export function HeroV9({ diagnostic }: { diagnostic?: string | null }) {
+export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; familles: FamilleVitrine[] }) {
   // Le tarif affiché est celui que la caisse applique : il vient des réglages,
   // jamais d'une constante. Sans tarif configuré, la promesse disparaît plutôt
   // que d'annoncer « 0 € ».
@@ -100,8 +102,37 @@ export function HeroV9({ diagnostic }: { diagnostic?: string | null }) {
         </h1>
 
         <p data-up="2" className="m-0 max-w-[40ch] text-[clamp(16.5px,1.35vw,20px)] leading-[1.45] text-ink-soft">
-          PlayStation, Nintendo, Xbox et rétro. Vous décrivez la panne, on diagnostique, vous recevez un devis avant toute intervention.
+          Vous décrivez la panne, on diagnostique, vous recevez un devis avant toute intervention.
         </p>
+
+        {/*
+          Le choix de la console, dans le premier écran du téléphone.
+          Sur ordinateur, les tuiles de la section « 01 » sont déjà sous le pli
+          à 1440 px : rien à remonter. Au doigt, elles arrivaient à 970 px — un
+          écran et demi de défilement avant la première vraie question, alors
+          que c'est **la** question du site. Trois boutons de 48 px la posent
+          tout de suite ; les tuiles illustrées restent en dessous, pour qui
+          fait défiler.
+
+          Les familles viennent du catalogue : celle qu'on n'a pas en atelier
+          ne s'affiche pas, et l'atelier n'annonce pas ce qu'il ne répare pas.
+        */}
+        {familles.length ? (
+          <div data-up="2" className="flex flex-col gap-2.5 sm:hidden">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.13em] text-ink-faint">Réparez votre console</span>
+            <div className="flex flex-wrap gap-0.5">
+              {familles.map((f) => (
+                <Link
+                  key={f.cle}
+                  href={f.href}
+                  className="flex min-h-[50px] flex-1 basis-[calc(50%-2px)] items-center justify-center whitespace-nowrap border border-ink bg-surface px-3 text-[15.5px] font-semibold text-ink"
+                >
+                  {f.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/*
@@ -202,33 +233,6 @@ export function HeroV9({ diagnostic }: { diagnostic?: string | null }) {
 
 // ────────────────────────── 3 · 01 votre machine ─────────────────────────────
 
-const MACHINES = [
-  {
-    cle: "playstation",
-    nom: "PlayStation",
-    modeles: "PS5 · PS5 Slim · PS4 · PS4 Pro · PS3 · PS2",
-    des: "dès 49 €",
-  },
-  {
-    cle: "switch",
-    nom: "Nintendo",
-    modeles: "Switch · Switch 2 · Lite · OLED",
-    des: "dès 45 €",
-  },
-  {
-    cle: "xbox",
-    nom: "Xbox",
-    modeles: "Series X · Series S · One · One S · 360",
-    des: "dès 49 €",
-  },
-  {
-    cle: "retro",
-    nom: "Rétro",
-    modeles: "N64 · SNES · Mega Drive · Game Boy · PS1",
-    des: "dès 39 €",
-  },
-] as const;
-
 /**
  * Le dégradé qui tient le texte blanc sur la photo.
  *
@@ -238,30 +242,50 @@ const MACHINES = [
  */
 const VOILE = "linear-gradient(180deg, rgba(16,17,20,0) 26%, rgba(16,17,20,0.88) 72%, rgba(16,17,20,0.97) 100%)";
 
-export function MachinesV9({ modelHrefs }: { modelHrefs: Record<string, string> }) {
+/**
+ * « Réparez votre console » — le premier geste du site.
+ *
+ * Les familles viennent du catalogue : leurs modèles sont ceux que l'atelier
+ * référence vraiment, et une famille sans modèle publié ne s'affiche pas. La
+ * ligne du bas ne porte un prix que là où l'atelier en a arbitré un ; partout
+ * ailleurs elle dit combien de modèles sont pris en charge, ce qui répond à la
+ * seule question que le visiteur se pose devant une tuile : « la mienne en
+ * fait-elle partie ? ». La version précédente y écrivait « dès 49 € » pour des
+ * prestations dont aucune n'avait de tarif.
+ *
+ * La tuile mène au parcours, la console déjà choisie : reste le modèle, puis
+ * le problème.
+ */
+export function MachinesV9({ familles }: { familles: FamilleVitrine[] }) {
+  if (!familles.length) return null;
   return (
-    <section id="reparation" className={`${SHELL} ${PAD} pt-[clamp(40px,5vw,84px)]`}>
+    /* Cette section-ci respire moins que les autres, et c'est voulu : c'est la
+       seule dont la place se joue au pixel. Trente pixels de gouttière en moins
+       font passer les tuiles au-dessus du pli d'un portable de 900 px de haut,
+       où elles tombaient douze pixels en dessous. */
+    <section id="reparation" className={`${SHELL} ${PAD} pt-[clamp(26px,3vw,46px)]`}>
       <TeteDeSection
+        serre
         numero="01 — Votre machine"
         titre={
           <>
-            Quelle console
+            Réparez
             <br />
-            faut-il réparer&#8239;?
+            votre console
           </>
         }
         aside={<span className="max-w-[34ch] font-mono text-[11.5px] leading-[1.6] text-ink-faint">Consoles uniquement. Ni téléphones, ni ordinateurs.</span>}
       />
 
       <div data-g-pf="1">
-        {MACHINES.map((m) => {
-          const visuel = PLATFORM_VISUALS[m.cle];
+        {familles.map((f) => {
+          const visuel = PLATFORM_VISUALS[f.cle];
           return (
-            <Link key={m.cle} href={modelHrefs[m.cle] ?? ROUTES.repair} data-tile="1" data-shot="1" className="relative block overflow-hidden bg-ink text-white">
+            <Link key={f.cle} href={f.href} data-tile="1" data-shot="1" className="relative block overflow-hidden bg-ink text-white">
               <HomeVisual
                 src={visuel?.src ?? null}
-                alt={visuel?.alt ?? m.nom}
-                label={m.nom}
+                alt={visuel?.alt ?? f.label}
+                label={f.label}
                 position={visuel?.position}
                 positionMobile={visuel?.mobile}
                 sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 380px"
@@ -269,15 +293,24 @@ export function MachinesV9({ modelHrefs }: { modelHrefs: Record<string, string> 
               <span aria-hidden="true" className="absolute inset-0" style={{ background: VOILE }} />
               <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 p-[22px]">
                 <span data-rule="1" aria-hidden="true" className="block h-0.5 w-10 bg-red" />
-                <strong className="mt-1 text-[clamp(21px,2vw,25px)] font-bold tracking-[-0.03em]">{m.nom}</strong>
+                <strong className="mt-1 text-[clamp(21px,2vw,25px)] font-bold tracking-[-0.03em]">{f.label}</strong>
                 <span className="font-mono text-[10.5px] tracking-[0.05em]" style={{ color: "#d3d3d8" }}>
-                  {m.modeles}
+                  {f.modeles.join(" · ")}
                 </span>
-                <span className="mt-1 font-mono text-[12.5px] text-white">{m.des}</span>
+                <span className="mt-1 font-mono text-[12.5px] text-white">
+                  {f.prixMinCents ? `dès ${formatPrice(f.prixMinCents)}` : `${f.modeles.length} modèle${f.modeles.length > 1 ? "s" : ""} pris en charge`}
+                </span>
               </span>
             </Link>
           );
         })}
+      </div>
+
+      <div className="mt-[26px] flex flex-wrap items-center gap-[11px]">
+        <Link href={ROUTES.repair} data-btn="1" className="bg-red px-[26px] py-[16px] text-[16.5px] font-semibold text-white hover:bg-ink">
+          Commencer une réparation
+        </Link>
+        <span className="font-mono text-[11.5px] text-ink-faint">Diagnostic sous 48 h · devis avant intervention</span>
       </div>
     </section>
   );
@@ -285,46 +318,19 @@ export function MachinesV9({ modelHrefs }: { modelHrefs: Record<string, string> 
 
 // ─────────────────────────── 4 · 02 votre panne ──────────────────────────────
 
-const INTERVENTIONS = [
-  {
-    nom: "Dérive des Joy-Con",
-    plat: "Nintendo Switch",
-    delai: "48 h",
-    prix: "45 €",
-  },
-  {
-    nom: "Remplacement port HDMI",
-    plat: "PS5 · PS4 · Xbox",
-    delai: "48 à 72 h",
-    prix: "79 €",
-  },
-  {
-    nom: "Nettoyage et pâte thermique",
-    plat: "PS5 · PS4 · Xbox",
-    delai: "24 à 48 h",
-    prix: "49 €",
-  },
-  {
-    nom: "Écran Nintendo Switch",
-    plat: "Switch · Lite · OLED",
-    delai: "48 h",
-    prix: "119 €",
-  },
-  {
-    nom: "Lecteur Blu-ray",
-    plat: "PS5 · PS4 · Xbox",
-    delai: "48 à 72 h",
-    prix: "89 €",
-  },
-  {
-    nom: "Recap condensateurs",
-    plat: "N64 · Mega Drive · rétro",
-    delai: "3 à 5 jours",
-    prix: "dès 65 €",
-  },
-] as const;
-
-export function PannesV9() {
+/**
+ * « 02 — Votre panne » : ce que l'atelier traite le plus souvent.
+ *
+ * Six lignes, prises dans les prestations que le back-office met en avant et
+ * regroupées par panne — « Aucun signal HDMI » vaut pour quatorze consoles,
+ * elle n'a pas à s'écrire quatorze fois. Ce que porte chaque ligne est vrai :
+ * les familles concernées, le nombre de consoles, et un prix **seulement** là
+ * où l'atelier en a arbitré un. Partout ailleurs, « Sur devis » — le même mot
+ * que l'étape 2 du parcours, et la même règle : jamais de tarif inventé, jamais
+ * de « 0,00 € » pour une prestation qui n'en a pas.
+ */
+export function PannesV9({ pannes }: { pannes: PanneVitrine[] }) {
+  if (!pannes.length) return null;
   return (
     <section id="pannes" className={`${SHELL} ${PAD} pt-[clamp(40px,5vw,84px)]`}>
       <TeteDeSection
@@ -336,19 +342,19 @@ export function PannesV9() {
             les plus demandées
           </>
         }
-        aside={<span className="font-mono text-[11.5px] text-ink-faint">Prix hors pièces · garantie 3 mois</span>}
+        aside={<span className="font-mono text-[11.5px] text-ink-faint">Devis avant intervention · garantie 3 mois</span>}
       />
 
       <div data-g-fault="1">
-        {INTERVENTIONS.map((f) => (
+        {pannes.map((f) => (
           <Link key={f.nom} href={ROUTES.repair} data-line="1" className="flex min-h-[44px] items-center gap-[18px] border-t border-border-strong py-[19px]">
             <span className="min-w-0 flex-1">
               <strong className="block text-[19px] font-semibold tracking-[-0.022em]">{f.nom}</strong>
               <span className="mt-1 block font-mono text-[10.5px] uppercase tracking-[0.05em] text-ink-faint">
-                {f.plat} · {f.delai}
+                {[f.familles.join(" · "), `${f.consoles} console${f.consoles > 1 ? "s" : ""}`].filter(Boolean).join(" · ")}
               </span>
             </span>
-            <span className="whitespace-nowrap text-[20px] font-bold tracking-[-0.03em]">{f.prix}</span>
+            <span className="whitespace-nowrap text-[20px] font-bold tracking-[-0.03em]">{f.prixMinCents ? `dès ${formatPrice(f.prixMinCents)}` : <span className="text-[15px] font-semibold text-ink-soft">Sur devis</span>}</span>
             <span data-go="1" aria-hidden="true" className="text-[17px] text-ink-faint">
               →
             </span>

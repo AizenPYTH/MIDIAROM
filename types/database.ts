@@ -2312,6 +2312,9 @@ export type Database = {
           updated_at: string;
           category_id: string | null;
           price_is_provisional: boolean;
+          /** Paraît dans la liste courte proposée au client. Les autres restent commandables derrière « Autre problème ». */
+          is_featured: boolean;
+          featured_order: number;
         };
         Insert: {
           id?: string;
@@ -2347,6 +2350,8 @@ export type Database = {
           updated_at?: string;
           category_id?: string | null;
           price_is_provisional?: boolean;
+          is_featured?: boolean;
+          featured_order?: number;
         };
         Update: {
           id?: string;
@@ -2382,6 +2387,8 @@ export type Database = {
           updated_at?: string;
           category_id?: string | null;
           price_is_provisional?: boolean;
+          is_featured?: boolean;
+          featured_order?: number;
         };
         Relationships: [
           {

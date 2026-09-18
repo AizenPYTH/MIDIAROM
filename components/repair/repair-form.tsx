@@ -14,6 +14,7 @@ import type { FormAddress, FormConditions, FormCustomer, FormModel, FormOffer, F
 import { DraftPhotoUploader, type DraftPhoto } from "@/components/customer/draft-photo-uploader";
 import { ProgressRing } from "@/components/marketing/motion";
 import { MQ_TELEPHONE, useMobile } from "@/components/marketing/use-mobile";
+import { listeCourte, listeLongue } from "@/lib/repair/selection";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -27,6 +28,15 @@ import { cn } from "@/lib/utils/cn";
  */
 export interface RepairFormProps {
   models: FormModel[];
+  /**
+   * La console déjà choisie, sans le modèle.
+   *
+   * C'est ce que pose une tuile de l'accueil : le visiteur a dit « PlayStation »
+   * en cliquant, il n'a pas à le redire. Le parcours reprend donc à la question
+   * suivante — le modèle — au lieu de rouvrir celle à laquelle il vient de
+   * répondre. Porte un identifiant de marque, ou « retro ».
+   */
+  initialPlatform?: string | null;
   initialModelId?: string | null;
   initialRepairs?: FormRepair[];
   initialRepairId?: string | null;
@@ -108,7 +118,12 @@ export function RepairForm(props: RepairFormProps) {
   const platforms = useMemo(() => buildPlatforms(models), [models]);
   const [platform, setPlatform] = useState<string | null>(() => {
     const initial = models.find((m) => m.id === props.initialModelId);
-    return initial ? initial.brandId : platforms.length === 1 ? (platforms[0]?.key ?? null) : null;
+    if (initial) return initial.brandId;
+    // Une plateforme passée par l'adresse n'est retenue que si elle existe
+    // vraiment : un lien périmé rouvre le choix plutôt que d'afficher un écran
+    // de modèles vide.
+    if (props.initialPlatform && platforms.some((p) => p.key === props.initialPlatform)) return props.initialPlatform;
+    return platforms.length === 1 ? (platforms[0]?.key ?? null) : null;
   });
   const [modelId, setModelId] = useState<string | null>(props.initialModelId ?? null);
   /**
@@ -119,12 +134,14 @@ export function RepairForm(props: RepairFormProps) {
    * pour la validation, les actions serveur et le desktop : seul l'affichage se
    * scinde, et `phase` dit lequel des deux écrans est à l'image.
    */
-  const [phase, setPhase] = useState<"marque" | "modele">(() => (props.initialModelId ? "modele" : "marque"));
+  const [phase, setPhase] = useState<"marque" | "modele">(() => (props.initialModelId || props.initialPlatform ? "modele" : "marque"));
   const [repairs, setRepairs] = useState<FormRepair[]>(props.initialRepairs ?? []);
   const [repairsLoading, setRepairsLoading] = useState(false);
   const [repairId, setRepairId] = useState<string | null>(props.initialRepairId ?? null);
   const [repairQuery, setRepairQuery] = useState("");
   const [openCategories, setOpenCategories] = useState<string[] | null>(null);
+  /** Le second écran du catalogue est ouvert (bouton « Autre problème »). */
+  const [voirTout, setVoirTout] = useState(false);
   const [offer, setOffer] = useState<FormOffer | null>(props.initialOffer ?? null);
   const [offerLoading, setOfferLoading] = useState(false);
   const [optionIds, setOptionIds] = useState<string[]>([]);
@@ -151,46 +168,73 @@ export function RepairForm(props: RepairFormProps) {
   const repair = repairs.find((r) => r.id === repairId) ?? null;
   const showPrices = props.showPrices ?? true;
   const platformModels = useMemo(() => (platform === RETRO_KEY ? models.filter((m) => m.isRetro) : platform ? models.filter((m) => m.brandId === platform) : []), [models, platform]);
-  // Le catalogue client est organisé par catégorie (« Image & HDMI », « Charge &
-  // USB-C »…). Une console peut compter plusieurs dizaines de pannes : on les
-  // regroupe et on propose une recherche plutôt qu'une liste à plat.
-  const repairGroups = useMemo(() => {
+  /*
+    ── Ce que le client voit d'abord ──────────────────────────────────────────
+    L'atelier publie jusqu'à quatre-vingt-neuf prestations pour une console :
+    c'est la bonne granularité pour saisir un dossier, c'est un mur pour
+    quelqu'un dont la console ne s'allume plus. On en montre sept à neuf — la
+    liste composée au back-office — et le reste attend derrière « Autre
+    problème », avec sa recherche. Rien n'est retiré du catalogue : ce qui n'est
+    pas mis en avant reste commandable en un geste.
+  */
+  const courtes = useMemo(() => listeCourte(repairs), [repairs]);
+  const autres = useMemo(() => listeLongue(repairs, courtes), [repairs, courtes]);
+
+  /**
+   * Le second écran s'ouvre de lui-même quand la prestation déjà choisie s'y
+   * trouve — retour en arrière, ou arrivée depuis une page de panne. Sinon le
+   * client verrait une liste courte sans sa propre sélection dedans.
+   */
+  const choixHorsListe = Boolean(repairId && autres.some((r) => r.id === repairId));
+  const tout = voirTout || choixHorsListe;
+
+  // La recherche ne vit que dans le second écran : elle n'a rien à filtrer
+  // dans une liste de neuf lignes.
+  const searching = repairQuery.trim().length > 0;
+  const autresFiltrees = useMemo(() => {
     const needle = repairQuery.trim().toLowerCase();
-    const matching = needle ? repairs.filter((r) => `${r.name} ${r.note} ${r.categoryName ?? ""}`.toLowerCase().includes(needle)) : repairs;
+    if (!needle) return autres;
+    return autres.filter((r) => `${r.name} ${r.note} ${r.categoryName ?? ""}`.toLowerCase().includes(needle));
+  }, [autres, repairQuery]);
+
+  // Le reste du catalogue garde ses familles (« Image & HDMI », « Charge &
+  // USB-C »…) : elles portent le sens du catalogue et rendent cinquante lignes
+  // parcourables.
+  const repairGroups = useMemo(() => {
     const groups = new Map<string, { name: string; order: number; items: FormRepair[] }>();
-    for (const r of matching) {
+    for (const r of autresFiltrees) {
       const name = r.categoryName ?? "Autres prestations";
       const g = groups.get(name) ?? { name, order: r.categoryOrder, items: [] };
       g.items.push(r);
       groups.set(name, g);
     }
     return [...groups.values()].sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
-  }, [repairs, repairQuery]);
+  }, [autresFiltrees]);
 
   /**
    * La même liste, à plat.
    *
-   * Au téléphone, pas d'accordéon : l'accordéon existait pour absorber quarante
-   * pannes, et c'est la recherche qui règle ce cas — sans demander au pouce
-   * d'ouvrir et de refermer des boîtes. L'ordre des catégories est conservé,
-   * il porte le sens du catalogue ; seules les cloisons disparaissent.
+   * Au téléphone, pas d'accordéon : il existait pour absorber quarante pannes,
+   * et c'est la liste courte qui règle ce cas — sans demander au pouce d'ouvrir
+   * et de refermer des boîtes. L'ordre des familles est conservé, il porte le
+   * sens du catalogue ; seules les cloisons disparaissent.
    */
   const repairsPlates = useMemo(() => repairGroups.flatMap((g) => g.items), [repairGroups]);
 
-  const searching = repairQuery.trim().length > 0;
   const isCategoryOpen = (name: string, index: number) => {
     if (searching) return true;
     if (openCategories) return openCategories.includes(name);
-    // Par défaut : tout ouvert quand la liste est courte, sinon la première catégorie
-    // et celle qui contient la prestation déjà choisie.
-    if (repairs.length <= 14) return true;
-    return index === 0 || repairs.find((r) => r.id === repairId)?.categoryName === name;
+    // Par défaut : tout ouvert quand le reste est court, sinon la première
+    // famille et celle qui contient la prestation déjà choisie.
+    if (autres.length <= 14) return true;
+    return index === 0 || autres.find((r) => r.id === repairId)?.categoryName === name;
   };
   const toggleCategory = (name: string) =>
     setOpenCategories((prev) => {
       const base = prev ?? repairGroups.filter((g, i) => isCategoryOpen(g.name, i)).map((g) => g.name);
       return base.includes(name) ? base.filter((n) => n !== name) : [...base, name];
     });
+
 
   // Le libellé du catalogue, mot pour mot : « Nécessite un devis », « Gratuit »
   // ou le montant. Aucun 0,00 € ne passe pour un prix qui n'a pas été arbitré.
@@ -304,6 +348,10 @@ export function RepairForm(props: RepairFormProps) {
       setPhase("modele");
       setModelId(id);
       setRepairId(null);
+      // Le second écran et sa recherche appartenaient au modèle précédent.
+      setVoirTout(false);
+      setRepairQuery("");
+      setOpenCategories(null);
       setOffer(null);
       setOptionIds([]);
       setPackIds([]);
@@ -606,44 +654,91 @@ export function RepairForm(props: RepairFormProps) {
           ) : null}
 
           {/* ── 3 · l'intervention ────────────────────────────────────────────
-              La recherche d'abord, une liste plate ensuite. L'accordéon
-              existait pour absorber quarante pannes ; c'est la recherche qui
-              règle ce cas, et sans demander au pouce d'ouvrir des boîtes. */}
+              Sept à neuf lignes, et rien d'autre. Le reste du catalogue — une
+              cinquantaine d'interventions pour une console — attend derrière
+              « Autre problème », avec sa recherche. C'est le seul écran du
+              parcours qui se dédouble, parce que c'est le seul qui puisse
+              compter quatre-vingts lignes. */}
           {ecran === 3 ? (
             <div>
-              <span className="mb-3 flex items-center gap-2.5 border border-border-strong bg-surface-muted px-3 py-3">
-                <span aria-hidden="true" className="font-mono text-[12px] text-ink-faint">
-                  ⌕
-                </span>
-                <input
-                  value={repairQuery}
-                  onChange={(e) => setRepairQuery(e.target.value)}
-                  placeholder="HDMI, charge, écran…"
-                  aria-label="Rechercher une panne"
-                  className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-faint"
-                />
-              </span>
-
               {repairsLoading ? <p className="text-[15px] text-ink-faint">Chargement des interventions…</p> : null}
 
-              <div className="flex flex-col" role="radiogroup" aria-label="Prestation">
-                {repairsPlates.map((r) => (
-                  <LigneCoche
-                    key={r.id}
-                    role="radio"
-                    selected={repairId === r.id}
-                    onPick={() => pickRepair(r.id)}
-                    label={r.name}
-                    note={[r.categoryName, r.note].filter(Boolean).join(" · ")}
-                    price={repairPrice(r)}
-                  />
-                ))}
-                <span aria-hidden="true" className="block border-t border-border-hairline" />
-              </div>
+              {!tout ? (
+                <>
+                  <div className="flex flex-col" role="radiogroup" aria-label="Prestation">
+                    {courtes.map((r) => (
+                      <LigneCoche key={r.id} role="radio" selected={repairId === r.id} onPick={() => pickRepair(r.id)} label={r.name} note={r.note} price={repairPrice(r)} />
+                    ))}
+                    <span aria-hidden="true" className="block border-t border-border-hairline" />
+                  </div>
+                  {autres.length ? (
+                    <button
+                      type="button"
+                      onClick={() => setVoirTout(true)}
+                      className="mt-3.5 flex min-h-[52px] w-full cursor-pointer items-center justify-between gap-3 border border-ink bg-surface px-4 text-left"
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-[15.5px] font-semibold text-ink">Autre problème</span>
+                        <span className="mt-0.5 block font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink-faint">{autres.length} autres interventions</span>
+                      </span>
+                      <span aria-hidden="true" className="text-[17px] text-ink-faint">
+                        →
+                      </span>
+                    </button>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <span className="mb-3 flex items-center gap-2.5 border border-border-strong bg-surface-muted px-3 py-3">
+                    <span aria-hidden="true" className="font-mono text-[12px] text-ink-faint">
+                      ⌕
+                    </span>
+                    <input
+                      value={repairQuery}
+                      onChange={(e) => setRepairQuery(e.target.value)}
+                      placeholder="HDMI, charge, écran…"
+                      aria-label="Rechercher une panne"
+                      className="min-w-0 flex-1 border-0 bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-faint"
+                    />
+                  </span>
 
-              {searching && !repairsPlates.length ? (
-                <p className="mt-4 text-[15px] leading-[1.5] text-ink-soft">Aucune panne ne correspond. Continuez : vous la décrirez à l&apos;écran suivant, le diagnostic tranchera.</p>
-              ) : null}
+                  <div className="flex flex-col" role="radiogroup" aria-label="Prestation">
+                    {repairsPlates.map((r) => (
+                      <LigneCoche
+                        key={r.id}
+                        role="radio"
+                        selected={repairId === r.id}
+                        onPick={() => pickRepair(r.id)}
+                        label={r.name}
+                        note={[r.categoryName, r.note].filter(Boolean).join(" · ")}
+                        price={repairPrice(r)}
+                      />
+                    ))}
+                    <span aria-hidden="true" className="block border-t border-border-hairline" />
+                  </div>
+
+                  {searching && !repairsPlates.length ? (
+                    <p className="mt-4 text-[15px] leading-[1.5] text-ink-soft">Aucune panne ne correspond. Continuez : vous la décrirez à l&apos;écran suivant, le diagnostic tranchera.</p>
+                  ) : null}
+
+                  {/* Le retour vers la liste courte, tant qu'on n'a rien pris
+                      dedans : sinon on refermerait sous les pieds du client la
+                      liste où vit sa sélection. */}
+                  {!choixHorsListe ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVoirTout(false);
+                        setRepairQuery("");
+                      }}
+                      className="mt-3.5 flex min-h-[44px] cursor-pointer items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.07em] text-ink-soft"
+                    >
+                      ← Revenir aux problèmes fréquents
+                    </button>
+                  ) : null}
+                </>
+              )}
+
               {!repairsLoading && !repairs.length ? (
                 <p className="mt-4 text-[15px] text-ink-soft">
                   Aucune intervention publiée pour ce modèle. Écrivez-nous depuis la page{" "}
@@ -923,15 +1018,43 @@ export function RepairForm(props: RepairFormProps) {
               .
             </p>
           ) : null}
-          {repairs.length > 14 ? (
-            <input
-              value={repairQuery}
-              onChange={(e) => setRepairQuery(e.target.value)}
-              placeholder={`Rechercher parmi ${repairs.length} pannes (HDMI, charge, écran…)`}
-              aria-label="Rechercher une panne"
-              className="w-full rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[15px]"
-            />
-          ) : null}
+          {/* ── La liste courte ──────────────────────────────────────────────
+              Sept à neuf interventions, celles que le back-office met en avant
+              pour ce modèle. Le catalogue complet — jusqu'à quatre-vingt-neuf
+              lignes pour une console — n'a jamais été une liste de choix : il
+              est derrière « Autre problème », plus bas, avec sa recherche. */}
+          {!tout ? (
+            <>
+              <div className="flex flex-col gap-2" role="radiogroup" aria-label="Prestation">
+                {courtes.map((r) => (
+                  <OptionRow key={r.id} selected={repairId === r.id} onPick={() => pickRepair(r.id)} label={r.name} note={r.note} price={repairPrice(r)} role="radio" />
+                ))}
+              </div>
+              {autres.length ? (
+                <button
+                  type="button"
+                  onClick={() => setVoirTout(true)}
+                  className="flex min-h-[56px] w-full cursor-pointer items-center justify-between gap-3 rounded-[20px] border border-border-strong bg-surface-muted px-4 py-3.5 text-left transition-colors hover:border-ink"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[16px] font-semibold text-ink">Autre problème</span>
+                    <span className="mt-0.5 block font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted">{autres.length} autres interventions pour ce modèle</span>
+                  </span>
+                  <span aria-hidden="true" className="text-[17px] text-ink-muted">
+                    →
+                  </span>
+                </button>
+              ) : null}
+            </>
+          ) : (
+          <>
+          <input
+            value={repairQuery}
+            onChange={(e) => setRepairQuery(e.target.value)}
+            placeholder={`Rechercher parmi ${autres.length} pannes (HDMI, charge, écran…)`}
+            aria-label="Rechercher une panne"
+            className="w-full rounded-[14px] border border-border-strong bg-field px-4 py-3 text-[16px] text-ink placeholder:text-ink-muted focus:border-accent focus:outline-none sm:text-[15px]"
+          />
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Prestation">
             {repairGroups.map((group, index) => {
               const open = isCategoryOpen(group.name, index);
@@ -963,6 +1086,20 @@ export function RepairForm(props: RepairFormProps) {
             })}
             {searching && !repairGroups.length ? <p className="text-[15px] text-ink-muted">Aucune panne ne correspond. Décrivez le problème à l&apos;étape suivante.</p> : null}
           </div>
+          {!choixHorsListe ? (
+            <button
+              type="button"
+              onClick={() => {
+                setVoirTout(false);
+                setRepairQuery("");
+              }}
+              className="cursor-pointer self-start font-mono text-[11.5px] uppercase tracking-[0.08em] text-ink-muted transition-colors hover:text-ink"
+            >
+              ← Revenir aux problèmes fréquents
+            </button>
+          ) : null}
+          </>
+          )}
           {repairId ? (
             <>
               {offerLoading ? <p className="font-mono text-[11.5px] text-ink-muted">Chargement des options compatibles…</p> : null}

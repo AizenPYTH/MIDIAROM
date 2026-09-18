@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { SITE_URL, ROUTES } from "@/config/site";
+import { SITE_URL } from "@/config/site";
 import { BoutiqueV9, HeroV9, MachinesV9, MagasinV9, PannesV9, ParcoursV9 } from "@/components/marketing/home/v9";
 import { RayonV9, type RayonProduit } from "@/components/marketing/home/rayon-v9";
 import { getProductCategoryCounts, getProducts } from "@/lib/shop/catalog";
-import { getModelsWithActiveRepairs } from "@/lib/repair/catalog";
+import { getVitrineReparation } from "@/lib/repair/vitrine";
 import { getRayons } from "@/lib/shop/categories";
 import { rayonsPublics } from "@/lib/shop/rayons";
 import { getSeoPage } from "@/lib/content";
@@ -35,35 +35,18 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/**
- * Où mène une tuile de plateforme.
- *
- * Vers la page de la console la plus récente de la famille — `/reparation/ps5`
- * — et non vers `/reparation`, qui rouvre le choix de la marque. Le
- * rattachement se fait sur le début du slug, parce que c'est ce que la base
- * garantit. Sans modèle publié pour une famille, on retombe sur le parcours
- * général : un lien vers une page inexistante serait pire.
- */
-function liensMachines(models: { slug: string }[]): Record<string, string> {
-  const prefixes: Record<string, string[]> = { playstation: ["ps"], switch: ["switch"], xbox: ["xbox"] };
-  const out: Record<string, string> = {};
-  for (const [cle, debuts] of Object.entries(prefixes)) {
-    const m = models.find((x) => debuts.some((d) => x.slug.startsWith(d)));
-    if (m) out[cle] = `${ROUTES.repair}/${m.slug}`;
-  }
-  const retro = models.find((x) => !Object.values(prefixes).flat().some((d) => x.slug.startsWith(d)));
-  if (retro) out.retro = `${ROUTES.repair}/${retro.slug}`;
-  return out;
-}
-
 export default async function HomePage() {
-  const [brand, rules, counts, products, models, rayons] = await Promise.all([
+  const [brand, rules, counts, products, vitrine, rayons] = await Promise.all([
     getBrandSettings(),
     // Le tarif de diagnostic affiché doit être celui que la caisse applique.
     getBusinessRules(),
     getProductCategoryCounts(),
     getProducts({ sort: "recent" }, MUR),
-    getModelsWithActiveRepairs().catch(() => []),
+    // Familles de consoles et pannes mises en avant : tirées du catalogue, pas
+    // d'une liste écrite en dur. Un accueil qui annonce une console qu'on ne
+    // répare pas, ou un prix qui n'existe pas, coûte plus cher qu'un accueil
+    // plus court.
+    getVitrineReparation().catch(() => ({ familles: [], pannes: [] })),
     getRayons(),
   ]);
 
@@ -99,9 +82,9 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroV9 diagnostic={diagnostic} />
-      <MachinesV9 modelHrefs={liensMachines(models)} />
-      <PannesV9 />
+      <HeroV9 diagnostic={diagnostic} familles={vitrine.familles} />
+      <MachinesV9 familles={vitrine.familles} />
+      <PannesV9 pannes={vitrine.pannes} />
       <ParcoursV9 />
       <BoutiqueV9 rayons={publics} />
       <RayonV9 produits={produits} total={total} rayons={publics} />

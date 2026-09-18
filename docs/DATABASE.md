@@ -104,6 +104,37 @@ appliquée sur Supabase.
 
 Le contenu vient de `supabase/catalog-reparations.sql`, appliqué en production sous sa forme générée `supabase/seed-production-repairs.sql` (voir README). La gamme PlayStation 5 s'ajoute par `supabase/catalog-ps5.sql` / `supabase/seed-production-ps5.sql` : elle ne figure pas dans le document du client et a été construite sur le modèle de la PS4. Une prestation non rattachée à une catégorie reste valide : elle apparaît sous « Sans catégorie ».
 
+### Ce que le client voit — `is_featured` / `featured_order`
+
+Le catalogue compte **1 189 prestations actives**, jusqu'à quatre-vingt-neuf
+pour une seule console. C'est la bonne granularité pour un réparateur qui
+saisit un dossier ; c'est un mur pour quelqu'un dont la console ne s'allume
+plus. Deux colonnes, ajoutées par `20260918000001_repairs_featured.sql`,
+séparent les deux publics :
+
+| Colonne | Rôle |
+| --- | --- |
+| `repairs.is_featured` | La prestation paraît dans la liste courte proposée d'emblée (7 à 9 par modèle). |
+| `repairs.featured_order` | Son rang dans cette liste. Ex æquo départagés par `display_order` puis par nom. |
+
+**Rien n'est retiré.** Une prestation non mise en avant reste active,
+commandable et tarifée comme les autres : elle vit derrière « Autre problème »,
+avec sa recherche, à un geste du client. Retirer une prestation de la liste
+courte ne se fait **jamais** en la désactivant — `is_active = false` la sort du
+catalogue tout entier.
+
+La migration amorce une première sélection en appliquant des motifs aux pannes
+réellement présentes pour chaque modèle : une PS5 Digital Edition ne reçoit pas
+de ligne « lecteur de disque », une Switch pas de ligne HDMI. Elle est
+**rejouable sans dommage** — elle ne touche qu'un modèle dont aucune prestation
+n'est encore mise en avant, donc rejouer ne défait pas la liste que le vendeur
+aurait recomposée depuis `/admin/catalog/repairs`.
+
+Le code tourne avec ou sans ces colonnes : `lib/repair/selection.ts` se rabat,
+quand rien n'est mis en avant, sur une prestation par famille de pannes. Un
+déploiement joué avant la migration montre donc une liste courte sensée plutôt
+qu'un écran vide.
+
 ## Périmètre du catalogue
 
 Le catalogue de réparation ne contient que les **13 modèles** détaillés dans le document du client (PS4 / Slim / Pro, Switch V1 / V2 / Lite / OLED / 2, Xbox One / S / X, Series S / X). `supabase/cleanup-strict-pdf.sql` remet une base déjà garnie au périmètre du document — modèles hors liste, prestations hors document et produits de démonstration retirés, photos des 13 consoles renseignées : `repairs.model_id` est en `ON DELETE RESTRICT`, les prestations partent donc avant les modèles ; dossiers, reprises et fiches produit conservent leur historique, seul le lien passe à NULL.
