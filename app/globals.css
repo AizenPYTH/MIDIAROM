@@ -887,12 +887,26 @@ body {
   [data-col2] > [data-side] { order: 4; }
 }
 
-/* Les quatre compteurs. Deux par deux au doigt : quatre colonnes de 90 px
+/* Les compteurs. Deux par deux au doigt : quatre colonnes de 90 px
    donneraient des chiffres de 44 px qui débordent de leur case. */
 [data-kpi] {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2px;
+}
+/* Au doigt et avec cinq compteurs, le premier prend la ligne entière et les
+   quatre autres retrouvent leur carré. La règle ne s'arme que s'il y en a
+   exactement cinq : `:first-child:nth-last-child(5)` se lit « premier, et
+   cinquième en partant de la fin ». Un compteur de plus ou de moins, et la
+   grille reprend son comportement d'origine sans qu'on ait à y revenir.
+
+   Au-dessus de 700 px elle ne s'arme pas : `auto-fit` y taille ses colonnes
+   sur la largeur disponible, pas sur le nombre d'enfants, et un premier
+   élément posé sur `1 / -1` laisserait les quatre suivants dans les quatre
+   premières colonnes d'une grille qui en compte six — une bande vide à
+   droite. Cinq cases de 210 px tiennent très bien sur une ligne. */
+@media (max-width: 699.98px) {
+  [data-kpi] > :first-child:nth-last-child(5) { grid-column: 1 / -1; }
 }
 @media (min-width: 700px) {
   [data-kpi] { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }

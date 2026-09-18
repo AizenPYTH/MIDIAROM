@@ -40,10 +40,19 @@ interface Ligne {
   attendDepuis: number | null;
 }
 
-/** Le traitement visuel d'un état. Trois registres, trois lectures. */
+/** Le traitement visuel d'un état. Chaque registre, une lecture. */
 const PASTILLE: Record<Registre, string> = {
   // La balle est chez le client : le seul rouge de la liste.
   attente: "border-[#f3c9cb] bg-[#fdecec] text-[#a8161c]",
+  /*
+    « À chiffrer » n'est pas rouge, et ce n'est pas un oubli.
+
+    Le rouge de cet écran ne dit qu'une chose : ce qui dépend du client. Une
+    demande de devis dépend de l'atelier — c'est lui qui doit répondre. Elle
+    porte donc la teinte de marque : la plus visible des couleurs qui ne
+    signalent pas une attente extérieure.
+  */
+  devis: "border-brand bg-brand text-white",
   atelier: "border-ink bg-ink text-white",
   diag: "border-border-strong bg-surface text-ink",
   prete: "border-border bg-surface-strong text-ink-muted",
@@ -131,6 +140,24 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
    * chiffre d'affaires —, puis les colis à préparer, puis les consoles à
    * ouvrir. Un dossier qui n'appelle aucune action n'y figure pas.
    */
+  /*
+    Les chiffrages d'abord.
+
+    Une relance attend une réponse déjà demandée ; un chiffrage n'a même pas
+    encore commencé, et le client ne peut rien faire tant qu'il n'est pas
+    parti. C'est donc lui qui bloque, et il bloque un dossier où rien n'a été
+    encaissé — la seule chose que l'atelier puisse perdre en l'oubliant, c'est
+    le client lui-même.
+  */
+  const chiffrages = parRegistre("devis")
+    .slice(0, 3)
+    .map((l) => ({
+      id: l.id,
+      label: `Chiffrer la demande de ${l.client} — ${l.console}`,
+      meta: `${l.ref} · ${l.panne}`,
+      urgent: true,
+    }));
+
   const relances = parRegistre("attente")
     .filter((l) => (l.attendDepuis ?? 0) >= 2)
     .sort((a, b) => (b.attendDepuis ?? 0) - (a.attendDepuis ?? 0))
@@ -158,7 +185,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       ]
     : [];
 
-  const aFaire = [...relances, ...colis, ...diagnostics];
+  const aFaire = [...chiffrages, ...relances, ...colis, ...diagnostics];
 
   return (
     <>
@@ -169,7 +196,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           ordinateur. Sur bande noire : c'est la seule chose qu'on lit en
           arrivant, et elle est déduite de la liste, jamais saisie.
         */}
-        {/* ── Quatre nombres, rien de plus. Chacun filtre la liste. ───────── */}
+        {/* ── Cinq nombres, rien de plus. Chacun filtre la liste. ─────────── */}
         <div data-kpi="1">
           {ORDRE.map((r) => {
             const n = parRegistre(r).length;
@@ -190,7 +217,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   data-n="1"
                   className={cn(
                     "text-[34px] font-extrabold leading-none tracking-[-0.04em] sm:text-[44px]",
-                    r === "attente" && n > 0 ? "text-brand" : "text-ink",
+                    (r === "attente" || r === "devis") && n > 0 ? "text-brand" : "text-ink",
                   )}
                 >
                   {n}

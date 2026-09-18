@@ -28,8 +28,18 @@ import { paymentConfigurationError } from "@/lib/stripe";
  * fiche (A2) avec un retour. Sans `?sel=`, la file seule ; avec, la fiche seule.
  */
 
-/** Les cinq temps de l'atelier, et les statuts réels qu'ils recouvrent. */
-const STEPS: { key: string; label: string; status: OrderStatus; statuses: OrderStatus[] }[] = [
+/**
+ * Les six temps de l'atelier, et les statuts réels qu'ils recouvrent.
+ *
+ * `status` est la cible d'avancement du segment — cliquer dessus y fait passer
+ * le dossier. « À chiffrer » n'en a pas, et c'est délibéré : on n'y sort que
+ * par l'envoi d'un devis. Un bouton qui poserait `WAITING_CUSTOMER_APPROVAL`
+ * d'un clic annoncerait au client un devis qui n'existe pas. Le segment est
+ * donc un repère, et l'action est le bouton « Envoyer le devis » en bas de
+ * fiche.
+ */
+const STEPS: { key: string; label: string; status?: OrderStatus; statuses: OrderStatus[] }[] = [
+  { key: "chiffrer", label: "À chiffrer", statuses: ["QUOTE_REQUESTED"] },
   { key: "recu", label: "Reçu", status: "RECEIVED", statuses: ["PAID", "AWAITING_SHIPMENT", "IN_TRANSIT_TO_WORKSHOP", "RECEIVED", "RECEPTION_CHECK"] },
   { key: "diagnostic", label: "Diagnostic", status: "DIAGNOSIS", statuses: ["DIAGNOSIS"] },
   { key: "devis", label: "Devis", status: "WAITING_CUSTOMER_APPROVAL", statuses: ["WAITING_CUSTOMER_APPROVAL", "APPROVED"] },
@@ -41,6 +51,10 @@ const FILTERS = [{ key: "all", label: "Tout" }, ...STEPS.map((s) => ({ key: s.ke
 
 /** Tout ce qui n'est pas encore parti : le compteur « N en cours ». */
 const OPEN: OrderStatus[] = [
+  // En tête, comme dans la file : une demande de devis est en cours, même si
+  // la console n'a pas bougé de chez le client. Son absence d'ici est ce qui
+  // la rendait invisible sur cet écran.
+  "QUOTE_REQUESTED",
   "PAID",
   "AWAITING_SHIPMENT",
   "IN_TRANSIT_TO_WORKSHOP",
@@ -66,6 +80,7 @@ function stepIndex(status: OrderStatus): number {
 
 /** Pastille de statut : un fond translucide et un texte de la même famille. */
 const PILL: Record<string, string> = {
+  chiffrer: "bg-[rgba(216,255,62,0.22)] text-lime",
   recu: "bg-[rgba(244,242,255,0.10)] text-ink",
   diagnostic: "bg-[rgba(51,225,255,0.16)] text-cyan",
   devis: "bg-[rgba(255,92,168,0.16)] text-rose",
@@ -99,9 +114,10 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   }
 
   const count = (query: PromiseLike<{ count: number | null }>) => query.then((r) => r.count ?? 0);
-  const [{ data: list }, enCours, enAtelier, devisAValider, prets, { data: delais }] = await Promise.all([
+  const [{ data: list }, enCours, aChiffrer, enAtelier, devisAValider, prets, { data: delais }] = await Promise.all([
     listQuery,
     count(db.from("repair_orders").select("id", { count: "exact", head: true }).in("status", OPEN)),
+    count(db.from("repair_orders").select("id", { count: "exact", head: true }).eq("status", "QUOTE_REQUESTED")),
     count(db.from("repair_orders").select("id", { count: "exact", head: true }).in("status", ["REPAIRING", "QUALITY_CONTROL"])),
     count(db.from("repair_orders").select("id", { count: "exact", head: true }).eq("status", "WAITING_CUSTOMER_APPROVAL")),
     count(db.from("repair_orders").select("id", { count: "exact", head: true }).eq("status", "READY_TO_SHIP")),
@@ -138,6 +154,9 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   const currentHref = hrefFor({});
 
   const kpis = [
+    // En tête : le client attend un prix, n'a rien payé, et garde sa console.
+    // C'est le seul chiffre de cet écran qui mesure une attente qu'on a créée.
+    { label: "À chiffrer", value: String(aChiffrer), glow: "rgba(216,255,62,0.26)", tone: "text-lime" },
     { label: "En atelier", value: String(enAtelier), glow: "rgba(124,92,255,0.3)", tone: "text-violet" },
     { label: "Devis à valider", value: String(devisAValider), glow: "rgba(255,92,168,0.24)", tone: "text-rose" },
     { label: "Prêts à rendre", value: String(prets), glow: "rgba(216,255,62,0.22)", tone: "text-lime" },
@@ -276,22 +295,22 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                 <div className="scroll-strip gap-2">
                   {STEPS.map((seg, i) => {
                     const reached = current >= 0 && i <= current;
-                    const allowed = canRoleTransition(user.profile.role, selected.status, seg.status);
+                    const allowed = seg.status !== undefined && canRoleTransition(user.profile.role, selected.status, seg.status);
                     const cls = cn(
                       "min-h-11 shrink-0 whitespace-nowrap rounded-full border px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors duration-300",
                       reached ? "border-sale bg-[rgba(216,255,62,0.16)] text-lime" : "border-border text-ink-muted",
                     );
                     return allowed ? (
-                      <form key={seg.status} action={advanceStatusAction} className="shrink-0">
+                      <form key={seg.key} action={advanceStatusAction} className="shrink-0">
                         <input type="hidden" name="order_id" value={selected.id} />
-                        <input type="hidden" name="status" value={seg.status} />
+                        <input type="hidden" name="status" value={seg.status!} />
                         <input type="hidden" name="next" value={currentHref} />
-                        <button type="submit" className={cn(cls, "cursor-pointer hover:border-sale hover:text-lime")} title={`Passer en « ${ORDER_STATUS_LABELS[seg.status]} »`}>
+                        <button type="submit" className={cn(cls, "cursor-pointer hover:border-sale hover:text-lime")} title={`Passer en « ${ORDER_STATUS_LABELS[seg.status!]} »`}>
                           {seg.label}
                         </button>
                       </form>
                     ) : (
-                      <span key={seg.status} className={cls} title={reached ? "Étape atteinte" : "Transition non autorisée depuis ce statut"}>
+                      <span key={seg.key} className={cls} title={reached ? "Étape atteinte" : seg.status === undefined ? "On en sort par l'envoi du devis" : "Transition non autorisée depuis ce statut"}>
                         {seg.label}
                       </span>
                     );
