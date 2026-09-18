@@ -64,7 +64,7 @@ export function SiteFooter({ brand, social, models, rayons }: { brand: BrandSett
   const adresse = [brand.address_line1, [brand.postal_code, brand.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
 
   return (
-    <footer className="mt-auto bg-ink px-[clamp(16px,4vw,64px)] pb-[26px] pt-[clamp(28px,4vw,60px)] text-on-dark-2">
+    <footer className="mt-auto bg-ink px-[clamp(16px,4.08vw,51px)] pb-[26px] pt-[clamp(28px,3.84vw,48px)] text-on-dark-2">
       <div className="page-wrap grid gap-0 lg:gap-[34px]" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))" }}>
         <div className="mb-[18px] flex flex-col gap-[11px] lg:mb-0">
           <span className="text-on-dark">

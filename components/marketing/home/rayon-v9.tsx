@@ -130,12 +130,12 @@ export function RayonV9({ produits, total, rayons }: { produits: RayonProduit[];
   }, [produits, actif, FILTRES]);
 
   return (
-    <section id="rayon" className={`mx-auto w-full max-w-[1560px] px-[clamp(16px,4vw,64px)] pt-[clamp(32px,4vw,64px)]`}>
+    <section id="rayon" className={`mx-auto w-full max-w-[var(--page-max)] px-[clamp(16px,4.08vw,51px)] pt-[clamp(32px,4.08vw,51px)]`}>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-5">
-        <h3 className="m-0 text-[clamp(20px,1.8vw,26px)] font-bold tracking-[-0.03em]">En rayon cette semaine</h3>
+        <h3 className="m-0 text-[clamp(20px,1.68vw,21px)] font-bold tracking-[-0.03em]">En rayon cette semaine</h3>
         {/* Rail au doigt sous `sm` : quatre chips de 44 px ne tiennent pas sur
             une ligne de 360 px sans devenir des cibles trop petites. */}
-        <span data-rail="1" className="-mx-[clamp(16px,4vw,64px)] flex gap-[7px] overflow-x-auto px-[clamp(16px,4vw,64px)] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+        <span data-rail="1" className="-mx-[clamp(16px,4.08vw,51px)] flex gap-[7px] overflow-x-auto px-[clamp(16px,4.08vw,51px)] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
           {FILTRES.map((f) => {
             const on = f.label === actif;
             return (

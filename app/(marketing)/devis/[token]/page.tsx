@@ -58,7 +58,7 @@ export default async function QuoteByTokenPage({ params }: { params: Promise<{ t
   */
   if (!quote) {
     return (
-      <Container className="max-w-[640px] py-[clamp(40px,6vw,80px)]">
+      <Container className="max-w-[640px] py-[clamp(40px,5.12vw,64px)]">
         <Alert tone="info" title="Ce lien n'est plus actif">
           Le devis a déjà été traité, ou son lien a expiré. Retrouvez votre dossier depuis le suivi, ou contactez l&apos;atelier — nous vous renverrons un devis à jour.
         </Alert>
@@ -94,11 +94,11 @@ export default async function QuoteByTokenPage({ params }: { params: Promise<{ t
   const expire = quote.expires_at ? new Date(quote.expires_at) < new Date() : false;
 
   return (
-    <Container className="max-w-[720px] py-[clamp(32px,4vw,64px)]">
+    <Container className="max-w-[720px] py-[clamp(32px,4.08vw,51px)]">
       <span className="font-mono text-[10.5px] uppercase tracking-[0.19em]" style={{ color: "var(--brand)" }}>
         Devis de réparation
       </span>
-      <h1 className="m-0 mt-2.5 text-[clamp(26px,3.2vw,40px)] font-extrabold leading-none tracking-[-0.04em] text-ink">
+      <h1 className="m-0 mt-2.5 text-[clamp(26px,2.56vw,32px)] font-extrabold leading-none tracking-[-0.04em] text-ink">
         Bonjour {order.customer_first_name},
         <br />
         voici votre devis.

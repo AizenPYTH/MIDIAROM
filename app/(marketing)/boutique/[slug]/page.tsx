@@ -92,7 +92,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <Eyebrow>
             {product.platform} · {rayonLabel}
           </Eyebrow>
-          <h1 className="text-[clamp(26px,3vw,36px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{product.name}</h1>
+          <h1 className="text-[clamp(26px,2.32vw,29px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{product.name}</h1>
           <p className="font-mono text-[11.5px] uppercase tracking-[0.06em] text-ink-muted">Réf. {product.sku}</p>
           <div className="flex flex-wrap items-baseline gap-3">
             <span className="font-mono text-[30px] font-semibold text-ink">{formatPrice(product.price_cents)}</span>

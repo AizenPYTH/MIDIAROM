@@ -31,7 +31,7 @@ export default async function ShopConfirmationPage({ params, searchParams }: { p
       {paid ? (
         <>
           <Eyebrow>Commande enregistrée</Eyebrow>
-          <h1 className="mt-2 text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Merci, votre commande est confirmée.</h1>
+          <h1 className="mt-2 text-[clamp(28px,2.72vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Merci, votre commande est confirmée.</h1>
           <p className="mt-3 text-[16.5px] text-ink-soft">Votre numéro de commande :</p>
           <p className="mt-1 font-mono text-[34px] font-semibold tracking-[-0.02em] text-ink">{current.order_number}</p>
           <p className="mt-3 text-[14px] text-ink-muted">Un e-mail de confirmation vient de vous être envoyé à {current.customer_email}.</p>
@@ -78,7 +78,7 @@ export default async function ShopConfirmationPage({ params, searchParams }: { p
         <>
           <PaymentPendingRefresh />
           <Eyebrow tone="muted">Paiement</Eyebrow>
-          <h1 className="mt-2 text-[clamp(28px,3.4vw,42px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Paiement en cours de confirmation</h1>
+          <h1 className="mt-2 text-[clamp(28px,2.72vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Paiement en cours de confirmation</h1>
           <p className="mt-3 text-[16px] text-ink-soft">
             Votre commande <span className="font-mono font-semibold text-ink">{current.order_number}</span> est enregistrée. Nous attendons la confirmation de votre paiement. Cette page se rafraîchit automatiquement.
           </p>

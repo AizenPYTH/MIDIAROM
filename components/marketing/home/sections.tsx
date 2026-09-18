@@ -33,7 +33,7 @@ function Eyebrow({ children, onDark = false }: { children: React.ReactNode; onDa
 
 function H2({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mt-2.5 text-[clamp(26px,3.2vw,40px)] font-bold leading-[1.04] tracking-[-0.032em]">{children}</h2>
+    <h2 className="mt-2.5 text-[clamp(26px,2.56vw,32px)] font-bold leading-[1.04] tracking-[-0.032em]">{children}</h2>
   );
 }
 
@@ -57,10 +57,10 @@ export function Hero() {
           <span data-enter="1">
             <Eyebrow>Atelier de réparation — consoles uniquement</Eyebrow>
           </span>
-          <h1 data-enter="1" className="text-[clamp(38px,5.2vw,68px)] font-bold leading-none tracking-[-0.038em]">
+          <h1 data-enter="1" className="text-[clamp(38px,4.32vw,54px)] font-bold leading-none tracking-[-0.038em]">
             Réparation de consoles
           </h1>
-          <p data-enter="2" className="max-w-[46ch] text-[clamp(16.5px,1.6vw,19px)] leading-[1.5] text-ink-soft">
+          <p data-enter="2" className="max-w-[46ch] text-[16.5px] leading-[1.5] text-ink-soft">
             PlayStation, Nintendo Switch, Xbox et consoles rétro. Vous décrivez la panne, nous diagnostiquons, vous recevez un devis
             avant toute intervention. Garantie trois mois, colis suivi à l&apos;aller comme au retour.
           </p>
@@ -558,7 +558,7 @@ export function Store({ brand }: { brand: BrandSettings }) {
         <div data-rise="1" className="flex flex-col justify-center gap-3 p-[34px]">
           <Eyebrow>Le magasin</Eyebrow>
           {adresse ? (
-            <strong className="text-[clamp(23px,2.6vw,32px)] font-bold leading-[1.1] tracking-[-0.03em]">{adresse}</strong>
+            <strong className="text-[clamp(23px,2.08vw,26px)] font-bold leading-[1.1] tracking-[-0.03em]">{adresse}</strong>
           ) : null}
           {brand.hours ? <span className="font-mono text-[13.5px] text-ink-soft">{brand.hours}</span> : null}
           <p className="max-w-[44ch] text-[15px] leading-[1.55] text-ink-soft">

@@ -145,7 +145,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       <div className="mb-7 flex flex-wrap items-end justify-between gap-6">
         <div>
           <Eyebrow>Boutique</Eyebrow>
-          <h1 className="mt-2 text-[clamp(28px,3.4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{rayonCourant ? libelleDe(rayons, rayonCourant) : sp.retro === "1" ? "Rétro et occasion" : "En rayon cette semaine"}</h1>
+          <h1 className="mt-2 text-[clamp(28px,2.56vw,32px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{rayonCourant ? libelleDe(rayons, rayonCourant) : sp.retro === "1" ? "Rétro et occasion" : "En rayon cette semaine"}</h1>
         </div>
         {/* Un décompte n'est pas une alerte : il reste en encre. Le rouge de la
             charte v9 ne signale que six choses — la marque, les numéros de
@@ -261,7 +261,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           {total === 0 ? (
             <>
               <p className="text-[15.5px] font-semibold text-ink">Aucun produit disponible pour le moment.</p>
-              <p className="mt-1 text-sm text-ink-muted">
+              <p className="mesure mt-1 text-sm text-ink-muted">
                 Le rayon en ligne est en cours de mise à jour. Passez au magasin, ou{" "}
                 <Link href={ROUTES.repair} className="text-sale underline">
                   faites réparer votre console
@@ -272,7 +272,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           ) : (
             <>
               <p className="text-[15.5px] font-semibold text-ink">Aucun article ne correspond à ces critères.</p>
-              <p className="mt-1 text-sm text-ink-muted">
+              <p className="mesure mt-1 text-sm text-ink-muted">
                 Élargissez la recherche ou{" "}
                 <Link href={ROUTES.shop} className="text-sale underline">
                   affichez tout le catalogue
@@ -283,7 +283,8 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           )}
         </div>
       )}
-      <p className="mt-8 text-[13px] text-ink-faint">Les états d&apos;occasion sont indiqués sur chaque fiche (grade A, B ou C, défauts détaillés). Un article d&apos;occasion n&apos;est jamais présenté comme neuf.</p>
+      {/* Pleine largeur, cette note courait sur 230 caractères à 1 920 px. */}
+      <p className="mesure mt-8 text-[13px] text-ink-faint">Les états d&apos;occasion sont indiqués sur chaque fiche (grade A, B ou C, défauts détaillés). Un article d&apos;occasion n&apos;est jamais présenté comme neuf.</p>
     </Container>
   );
 }

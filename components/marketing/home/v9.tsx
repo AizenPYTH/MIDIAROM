@@ -33,8 +33,8 @@ import { formatPrice } from "@/lib/utils/format";
  * requête de média, et elles ne peuvent pas être battues par un style en ligne.
  */
 
-const SHELL = "mx-auto w-full max-w-[1560px]";
-const PAD = "px-[clamp(16px,4vw,64px)]";
+const SHELL = "mx-auto w-full max-w-[var(--page-max)]";
+const PAD = "px-[clamp(16px,4.08vw,51px)]";
 
 /** Le numéro de section, en mono bleu — la ponctuation de la page. */
 function Numero({ children, onDark = false }: { children: React.ReactNode; onDark?: boolean }) {
@@ -42,7 +42,7 @@ function Numero({ children, onDark = false }: { children: React.ReactNode; onDar
 }
 
 function H2({ children }: { children: React.ReactNode }) {
-  return <h2 className="mt-3 text-[clamp(27px,3.4vw,50px)] font-extrabold leading-[0.98] tracking-[-0.042em]">{children}</h2>;
+  return <h2 className="mt-3 text-[clamp(27px,3.2vw,40px)] font-extrabold leading-[0.98] tracking-[-0.042em]">{children}</h2>;
 }
 
 /**
@@ -89,19 +89,19 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
         texte. La grille de `globals.css` remet A et B dans la colonne de gauche
         dès 900 px ; ici, l'ordre du balisage est celui du téléphone.
       */}
-      <div data-hero-a="1" className={`flex min-w-0 flex-col gap-[22px] ${PAD} pt-[clamp(22px,4.6vw,76px)]`}>
+      <div data-hero-a="1" className="gouttiere-page flex min-w-0 flex-col gap-[22px] pt-[clamp(22px,4.88vw,61px)]">
         <span data-up="1" className="flex items-center gap-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-brand">
           <span data-blip="1" aria-hidden="true" className="block h-[7px] w-[7px] bg-brand" />
           Atelier ouvert · Marseille · depuis 1997
         </span>
 
-        <h1 data-up="1" className="m-0 text-[clamp(36px,5.6vw,92px)] font-extrabold leading-[0.93] tracking-[-0.045em]">
+        <h1 data-up="1" className="m-0 text-[clamp(36px,5.92vw,74px)] font-extrabold leading-[0.93] tracking-[-0.045em]">
           Réparation
           <br />
           de consoles
         </h1>
 
-        <p data-up="2" className="m-0 max-w-[40ch] text-[clamp(16.5px,1.35vw,20px)] leading-[1.45] text-ink-soft">
+        <p data-up="2" className="m-0 max-w-[46ch] text-[16.5px] leading-[1.5] text-ink-soft">
           Vous décrivez la panne, on diagnostique, vous recevez un devis avant toute intervention.
         </p>
 
@@ -181,7 +181,7 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
       </div>
 
       {/* Bloc B : ce qu'on demande au visiteur, et ce qu'on lui promet. */}
-      <div data-hero-b="1" className={`flex min-w-0 flex-col gap-[22px] ${PAD} pb-[clamp(26px,4.6vw,76px)] pt-[18px] sm:pt-[22px]`}>
+      <div data-hero-b="1" className="gouttiere-page flex min-w-0 flex-col gap-[22px] pb-[clamp(26px,4.88vw,61px)] pt-[18px] sm:pt-[22px]">
         {/*
           Pleine largeur au doigt, côte à côte dès qu'il y a la place.
           Deux boutons de 17 px empilés à leur largeur de texte laissaient une
@@ -190,13 +190,13 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
           page.
         */}
         <div data-up="3" className="flex flex-col gap-0.5 sm:flex-row sm:flex-wrap sm:gap-[11px]">
-          <Link href={ROUTES.repair} data-btn="1" className="block bg-brand px-[30px] py-[18px] text-center text-[17px] font-semibold text-white hover:bg-ink sm:inline-block sm:w-auto">
+          <Link href={ROUTES.repair} data-btn="1" className="block bg-brand px-[26px] py-[15px] text-center text-[15.5px] font-semibold text-white hover:bg-ink sm:inline-block sm:w-auto">
             Demander un diagnostic
           </Link>
           <Link
             href="#pannes"
             data-btn="1"
-            className="block border border-ink px-[26px] py-[17px] text-center text-[17px] font-semibold text-ink hover:bg-ink hover:text-white sm:inline-block sm:w-auto"
+            className="block border border-ink px-[24px] py-[14px] text-center text-[15.5px] font-semibold text-ink hover:bg-ink hover:text-white sm:inline-block sm:w-auto"
           >
             Voir les tarifs
           </Link>
@@ -217,7 +217,7 @@ export function HeroV9({ diagnostic, familles }: { diagnostic?: string | null; f
         <ul
           data-up="4"
           data-rail="1"
-          className="-mx-[clamp(16px,4vw,64px)] mt-2.5 flex list-none gap-[26px] overflow-x-auto border-t border-border px-[clamp(16px,4vw,64px)] pt-[22px] sm:mx-0 sm:flex-nowrap sm:gap-[18px] sm:overflow-visible sm:px-0 min-[1560px]:gap-[26px]"
+          className="-mx-[clamp(16px,4.08vw,51px)] mt-2.5 flex list-none gap-[26px] overflow-x-auto border-t border-border px-[clamp(16px,4.08vw,51px)] pt-[22px] sm:mx-0 sm:flex-nowrap sm:gap-[18px] sm:overflow-visible sm:px-0 min-[1560px]:gap-[26px]"
         >
           {promesses.map((p) => (
             <li key={p.v} className="flex shrink-0 flex-col gap-px sm:min-w-0 sm:shrink">
@@ -263,7 +263,7 @@ export function MachinesV9({ familles }: { familles: FamilleVitrine[] }) {
        seule dont la place se joue au pixel. Trente pixels de gouttière en moins
        font passer les tuiles au-dessus du pli d'un portable de 900 px de haut,
        où elles tombaient douze pixels en dessous. */
-    <section id="reparation" className={`${SHELL} ${PAD} pt-[clamp(26px,3vw,46px)]`}>
+    <section id="reparation" className={`${SHELL} ${PAD} pt-[clamp(26px,2.96vw,37px)]`}>
       <TeteDeSection
         serre
         numero="01 — Votre machine"
@@ -293,7 +293,7 @@ export function MachinesV9({ familles }: { familles: FamilleVitrine[] }) {
               <span aria-hidden="true" className="absolute inset-0" style={{ background: VOILE }} />
               <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 p-[22px]">
                 <span data-rule="1" aria-hidden="true" className="block h-0.5 w-10 bg-brand" />
-                <strong className="mt-1 text-[clamp(21px,2vw,25px)] font-bold tracking-[-0.03em]">{f.label}</strong>
+                <strong className="mt-1 text-[clamp(19px,1.6vw,20px)] font-bold tracking-[-0.03em]">{f.label}</strong>
                 <span className="font-mono text-[10.5px] tracking-[0.05em]" style={{ color: "#d3d3d8" }}>
                   {f.modeles.join(" · ")}
                 </span>
@@ -307,7 +307,7 @@ export function MachinesV9({ familles }: { familles: FamilleVitrine[] }) {
       </div>
 
       <div className="mt-[26px] flex flex-wrap items-center gap-[11px]">
-        <Link href={ROUTES.repair} data-btn="1" className="bg-brand px-[26px] py-[16px] text-[16.5px] font-semibold text-white hover:bg-ink">
+        <Link href={ROUTES.repair} data-btn="1" className="bg-brand px-[24px] py-[14px] text-[15.5px] font-semibold text-white hover:bg-ink">
           Commencer une réparation
         </Link>
         <span className="font-mono text-[11.5px] text-ink-faint">Diagnostic sous 48 h · devis avant intervention</span>
@@ -332,7 +332,7 @@ export function MachinesV9({ familles }: { familles: FamilleVitrine[] }) {
 export function PannesV9({ pannes }: { pannes: PanneVitrine[] }) {
   if (!pannes.length) return null;
   return (
-    <section id="pannes" className={`${SHELL} ${PAD} pt-[clamp(40px,5vw,84px)]`}>
+    <section id="pannes" className={`${SHELL} ${PAD} pt-[clamp(40px,5.36vw,67px)]`}>
       <TeteDeSection
         numero="02 — Votre panne"
         titre={
@@ -401,8 +401,8 @@ const ETAPES = [
 
 export function ParcoursV9() {
   return (
-    <section id="devis" className="mt-[clamp(40px,5vw,84px)] bg-ink text-on-dark">
-      <div className={`${SHELL} ${PAD} py-[clamp(44px,4.6vw,76px)]`}>
+    <section id="devis" className="mt-[clamp(40px,5.36vw,67px)] bg-ink text-on-dark">
+      <div className={`${SHELL} ${PAD} py-[clamp(44px,4.88vw,61px)]`}>
         <div className="mb-[38px] flex flex-wrap items-end justify-between gap-[26px]">
           <div className="min-w-0">
             <Numero onDark>03 — Le parcours</Numero>
@@ -412,7 +412,7 @@ export function ParcoursV9() {
               de votre console
             </H2>
           </div>
-          <Link href={ROUTES.repair} data-btn="1" className="whitespace-nowrap bg-brand px-7 py-[17px] text-[16.5px] font-semibold text-white hover:bg-white hover:text-ink">
+          <Link href={ROUTES.repair} data-btn="1" className="whitespace-nowrap bg-brand px-6 py-[14px] text-[15.5px] font-semibold text-white hover:bg-white hover:text-ink">
             Commencer mon diagnostic
           </Link>
         </div>
@@ -497,7 +497,7 @@ export function RayonsEnTuiles({ rayons }: { rayons: Rayon[] }) {
             <span aria-hidden="true" className="absolute inset-0" style={{ background: VOILE }} />
             <span className="absolute inset-x-0 bottom-0 flex flex-col gap-[7px] p-[26px]">
               <span data-rule="1" aria-hidden="true" className="block h-0.5 w-11 bg-brand" />
-              <strong className="mt-1 text-[clamp(22px,2.2vw,32px)] font-extrabold tracking-[-0.034em]">{r.label}</strong>
+              <strong className="mt-1 text-[clamp(22px,2.08vw,26px)] font-extrabold tracking-[-0.034em]">{r.label}</strong>
               {redige ? (
                 <span className="text-[14.5px] leading-[1.4]" style={{ color: "#d3d3d8" }}>
                   {redige.texte}
@@ -513,7 +513,7 @@ export function RayonsEnTuiles({ rayons }: { rayons: Rayon[] }) {
 
 export function BoutiqueV9({ rayons }: { rayons: Rayon[] }) {
   return (
-    <section id="boutique" className={`${SHELL} ${PAD} pt-[clamp(40px,5vw,84px)]`}>
+    <section id="boutique" className={`${SHELL} ${PAD} pt-[clamp(40px,5.36vw,67px)]`}>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-6">
         <div className="min-w-0">
           <Numero>La boutique</Numero>
@@ -541,15 +541,15 @@ export function BoutiqueV9({ rayons }: { rayons: Rayon[] }) {
 export function MagasinV9({ brand }: { brand: BrandSettings }) {
   const tel = brand.phone?.replace(/\s/g, "") ?? "";
   return (
-    <section id="magasin" className={`${SHELL} ${PAD} py-[clamp(40px,5vw,84px)]`}>
+    <section id="magasin" className={`${SHELL} ${PAD} py-[clamp(40px,5.36vw,67px)]`}>
       <div data-store-v9="1">
         {/* 3/4 : le format de la façade. Un cadre paysage couperait l'enseigne. */}
         <div className="relative overflow-hidden bg-surface-strong" style={{ aspectRatio: "3 / 4" }}>
           <HomeVisual src={HOME_VISUALS.magasin} alt={`Façade du magasin ${brand.name}, rue de Rome à Marseille`} label="Magasin" sizes="(max-width: 700px) 100vw, 40vw" />
         </div>
-        <div className="flex flex-col justify-center gap-[13px] bg-surface p-[clamp(22px,2.6vw,44px)]">
+        <div className="flex flex-col justify-center gap-[13px] bg-surface p-[clamp(22px,2.8vw,35px)]">
           <Numero>Le magasin</Numero>
-          <strong className="text-[clamp(23px,2.6vw,38px)] font-extrabold leading-[1.06] tracking-[-0.036em]">
+          <strong className="text-[clamp(23px,2.4vw,30px)] font-extrabold leading-[1.06] tracking-[-0.036em]">
             {brand.address_line1}
             <br />
             {brand.city} 6ᵉ
@@ -560,11 +560,11 @@ export function MagasinV9({ brand }: { brand: BrandSettings }) {
           </span>
           <div className="mt-2 flex flex-wrap gap-[11px]">
             {brand.phone ? (
-              <a href={`tel:${tel}`} data-btn="1" className="whitespace-nowrap bg-ink px-6 py-4 text-[16.5px] font-semibold text-white hover:bg-brand">
+              <a href={`tel:${tel}`} data-btn="1" className="whitespace-nowrap bg-ink px-[22px] py-[14px] text-[15.5px] font-semibold text-white hover:bg-brand">
                 {brand.phone}
               </a>
             ) : null}
-            <Link href={ROUTES.contact} data-btn="1" className="whitespace-nowrap border border-ink px-[22px] py-[15px] text-[16.5px] font-semibold text-ink hover:bg-ink hover:text-white">
+            <Link href={ROUTES.contact} data-btn="1" className="whitespace-nowrap border border-ink px-[22px] py-[13px] text-[15.5px] font-semibold text-ink hover:bg-ink hover:text-white">
               Nous écrire
             </Link>
           </div>

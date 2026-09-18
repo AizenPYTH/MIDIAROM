@@ -148,6 +148,7 @@ describe("le suivi ne parle jamais de colis avant l'accord", () => {
 
 describe("ce que la demande exige, et ce qu'elle refuse", () => {
   const valide = {
+    modelId: "00000000-0000-4000-8000-000000000002",
     repairId: "00000000-0000-4000-8000-000000000001",
     customer: { first_name: "Camille", last_name: "Roux", email: "camille@exemple.fr" },
     description: "Plus aucune image depuis hier, le voyant reste blanc et la console chauffe.",
@@ -156,6 +157,20 @@ describe("ce que la demande exige, et ce qu'elle refuse", () => {
 
   it("accepte une demande sans adresse ni mode d'envoi", () => {
     expect(createQuoteRequestSchema.safeParse(valide).success).toBe(true);
+  });
+
+  it("accepte « Autre problème » : la console suffit, la panne est facultative", () => {
+    // La porte de sortie du parcours. Sans elle, couvrir les cas rares
+    // voudrait dire rallonger le catalogue — ce qu'on vient d'arrêter.
+    const { repairId: _ignore, ...sansPanne } = valide;
+    const r = createQuoteRequestSchema.safeParse(sansPanne);
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.repairId).toBeNull();
+  });
+
+  it("exige la console, même quand la panne est décrite librement", () => {
+    const { modelId: _ignore, ...sansConsole } = valide;
+    expect(createQuoteRequestSchema.safeParse(sansConsole).success).toBe(false);
   });
 
   it("exige une description : sans mots, le réparateur n'a rien à chiffrer", () => {

@@ -33,7 +33,7 @@ export default async function TradeInPage() {
         <div className="flex flex-col gap-[26px]">
           <div>
             <Eyebrow>Reprise</Eyebrow>
-            <h1 className="mt-2 text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em]">{block?.title ?? "Vendez-nous votre console"}</h1>
+            <h1 className="mt-2 text-[clamp(25px,2.16vw,27px)] font-extrabold leading-[1.02] tracking-[-0.02em]">{block?.title ?? "Vendez-nous votre console"}</h1>
             <p className="mt-3.5 max-w-[42ch] text-[16.5px] leading-[1.55] text-[#c4bdae]">{block?.body ?? "Estimation en ligne, paiement au comptoir le jour même. Consoles, jeux, manettes, collectors."}</p>
           </div>
           <HowToList steps={STEPS} />

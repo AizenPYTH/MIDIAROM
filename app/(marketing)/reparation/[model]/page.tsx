@@ -90,7 +90,7 @@ export default async function ModelPage({ params }: { params: Promise<{ model: s
             </span>
             <div>
               <Eyebrow tone="repair">{model.brand.name}</Eyebrow>
-              <h1 className="mt-2 text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em]">Réparation {model.name} : quelle est la panne ?</h1>
+              <h1 className="mt-2 text-[clamp(25px,2.16vw,27px)] font-extrabold leading-[1.02] tracking-[-0.02em]">Réparation {model.name} : quelle est la panne ?</h1>
               <p className="mt-3.5 max-w-[42ch] text-[16.5px] leading-[1.55] text-[#c4bdae]">{model.seo_intro ?? `Sélectionnez le symptôme qui correspond le mieux à votre ${model.name}. En cas de doute, choisissez « Autre panne » : nous diagnostiquons.`}</p>
             </div>
             {repairs.length ? (

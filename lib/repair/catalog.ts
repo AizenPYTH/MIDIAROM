@@ -68,6 +68,20 @@ export const getModelBySlug = cache(async (slug: string): Promise<(ConsoleModel 
   return { ...data, brand: data.brand as Brand };
 });
 
+/**
+ * Un modèle par son identifiant, avec sa marque.
+ *
+ * `getModelBySlug` sert les adresses lisibles ; celui-ci sert le formulaire,
+ * qui manipule des identifiants. Une demande de devis « Autre problème » n'a
+ * pas de prestation à résoudre : le modèle est alors la seule donnée de
+ * catalogue du dossier, et il doit être vérifié comme telle.
+ */
+export const getModelById = cache(async (id: string): Promise<(ConsoleModel & { brand: Brand }) | null> => {
+  const { data } = await db().from("console_models").select("*, brand:brands(*)").eq("id", id).maybeSingle();
+  if (!data || !data.brand) return null;
+  return { ...data, brand: data.brand as Brand };
+});
+
 /** Active repairs for a model with their fault (used by /reparation/[model]). */
 export const getRepairsForModel = cache(async (modelId: string): Promise<(Repair & { fault: Fault; category: RepairCategory | null })[]> => {
   const { data } = await db()

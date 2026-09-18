@@ -9,8 +9,13 @@
  * Le catalogue de l'atelier compte plus de mille prestations — jusqu'à
  * quatre-vingt-neuf pour une seule console. C'est la bonne granularité pour un
  * réparateur qui saisit un dossier ; c'est un mur pour quelqu'un dont la
- * console ne s'allume plus. On en montre sept à neuf, et le reste ne disparaît
- * pas : il devient un second écran.
+ * console ne s'allume plus.
+ *
+ * On en montre **cinq**, celles que le back-office met en avant pour ce modèle.
+ * Le reste ne devient pas un second écran : ce qui n'est pas dans les cinq
+ * passe par « Autre problème », où le client décrit sa panne et joint des
+ * photos. La couverture des cas rares se fait par la description, jamais par
+ * l'allongement de la liste.
  */
 
 /** Le strict nécessaire pour trier une prestation. Le reste ne nous regarde pas. */
@@ -30,12 +35,15 @@ export interface PrestationClassable {
 /**
  * Le plafond de la liste courte.
  *
- * Neuf. En dessous de six, une console un peu large — une Switch a dix
- * familles de pannes — perdrait une catégorie entière de clients ; au-dessus de
- * neuf, la liste redevient ce qu'on essaie de quitter. C'est aussi le plafond
- * que pose la migration en amorçant la sélection.
+ * Cinq. C'est ce qu'un œil embrasse sans lire — au-delà, on parcourt, et
+ * parcourir une liste de pannes quand sa console vient de mourir est
+ * exactement l'épreuve qu'on veut épargner. Le sixième cas n'est pas perdu
+ * pour autant : il a sa porte, « Autre problème », et elle mène à quelqu'un
+ * plutôt qu'à une liste.
+ *
+ * C'est aussi le plafond que pose la migration en amorçant la sélection.
  */
-export const MAX_LISTE_COURTE = 9;
+export const MAX_LISTE_COURTE = 5;
 
 function rang(p: PrestationClassable): number {
   return p.featuredOrder ?? 0;

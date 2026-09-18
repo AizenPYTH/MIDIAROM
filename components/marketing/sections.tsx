@@ -52,7 +52,7 @@ export function PriceLines({ items, className }: { items: { label: string; price
       {items.map((item, i) => {
         const row = (
           <>
-            <span className="font-display text-[clamp(18px,1.6vw,23px)] font-bold leading-[1.1] tracking-[-0.03em] text-ink">{item.label}</span>
+            <span className="font-display text-[18px] font-bold leading-[1.1] tracking-[-0.03em] text-ink">{item.label}</span>
             <span className="whitespace-nowrap font-mono text-[18px] text-sale">{item.price}</span>
           </>
         );
@@ -169,7 +169,7 @@ export function ConsoleGrid({ brands, models }: { brands: Brand[]; models: Conso
             {/* `clamp` : deux colonnes au téléphone, comme au rayon. Le plancher
                 fixe à 190 px n'en laissait qu'une sous 424 px, et dix-huit
                 vignettes pleine largeur faisaient de la grille un couloir. */}
-            <ul className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(clamp(150px, 20vw, 190px), 1fr))" }}>
+            <ul className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(152px, 1fr))" }}>
               {brandModels.map((model) => (
                 <li key={model.id} className="min-w-0">
                   <Link
@@ -235,7 +235,7 @@ export function ReviewsSection({ reviews }: { reviews: Views<"public_reviews">[]
     <section>
       <Container className="py-[92px]">
         <Eyebrow>Avis</Eyebrow>
-        <h2 className="reveal mt-3 font-display text-[clamp(26px,3.1vw,40px)] font-extrabold leading-[0.92] tracking-[-0.04em]">Ce que disent les clients</h2>
+        <h2 className="reveal mt-3 font-display text-[clamp(26px,2.56vw,32px)] font-extrabold leading-[0.92] tracking-[-0.04em]">Ce que disent les clients</h2>
         <p className="reveal mt-4 max-w-[42ch] text-[16px] text-ink-soft">Avis authentiques laissés après une réparation, modérés par l&apos;atelier.</p>
         <ul className="mt-10 grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
           {reviews.map((review) => (
@@ -286,7 +286,7 @@ export function CtaBanner({ title, text }: { title: string; text: string }) {
         <div className="glass reveal flex flex-wrap items-end justify-between gap-8 rounded-[2px] p-8 sm:p-10">
           <div>
             <Eyebrow tone="repair">Atelier</Eyebrow>
-            <h2 className="mt-3 font-display text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[0.95] tracking-[-0.035em]">{title}</h2>
+            <h2 className="mt-3 font-display text-[clamp(25px,2.16vw,27px)] font-extrabold leading-[0.95] tracking-[-0.035em]">{title}</h2>
             <p className="mt-3 max-w-[46ch] text-[16.5px] leading-[1.45] text-ink-soft">{text}</p>
           </div>
           <Link href={ROUTES.repair} className="btn-gradient flex items-center justify-center rounded-[2px] px-7 py-[15px] text-[15px] font-semibold max-sm:w-full">

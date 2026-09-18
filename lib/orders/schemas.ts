@@ -70,7 +70,18 @@ export const createOrderSchema = z.object({
  * demande lui arrive vide.
  */
 export const createQuoteRequestSchema = z.object({
-  repairId: z.string().uuid(),
+  /** La console, toujours connue : c'est elle qui situe la demande. */
+  modelId: z.string().uuid(),
+  /**
+   * La panne choisie dans la liste courte — ou **rien**.
+   *
+   * « Autre problème » n'est pas une prestation du catalogue et ne doit pas en
+   * devenir une : ce serait rouvrir la liste de 1 189 lignes par la porte de
+   * derrière, une entrée à la fois. C'est l'absence de prestation qui dit
+   * « le réparateur lira la description ». `null` est donc une valeur du
+   * parcours, pas un trou à combler.
+   */
+  repairId: z.string().uuid().nullable().default(null),
   customer: customerSchema,
   description: z.string().trim().min(20, "Décrivez la panne en quelques mots (20 caractères minimum)").max(2000),
   console_serial_number: z.string().trim().max(60).optional().or(z.literal("")),

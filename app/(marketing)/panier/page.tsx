@@ -8,7 +8,7 @@ export default function CartRoute() {
   return (
     <Container className="py-12">
       <Eyebrow>Boutique</Eyebrow>
-      <h1 className="mb-8 mt-2 text-[clamp(28px,3.4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">Votre panier</h1>
+      <h1 className="mb-8 mt-2 text-[clamp(28px,2.56vw,32px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">Votre panier</h1>
       <CartPage />
     </Container>
   );

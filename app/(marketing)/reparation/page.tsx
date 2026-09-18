@@ -57,13 +57,13 @@ export default async function RepairIndexPage({ searchParams }: { searchParams: 
         progression de la fiche raconte déjà, en six cellules. Reste une phrase,
         celle qui dit au visiteur ce qu'on attend de lui.
       */}
-      <section className="bg-bg px-[clamp(16px,3vw,32px)] pb-0 pt-[clamp(20px,2.4vw,34px)] text-ink">
+      <section className="bg-bg px-[clamp(16px,2.08vw,26px)] pb-0 pt-[clamp(20px,2.16vw,27px)] text-ink">
         <div className="mx-auto w-full max-w-[1400px]">
-          <div className="mb-[clamp(18px,2vw,26px)]">
+          <div className="mb-[clamp(18px,1.68vw,21px)]">
             <span className="font-mono text-[10.5px] uppercase tracking-[0.19em]" style={{ color: "var(--brand)" }}>
               Réparation console
             </span>
-            <h1 className="m-0 mt-2.5 text-[clamp(26px,3.2vw,44px)] font-extrabold leading-none tracking-[-0.042em]">
+            <h1 className="m-0 mt-2.5 text-[clamp(26px,2.8vw,35px)] font-extrabold leading-none tracking-[-0.042em]">
               Identifiez votre console.
               <br />
               Nous nous occupons du reste.
@@ -73,7 +73,7 @@ export default async function RepairIndexPage({ searchParams }: { searchParams: 
           <RepairForm models={form.models} conditions={form.conditions} initialPlatform={plateforme} initialCustomer={null} initialAddress={null} isLoggedIn={false} catalogueCount={models.length} />
 
           {howto.length ? (
-            <div className="mt-0.5 bg-surface p-[clamp(18px,2.2vw,32px)]">
+            <div className="mt-0.5 bg-surface p-[clamp(18px,2.08vw,26px)]">
               <span className="block font-mono text-[10px] uppercase tracking-[0.19em] text-ink-faint">Comment ça se passe</span>
               <div className="mt-3.5">
                 <HowToList steps={howto.slice(0, 4)} />
@@ -98,7 +98,7 @@ export default async function RepairIndexPage({ searchParams }: { searchParams: 
       */}
       <Container id="catalogue" className="py-[64px]">
         <Eyebrow tone="repair">Catalogue</Eyebrow>
-        <h2 className="mt-2 text-[clamp(24px,2.4vw,32px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">Toutes les consoles prises en charge</h2>
+        <h2 className="mt-2 text-[clamp(24px,2.08vw,26px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">Toutes les consoles prises en charge</h2>
         <p className="mt-3 max-w-[42ch] text-[16px] text-ink-soft">Chaque modèle a sa page : pannes réparables, prix, garantie et délais.</p>
         <div className="mt-8">
           <ConsoleGrid brands={brands} models={models} />

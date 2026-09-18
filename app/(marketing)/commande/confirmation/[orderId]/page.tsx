@@ -37,7 +37,7 @@ export default async function ConfirmationPage({ params, searchParams }: { param
         <>
           <TrackOnMount event={ANALYTICS_EVENTS.PURCHASE} props={{ order_number: current.order_number, value_cents: current.total_cents, repair_id: current.repair_id ?? undefined }} />
           <Eyebrow tone="repair">Demande enregistrée</Eyebrow>
-          <h1 className="mt-2 text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Merci, votre commande est confirmée.</h1>
+          <h1 className="mt-2 text-[clamp(25px,2.16vw,27px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Merci, votre commande est confirmée.</h1>
           <p className="mt-3 text-[16.5px] text-ink-soft">Votre numéro de dossier :</p>
           <p className="mt-1 font-mono text-[28px] font-semibold tracking-[-0.02em] text-ink">{current.order_number}</p>
           <p className="mt-3 text-[14px] text-ink-muted">Un e-mail de confirmation avec les instructions vient de vous être envoyé à {current.customer_email}.</p>
@@ -115,7 +115,7 @@ export default async function ConfirmationPage({ params, searchParams }: { param
         <>
           <PaymentPendingRefresh />
           <Eyebrow tone="muted">Paiement</Eyebrow>
-          <h1 className="mt-2 text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Paiement en cours de confirmation</h1>
+          <h1 className="mt-2 text-[clamp(25px,2.16vw,27px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">Paiement en cours de confirmation</h1>
           <p className="mt-3 text-[16px] text-ink-soft">
             Votre dossier <span className="font-mono font-semibold text-ink">{current.order_number}</span> est enregistré. Nous attendons la confirmation de votre paiement par notre prestataire. Cette page se rafraîchit automatiquement.
           </p>

@@ -38,7 +38,7 @@ export function PageHeader({
     <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between", className)}>
       <div className="min-w-0">
         {eyebrow ? <Eyebrow tone={eyebrowTone}>{eyebrow}</Eyebrow> : null}
-        <h1 className="page-title mt-2 text-[clamp(25px,2.6vw,34px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">{title}</h1>
+        <h1 className="page-title mt-2 text-[clamp(25px,2.16vw,27px)] font-extrabold leading-[1.02] tracking-[-0.02em] text-ink">{title}</h1>
         {description ? <p className="mt-3 max-w-[42ch] text-[16.5px] leading-[1.55] text-ink-soft">{description}</p> : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
@@ -51,7 +51,7 @@ export function SectionTitle({ title, description, eyebrow, eyebrowTone = "sale"
     <div className={cn("mb-7 flex flex-wrap items-end justify-between gap-6", className)}>
       <div>
         {eyebrow ? <Eyebrow tone={eyebrowTone}>{eyebrow}</Eyebrow> : null}
-        <h2 className="mt-2 text-[clamp(24px,2.4vw,32px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{title}</h2>
+        <h2 className="mt-2 text-[clamp(24px,2.08vw,26px)] font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">{title}</h2>
         {description ? <p className="mt-3 max-w-[42ch] text-[16px] leading-[1.5] text-ink-soft">{description}</p> : null}
       </div>
       {aside}

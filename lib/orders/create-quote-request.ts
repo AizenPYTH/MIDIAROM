@@ -1,7 +1,7 @@
 import "server-only";
 import type { Json } from "@/types/database";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getRepairById } from "@/lib/repair/catalog";
+import { getModelById, getRepairById } from "@/lib/repair/catalog";
 import { getSetting } from "@/lib/settings";
 import { addOrderEvent } from "@/lib/orders/service";
 import { audit } from "@/lib/security/audit";
@@ -31,24 +31,52 @@ export interface QuoteRequestResult {
   trackingToken: string;
 }
 
+/**
+ * Ce qu'on inscrit au dossier quand le client n'a rien trouvé dans la liste.
+ *
+ * Ces libellés partent dans `repair_name` et `fault_name`, qui sont `not null`
+ * et servent partout d'intitulé du dossier — e-mails, suivi, back-office. Ils
+ * doivent donc se lire comme une phrase, et dire au réparateur ce qu'on attend
+ * de lui : lire la description.
+ */
+const PANNE_LIBRE = "Autre problème — à diagnostiquer";
+const SYMPTOME_LIBRE = "Panne décrite par le client";
+
 export async function createQuoteRequest(input: CreateQuoteRequestInput, currentUser: CurrentUser | null): Promise<QuoteRequestResult> {
   const db = createSupabaseAdminClient();
-  const repair = await getRepairById(input.repairId);
-  if (!repair || !repair.is_active || !repair.model.is_active) {
-    throw new CreateOrderError("Cette réparation n'est plus disponible.");
-  }
+
+  const model = await getModelById(input.modelId);
+  if (!model || !model.is_active) throw new CreateOrderError("Cette console n'est plus prise en charge.");
 
   /*
-    Le garde-fou du parcours.
+    Deux entrées, un seul dossier.
 
-    Une prestation à prix ferme n'a rien à faire ici : son prix est connu, elle
-    se commande et se paie. L'accepter reviendrait à offrir un chemin pour
-    obtenir gratuitement ce qui est tarifé — précisément ce que la demande de
-    devis ne doit pas devenir. La vérification est ici, côté serveur, sur la
-    donnée de la base, et non sur ce que le navigateur a bien voulu envoyer.
+    Soit le client a reconnu sa panne dans les cinq propositions, soit il ne
+    l'a pas reconnue et la décrit lui-même. Le second cas ne crée **aucune**
+    prestation au catalogue : `repair_id` et `fault_id` restent nuls, et c'est
+    exactement ce qui signale au réparateur qu'il doit lire avant de chiffrer.
   */
-  if (!repair.price_is_provisional) {
-    throw new CreateOrderError("Cette réparation a un prix ferme : elle se commande directement, sans devis.");
+  const repair = input.repairId ? await getRepairById(input.repairId) : null;
+  if (input.repairId) {
+    if (!repair || !repair.is_active || !repair.model.is_active) {
+      throw new CreateOrderError("Cette réparation n'est plus disponible.");
+    }
+    if (repair.model.id !== model.id) {
+      throw new CreateOrderError("Cette panne ne concerne pas la console choisie.");
+    }
+    /*
+      Le garde-fou du parcours.
+
+      Une prestation à prix ferme n'a rien à faire ici : son prix est connu,
+      elle se commande et se paie. L'accepter reviendrait à offrir un chemin
+      pour obtenir gratuitement ce qui est tarifé — précisément ce que la
+      demande de devis ne doit pas devenir. La vérification est ici, côté
+      serveur, sur la donnée de la base, et non sur ce que le navigateur a bien
+      voulu envoyer.
+    */
+    if (!repair.price_is_provisional) {
+      throw new CreateOrderError("Cette réparation a un prix ferme : elle se commande directement, sans devis.");
+    }
   }
 
   const [rules, checkout] = await Promise.all([getSetting("business_rules"), getSetting("checkout")]);
@@ -61,21 +89,21 @@ export async function createQuoteRequest(input: CreateQuoteRequestInput, current
       customer_id: customer.id,
       status: "QUOTE_REQUESTED",
       is_quote_request: true,
-      brand_id: repair.model.brand.id,
-      model_id: repair.model.id,
-      fault_id: repair.fault.id,
-      repair_id: repair.id,
+      brand_id: model.brand.id,
+      model_id: model.id,
+      fault_id: repair?.fault.id ?? null,
+      repair_id: repair?.id ?? null,
       // Ni transport ni adresse : on ne sait pas encore si la console viendra,
       // et si elle vient, le client choisira alors entre le dépôt en boutique
       // et l'envoi. `shipping_address` est `not null` en base — un objet vide
       // dit « rien de décidé », là où une fausse adresse mentirait.
       shipping_method_id: null,
       shipping_address: {} as unknown as Json,
-      brand_name: repair.model.brand.name,
-      model_name: repair.model.name,
-      fault_name: repair.fault.name,
-      repair_name: repair.name,
-      warranty_months: repair.warranty_months,
+      brand_name: model.brand.name,
+      model_name: model.name,
+      fault_name: repair?.fault.name ?? SYMPTOME_LIBRE,
+      repair_name: repair?.name ?? PANNE_LIBRE,
+      warranty_months: repair?.warranty_months ?? 0,
       customer_first_name: input.customer.first_name,
       customer_last_name: input.customer.last_name,
       customer_email: email,
@@ -120,8 +148,8 @@ export async function createQuoteRequest(input: CreateQuoteRequestInput, current
     order_id: order.id,
     item_type: "REPAIR" as const,
     source: "INITIAL" as const,
-    reference_id: repair.id,
-    label: repair.name,
+    reference_id: repair?.id ?? null,
+    label: repair?.name ?? PANNE_LIBRE,
     description: "Demande de devis — montant à chiffrer par l'atelier",
     quantity: 1,
     unit_price_cents: 0,
@@ -165,7 +193,7 @@ export async function createQuoteRequest(input: CreateQuoteRequestInput, current
     resourceType: "repair_orders",
     resourceId: order.id,
     orderId: order.id,
-    newValue: { repair_id: repair.id, photos: input.photos.length, total_cents: 0 },
+    newValue: { repair_id: repair?.id ?? null, model_id: model.id, libre: !repair, photos: input.photos.length, total_cents: 0 },
   });
 
   // Le client sait que c'est parti ; l'atelier sait qu'il a du travail.

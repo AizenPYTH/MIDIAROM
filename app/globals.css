@@ -1011,14 +1011,66 @@ body {
    d'images de l'accueil — bloqué, lui, à la borne du handoff — cessait d'être
    d'aplomb avec le logo dès le premier palier.
    Il ne s'agit pas d'agrandir le contenu avec l'écran : la typographie et les
-   grilles gardent leurs bornes, et au-delà de 1560 px la page reste centrée.
+   grilles gardent leurs bornes, et au-delà de la borne la page reste centrée.
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  /* v9 : une seule borne, 1560 px, celle du handoff. Les trois paliers
-     précédents faisaient diverger l'en-tête, le pied de page et les sections
-     de l'accueil d'un écran à l'autre — le mur d'images n'était plus aligné
-     sur le logo au-delà de 1700 px. */
-  --page-max: 1560px;
+  /*
+    1 400 px, et non plus 1 560.
+
+    Une seule borne, toujours — les trois paliers d'avant faisaient diverger
+    l'en-tête, le pied de page et le mur d'images d'un écran à l'autre. Mais
+    1 560 px occupait 81 % d'un écran de 1 920 : la page touchait presque les
+    deux bords, et une ligne de texte y courait sur plus de deux cents
+    caractères. À 1 400 px il reste de l'air de chaque côté, ce qui est
+    précisément ce qu'on voyait à 80 % de zoom et qu'on prenait pour de
+    l'élégance.
+
+    Sous 1 400 px rien ne change : à 1 280 et 1 366 la page était déjà pleine
+    largeur. La borne ne joue qu'à partir de là.
+  */
+  --page-max: 1400px;
+
+  /*
+    La mesure : la largeur maximale d'un paragraphe.
+
+    Au-delà d'une soixantaine de caractères, l'œil perd la ligne suivante en
+    revenant à la marge. Les intertitres de la boutique couraient sur 230
+    caractères à 1 920 px — pleine largeur de page, sans borne. `--mesure`
+    donne à ces textes une limite indépendante de celle de la page.
+  */
+  --mesure: 68ch;
+}
+
+/**
+ * La gouttière d'une section pleine largeur, alignée sur la colonne du site.
+ *
+ * Le hero de l'accueil saigne jusqu'aux bords — c'est son parti pris, la
+ * photographie d'atelier touche le bord droit de l'écran. Sa colonne de texte,
+ * elle, doit commencer là où commence le logo, sinon le haut de page se lit sur
+ * deux alignements concurrents : c'est ce qui s'est produit en ramenant la
+ * colonne de 1 560 à 1 400 px, où le logo s'est décalé de deux cents pixels
+ * vers l'intérieur pendant que le titre restait au bord.
+ *
+ * La gouttière vaut donc le plus grand des deux : le retrait habituel, ou la
+ * moitié de ce qui dépasse de la colonne. En dessous de 1 400 px le second
+ * terme est négatif et le retrait habituel gagne — rien ne change.
+ */
+.gouttiere-page {
+  /* À gauche, l'alignement sur la colonne ; à droite, la gouttière habituelle —
+     le bord droit de ces colonnes est intérieur à la grille du hero, il n'a
+     rien à aligner sur le logo. */
+  padding-left: max(clamp(16px, 4.08vw, 51px), calc((100vw - var(--page-max)) / 2));
+  padding-right: clamp(16px, 4.08vw, 51px);
+}
+
+/**
+ * Un paragraphe qui s'arrête où la lecture s'arrête.
+ *
+ * Posé sur les chapôs et les descriptions de section, là où le texte hérite
+ * sinon de toute la largeur de la page.
+ */
+.mesure {
+  max-width: var(--mesure);
 }
 
 /**
