@@ -17,7 +17,13 @@ export interface CarteUnivers {
   nom: string;
   legende: string;
   href: string;
-  /** Le fichier attendu dans `public/images/univers/`, sans extension. */
+  /**
+   * Le fichier tel qu'il a été déposé dans `public/images/univers/`.
+   *
+   * Écrit en toutes lettres, espaces et coquille comprises (`plasyation.jpg`) :
+   * ce sont les fichiers du client, on ne les renomme pas pour faire joli. La
+   * carte s'adapte au fichier, jamais l'inverse.
+   */
   fichier: string;
 }
 
@@ -41,40 +47,32 @@ export interface CarteUnivers {
   déjà de son propre filtre.
 */
 export const PLATEFORMES: CarteUnivers[] = [
-  { nom: "PlayStation", legende: "PS5 · PS4 · rétro", href: "/boutique?plateforme=PlayStation*", fichier: "playstation" },
-  { nom: "Nintendo", legende: "Switch · Switch 2 · rétro", href: "/boutique?plateforme=Nintendo*", fichier: "nintendo" },
-  { nom: "Xbox", legende: "Series · One", href: "/boutique?plateforme=Xbox*", fichier: "xbox" },
-  { nom: "Rétro", legende: "N64 · SNES · Mega Drive", href: "/boutique?retro=1", fichier: "retro" },
+  { nom: "PlayStation", legende: "PS5 · PS4 · rétro", href: "/boutique?plateforme=PlayStation*", fichier: "plasyation.jpg" },
+  { nom: "Nintendo", legende: "Switch · Switch 2 · rétro", href: "/boutique?plateforme=Nintendo*", fichier: "nintendo.png" },
+  { nom: "Xbox", legende: "Series · One", href: "/boutique?plateforme=Xbox*", fichier: "Xbox-logo.png" },
+  { nom: "Rétro", legende: "N64 · SNES · Mega Drive", href: "/boutique?retro=1", fichier: "retro.jfif" },
 ];
 
 export const LICENCES: CarteUnivers[] = [
-  { nom: "One Piece", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=One Piece", fichier: "one-piece" },
-  { nom: "Naruto", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Naruto*", fichier: "naruto" },
-  { nom: "Dragon Ball", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Dragon Ball*", fichier: "dragon-ball" },
-  { nom: "Jujutsu Kaisen", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Jujutsu Kaisen", fichier: "jujutsu-kaisen" },
-  { nom: "Demon Slayer", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Demon Slayer", fichier: "demon-slayer" },
+  { nom: "One Piece", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=One Piece", fichier: "one piece.jpg" },
+  { nom: "Naruto", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Naruto*", fichier: "naruto.png" },
+  { nom: "Dragon Ball", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Dragon Ball*", fichier: "dragon ball.png" },
+  { nom: "Jujutsu Kaisen", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Jujutsu Kaisen", fichier: "jujutsu kaisen.png" },
+  { nom: "Demon Slayer", legende: "Figurines", href: "/boutique?cat=figurines&plateforme=Demon Slayer", fichier: "demon slayer.png" },
 ];
 
-const EXTENSIONS = [".svg", ".png", ".webp", ".jpg"];
-
 /**
- * Le logo de la carte, s'il a été déposé.
+ * Le logo de la carte, s'il est bien là.
  *
- * Aucun logo n'est produit ici, et aucun n'est allé le chercher ailleurs : on
- * regarde si le fichier existe dans `public/images/univers/`, et on l'utilise.
- * Tant qu'il n'y est pas, la carte porte le nom de la marque en typographie —
- * exactement ce que fait la maquette du handoff, qui note qu'elle ne peut pas
- * produire de logos non plus.
- *
- * Le jour où les fichiers sont déposés, les logos apparaissent sans toucher au
- * code : la carte, sa taille et son comportement ne changent pas.
+ * Aucun logo n'est produit ici et aucun n'est allé le chercher ailleurs : on
+ * regarde si le fichier déposé existe, et on l'utilise. S'il manque — un
+ * renommage, un fichier oublié — la carte porte le nom de la marque en
+ * typographie plutôt qu'un cadre vide. C'est ce que fait la maquette du
+ * handoff, qui note qu'elle ne peut pas produire de logos non plus.
  */
 function logoDe(fichier: string): string | null {
-  for (const ext of EXTENSIONS) {
-    const relatif = `/images/univers/${fichier}${ext}`;
-    if (existsSync(path.join(process.cwd(), "public", relatif))) return relatif;
-  }
-  return null;
+  const relatif = `/images/univers/${fichier}`;
+  return existsSync(path.join(process.cwd(), "public", relatif)) ? relatif : null;
 }
 
 function Carte({ carte }: { carte: CarteUnivers }) {
@@ -92,7 +90,22 @@ function Carte({ carte }: { carte: CarteUnivers }) {
           haut occupent la même surface optique, quelles que soient les
           dimensions du fichier déposé. Rien n'est jamais étiré.
         */
-        <span className="relative block h-[44px] w-[62%]">
+        /*
+          54 px de haut, pas les 44 du handoff.
+
+          Le handoff plafonne la hauteur à 44 et la largeur à 62 % : sur un logo
+          large (PlayStation, 239×134) c'est la hauteur qui borne, et le mark
+          occupe 78×44 ; sur un logo carré (Nintendo, Rétro, One Piece, tous en
+          239×239) c'est encore la hauteur, et le mark n'occupe que 44×44 —
+          presque moitié moins de surface pour la même carte.
+
+          Plusieurs de ces fichiers portent en plus une marge blanche dans
+          l'image elle-même, qu'aucune règle CSS ne peut retirer sans rogner.
+          Relever la boîte à 54 px rattrape l'essentiel de l'écart ; la largeur
+          reste bornée, donc les logos larges ne débordent pas. `contain` fait
+          le reste : rien n'est jamais étiré.
+        */
+        <span className="relative block h-[54px] w-[66%]">
           <Image src={logo} alt={carte.nom} fill sizes="240px" className="object-contain opacity-[0.82] transition-opacity duration-200 group-hover:opacity-100" />
         </span>
       ) : (
